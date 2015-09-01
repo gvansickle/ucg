@@ -21,7 +21,8 @@ libsrc_a_SOURCES = \
 	Globber.cpp Globber.h \
 	MatchList.cpp MatchList.h \
 	FileScanner.cpp FileScanner.h \
-	OutputTask.cpp OutputTask.h
+	OutputTask.cpp OutputTask.h \
+	TypeManager.cpp TypeManager.h
 
 libsrc_a_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_a_CFLAGS = $(AM_CFLAGS)
