@@ -19,6 +19,8 @@
 
 #include "Globber.h"
 
+#include "TypeManager.h"
+
 #include <fts.h>
 #include <fnmatch.h>
 #include <cstring>
@@ -27,12 +29,13 @@
 
 
 Globber::Globber(std::string start_dir,
-		boost::concurrent::sync_queue<std::string>& out_queue) : m_out_queue(out_queue)
+		TypeManager &type_manager,
+		boost::concurrent::sync_queue<std::string>& out_queue)
+		: m_start_dir(start_dir),
+		  m_out_queue(out_queue),
+		  m_type_manager(type_manager)
 {
-	m_start_dir = start_dir;
 
-	// cpp
-	m_include_extensions.insert({"cpp", "cc", "cxx", "m", "hpp", "hh", "h", "hxx"});
 }
 
 Globber::~Globber()
@@ -42,23 +45,15 @@ Globber::~Globber()
 
 void Globber::Run()
 {
-	char *dirs[2];
-	dirs[0] = m_start_dir.c_str();
-	dirs[1] = 0;
+	char *const dirs[2] = { const_cast<char*>(m_start_dir.c_str()), 0 };
+
 	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR | FTS_NOSTAT, NULL);
 	while(FTSENT *ftsent = fts_read(fts))
 	{
 		if(ftsent->fts_info == FTS_F)
 		{
-			// It's a normal file.  Check for inclusion/exclusion.
-			const char *pn = ftsent->fts_accpath;
-			const char *last_period = strrchr(pn, '.');
-			if(last_period == NULL || last_period == pn || (*(pn-1) == '/'))
-			{
-				// Filename either had no "." or started with a ".".
-				continue;
-			}
-			if(auto it = m_include_extensions.find(last_period+1) != m_include_extensions.end())
+			// It's a normal file.  Check for inclusion.
+			if(m_type_manager.FileShouldBeScanned(ftsent->fts_path, ftsent->fts_name))
 			{
 				// Extension was in the hash table.
 				m_out_queue.wait_push(std::string(ftsent->fts_accpath));

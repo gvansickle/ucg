@@ -50,8 +50,10 @@ static char args_doc[] = "PATTERN [FILES]";
 
 /// @name Keys for options without short-options.
 ///@{
-#define OPT_COLOR  1
-#define OPT_NOCOLOR 2
+#define OPT_COLOR          1
+#define OPT_NOCOLOR        2
+#define OPT_IGNORE_DIR     3
+#define OPT_NOIGNORE_DIR     4
 ///@}
 
 static struct argp_option options[] = {
@@ -62,10 +64,11 @@ static struct argp_option options[] = {
 		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
 		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
 		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
+		{0,0,0,0, "File inclusion/exclusion:"},
+		{"ignore-dir",  OPT_IGNORE_DIR, "REGEX", 0,  "Exclude directories matching this regex pattern."},
+		{"noignore-dir",  OPT_NOIGNORE_DIR, "REGEX", 0,  "Do not exclude directories matching this regex pattern."},
 		{0,0,0,0, "Miscellaneous:" },
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use" },
-		{"exclude",  'e', "REGEX",0,  "Exclude files or paths matching this regex pattern."},
-		{"output",   'o', "FILE", 0,  "The name to give to the generated PDF file." },
 		{ 0 }
 	};
 
@@ -78,8 +81,12 @@ error_t parse_opt (int key, char *arg, struct argp_state *state)
 	case 'i':
 		arguments->m_ignore_case = true;
 		break;
-	case 'e':
+	case OPT_IGNORE_DIR:
 		arguments->m_excludes.push_back(arg);
+		break;
+	case OPT_NOIGNORE_DIR:
+		/// @todo Implement.
+		///arguments->m_excludes.push_back(arg);
 		break;
 	case 'j':
 		if(atoi(arg) < 1)

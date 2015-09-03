@@ -66,7 +66,7 @@ AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
 # By default, compile C and C++ with the maximum possible debugging info and least optimization for maximum debugability.
 AC_SUBST([AM_CFLAGS], ["-ggdb3 -O0"])
 # -Wold-style-cast
-AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
+AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O0"])
 
 AC_LANG_PUSH([C++])
 # Require at least some level of C++11 support.

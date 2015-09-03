@@ -20,6 +20,11 @@
 #ifndef TYPEMANAGER_H_
 #define TYPEMANAGER_H_
 
+#include <string>
+#include <vector>
+#include <map>
+#include <unordered_map>
+
 /*
  *
  */
@@ -28,6 +33,33 @@ class TypeManager
 public:
 	TypeManager();
 	virtual ~TypeManager();
+
+	/**
+	 * Determine if the file with the given path and name should be scanned based on the
+	 * enabled file types.
+	 *
+	 * @param path
+	 * @param name
+	 * @return
+	 */
+	bool FileShouldBeScanned(const std::string &path, const std::string &name);
+
+	void CompileTypeTables();
+
+private:
+
+	/// Map of file types to the associated filename extensions.
+	std::map<std::string, std::vector<std::string>> m_type_to_extension_map;
+
+	/// File extensions which will be examined.  Maps to file type.
+	std::unordered_multimap<std::string, std::string> m_include_extensions;
+
+	/// Literal filenames which will be examined.  Maps to file type.
+	std::unordered_multimap<std::string, std::string> m_included_literal_filenames;
+
+	/// Map of the regexes to try to match to the first line of the file (key) to
+	/// the file type (value).
+	std::unordered_multimap<std::string, std::string> m_included_first_line_regexes;
 };
 
 #endif /* TYPEMANAGER_H_ */

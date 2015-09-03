@@ -39,6 +39,8 @@ void MatchList::AddMatch(long long lineno, const Match &match)
 
 void MatchList::Print(bool istty, bool enable_color)
 {
+	std::string no_dotslash_fn(m_filename.begin()+2, m_filename.end());
+
 	if(istty)
 	{
 		std::string color_filename("\x1B[32;1m"); // 32=green, 1=bold
@@ -54,8 +56,9 @@ void MatchList::Print(bool istty, bool enable_color)
 			color_default = "";
 		}
 
+
 		std::cout << std::endl;
-		std::cout << color_filename << m_filename << color_default << std::endl;
+		std::cout << color_filename << no_dotslash_fn << color_default << std::endl;
 		for(auto it : m_match_list)
 		{
 			std::cout << color_lineno << it.first << color_default << ":"
@@ -66,7 +69,7 @@ void MatchList::Print(bool istty, bool enable_color)
 	{
 		for(auto it : m_match_list)
 		{
-			std::cout << m_filename << ":" << it.first << ":"
+			std::cout << no_dotslash_fn << ":" << it.first << ":"
 					<< it.second.m_pre_match << it.second.m_match << it.second.m_post_match << std::endl;
 		}
 	}

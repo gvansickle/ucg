@@ -23,8 +23,9 @@
 
 #include <string>
 #include <thread>
-#include <unordered_set>
 #include <boost/thread/sync_queue.hpp>
+
+class TypeManager;
 
 /*
  *
@@ -32,7 +33,7 @@
 class Globber
 {
 public:
-	Globber(std::string start_dir, boost::concurrent::sync_queue<std::string> &out_queue);
+	Globber(std::string start_dir, TypeManager &type_manager, boost::concurrent::sync_queue<std::string> &out_queue);
 	virtual ~Globber();
 
 	void Run();
@@ -41,8 +42,7 @@ private:
 	std::string m_start_dir;
 	boost::concurrent::sync_queue<std::string>& m_out_queue;
 
-	/// File extensions which will be examined.
-	std::unordered_set<std::string> m_include_extensions;
+	TypeManager &m_type_manager;
 };
 
 #endif /* GLOBBER_H_ */

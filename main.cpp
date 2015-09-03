@@ -26,6 +26,7 @@
 
 #include "ArgParse.h"
 #include "Globber.h"
+#include "TypeManager.h"
 #include "MatchList.h"
 #include "FileScanner.h"
 #include "OutputTask.h"
@@ -35,10 +36,14 @@ int main(int argc, char **argv)
 {
 	std::vector<std::thread> scanner_threads;
 
+	TypeManager tm;
+
 	ArgParse ap;
 
 	// Parse command-line options and args.
 	ap.Parse(argc, argv);
+
+	tm.CompileTypeTables();
 
 	std::clog << "Num jobs: " << ap.m_jobs << std::endl;
 
@@ -47,7 +52,7 @@ int main(int argc, char **argv)
 	boost::concurrent::sync_queue<MatchList> out_q;
 
 	// Set up the globber.
-	Globber g(".", q);
+	Globber g(".", tm, q);
 	// Set up the output task.
 	OutputTask output_task(ap.m_color, out_q);
 
