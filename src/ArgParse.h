@@ -37,7 +37,10 @@ public:
 public:
 	bool m_ignore_case;
 	std::string m_pattern;
+
+	/// The file and directory paths given on the command line.
 	std::vector<std::string> m_paths;
+
 	std::vector<std::string> m_excludes;
 
 	/// Number of FileScanner threads to use.

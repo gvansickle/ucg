@@ -56,7 +56,7 @@ void Globber::Run()
 			if(m_type_manager.FileShouldBeScanned(ftsent->fts_path, ftsent->fts_name))
 			{
 				// Extension was in the hash table.
-				m_out_queue.wait_push(std::string(ftsent->fts_accpath));
+				m_out_queue.wait_push(std::string(ftsent->fts_path));
 			}
 		}
 	}

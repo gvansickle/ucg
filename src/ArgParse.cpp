@@ -46,7 +46,7 @@ static const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 
 static char doc[] = "ucg: the Universal Code Grep tool.";
 
-static char args_doc[] = "PATTERN [FILES]";
+static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
 /// @name Keys for options without short-options.
 ///@{
@@ -163,6 +163,13 @@ void ArgParse::Parse(int argc, char **argv)
 			// std::thread::hardware_concurrency() is broken.  Default to one thread.
 			m_jobs = 1;
 		}
+	}
+
+	// Search files/directories.
+	if(m_paths.empty())
+	{
+		// Default to current directory.
+		m_paths.push_back(".");
 	}
 
 }
