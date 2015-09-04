@@ -100,8 +100,18 @@ void FileScanner::Run()
 			auto line_ending = "\n";
 			auto line_start = std::find_end(file_data, file_data+rit->position(),
 					line_ending, line_ending+1);
+			if(line_start == file_data+rit->position())
+			{
+				// The line has no starting '\n', so it must be the first line.
+				line_start = file_data;
+			}
+			else
+			{
+				// The line had a starting '\n', clip it off.
+				++line_start;
+			}
 			auto line_end = std::find(file_data+rit->position(), file_data+file_size, '\n');
-			auto pre_match = std::string(line_start+1, file_data+rit->position());
+			auto pre_match = std::string(line_start, file_data+rit->position());
 			auto match = std::string(rit->begin()->str());
 			auto post_match = std::string(file_data+rit->position()+rit->length(), line_end);
 			Match m = { pre_match, match, post_match };
