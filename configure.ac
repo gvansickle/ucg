@@ -42,8 +42,9 @@ AC_CONFIG_MACRO_DIR([m4])
 : ${CFLAGS=""}		# Don't default to "-g -O2".
 : ${CXXFLAGS=""}	# Don't default to "-g -O2".
 
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_BUILD
 AM_INIT_AUTOMAKE([
+	foreign
 	subdir-objects
 	color-tests
 	std-options
@@ -64,15 +65,23 @@ AC_SUBST([CPU_COUNT])
 # Increase the default GCC warning level.
 AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
 # By default, compile C and C++ with the maximum possible debugging info and least optimization for maximum debugability.
-AC_SUBST([AM_CFLAGS], ["-ggdb3 -O0"])
+AC_SUBST([AM_CFLAGS], ["-ggdb3 -O3"])
 # -Wold-style-cast
-AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O0"])
+AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 
 AC_LANG_PUSH([C++])
-# Require at least some level of C++11 support.
-# This is currently known to do what we need for at least gcc 4.7.3, which has the
-# support listed here: http://gcc.gnu.org/gcc-4.7/cxx0x_status.html
-AX_CXX_COMPILE_STDCXX_11([], [mandatory])
+# Determine what switches we need to get at least some level of C++11 support.
+CXX11_FLAG=""
+for switch in -std=gnu++11 -std=c++11; do
+	AC_MSG_CHECKING(whether $CXX supports C++11 features with $switch)
+	AX_APPEND_COMPILE_FLAGS([$switch],[CXX11_FLAG])
+	AS_IF([test -n $CXX11_FLAG],
+		[AC_MSG_RESULT([yes]); break;],
+		[AC_MSG_RESULT([no]);])
+done
+AS_IF([test -n $CXX11_FLAG],
+	[AX_APPEND_COMPILE_FLAGS([$CXX11_FLAG],[AM_CXXFLAGS])],
+	[AC_MSG_FAILURE([Can't find working C++11 parameter])])
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does. 
 #AX_APPEND_COMPILE_FLAGS([-fno-pretty-templates],[AM_CXXFLAGS])
