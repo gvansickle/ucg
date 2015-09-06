@@ -33,13 +33,13 @@ class TypeManager;
 class Globber
 {
 public:
-	Globber(std::string start_dir, TypeManager &type_manager, boost::concurrent::sync_queue<std::string> &out_queue);
+	Globber(std::vector<std::string> start_paths, TypeManager &type_manager, boost::concurrent::sync_queue<std::string> &out_queue);
 	virtual ~Globber();
 
 	void Run();
 
 private:
-	std::string m_start_dir;
+	std::vector<std::string> m_start_paths;
 	boost::concurrent::sync_queue<std::string>& m_out_queue;
 
 	TypeManager &m_type_manager;

@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	boost::concurrent::sync_queue<MatchList> out_q;
 
 	// Set up the globber.
-	Globber g(".", tm, q);
+	Globber g(ap.m_paths, tm, q);
 	// Set up the output task.
 	OutputTask output_task(ap.m_color, out_q);
 

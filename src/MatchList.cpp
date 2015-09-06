@@ -39,7 +39,18 @@ void MatchList::AddMatch(long long lineno, const Match &match)
 
 void MatchList::Print(bool istty, bool enable_color)
 {
-	std::string no_dotslash_fn(m_filename.begin()+2, m_filename.end());
+	std::string no_dotslash_fn;
+
+	// If the file path starts with a "./", chop it off.
+	// This is to match the behavior of ack.
+	if(m_filename.find("./") == 0)
+	{
+		no_dotslash_fn = std::string(m_filename.begin()+2, m_filename.end());
+	}
+	else
+	{
+		no_dotslash_fn = std::string(m_filename.begin(), m_filename.end());
+	}
 
 	if(istty)
 	{

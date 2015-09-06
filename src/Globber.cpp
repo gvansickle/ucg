@@ -28,10 +28,10 @@
 #include <utility>
 
 
-Globber::Globber(std::string start_dir,
+Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
 		boost::concurrent::sync_queue<std::string>& out_queue)
-		: m_start_dir(start_dir),
+		: m_start_paths(start_paths),
 		  m_out_queue(out_queue),
 		  m_type_manager(type_manager)
 {
@@ -45,7 +45,15 @@ Globber::~Globber()
 
 void Globber::Run()
 {
-	char *const dirs[2] = { const_cast<char*>(m_start_dir.c_str()), 0 };
+	char * dirs[m_start_paths.size()+1];
+
+	int i = 0;
+	for(auto path : m_start_paths)
+	{
+		dirs[i] = const_cast<char*>(path.c_str());
+		++i;
+	}
+	dirs[m_start_paths.size()] = 0;
 
 	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR | FTS_NOSTAT, NULL);
 	while(FTSENT *ftsent = fts_read(fts))
