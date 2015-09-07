@@ -57,10 +57,6 @@ AM_INIT_AUTOMAKE([
 AX_COUNT_CPUS
 AC_SUBST([CPU_COUNT])
 
-###
-### Manual configure options.
-###
-
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
 AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
@@ -69,33 +65,9 @@ AC_SUBST([AM_CFLAGS], ["-ggdb3 -O3"])
 # -Wold-style-cast
 AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 
-AC_LANG_PUSH([C++])
-# Determine what switches we need to get at least some level of C++11 support.
-CXX11_FLAG=""
-for switch in -std=gnu++11 -std=c++11; do
-	AC_MSG_CHECKING(whether $CXX supports C++11 features with $switch)
-	AX_APPEND_COMPILE_FLAGS([$switch],[CXX11_FLAG])
-	AS_IF([test -n $CXX11_FLAG],
-		[AC_MSG_RESULT([yes]); break;],
-		[AC_MSG_RESULT([no]);])
-done
-AS_IF([test -n $CXX11_FLAG],
-	[AX_APPEND_COMPILE_FLAGS([$CXX11_FLAG],[AM_CXXFLAGS])],
-	[AC_MSG_FAILURE([Can't find working C++11 parameter])])
-# Check if the C++ compiler supports some flags we'd like to set.
-# Append them to AM_CXXFLAGS if it does. 
-#AX_APPEND_COMPILE_FLAGS([-fno-pretty-templates],[AM_CXXFLAGS])
-# Use "permissive" to work around some template issues in GraphAdapter.h with later GCCs (e.g. 4.7.1).
-AX_APPEND_COMPILE_FLAGS([-fpermissive], [AM_CXXFLAGS])
-# Boost generates a ton of these warnings.
-AX_APPEND_COMPILE_FLAGS([-Wno-unused-local-typedefs], [AM_CXXFLAGS])
-AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
-AC_LANG_POP([C++])
-
-
 
 ###
-### Checks for the programs
+### Checks for programs
 ###
 
 ## Checks for the programs needed to do a build.
@@ -114,6 +86,7 @@ AC_PROG_SED
 
 # Autotest needs autom4te, or 'missing's stub for it. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
+
 
 ###
 ### Checks for libraries
@@ -150,10 +123,68 @@ AM_CPPFLAGS="$AM_CPPFLAGS $BOOST_CPPFLAGS"
 AC_SUBST([BOOST_LDFLAGS],[""])
 AC_SUBST([BOOST_LIBTOOL_FLAGS],[""])
 
+
 ###
-### Checks for some library functions we need.
+### Checks for header files.
+###
+
+# N/A
+
+
+###
+### Checks for types
+###
+
+# N/A
+
+
+###
+### Checks for structures
+###
+
+# N/A
+
+
+###
+### Checks for compiler characteristics.
+###
+
+AC_LANG_PUSH([C++])
+# Determine what switches we need to get at least some level of C++11 support.
+CXX11_FLAG=""
+for switch in -std=gnu++11 -std=c++11; do
+	AC_MSG_CHECKING(whether $CXX supports C++11 features with $switch)
+	AX_APPEND_COMPILE_FLAGS([$switch],[CXX11_FLAG])
+	AS_IF([test -n $CXX11_FLAG],
+		[AC_MSG_RESULT([yes]); break;],
+		[AC_MSG_RESULT([no]);])
+done
+AS_IF([test -n $CXX11_FLAG],
+	[AX_APPEND_COMPILE_FLAGS([$CXX11_FLAG],[AM_CXXFLAGS])],
+	[AC_MSG_FAILURE([Can't find working C++11 parameter])])
+# Check if the C++ compiler supports some flags we'd like to set.
+# Append them to AM_CXXFLAGS if it does. 
+#AX_APPEND_COMPILE_FLAGS([-fno-pretty-templates],[AM_CXXFLAGS])
+# Use "permissive" to work around some template issues in GraphAdapter.h with later GCCs (e.g. 4.7.1).
+AX_APPEND_COMPILE_FLAGS([-fpermissive], [AM_CXXFLAGS])
+# Boost generates a ton of these warnings.
+AX_APPEND_COMPILE_FLAGS([-Wno-unused-local-typedefs], [AM_CXXFLAGS])
+AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
+AC_LANG_POP([C++])
+
+
+###
+### Checks for library functions.
 ###
 AC_SEARCH_LIBS([argp_parse],[argp])
+
+
+###
+### Checks for system services
+###
+
+# N/A
+
 
 ###
 ### Create the Makefiles for the program.
