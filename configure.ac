@@ -18,7 +18,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([UniversalCodeGrep], [0.1], [BUG-REPORT-ADDRESS],,[http://????.sourceforge.net/])
+AC_INIT([UniversalCodeGrep], [0.1], [https://github.com/gvansickle/ucg/issues],,[https://github.com/gvansickle/ucg])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -170,6 +170,8 @@ AX_APPEND_COMPILE_FLAGS([-fpermissive], [AM_CXXFLAGS])
 # Boost generates a ton of these warnings.
 AX_APPEND_COMPILE_FLAGS([-Wno-unused-local-typedefs], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
+# To help with profiling.
+AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 AC_LANG_POP([C++])
 
 

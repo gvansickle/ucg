@@ -48,7 +48,7 @@ stamp_boost_src_untarred: $(FILE_PATH_BOOST_SOURCE_TARBALL)
 	echo "`date -u`" > $@-temp
 	@echo "In directory $$(pwd), attempting to untar \"$<\""
 	@: 'Untar the Boost source distro into our build directory.'
-	test ! -f "$<" || tar -xaf "$<"
+	test -f "$<" && tar -xaf "$<"
 	mv $@-temp $@
 
 $(TOOL_BOOST_B2): stamp_boost_src_untarred
