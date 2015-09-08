@@ -26,6 +26,9 @@ ACLOCAL_AMFLAGS = -I m4 --install
 # Note that we can't list these other libraries in e.g. *_DEPENDENCIES because that replaces all Automake-generated dependencies.
 SUBDIRS = third_party src
 
+# Make sure README.rd gets distributed and installed correctly.
+dist_doc_DATA=README.md
+
 # The Automake rules for the ucg executable.
 bin_PROGRAMS=ucg
 ucg_SOURCES=main.cpp
