@@ -27,7 +27,8 @@
 
 #include "config.h"
 
-static const char *argp_program_version = PACKAGE_STRING "\n"
+// Not static, argp.h externs this.
+const char *argp_program_version = PACKAGE_STRING "\n"
 	"Copyright (C) 2015 Gary R. Van Sickle.\n"
 	"\n"
 	"This program is free software; you can redistribute it and/or modify\n"
@@ -42,9 +43,11 @@ static const char *argp_program_version = PACKAGE_STRING "\n"
 	"You should have received a copy of the GNU General Public License\n"
 	"along with this program. If not, see http://www.gnu.org/licenses/."
 	;
-static const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 
-static char doc[] = "ucg: the Universal Code Grep tool.";
+// Not static, argp.h externs this.
+const char *argp_program_bug_address = PACKAGE_BUGREPORT;
+
+static char doc[] = "ucg: the UniversalCodeGrep tool.";
 
 static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
@@ -74,7 +77,7 @@ static struct argp_option options[] = {
 
 error_t parse_opt (int key, char *arg, struct argp_state *state)
 {
-	class ArgParse *arguments = state->input;
+	class ArgParse *arguments = static_cast<ArgParse*>(state->input);
 
 	switch (key)
 	{

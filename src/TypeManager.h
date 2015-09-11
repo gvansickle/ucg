@@ -42,7 +42,7 @@ public:
 	 * @param name
 	 * @return
 	 */
-	bool FileShouldBeScanned(const std::string &path, const std::string &name);
+	bool FileShouldBeScanned(const std::string &name);
 
 	void CompileTypeTables();
 
