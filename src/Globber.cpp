@@ -61,7 +61,7 @@ void Globber::Run()
 		if(ftsent->fts_info == FTS_F)
 		{
 			// It's a normal file.  Check for inclusion.
-			if(m_type_manager.FileShouldBeScanned(ftsent->fts_path, ftsent->fts_name))
+			if(m_type_manager.FileShouldBeScanned(ftsent->fts_name))
 			{
 				// Extension was in the hash table.
 				m_out_queue.wait_push(std::string(ftsent->fts_path));

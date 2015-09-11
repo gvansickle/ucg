@@ -120,8 +120,7 @@ TypeManager::~TypeManager()
 	// TODO Auto-generated destructor stub
 }
 
-bool TypeManager::FileShouldBeScanned(const std::string& path,
-		const std::string& name)
+bool TypeManager::FileShouldBeScanned(const std::string& name)
 {
 	// Find the name's extension.
 	const char period[] = ".";

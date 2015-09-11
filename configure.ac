@@ -162,11 +162,10 @@ done
 AS_IF([test -n $CXX11_FLAG],
 	[AX_APPEND_COMPILE_FLAGS([$CXX11_FLAG],[AM_CXXFLAGS])],
 	[AC_MSG_FAILURE([Can't find working C++11 parameter])])
+
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does. 
-#AX_APPEND_COMPILE_FLAGS([-fno-pretty-templates],[AM_CXXFLAGS])
-# Use "permissive" to work around some template issues in GraphAdapter.h with later GCCs (e.g. 4.7.1).
-AX_APPEND_COMPILE_FLAGS([-fpermissive], [AM_CXXFLAGS])
+
 # Boost generates a ton of these warnings.
 AX_APPEND_COMPILE_FLAGS([-Wno-unused-local-typedefs], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
