@@ -20,15 +20,25 @@
 #include "FileScanner.h"
 #include "MatchList.h"
 
+#include "config.h"
+
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <regex>
+#include <mutex>
+#ifndef HAVE_sched_setaffinity
+#else
+	#include <sched.h>
+#endif
+
+std::mutex f_assign_affinity_mutex;
 
 FileScanner::FileScanner(boost::concurrent::sync_queue<std::string> &in_queue,
 		boost::concurrent::sync_queue<MatchList> &output_queue,
 		std::string regex,
-		bool ignore_case) : m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex), m_ignore_case(ignore_case)
+		bool ignore_case) : m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex), m_ignore_case(ignore_case),
+				m_next_core(0)
 {
 
 }
@@ -40,6 +50,9 @@ FileScanner::~FileScanner()
 
 void FileScanner::Run()
 {
+	// Spread the scanner threads across cores.  Linux at least doesn't seem to want to do that by default.
+	AssignToNextCore();
+
 	// The regex we're looking for, possibly ignoring case.
 	std::regex expression(m_regex,
 			std::regex_constants::ECMAScript | static_cast<typeof(std::regex_constants::icase)>(std::regex_constants::icase * m_ignore_case));
@@ -131,3 +144,25 @@ void FileScanner::Run()
 	}
 }
 
+void FileScanner::AssignToNextCore()
+{
+#ifdef HAVE_sched_setaffinity
+
+	// Prevent the multiple threads from stepping on each other and screwing up m_next_core.
+	std::lock_guard<std::mutex> lg {f_assign_affinity_mutex};
+
+	cpu_set_t cpuset;
+
+	// Clear the cpu_set_t.
+	CPU_ZERO(&cpuset);
+
+	// Set the bit of the next CPU.
+	CPU_SET(m_next_core, &cpuset);
+
+	sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+
+	// Increment so we use the next core the next time.
+	m_next_core++;
+	m_next_core %= std::thread::hardware_concurrency();
+#endif
+}

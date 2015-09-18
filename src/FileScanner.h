@@ -26,8 +26,8 @@
 
 #include "MatchList.h"
 
-/*
- *
+/**
+ * Class which does the actual regex scanning.
  */
 class FileScanner
 {
@@ -42,6 +42,8 @@ public:
 
 private:
 
+	void AssignToNextCore();
+
 	boost::concurrent::sync_queue<std::string>& m_in_queue;
 
 	boost::concurrent::sync_queue<MatchList> &m_output_queue;
@@ -49,6 +51,8 @@ private:
 	std::string m_regex;
 
 	bool m_ignore_case;
+
+	int m_next_core;
 };
 
 #endif /* FILESCANNER_H_ */
