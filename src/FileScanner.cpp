@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <regex>
+#include <thread>
 #include <mutex>
 #ifndef HAVE_SCHED_SETAFFINITY
 #else
