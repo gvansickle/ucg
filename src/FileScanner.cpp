@@ -39,7 +39,7 @@ FileScanner::FileScanner(boost::concurrent::sync_queue<std::string> &in_queue,
 		boost::concurrent::sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case) : m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex), m_ignore_case(ignore_case),
-				m_next_core(0)
+				m_next_core(0), m_use_mmap(false)
 {
 
 }
@@ -87,21 +87,14 @@ void FileScanner::Run()
 		}
 
 		// mmap the file into memory.
-		const char *file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE, fd, 0));
+		const char *file_data = GetFile(fd, file_size);
 
 		if(file_data == MAP_FAILED)
 		{
 			// Mapping failed.
 			std::cerr << "ERROR: Couldn't map file \"" << next_string << "\"" << std::endl;
-			close(fd);
 			continue;
 		}
-
-		// Hint that we'll be sequentially reading the mmapped file soon.
-		posix_madvise(const_cast<char*>(file_data), file_size, POSIX_MADV_SEQUENTIAL | POSIX_MADV_WILLNEED);
-
-		// We don't need the file descriptor anymore.
-		close(fd);
 
 		// Scan the mmapped file for the regex.
 		std::regex_iterator<const char *> rit(file_data, file_data+file_size, expression);
@@ -141,7 +134,7 @@ void FileScanner::Run()
 		}
 
 		// Clean up.
-		munmap(const_cast<char*>(file_data), file_size);
+		FreeFile(file_data, file_size);
 	}
 }
 
@@ -166,4 +159,49 @@ void FileScanner::AssignToNextCore()
 	m_next_core++;
 	m_next_core %= std::thread::hardware_concurrency();
 #endif
+}
+
+const char* FileScanner::GetFile(int file_descriptor, size_t file_size)
+{
+	const char *file_data = static_cast<const char *>(MAP_FAILED);
+
+	if(m_use_mmap)
+	{
+		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE, file_descriptor, 0));
+
+		if(file_data == MAP_FAILED)
+		{
+			// Mapping failed.
+			close(file_descriptor);
+			return file_data;
+		}
+
+		// Hint that we'll be sequentially reading the mmapped file soon.
+		posix_madvise(const_cast<char*>(file_data), file_size, POSIX_MADV_SEQUENTIAL | POSIX_MADV_WILLNEED);
+
+	}
+	else
+	{
+		file_data = new char [file_size];
+
+		// Read in the whole file.
+		read(file_descriptor, const_cast<char*>(file_data), file_size);
+	}
+
+	// We don't need the file descriptor anymore.
+	close(file_descriptor);
+
+	return file_data;
+}
+
+void FileScanner::FreeFile(const char* file_data, size_t file_size)
+{
+	if(m_use_mmap)
+	{
+		munmap(const_cast<char*>(file_data), file_size);
+	}
+	else
+	{
+		delete [] file_data;
+	}
 }

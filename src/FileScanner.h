@@ -44,6 +44,9 @@ private:
 
 	void AssignToNextCore();
 
+	const char* GetFile(int file_descriptor, size_t file_size);
+	void FreeFile(const char * file_data, size_t file_size);
+
 	boost::concurrent::sync_queue<std::string>& m_in_queue;
 
 	boost::concurrent::sync_queue<MatchList> &m_output_queue;
@@ -53,6 +56,8 @@ private:
 	bool m_ignore_case;
 
 	int m_next_core;
+
+	bool m_use_mmap;
 };
 
 #endif /* FILESCANNER_H_ */
