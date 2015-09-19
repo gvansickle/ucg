@@ -27,7 +27,7 @@
 #include <sys/mman.h>
 #include <regex>
 #include <mutex>
-#ifndef HAVE_sched_setaffinity
+#ifndef HAVE_SCHED_SETAFFINITY
 #else
 	#include <sched.h>
 #endif
@@ -146,7 +146,7 @@ void FileScanner::Run()
 
 void FileScanner::AssignToNextCore()
 {
-#ifdef HAVE_sched_setaffinity
+#ifdef HAVE_SCHED_SETAFFINITY
 
 	// Prevent the multiple threads from stepping on each other and screwing up m_next_core.
 	std::lock_guard<std::mutex> lg {f_assign_affinity_mutex};
