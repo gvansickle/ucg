@@ -27,7 +27,7 @@
 #include "MatchList.h"
 
 /**
- * Class which does the actual regex scanning.
+ * Class which does the actual regex scanning of a file.
  */
 class FileScanner
 {
@@ -42,9 +42,33 @@ public:
 
 private:
 
+	/**
+	 * Helper to assign each thread which starts Run() to a different core.
+	 * Note that this currently only works on Linux, and does not appear to make
+	 * a measurable difference in performance, likely because we're I/O bound regardless.
+	 *
+	 * Maintaining this for experimental purposes.
+	 */
 	void AssignToNextCore();
 
+	/**
+	 * Return a pointer to a buffer containing the contents of the file described by #file_descriptor.
+	 * May be mmap()'ed or read() into a newed buffer depending on m_use_mmap.
+	 *
+	 * @note file_descriptor will be closed after this function returns.
+	 *
+	 * @param file_descriptor  File descriptor (from open()) of the file to read in / mmap.
+	 * @param file_size        Size of the file.
+	 * @return
+	 */
 	const char* GetFile(int file_descriptor, size_t file_size);
+
+	/**
+	 * Frees the resources allocated by GetFile().
+	 *
+	 * @param file_data  Pointer to the file data, as returned by GetFile().
+	 * @param file_size  The same file_size used in the call to GetFile().
+	 */
 	void FreeFile(const char * file_data, size_t file_size);
 
 	boost::concurrent::sync_queue<std::string>& m_in_queue;
@@ -58,6 +82,15 @@ private:
 	int m_next_core;
 
 	bool m_use_mmap;
+
+	/**
+	 * Switch to make Run() assign its std::thread to different cores on the machine.
+	 * If false, the underlying std::thread logic is allowed to decide which threads run on
+	 * which cores.  See note above for AssignToNextCore(); turning this on makes no real difference.
+	 *
+	 * Maintaining this for experimental purposes.
+	 */
+	bool m_manually_assign_cores;
 };
 
 #endif /* FILESCANNER_H_ */

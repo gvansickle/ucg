@@ -33,13 +33,13 @@
 	#include <sched.h>
 #endif
 
-std::mutex f_assign_affinity_mutex;
+static std::mutex f_assign_affinity_mutex;
 
 FileScanner::FileScanner(boost::concurrent::sync_queue<std::string> &in_queue,
 		boost::concurrent::sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case) : m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex), m_ignore_case(ignore_case),
-				m_next_core(0), m_use_mmap(false)
+				m_next_core(0), m_use_mmap(false), m_manually_assign_cores(false)
 {
 
 }
@@ -51,8 +51,11 @@ FileScanner::~FileScanner()
 
 void FileScanner::Run()
 {
-	// Spread the scanner threads across cores.  Linux at least doesn't seem to want to do that by default.
-	AssignToNextCore();
+	if(m_manually_assign_cores)
+	{
+		// Spread the scanner threads across cores.  Linux at least doesn't seem to want to do that by default.
+		AssignToNextCore();
+	}
 
 	// The regex we're looking for, possibly ignoring case.
 	std::regex expression(m_regex,
@@ -61,7 +64,6 @@ void FileScanner::Run()
 	std::string next_string;
 	while(m_in_queue.wait_pull(next_string) != boost::concurrent::queue_op_status::closed)
 	{
-		///std::cout << "=" << next_string << std::endl;
 		MatchList ml(next_string);
 
 		// Open the file.
@@ -81,12 +83,12 @@ void FileScanner::Run()
 		// If filesize is 0, skip.
 		if(file_size == 0)
 		{
-			std::cerr << "WARNING: Filesize is 0" << std::endl;
+			std::cerr << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
 			close(fd);
 			continue;
 		}
 
-		// mmap the file into memory.
+		// Read or mmap the file into memory.
 		const char *file_data = GetFile(fd, file_size);
 
 		if(file_data == MAP_FAILED)
