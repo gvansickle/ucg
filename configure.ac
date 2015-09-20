@@ -179,6 +179,8 @@ AC_LANG_POP([C++])
 ###
 AC_SEARCH_LIBS([argp_parse],[argp])
 
+AC_REPLACE_FUNCS([sched_setaffinity])
+
 
 ###
 ### Checks for system services
