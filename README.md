@@ -8,3 +8,7 @@ Ucg is written in C++ and takes advantage of the C++11 and newer facilities of t
 ## Installation
 
 [@TODO - No releases yet.]
+
+### Prerequisites
+
+- gcc version 4.9 or greater.
