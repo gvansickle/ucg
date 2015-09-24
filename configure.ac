@@ -181,6 +181,21 @@ AC_SEARCH_LIBS([argp_parse],[argp])
 
 AC_REPLACE_FUNCS([sched_setaffinity])
 
+AC_LANG_PUSH([C++])
+# At least gcc 4.8.x claims to support C++11, but its std::regex library is mostly stubbed in.
+# Attempt to detect this.  On gcc 4.8.x, std::regex_iterator<> is not defined, which we use anyway, so we'll use that
+# type's existence and linkability as our test.
+SAVE_CXXFLAGS="$CXXFLAGS"
+CXXFLAGS="$CXXFLAGS $CXX11_FLAG"
+AC_MSG_CHECKING([whether C++ <regex> library is usable])
+AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM([[#include <regex>]],[[std::regex_iterator<const char *> test;]])],
+	[AC_MSG_RESULT([yes])],
+	[AC_MSG_ERROR([std::regex_iterator<> is not defined in your C++ standard library. \
+gcc < 4.9.0 is known to have this problem.])]
+	)
+CXXFLAGS="$SAVE_CXXFLAGS"
+AC_LANG_POP([C++])
 
 ###
 ### Checks for system services

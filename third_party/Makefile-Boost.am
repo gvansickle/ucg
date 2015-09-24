@@ -42,6 +42,7 @@ BOOST_THREADING = multi
 BOOST_BJAM_JOBS = -j$(CPU_COUNT)
 BOOST_RUNTIME_LINK = static
 BOOST_VARIANT = debug
+BOOST_TOOLSET = $$(echo $(CXX) | sed s/g++/gcc/)
 
 
 stamp_boost_src_untarred: $(FILE_PATH_BOOST_SOURCE_TARBALL)
@@ -54,8 +55,8 @@ stamp_boost_src_untarred: $(FILE_PATH_BOOST_SOURCE_TARBALL)
 $(TOOL_BOOST_B2): stamp_boost_src_untarred
 	@echo "Building and installing b2..." 
 	cd $(BOOST_TARBALL_DIRNAME)/tools/build && \
-	./bootstrap.sh && \
-	./b2 install --prefix=../../../$(TOOL_BOOST_B2_INSTALL_PREFIX)
+	./bootstrap.sh --with-toolset=$(BOOST_TOOLSET) && \
+	./b2 install toolset=$(BOOST_TOOLSET) --prefix=../../../$(TOOL_BOOST_B2_INSTALL_PREFIX)
 
 stamp_boost_src_configured: stamp_boost_src_untarred $(TOOL_BOOST_B2)
 	echo "`date -u`" > $@-temp
@@ -67,7 +68,7 @@ stamp_boost_src_installed: stamp_boost_src_configured
 	echo "`date -u`" > $@-temp
 	@echo "Building Boost with b2...";
 	cd $(BOOST_TARBALL_DIRNAME) && \
-		../$(TOOL_BOOST_B2) -d 1 --build-dir=../boost_build_dir -q $(BOOST_BJAM_JOBS) --prefix=../boost_local \
+		../$(TOOL_BOOST_B2) -d 1 toolset=$(BOOST_TOOLSET) --build-dir=../boost_build_dir -q $(BOOST_BJAM_JOBS) --prefix=../boost_local \
 		variant=$(BOOST_VARIANT) link=static runtime-link=$(BOOST_RUNTIME_LINK) threading=$(BOOST_THREADING) \
 		--with$$(echo "$(REQUIRED_BOOST_LIBS)" | sed 's/,/ --with-/g')
 	mv $@-temp $@
