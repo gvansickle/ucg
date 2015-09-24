@@ -191,8 +191,8 @@ AC_MSG_CHECKING([whether C++ <regex> library is usable])
 AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM([[#include <regex>]],[[std::regex_iterator<const char *> test;]])],
 	[AC_MSG_RESULT([yes])],
-	[AC_MSG_ERROR([std::regex_iterator<> is not defined in your C++ standard library\n
-		gcc < 4.9.0 is known to have this problem.])]
+	[AC_MSG_ERROR([std::regex_iterator<> is not defined in your C++ standard library. \
+gcc < 4.9.0 is known to have this problem.])]
 	)
 CXXFLAGS="$SAVE_CXXFLAGS"
 AC_LANG_POP([C++])
