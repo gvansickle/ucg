@@ -15,33 +15,25 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file */
-
-#ifndef OUTPUTTASK_H_
-#define OUTPUTTASK_H_
-
-#include <MatchList.h>
-
-#include "sync_queue_impl_selector.h"
-
-/*
+/**
+ * @file sync_queue_impl_selector.h
  *
+ * Include a sync_queue<> implementation and bring it into the global namespace.
  */
-class OutputTask
-{
-public:
-	OutputTask(bool enable_color, sync_queue<MatchList> &input_queue);
-	virtual ~OutputTask();
 
-	void Run();
+#ifndef SYNC_QUEUE_IMPL_SELECTOR_H
+#define SYNC_QUEUE_IMPL_SELECTOR_H
 
-private:
+#include "config.h"
 
-	sync_queue<MatchList> &m_input_queue;
+#ifdef USE_SYNC_QUEUE_BOOST
+#include <boost/thread/sync_queue.hpp>
 
-	bool m_output_is_tty;
+using boost::concurrent::sync_queue;
+using boost::concurrent::queue_op_status;
+#else
+#include "sync_queue.h"
+// Our own sync_queue is already in the global namespace.
+#endif
 
-	bool m_enable_color;
-};
-
-#endif /* OUTPUTTASK_H_ */
+#endif // SYNC_QUEUE_IMPL_SELECTOR_H

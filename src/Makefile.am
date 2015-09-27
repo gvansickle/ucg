@@ -22,6 +22,8 @@ libsrc_a_SOURCES = \
 	MatchList.cpp MatchList.h \
 	FileScanner.cpp FileScanner.h \
 	OutputTask.cpp OutputTask.h \
+	sync_queue.h \
+	sync_queue_impl_selector.h \
 	TypeManager.cpp TypeManager.h
 
 libsrc_a_CPPFLAGS = $(AM_CPPFLAGS)

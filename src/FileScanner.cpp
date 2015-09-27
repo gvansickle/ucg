@@ -22,8 +22,10 @@
 
 #include "config.h"
 
+#include <iostream>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/mman.h>
 #include <regex>
 #include <thread>
@@ -35,8 +37,8 @@
 
 static std::mutex f_assign_affinity_mutex;
 
-FileScanner::FileScanner(boost::concurrent::sync_queue<std::string> &in_queue,
-		boost::concurrent::sync_queue<MatchList> &output_queue,
+FileScanner::FileScanner(sync_queue<std::string> &in_queue,
+		sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case) : m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex), m_ignore_case(ignore_case),
 				m_next_core(0), m_use_mmap(false), m_manually_assign_cores(false)
@@ -62,7 +64,7 @@ void FileScanner::Run()
 			std::regex_constants::ECMAScript | static_cast<typeof(std::regex_constants::icase)>(std::regex_constants::icase * m_ignore_case));
 
 	std::string next_string;
-	while(m_in_queue.wait_pull(next_string) != boost::concurrent::queue_op_status::closed)
+	while(m_in_queue.wait_pull(next_string) != queue_op_status::closed)
 	{
 		MatchList ml(next_string);
 

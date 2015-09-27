@@ -30,7 +30,7 @@
 
 Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
-		boost::concurrent::sync_queue<std::string>& out_queue)
+		sync_queue<std::string>& out_queue)
 		: m_start_paths(start_paths),
 		  m_out_queue(out_queue),
 		  m_type_manager(type_manager)
