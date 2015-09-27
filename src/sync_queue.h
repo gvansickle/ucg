@@ -73,6 +73,9 @@ public:
 		// Push via copy.
 		m_underlying_queue.push(x);
 
+		// Notify any threads waiting on the queue's condition variable that it now has something to pull.
+		m_cv.notify_all();
+
 		return queue_op_status::success;
 	}
 
@@ -89,6 +92,9 @@ public:
 
 		// Push via move.
 		m_underlying_queue.push(std::move(x));
+
+		// Notify any threads waiting on the queue's condition variable that it now has something to pull.
+		m_cv.notify_all();
 
 		return queue_op_status::success;
 	}
