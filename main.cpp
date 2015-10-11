@@ -22,7 +22,8 @@
 #include <vector>
 #include <thread>
 #include <utility>
-#include <boost/thread/sync_queue.hpp>
+
+#include "sync_queue_impl_selector.h"
 
 #include "ArgParse.h"
 #include "Globber.h"
@@ -32,9 +33,9 @@
 #include "OutputTask.h"
 
 
-
 int main(int argc, char **argv)
 {
+	// We'll keep the scanner threads in this vector so we can join() them later.
 	std::vector<std::thread> scanner_threads;
 
 	TypeManager tm;
@@ -49,8 +50,8 @@ int main(int argc, char **argv)
 	std::clog << "Num jobs: " << ap.m_jobs << std::endl;
 
 	// Create the queues.
-	boost::concurrent::sync_queue<std::string> q;
-	boost::concurrent::sync_queue<MatchList> out_q;
+	sync_queue<std::string> q;
+	sync_queue<MatchList> out_q;
 
 	// Set up the globber.
 	Globber g(ap.m_paths, tm, q);
@@ -62,8 +63,6 @@ int main(int argc, char **argv)
 
 	// Start the output task thread.
 	std::thread ot {&OutputTask::Run, &output_task};
-
-
 
 	// Start the scanner threads.
 	FileScanner fs(q, out_q, ap.m_pattern, ap.m_ignore_case);

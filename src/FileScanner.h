@@ -22,8 +22,8 @@
 
 
 #include <string>
-#include <boost/thread/sync_queue.hpp>
 
+#include "sync_queue_impl_selector.h"
 #include "MatchList.h"
 
 /**
@@ -32,8 +32,8 @@
 class FileScanner
 {
 public:
-	FileScanner(boost::concurrent::sync_queue<std::string> &in_queue,
-			boost::concurrent::sync_queue<MatchList> &output_queue,
+	FileScanner(sync_queue<std::string> &in_queue,
+			sync_queue<MatchList> &output_queue,
 			std::string regex,
 			bool ignore_case);
 	virtual ~FileScanner();
@@ -71,9 +71,9 @@ private:
 	 */
 	void FreeFile(const char * file_data, size_t file_size);
 
-	boost::concurrent::sync_queue<std::string>& m_in_queue;
+	sync_queue<std::string>& m_in_queue;
 
-	boost::concurrent::sync_queue<MatchList> &m_output_queue;
+	sync_queue<MatchList> &m_output_queue;
 
 	std::string m_regex;
 
