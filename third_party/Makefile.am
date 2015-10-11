@@ -44,12 +44,12 @@ MOSTLYCLEANFILES =
 CLEANFILES =
 
 
+if BUILD_BOOST_FROM_TARBALL
 ###
 ### The Automake rules for building static versions of the Boost libraries we need from an upstream source tarball.
 ###
-
 include $(srcdir)/Makefile-Boost.am
-
+endif
 
 # The stamp file which will depend on all active third-party builds.
 # We do this this way so as to maximize parallel build potential.

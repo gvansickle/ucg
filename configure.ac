@@ -104,6 +104,7 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 #      even though it's correctly using the headers in /usr/local/include.
 GRVS_ARG_WITH_FILE([FILE_PATH_BOOST_SOURCE_TARBALL], [boost-tarball], [boost source distribution tarball],
 	[],[AC_MSG_WARN([No Boost source tarball specified.])])
+AM_CONDITIONAL([BUILD_BOOST_FROM_TARBALL],[test -f "$FILE_PATH_BOOST_SOURCE_TARBALL"])
 
 # The list of Boost libraries we need, in a form that Boost's bootstrap.sh can understand.
 AC_SUBST([REQUIRED_BOOST_LIBS],[system,thread])
@@ -196,6 +197,7 @@ gcc < 4.9.0 is known to have this problem.])]
 	)
 CXXFLAGS="$SAVE_CXXFLAGS"
 AC_LANG_POP([C++])
+
 
 ###
 ### Checks for system services
