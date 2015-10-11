@@ -18,7 +18,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([UniversalCodeGrep], [0.1], [https://github.com/gvansickle/ucg/issues],,[https://github.com/gvansickle/ucg])
+AC_INIT([UniversalCodeGrep], [0.1.0], [https://github.com/gvansickle/ucg/issues],,[https://github.com/gvansickle/ucg])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
 AC_CONFIG_HEADERS([config.h])
