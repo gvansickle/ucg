@@ -67,9 +67,11 @@ static struct argp_option options[] = {
 		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
 		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
 		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
+#if 0 /// @todo Put this back in, add the functionality.
 		{0,0,0,0, "File inclusion/exclusion:"},
 		{"ignore-dir",  OPT_IGNORE_DIR, "REGEX", 0,  "Exclude directories matching this regex pattern."},
 		{"noignore-dir",  OPT_NOIGNORE_DIR, "REGEX", 0,  "Do not exclude directories matching this regex pattern."},
+#endif
 		{0,0,0,0, "Miscellaneous:" },
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use" },
 		{ 0 }
