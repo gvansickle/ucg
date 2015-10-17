@@ -8,9 +8,9 @@ As a consequence of `ucg`'s use of these facilities and its overall design for m
 
 | Command | Approximate Real Time |
 |---------|-----------------------|
-| time ucg '#endif' ~/src/boost_1_58_0 | ~ 3 seconds |
-| time ag '#endif' ~/src/boost_1_58_0 | ~ 10 seconds |
-| time ack '#endif' ~/src/boost_1_58_0 | ~ 19 seconds |
+| `time ucg '#endif' ~/src/boost_1_58_0` | ~ 3 seconds |
+| `time ag '#endif' ~/src/boost_1_58_0` | ~ 10 seconds |
+| `time ack '#endif' ~/src/boost_1_58_0` | ~ 19 seconds |
 
 ## License
 
