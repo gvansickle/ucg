@@ -4,6 +4,14 @@ UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is a
 
 `ucg` is written in C++ and takes advantage of the C++11 and newer facilities of the language to reduce reliance on non-standard libraries, increase portability, and increase scanning speed.
 
+As a consequence of `ucg`'s use of these facilities and its overall design for maximum concurrency and speed, `ucg` is extremely fast.  Under Ubuntu 15.04, scanning the Boost 1.58.0 source tree with `ucg` 0.1.0, [`ag`](http://geoff.greer.fm/ag/) 0.28.0, and `ack` 2.14 produces the following results:
+
+| Command | Approximate Real Time |
+|---------|-----------------------|
+| time ucg '#endif' ~/src/boost_1_58_0 | ~ 3 seconds |
+| time ag '#endif' ~/src/boost_1_58_0 | ~ 10 seconds |
+| time ack '#endif' ~/src/boost_1_58_0 | ~ 19 seconds |
+
 ## License
 
 [GPL (Version 3 only)](https://github.com/gvansickle/ucg/blob/master/COPYING)
