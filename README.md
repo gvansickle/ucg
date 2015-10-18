@@ -18,11 +18,11 @@ As a consequence of `ucg`'s use of these facilities and its overall design for m
 
 ## Installation
 
-UniversalCodeGrep installs from the distribution tarball in the standard autotools manner:
+UniversalCodeGrep installs from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.1.0/universalcodegrep-0.1.0.tar.gz)) in the standard autotools manner:
 
 ```sh
-tar -xaf <tarball-name>
-cd <tarball-name>
+tar -xaf universalcodegrep-0.1.0.tar.gz
+cd universalcodegrep-0.1.0.tar.gz
 ./configure
 make
 make install
