@@ -18,7 +18,7 @@ As a consequence of `ucg`'s use of these facilities and its overall design for m
 
 ## Installation
 
-UniversalCodeGrep installs from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/untagged-2777400c999684490151/universalcodegrep-0.1.0.tar.gz)) in the standard autotools manner:
+UniversalCodeGrep installs from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.1.0/universalcodegrep-0.1.0.tar.gz)) in the standard autotools manner:
 
 ```sh
 tar -xaf universalcodegrep-0.1.0.tar.gz
