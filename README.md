@@ -50,7 +50,29 @@ UniversalCodeGrep should build and function anywhere there's a `gcc` 4.9 or grea
 
 ## Usage
 
+Invoking `ucg` is the same as with `ack`:
 
+```sh
+ucg [OPTION...] PATTERN [FILES OR DIRECTORIES]
+```
+
+...where `PATTERN` is an ECMAScript-compatible regular expression.
+
+If no `FILES OR DIRECTORIES` are specified, searching starts in the current directory.
+
+### Options
+
+Version 0.1.0 of `ucg` only supports a small subset of the options supported by `ack`.  Future releases will have support for more options.
+
+#### Searching
+|----------------------|------------------------------------------|
+| `-i, --ignore-case`    |      Ignore case distinctions in PATTERN |
+|----------------------|------------------------------------------|
+
+#### File presentation
+
+| `--color, --colour`   |   Render the output with ANSI color codes. |
+| `--nocolor, --nocolour` | Render the output without ANSI color codes. |
 
 ## Author
 
