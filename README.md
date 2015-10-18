@@ -18,7 +18,7 @@ As a consequence of `ucg`'s use of these facilities and its overall design for m
 
 ## Installation
 
-UniversalCodeGrep installs from the source tarball in the standard autotools manner:
+UniversalCodeGrep installs from the distribution tarball in the standard autotools manner:
 
 ```sh
 tar -xaf <tarball-name>
