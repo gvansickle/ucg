@@ -65,12 +65,16 @@ If no `FILES OR DIRECTORIES` are specified, searching starts in the current dire
 Version 0.1.0 of `ucg` only supports a small subset of the options supported by `ack`.  Future releases will have support for more options.
 
 #### Searching
+
+| Option | Description |
 |----------------------|------------------------------------------|
 | `-i, --ignore-case`    |      Ignore case distinctions in PATTERN |
-|----------------------|------------------------------------------|
+
 
 #### File presentation
 
+| Option | Description |
+|----------------------|------------------------------------------|
 | `--color, --colour`   |   Render the output with ANSI color codes. |
 | `--nocolor, --nocolour` | Render the output without ANSI color codes. |
 
