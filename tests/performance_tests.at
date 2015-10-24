@@ -16,6 +16,33 @@
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
 
+m4_define([EXTRACT_AND_APPEND_TIME],[[
+		# $1 == program name.
+		echo -n "$1 " >> ${abs_top_builddir}/tests/perf_test_results.txt;
+		cat stderr | egrep "real[[:space:]]*" | sed -r 's/real[[:space:]]*(.*)/\1/' >> ${abs_top_builddir}/tests/perf_test_results.txt
+]])
+
+m4_define([PREP_ONE_PROG],[
+# $1 == program name.
+AT_CHECK([time $1 '#endif' ${BOOST_PATH}],
+	0,
+	ignore,
+	ignore)
+])
+
+m4_define([TIME_ONE_PROG],[
+# $1 == program name.
+PREP_ONE_PROG([$1])
+AT_CHECK([time $1 '#endif' ${BOOST_PATH}],
+	0,
+	stdout,
+	stderr,
+	[],
+	[
+		EXTRACT_AND_APPEND_TIME([$1])
+	])
+])
+
 AT_BANNER([UniversalCodeGrep performance tests])
 
 AT_SETUP([Boost: find all '#endif's])
@@ -26,14 +53,11 @@ BOOST_PATH=${abs_top_srcdir}/../boost_1_58_0
 
 AT_SKIP_IF([test ! -d "$BOOST_PATH"])
 
-AT_CHECK([time ucg '#endif' ${BOOST_PATH}],
-	0,
-	stdout,
-	stderr,
-	[],
-	[[
-		cat stderr | egrep "real[[:space:]]*" | sed -r 's/real[[:space:]]*(.*)/\1/' > ${abs_top_builddir}/tests/perf_test_results.txt
-	]])
+AS_ECHO(["Perf Test Results"]) > ${abs_top_builddir}/tests/perf_test_results.txt
+
+TIME_ONE_PROG([ucg])
+TIME_ONE_PROG([ag])
+TIME_ONE_PROG([ack])
 	
 #AT_FAIL_IF([true])
 	
