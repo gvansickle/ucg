@@ -1,0 +1,49 @@
+# @configure_input@                                     -*- shell-script -*-
+# atlocal.in for UniversalCodeGrep's ./tests directory, used to collect configure-time
+# information about the build system.
+#
+# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+#
+# This file is part of UniversalCodeGrep.
+#
+# UniversalCodeGrep is free software: you can redistribute it and/or modify it under the
+# terms of version 3 of the GNU General Public License as published by the Free
+# Software Foundation.
+#
+# UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along with
+# UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
+
+## Process this file with autoconf to produce atlocal.
+
+# @TODO Not sure if we need something like this or not.
+PATH=@abs_builddir@:@abs_top_builddir@/src:@abs_top_srcdir@/build-aux:$top_srcdir:$srcdir:$PATH
+
+XFAILFILE=$abs_builddir/.badversion
+
+trap "test -r $XFAILFILE && cat $XFAILFILE; exit $?" 1 2 13 15
+
+# At testsuite-time, find the programs we wish to compare performance with.
+PERF_PROGRAMS_TO_COMPARE=ucg
+if PROG_AG="$(which ag)";
+then
+	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_AG;
+fi
+if PROG_ACK="$(which ack)";
+then
+	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_ACK;
+fi
+
+# Paths to source that we'll test against.
+# @todo Maybe take this in as a parameter?  The only issue is that this doesn't work during a "make distcheck",
+# which arguably is not a big deal.
+BOOST_PATH=${abs_top_srcdir}/../boost_1_58_0
+
+# The file where we'll put the results of the performance tests.
+PERF_RESULTS_FILE=${abs_top_builddir}/tests/perf_test_results.txt
+# Create it.
+echo "ucg Performance Test Results" > $PERF_RESULTS_FILE
+
