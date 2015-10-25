@@ -1,0 +1,56 @@
+# testsuite.at for UniversalCodeGrep
+#
+# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+#
+# This file is part of UniversalCodeGrep.
+#
+# UniversalCodeGrep is free software: you can redistribute it and/or modify it under the
+# terms of version 3 of the GNU General Public License as published by the Free
+# Software Foundation.
+#
+# UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along with
+# UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
+
+# A basic test suite for UniversalCodeGrep.
+
+###
+### "Helper" m4 defines.
+###
+
+# A somewhat more explicit way of skipping tests.
+m4_define([AT_SKIP_TEST],[exit 77])
+
+dnl Quadrigraphs (for reference):
+dnl @S|@ = "$"
+dnl @<:@ = "["
+
+###
+### Start of the test suite proper.
+###
+AT_INIT([UniversalCodeGrep Test Suite])
+AT_COPYRIGHT([Copyright (C) 2015 Gary R. Van Sickle])
+AT_COLOR_TESTS
+
+# We have one main executable to test.
+AT_TESTED([ucg])
+
+###
+### Start the "Sanity check" test category.
+###
+AT_BANNER([UniversalCodeGrep sanity checks])
+
+m4_include([version.at])
+
+
+###
+### Run some performance tests.
+###
+m4_include([performance_tests.at])
+
+
+
+

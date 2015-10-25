@@ -18,8 +18,9 @@
 
 m4_define([EXTRACT_AND_APPEND_TIME],[[
 		# $1 == program name.
-		echo -n "$1 " >> ${abs_top_builddir}/tests/perf_test_results.txt;
-		cat stderr | egrep "real[[:space:]]*" | sed -r 's/real[[:space:]]*(.*)/\1/' >> ${abs_top_builddir}/tests/perf_test_results.txt
+		## @todo For some reason, AS_ECHO_N() won't expand in here.
+		$as_echo_n "$1 " >> $PERF_RESULTS_FILE;
+		cat stderr | egrep "real[[:space:]]*" | sed -r 's/real[[:space:]]*(.*)/\1/' >> $PERF_RESULTS_FILE
 ]])
 
 m4_define([PREP_ONE_PROG],[
@@ -43,22 +44,23 @@ AT_CHECK([time $1 '#endif' ${BOOST_PATH}],
 	])
 ])
 
+###
+### Start of the performance tests.
+###
 AT_BANNER([UniversalCodeGrep performance tests])
 
 AT_SETUP([Boost: find all '#endif's])
 
-# @todo Maybe take this in as a parameter?  The only issue is that this doesn't work during a "make distcheck",
-# which arguably is not a big deal.
-BOOST_PATH=${abs_top_srcdir}/../boost_1_58_0
+# Skip this test if we can't find the Boost source tree.
+AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
 
-AT_SKIP_IF([test ! -d "$BOOST_PATH"])
+AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
 
-AS_ECHO(["Perf Test Results"]) > ${abs_top_builddir}/tests/perf_test_results.txt
+# Loop through the programs we're comparing performance with.
+for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
+	TIME_ONE_PROG(["${PROGNAME}"])
+done
 
-TIME_ONE_PROG([ucg])
-TIME_ONE_PROG([ag])
-TIME_ONE_PROG([ack])
-	
 #AT_FAIL_IF([true])
 	
 AT_CLEANUP
