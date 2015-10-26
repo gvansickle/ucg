@@ -20,11 +20,14 @@ m4_define([EXTRACT_AND_APPEND_TIME],[[
 		# $1 == program name.
 		## @todo For some reason, AS_ECHO_N() won't expand in here.
 		$as_echo_n "$1 " >> $PERF_RESULTS_FILE;
-		cat stderr | egrep "real[[:space:]]*" | sed -r 's/real[[:space:]]*(.*)/\1/' >> $PERF_RESULTS_FILE
+		cat stderr | egrep "real[[:space:]]*" | sed -r 's/real[[:space:]]*(.*)/\1/' | tr -d '\n' >> $PERF_RESULTS_FILE;
+		$as_echo_n " " >> $PERF_RESULTS_FILE;
+		cat stdout | wc -l >> $PERF_RESULTS_FILE;
 ]])
 
 m4_define([PREP_ONE_PROG],[
 # $1 == program name.
+# $2 == search pattern.
 AT_CHECK([time $1 $2 ${BOOST_PATH}],
 	0,
 	ignore,
@@ -65,7 +68,7 @@ done
 AT_CLEANUP
 
 
-AT_SETUP([Boost: search with complex regex])
+AT_SETUP([Boost: search with simple regex])
 
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
