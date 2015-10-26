@@ -25,7 +25,7 @@ m4_define([EXTRACT_AND_APPEND_TIME],[[
 
 m4_define([PREP_ONE_PROG],[
 # $1 == program name.
-AT_CHECK([time $1 '#endif' ${BOOST_PATH}],
+AT_CHECK([time $1 $2 ${BOOST_PATH}],
 	0,
 	ignore,
 	ignore)
@@ -33,8 +33,9 @@ AT_CHECK([time $1 '#endif' ${BOOST_PATH}],
 
 m4_define([TIME_ONE_PROG],[
 # $1 == program name.
-PREP_ONE_PROG([$1])
-AT_CHECK([time $1 '#endif' ${BOOST_PATH}],
+# $2 == search pattern.
+PREP_ONE_PROG([$1], [$2])
+AT_CHECK([time $1 $2 ${BOOST_PATH}],
 	0,
 	stdout,
 	stderr,
@@ -58,9 +59,22 @@ AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
 
 # Loop through the programs we're comparing performance with.
 for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
-	TIME_ONE_PROG(["${PROGNAME}"])
+	TIME_ONE_PROG(["${PROGNAME}"], ['#endif'])
 done
 
-#AT_FAIL_IF([true])
-	
+AT_CLEANUP
+
+
+AT_SETUP([Boost: search with complex regex])
+
+# Skip this test if we can't find the Boost source tree.
+AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+
+AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
+
+# Loop through the programs we're comparing performance with.
+for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
+	TIME_ONE_PROG(["${PROGNAME}"], ['BOOST.*HPP'])
+done
+
 AT_CLEANUP

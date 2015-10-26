@@ -61,7 +61,9 @@ void FileScanner::Run()
 
 	// The regex we're looking for, possibly ignoring case.
 	std::regex expression(m_regex,
-			std::regex_constants::ECMAScript | static_cast<typeof(std::regex_constants::icase)>(std::regex_constants::icase * m_ignore_case));
+			std::regex_constants::ECMAScript |
+			std::regex_constants::optimize   |
+			static_cast<typeof(std::regex_constants::icase)>(std::regex_constants::icase * m_ignore_case));
 
 	std::string next_string;
 	while(m_in_queue.wait_pull(next_string) != queue_op_status::closed)
@@ -189,7 +191,7 @@ const char* FileScanner::GetFile(int file_descriptor, size_t file_size)
 		file_data = new char [file_size];
 
 		// Read in the whole file.
-		read(file_descriptor, const_cast<char*>(file_data), file_size);
+		while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
 	}
 
 	// We don't need the file descriptor anymore.

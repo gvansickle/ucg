@@ -49,8 +49,10 @@ int main(int argc, char **argv)
 
 	std::clog << "Num jobs: " << ap.m_jobs << std::endl;
 
-	// Create the queues.
+	// Create the Globber->FileScanner queue.
 	sync_queue<std::string> q;
+
+	// Create the FileScanner->OutputTask queue.
 	sync_queue<MatchList> out_q;
 
 	// Set up the globber.
@@ -58,8 +60,6 @@ int main(int argc, char **argv)
 	// Set up the output task.
 	OutputTask output_task(ap.m_color, out_q);
 
-	// Start the globber thread.
-	std::thread gt {&Globber::Run, &g};
 
 	// Start the output task thread.
 	std::thread ot {&OutputTask::Run, &output_task};
@@ -71,6 +71,13 @@ int main(int argc, char **argv)
 		std::thread fst {&FileScanner::Run, &fs};
 		scanner_threads.push_back(std::move(fst));
 	}
+
+	// Start the globber thread last.
+	// We do this last because the globber thread is the source; all other threads will be
+	// waiting for it to start sending data to the Globber->FileScanner queue.  If we started it
+	// first, the globbing would start immediately, and it would take longer to get the scanner and output
+	// threads created and started, and ultimately slow down startup.
+	std::thread gt {&Globber::Run, &g};
 
 	// Wait for the Globber thread (the source) to finish.
 	gt.join();
