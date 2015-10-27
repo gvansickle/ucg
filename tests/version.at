@@ -1,0 +1,36 @@
+# version.at for UniversalCodeGrep
+#
+# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+#
+# This file is part of UniversalCodeGrep.
+#
+# UniversalCodeGrep is free software: you can redistribute it and/or modify it under the
+# terms of version 3 of the GNU General Public License as published by the Free
+# Software Foundation.
+#
+# UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along with
+# UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
+
+# Make sure we're checking the right version.
+
+AT_SETUP([UniversalCodeGrep version])
+
+AT_CHECK([ucg --version | sed 1q],
+	[0],
+	[AT_PACKAGE_NAME AT_PACKAGE_VERSION
+],
+[],
+[cat >$[]XFAILFILE <<'_EOT'
+
+===================================================================================
+WARNING: "make check" has found the wrong version of ucg, all checks are suspect.
+===================================================================================
+_EOT
+],
+[rm -rf $[]XFAILFILE])
+
+AT_CLEANUP

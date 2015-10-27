@@ -65,9 +65,14 @@ void Globber::Run()
 			{
 				// Extension was in the hash table.
 				m_out_queue.wait_push(std::string(ftsent->fts_path));
+
+				// Count the number of files we found that were included in the search.
+				m_num_files_found++;
 			}
 		}
 	}
 	fts_close(fts);
+
+	std::clog << "NUM FILES INCLUDED: " << m_num_files_found << std::endl;
 }
 

@@ -46,6 +46,8 @@ private:
 	sync_queue<std::string>& m_out_queue;
 
 	TypeManager &m_type_manager;
+
+	long m_num_files_found = {0};
 };
 
 #endif /* GLOBBER_H_ */

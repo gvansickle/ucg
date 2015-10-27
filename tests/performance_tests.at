@@ -1,0 +1,83 @@
+# performance_tests.at for UniversalCodeGrep
+#
+# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+#
+# This file is part of UniversalCodeGrep.
+#
+# UniversalCodeGrep is free software: you can redistribute it and/or modify it under the
+# terms of version 3 of the GNU General Public License as published by the Free
+# Software Foundation.
+#
+# UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along with
+# UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
+
+
+m4_define([EXTRACT_AND_APPEND_TIME],[[
+		# $1 == program name.
+		## @todo For some reason, AS_ECHO_N() won't expand in here.
+		$as_echo_n "$1 " >> $PERF_RESULTS_FILE;
+		cat stderr | egrep "real[[:space:]]*" | sed -r 's/real[[:space:]]*(.*)/\1/' | tr -d '\n' >> $PERF_RESULTS_FILE;
+		$as_echo_n " " >> $PERF_RESULTS_FILE;
+		cat stdout | wc -l >> $PERF_RESULTS_FILE;
+]])
+
+m4_define([PREP_ONE_PROG],[
+# $1 == program name.
+# $2 == search pattern.
+AT_CHECK([time $1 $2 ${BOOST_PATH}],
+	0,
+	ignore,
+	ignore)
+])
+
+m4_define([TIME_ONE_PROG],[
+# $1 == program name.
+# $2 == search pattern.
+PREP_ONE_PROG([$1], [$2])
+AT_CHECK([time $1 $2 ${BOOST_PATH}],
+	0,
+	stdout,
+	stderr,
+	[],
+	[
+		EXTRACT_AND_APPEND_TIME([$1])
+	])
+])
+
+###
+### Start of the performance tests.
+###
+AT_BANNER([UniversalCodeGrep performance tests])
+
+AT_SETUP([Boost: find all '#endif's])
+
+# Skip this test if we can't find the Boost source tree.
+AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+
+AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
+
+# Loop through the programs we're comparing performance with.
+for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
+	TIME_ONE_PROG(["${PROGNAME}"], ['#endif'])
+done
+
+AT_CLEANUP
+
+
+AT_SETUP([Boost: search with simple regex])
+
+# Skip this test if we can't find the Boost source tree.
+AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+
+AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
+
+# Loop through the programs we're comparing performance with.
+for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
+	TIME_ONE_PROG(["${PROGNAME}"], ['BOOST.*HPP'])
+done
+
+AT_CLEANUP
