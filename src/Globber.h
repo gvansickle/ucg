@@ -40,6 +40,10 @@ public:
 
 	void Run();
 
+	bool Error() { return m_bad_path.size() != 0; };
+
+	std::string ErrorPath() { return m_bad_path; };
+
 private:
 	std::vector<std::string> m_start_paths;
 
@@ -48,6 +52,8 @@ private:
 	TypeManager &m_type_manager;
 
 	long m_num_files_found = {0};
+
+	std::string m_bad_path;
 };
 
 #endif /* GLOBBER_H_ */

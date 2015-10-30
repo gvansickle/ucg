@@ -97,5 +97,12 @@ int main(int argc, char **argv)
 	// Wait for the output thread to complete.
 	ot.join();
 
+	// Check for errors.
+	if(g.Error())
+	{
+		std::cout << "ucg: \"" << g.ErrorPath() << "\": No such file or directory" << std::endl;
+		return 1;
+	}
+
 	return 0;
 }

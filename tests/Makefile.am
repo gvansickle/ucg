@@ -59,6 +59,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 TESTSUITE_AT = \
 	testsuite.at \
 	version.at \
+	sanity.at \
 	performance_tests.at
 
 # The actual shell script which is the testsuite.

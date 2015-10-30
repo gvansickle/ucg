@@ -23,6 +23,9 @@
 
 #include <fts.h>
 #include <fnmatch.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <cstring>
 #include <iostream>
 #include <utility>
@@ -51,6 +54,24 @@ void Globber::Run()
 	for(auto path : m_start_paths)
 	{
 		dirs[i] = const_cast<char*>(path.c_str());
+
+		// Check if this start path exists and is a file or directory.
+		DIR *d = opendir(dirs[i]);
+		int f = open(dirs[i], O_RDONLY);
+		if(d != NULL)
+		{
+			closedir(d);
+		}
+		else if(f != -1)
+		{
+			close(f);
+		}
+		else
+		{
+			m_bad_path = dirs[i];
+			return;
+		}
+
 		++i;
 	}
 	dirs[m_start_paths.size()] = 0;
@@ -69,6 +90,11 @@ void Globber::Run()
 				// Count the number of files we found that were included in the search.
 				m_num_files_found++;
 			}
+		}
+		else if(ftsent->fts_info == FTS_DNR || ftsent->fts_info == FTS_ERR)
+		{
+			m_bad_path = ftsent->fts_name;
+			break;
 		}
 	}
 	fts_close(fts);

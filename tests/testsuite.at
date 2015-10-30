@@ -44,6 +44,7 @@ AT_TESTED([ucg])
 AT_BANNER([UniversalCodeGrep sanity checks])
 
 m4_include([version.at])
+m4_include([sanity.at])
 
 
 ###
