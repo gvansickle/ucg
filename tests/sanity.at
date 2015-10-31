@@ -15,8 +15,15 @@
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
+
+###
+### Check if we properly detect a bad starting search path and return an error.
+###
 AT_SETUP([Error code with bad search path])
 
-AT_CHECK([ucg 'a' /thisDirDoesntExist], [1])
+# Note that the stdout match text here has a literal '\n' in it due to the line break; don't try
+# to put this on one line.
+AT_CHECK([ucg 'a' /thisDirDoesntExist], [1], [ucg: "/thisDirDoesntExist": No such file or directory
+], [stderr])
 
 AT_CLEANUP
