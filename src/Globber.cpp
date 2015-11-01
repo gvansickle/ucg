@@ -51,7 +51,7 @@ void Globber::Run()
 	char * dirs[m_start_paths.size()+1];
 
 	int i = 0;
-	for(auto path : m_start_paths)
+	for(const std::string& path : m_start_paths)
 	{
 		dirs[i] = const_cast<char*>(path.c_str());
 
