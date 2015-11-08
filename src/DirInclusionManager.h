@@ -20,14 +20,37 @@
 #ifndef DIRINCLUSIONMANAGER_H_
 #define DIRINCLUSIONMANAGER_H_
 
-/*
- *
+#include <vector>
+#include <string>
+#include <set>
+
+/**
+ * Class for managing the inclusion and exclusion of directories from the search.
  */
 class DirInclusionManager
 {
 public:
 	DirInclusionManager();
 	virtual ~DirInclusionManager();
+
+	void AddExclusions(const std::vector<std::string> &exclusions);
+
+	void CompileExclusionTables();
+
+	/**
+	 * Returns true if:
+	 * - The @a name param (i.e. <...>/dir) matches one of the literal strings
+	 *   in m_excluded_literal_dirs.
+	 *
+	 * @param path
+	 * @return
+	 */
+	bool DirShouldBeExcluded(const std::string &path, const std::string &name) const;
+
+private:
+
+	/// Literal directory names (not containing '/') which will be excluded.
+	std::set<std::string> m_excluded_literal_dirs;
 };
 
 #endif /* DIRINCLUSIONMANAGER_H_ */

@@ -28,6 +28,7 @@
 #include "ArgParse.h"
 #include "Globber.h"
 #include "TypeManager.h"
+#include "DirInclusionManager.h"
 #include "MatchList.h"
 #include "FileScanner.h"
 #include "OutputTask.h"
@@ -38,14 +39,19 @@ int main(int argc, char **argv)
 	// We'll keep the scanner threads in this vector so we can join() them later.
 	std::vector<std::thread> scanner_threads;
 
+	// Instantiate classes for file and directory inclusion/exclusion.
 	TypeManager tm;
+	DirInclusionManager dim;
 
 	ArgParse ap;
 
 	// Parse command-line options and args.
 	ap.Parse(argc, argv);
 
+	dim.AddExclusions(ap.m_excludes);
+
 	tm.CompileTypeTables();
+	dim.CompileExclusionTables();
 
 	std::clog << "Num jobs: " << ap.m_jobs << std::endl;
 
@@ -56,7 +62,7 @@ int main(int argc, char **argv)
 	sync_queue<MatchList> out_q;
 
 	// Set up the globber.
-	Globber g(ap.m_paths, tm, q);
+	Globber g(ap.m_paths, tm, dim, q);
 	// Set up the output task.
 	OutputTask output_task(ap.m_color, out_q);
 

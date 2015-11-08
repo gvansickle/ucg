@@ -19,6 +19,14 @@
 
 #include "DirInclusionManager.h"
 
+static const std::string f_builtin_dir_excludes[] =
+{
+	".git",
+	".svn",
+	".hg",
+	""
+};
+
 DirInclusionManager::DirInclusionManager()
 {
 	// TODO Auto-generated constructor stub
@@ -30,3 +38,35 @@ DirInclusionManager::~DirInclusionManager()
 	// TODO Auto-generated destructor stub
 }
 
+void DirInclusionManager::AddExclusions(
+		const std::vector<std::string>& exclusions)
+{
+	for(auto name : exclusions)
+	{
+		m_excluded_literal_dirs.insert(name);
+	}
+}
+
+void DirInclusionManager::CompileExclusionTables()
+{
+	// Populate the exclusion set with the built-in defaults.
+	size_t i = 0;
+	std::string t;
+	while(t = f_builtin_dir_excludes[i], !t.empty())
+	{
+		m_excluded_literal_dirs.insert(t);
+		++i;
+	}
+}
+
+bool DirInclusionManager::DirShouldBeExcluded(const std::string& path, const std::string &name) const
+{
+	if(m_excluded_literal_dirs.count(name) != 0)
+	{
+		// This directory shouldn't be traversed.
+		return true;
+	}
+
+	// No exclusion rules matched, descend into the directory.
+	return false;
+}
