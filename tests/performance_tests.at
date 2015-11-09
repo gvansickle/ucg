@@ -37,8 +37,9 @@ AT_CHECK([time $1 $2 ${BOOST_PATH}],
 m4_define([TIME_ONE_PROG],[
 # $1 == program name.
 # $2 == search pattern.
-PREP_ONE_PROG([$1], [$2])
-AT_CHECK([time $1 $2 ${BOOST_PATH}],
+# $3 == params
+PREP_ONE_PROG([$1], [$2], [$3])
+AT_CHECK([time $1 $2 ${BOOST_PATH} $3],
 	0,
 	stdout,
 	stderr,
@@ -78,6 +79,21 @@ AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
 # Loop through the programs we're comparing performance with.
 for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
 	TIME_ONE_PROG(["${PROGNAME}"], ['BOOST.*HPP'])
+done
+
+AT_CLEANUP
+
+
+AT_SETUP([Boost: search with --ignore-dir=doc])
+
+# Skip this test if we can't find the Boost source tree.
+AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+
+AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
+
+# Loop through the programs we're comparing performance with.
+for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
+	TIME_ONE_PROG(["${PROGNAME}"], ['#endif'], [--ignore-dir=doc])
 done
 
 AT_CLEANUP
