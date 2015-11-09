@@ -18,6 +18,7 @@
 noinst_LIBRARIES = libsrc.a 
 libsrc_a_SOURCES = \
 	ArgParse.cpp ArgParse.h \
+	DirInclusionManager.cpp DirInclusionManager.h \
 	Globber.cpp Globber.h \
 	MatchList.cpp MatchList.h \
 	FileScanner.cpp FileScanner.h \

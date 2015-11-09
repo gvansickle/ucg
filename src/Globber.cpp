@@ -20,6 +20,7 @@
 #include "Globber.h"
 
 #include "TypeManager.h"
+#include "DirInclusionManager.h"
 
 #include <fts.h>
 #include <fnmatch.h>
@@ -33,10 +34,12 @@
 
 Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
+		DirInclusionManager &dir_inc_manager,
 		sync_queue<std::string>& out_queue)
 		: m_start_paths(start_paths),
 		  m_out_queue(out_queue),
-		  m_type_manager(type_manager)
+		  m_type_manager(type_manager),
+		  m_dir_inc_manager(dir_inc_manager)
 {
 
 }
@@ -89,6 +92,16 @@ void Globber::Run()
 
 				// Count the number of files we found that were included in the search.
 				m_num_files_found++;
+			}
+		}
+		else if(ftsent->fts_info == FTS_D)
+		{
+			// It's a directory.  Check if we should descend into it.
+			/// @todo
+			if(m_dir_inc_manager.DirShouldBeExcluded(ftsent->fts_path, ftsent->fts_name))
+			{
+				// Exclude the dir and all subdirs from the scan.
+				fts_set(fts, ftsent, FTS_SKIP);
 			}
 		}
 		else if(ftsent->fts_info == FTS_DNR || ftsent->fts_info == FTS_ERR)

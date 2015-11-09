@@ -27,7 +27,9 @@
 
 #include "sync_queue_impl_selector.h"
 
+// Forward decls.
 class TypeManager;
+class DirInclusionManager;
 
 /*
  *
@@ -35,7 +37,8 @@ class TypeManager;
 class Globber
 {
 public:
-	Globber(std::vector<std::string> start_paths, TypeManager &type_manager, sync_queue<std::string> &out_queue);
+	Globber(std::vector<std::string> start_paths, TypeManager &type_manager,
+			DirInclusionManager &dir_inc_manager, sync_queue<std::string> &out_queue);
 	virtual ~Globber();
 
 	void Run();
@@ -50,6 +53,8 @@ private:
 	sync_queue<std::string>& m_out_queue;
 
 	TypeManager &m_type_manager;
+
+	DirInclusionManager &m_dir_inc_manager;
 
 	long m_num_files_found = {0};
 

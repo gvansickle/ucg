@@ -67,11 +67,11 @@ static struct argp_option options[] = {
 		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
 		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
 		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
-#if 0 /// @todo Put this back in, add the functionality.
 		{0,0,0,0, "File inclusion/exclusion:"},
-		{"ignore-dir",  OPT_IGNORE_DIR, "REGEX", 0,  "Exclude directories matching this regex pattern."},
-		{"noignore-dir",  OPT_NOIGNORE_DIR, "REGEX", 0,  "Do not exclude directories matching this regex pattern."},
-#endif
+		{"ignore-dir",  OPT_IGNORE_DIR, "name", 0,  "Exclude directories with this name."},
+		{"ignore-directory", OPT_IGNORE_DIR, "name", OPTION_ALIAS },
+		{"noignore-dir",  OPT_NOIGNORE_DIR, "name", 0,  "Do not exclude directories with this name."},
+		{"noignore-directory", OPT_NOIGNORE_DIR, "name", OPTION_ALIAS },
 		{0,0,0,0, "Miscellaneous:" },
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use" },
 		{ 0 }
@@ -87,11 +87,14 @@ error_t parse_opt (int key, char *arg, struct argp_state *state)
 		arguments->m_ignore_case = true;
 		break;
 	case OPT_IGNORE_DIR:
-		arguments->m_excludes.push_back(arg);
+		arguments->m_excludes.insert(arg);
 		break;
 	case OPT_NOIGNORE_DIR:
-		/// @todo Implement.
-		///arguments->m_excludes.push_back(arg);
+		/**
+		 * @todo Ack is fancier in its noignore handling.  If you noignore a directory under an ignored
+		 * directory, it gets put back into the set of paths that will be searched.  Feature for another day.
+		 */
+		arguments->m_excludes.erase(arg);
 		break;
 	case 'j':
 		if(atoi(arg) < 1)
