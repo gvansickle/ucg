@@ -19,11 +19,18 @@
 
 #include "DirInclusionManager.h"
 
+/**
+ * Default directories which will be ignored.
+ */
 static const std::string f_builtin_dir_excludes[] =
 {
+	".bzr",
 	".git",
-	".svn",
 	".hg",
+	".metadata",
+	".svn",
+	"CVS",
+	"autom4te.cache",
 	""
 };
 
@@ -38,8 +45,7 @@ DirInclusionManager::~DirInclusionManager()
 	// TODO Auto-generated destructor stub
 }
 
-void DirInclusionManager::AddExclusions(
-		const std::vector<std::string>& exclusions)
+void DirInclusionManager::AddExclusions(const std::set<std::string>& exclusions)
 {
 	for(auto name : exclusions)
 	{

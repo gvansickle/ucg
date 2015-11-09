@@ -20,7 +20,6 @@
 #ifndef DIRINCLUSIONMANAGER_H_
 #define DIRINCLUSIONMANAGER_H_
 
-#include <vector>
 #include <string>
 #include <set>
 
@@ -33,7 +32,7 @@ public:
 	DirInclusionManager();
 	virtual ~DirInclusionManager();
 
-	void AddExclusions(const std::vector<std::string> &exclusions);
+	void AddExclusions(const std::set<std::string> &exclusions);
 
 	void CompileExclusionTables();
 
