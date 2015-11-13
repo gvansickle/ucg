@@ -72,6 +72,8 @@ static struct argp_option options[] = {
 		{"ignore-directory", OPT_IGNORE_DIR, "name", OPTION_ALIAS },
 		{"noignore-dir",  OPT_NOIGNORE_DIR, "name", 0,  "Do not exclude directories with this name."},
 		{"noignore-directory", OPT_NOIGNORE_DIR, "name", OPTION_ALIAS },
+		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)" },
+		{0, 'R', 0, OPTION_ALIAS },
 		{0,0,0,0, "Miscellaneous:" },
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use" },
 		{ 0 }
@@ -95,6 +97,10 @@ error_t parse_opt (int key, char *arg, struct argp_state *state)
 		 * directory, it gets put back into the set of paths that will be searched.  Feature for another day.
 		 */
 		arguments->m_excludes.erase(arg);
+		break;
+	case 'r':
+	case 'R':
+		arguments->m_recurse = true;
 		break;
 	case 'j':
 		if(atoi(arg) < 1)
@@ -144,7 +150,8 @@ static struct argp argp = { options, parse_opt, args_doc, doc };
 ArgParse::ArgParse()
 	: m_ignore_case(false),
 	  m_jobs(0),
-	  m_color(true)
+	  m_color(true),
+	  m_recurse(true)
 {
 
 }

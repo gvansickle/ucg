@@ -50,6 +50,9 @@ public:
 
 	/// Whether to use color output or not.
 	bool m_color;
+
+	/// Whether to recurse into subdirectories or not.
+	bool m_recurse;
 };
 
 #endif /* ARGPARSE_H_ */
