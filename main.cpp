@@ -62,10 +62,10 @@ int main(int argc, char **argv)
 	sync_queue<MatchList> out_q;
 
 	// Set up the globber.
-	Globber g(ap.m_paths, tm, dim, q);
+	Globber g(ap.m_paths, tm, dim, ap.m_recurse, q);
+
 	// Set up the output task.
 	OutputTask output_task(ap.m_color, out_q);
-
 
 	// Start the output task thread.
 	std::thread ot {&OutputTask::Run, &output_task};

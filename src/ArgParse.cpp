@@ -74,6 +74,7 @@ static struct argp_option options[] = {
 		{"noignore-directory", OPT_NOIGNORE_DIR, "name", OPTION_ALIAS },
 		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)" },
 		{0, 'R', 0, OPTION_ALIAS },
+		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
 		{0,0,0,0, "Miscellaneous:" },
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use" },
 		{ 0 }
@@ -101,6 +102,9 @@ error_t parse_opt (int key, char *arg, struct argp_state *state)
 	case 'r':
 	case 'R':
 		arguments->m_recurse = true;
+		break;
+	case 'n':
+		arguments->m_recurse = false;
 		break;
 	case 'j':
 		if(atoi(arg) < 1)
