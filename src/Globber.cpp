@@ -35,11 +35,13 @@
 Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
 		DirInclusionManager &dir_inc_manager,
+		bool recurse_subdirs,
 		sync_queue<std::string>& out_queue)
 		: m_start_paths(start_paths),
 		  m_out_queue(out_queue),
 		  m_type_manager(type_manager),
-		  m_dir_inc_manager(dir_inc_manager)
+		  m_dir_inc_manager(dir_inc_manager),
+		  m_recurse_subdirs(recurse_subdirs)
 {
 
 }
@@ -97,10 +99,14 @@ void Globber::Run()
 		else if(ftsent->fts_info == FTS_D)
 		{
 			// It's a directory.  Check if we should descend into it.
-			/// @todo
+			if(!m_recurse_subdirs && ftsent->fts_level > 0)
+			{
+				// We were told not to recurse into subdirectories.
+				fts_set(fts, ftsent, FTS_SKIP);
+			}
 			if(m_dir_inc_manager.DirShouldBeExcluded(ftsent->fts_path, ftsent->fts_name))
 			{
-				// Exclude the dir and all subdirs from the scan.
+				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 				fts_set(fts, ftsent, FTS_SKIP);
 			}
 		}
