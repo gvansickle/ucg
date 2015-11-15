@@ -18,6 +18,7 @@
 ## Process this file with automake to produce Makefile.in.
 
 EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in
+CLEANFILES = perf_test_results.txt
 DISTCLEANFILES = atconfig
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
      
