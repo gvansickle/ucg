@@ -24,6 +24,7 @@
 #include <thread>
 #include <argp.h>
 #include <cstdlib>
+#include <cstring>
 
 #include "config.h"
 
@@ -57,6 +58,7 @@ static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 #define OPT_NOCOLOR        2
 #define OPT_IGNORE_DIR     3
 #define OPT_NOIGNORE_DIR     4
+#define OPT_TYPE			5
 ///@}
 
 static struct argp_option options[] = {
@@ -75,6 +77,7 @@ static struct argp_option options[] = {
 		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)" },
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
+		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files."},
 		{0,0,0,0, "Miscellaneous:" },
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use" },
 		{ 0 }
@@ -105,6 +108,13 @@ error_t parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case 'n':
 		arguments->m_recurse = false;
+		break;
+	case OPT_TYPE:
+		/** @todo */
+		if(std::strcmp("no", arg) < 0)
+		{
+			// The first two chars are "no".
+		}
 		break;
 	case 'j':
 		if(atoi(arg) < 1)
