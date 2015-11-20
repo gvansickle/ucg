@@ -111,7 +111,7 @@ TypeManager::TypeManager()
 	for(auto t : f_builtin_type_array)
 	{
 		m_builtin_type_map[t.m_type_name] = t.m_type_extensions;
-		m_type_to_extension_map[t.m_type_name] = t.m_type_extensions;
+		m_active_type_map[t.m_type_name] = t.m_type_extensions;
 	}
 }
 
@@ -166,12 +166,12 @@ bool TypeManager::type(const std::string& type_name)
 	if(!m_first_type_has_been_seen)
 	{
 		// This is the first call to type(), clear the active Type map.
-		m_type_to_extension_map.clear();
+		m_active_type_map.clear();
 	}
 	m_first_type_has_been_seen = true;
 
 	// Add the type to the active type map.
-	m_type_to_extension_map.insert(*it_type);
+	m_active_type_map.insert(*it_type);
 
 	return true;
 }
@@ -187,14 +187,14 @@ bool TypeManager::notype(const std::string& type_name)
 	}
 
 	// Remove the type from the active type map.
-	m_type_to_extension_map.erase(type_name);
+	m_active_type_map.erase(type_name);
 
 	return true;
 }
 
 void TypeManager::CompileTypeTables()
 {
-	for(auto i : m_type_to_extension_map)
+	for(auto i : m_active_type_map)
 	{
 		for(auto j : i.second)
 		{
