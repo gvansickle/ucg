@@ -25,8 +25,8 @@
 #include <map>
 #include <unordered_map>
 
-/*
- *
+/**
+ * Class which manages the file types which are to be scanned.
  */
 class TypeManager
 {
@@ -44,12 +44,32 @@ public:
 	 */
 	bool FileShouldBeScanned(const std::string &name) const;
 
+	/**
+	 * Add the given file type to the types which will be scanned.  For handling the
+	 * --type= command line param.  The first time this function is called, all currently-
+	 * active types are removed, and only the given type (and types given subsequently)
+	 * will be searched.
+	 *
+	 * @param type_name  Name of the type.
+	 * @return true on success, false if no such type.
+	 */
+	bool type(const std::string &type_name);
+
+	bool notype(const std::string &type_name);
+
 	void CompileTypeTables();
 
 private:
 
+	/// Flag to keep track of the first call to type().
+	bool m_first_type_has_been_seen = { false };
+
+	std::map<std::string, std::vector<std::string>> m_builtin_type_map;
+
 	/// Map of file types to the associated filename extensions.
-	std::map<std::string, std::vector<std::string>> m_type_to_extension_map;
+	/// This is the active map, which will eventually be compiled into the
+	/// hash tables used at filename-scanning time.
+	std::map<std::string, std::vector<std::string>> m_active_type_map;
 
 	/// File extensions which will be examined.  Maps to file type.
 	std::unordered_multimap<std::string, std::string> m_include_extensions;

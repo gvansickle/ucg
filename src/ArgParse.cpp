@@ -24,8 +24,10 @@
 #include <thread>
 #include <argp.h>
 #include <cstdlib>
+#include <cstring>
 
 #include "config.h"
+#include "TypeManager.h"
 
 // Not static, argp.h externs this.
 const char *argp_program_version = PACKAGE_STRING "\n"
@@ -57,7 +59,15 @@ static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 #define OPT_NOCOLOR        2
 #define OPT_IGNORE_DIR     3
 #define OPT_NOIGNORE_DIR     4
+#define OPT_TYPE			5
 ///@}
+
+/// Status code to use for a bad parameter which terminates the program via argp_failure().
+/// Ack returns 255 in this case, so we'll use that instead of BSD's EX_USAGE, which is 64.
+#define STATUS_EX_USAGE 255
+
+// Not static, argp.h externs this.
+error_t argp_err_exit_status = STATUS_EX_USAGE;
 
 static struct argp_option options[] = {
 		{0,0,0,0, "Searching:" },
@@ -75,6 +85,7 @@ static struct argp_option options[] = {
 		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)" },
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
+		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files."},
 		{0,0,0,0, "Miscellaneous:" },
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use" },
 		{ 0 }
@@ -106,11 +117,29 @@ error_t parse_opt (int key, char *arg, struct argp_state *state)
 	case 'n':
 		arguments->m_recurse = false;
 		break;
+	case OPT_TYPE:
+		if(std::strncmp("no", arg, 2) == 0)
+		{
+			// The first two chars are "no", this is a "--type=noTYPE" option.
+			if(arguments->m_type_manager.notype(arg+2) == false)
+			{
+				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg+2);
+			}
+		}
+		else
+		{
+			// This is a "--type=TYPE" option.
+			if(arguments->m_type_manager.type(arg) == false)
+			{
+				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
+			}
+		}
+		break;
 	case 'j':
 		if(atoi(arg) < 1)
 		{
 			// Specified 0 or negative jobs.
-			argp_failure(state, 1, 0, "jobs must be >= 1");
+			argp_failure(state, STATUS_EX_USAGE, 0, "jobs must be >= 1");
 		}
 		else
 		{
@@ -151,11 +180,12 @@ error_t parse_opt (int key, char *arg, struct argp_state *state)
 static struct argp argp = { options, parse_opt, args_doc, doc };
 
 
-ArgParse::ArgParse()
+ArgParse::ArgParse(TypeManager &type_manager)
 	: m_ignore_case(false),
 	  m_jobs(0),
 	  m_color(true),
-	  m_recurse(true)
+	  m_recurse(true),
+	  m_type_manager(type_manager)
 {
 
 }

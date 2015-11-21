@@ -20,6 +20,7 @@
 #include "TypeManager.h"
 
 #include <algorithm>
+#include <set>
 
 struct Type
 {
@@ -28,9 +29,12 @@ struct Type
 
 	/// Vector of the extensions, literal strings, and first-line regexes which match the type.
 	std::vector<std::string> m_type_extensions;
+
+	/// less-than operator, so that Types are sortable by key (m_type_name).
+	bool operator<(const Type &other) const { return m_type_name < other.m_type_name; };
 };
 
-static const Type f_builtin_type_array[] =
+static const std::set<Type> f_builtin_type_array =
 {
 	{ "actionscript", {".as", ".mxml"} },
 	{ "ada", {".ada", ".adb", ".ads"} },
@@ -97,21 +101,17 @@ static const Type f_builtin_type_array[] =
 	{ "vhdl", {".vhd", ".vhdl"} },
 	{ "vim", {".vim"} },
 	{ "xml", {".xml", ".dtd", ".xsl", ".xslt", ".ent", R"(/<[?]xml/)"} },
-	{ "yaml", {".yaml", ".yml"} },
-	{ "", {""} }
+	{ "yaml", {".yaml", ".yml"} }
 };
 
 
 TypeManager::TypeManager()
 {
-	size_t i = 0;
-	Type t;
-
 	// Populate the type map with the built-in defaults.
-	while(t = f_builtin_type_array[i], !t.m_type_name.empty())
+	for(auto t : f_builtin_type_array)
 	{
-		m_type_to_extension_map[t.m_type_name] = t.m_type_extensions;
-		++i;
+		m_builtin_type_map[t.m_type_name] = t.m_type_extensions;
+		m_active_type_map[t.m_type_name] = t.m_type_extensions;
 	}
 }
 
@@ -153,9 +153,48 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const
 	return false;
 }
 
+bool TypeManager::type(const std::string& type_name)
+{
+	auto it_type = m_builtin_type_map.find(type_name);
+
+	if(it_type == m_builtin_type_map.end())
+	{
+		// No such type currently is defined.
+		return false;
+	}
+
+	if(!m_first_type_has_been_seen)
+	{
+		// This is the first call to type(), clear the active Type map.
+		m_active_type_map.clear();
+	}
+	m_first_type_has_been_seen = true;
+
+	// Add the type to the active type map.
+	m_active_type_map.insert(*it_type);
+
+	return true;
+}
+
+bool TypeManager::notype(const std::string& type_name)
+{
+	auto it_type = m_builtin_type_map.find(type_name);
+
+	if(it_type == m_builtin_type_map.end())
+	{
+		// No such type currently is defined.
+		return false;
+	}
+
+	// Remove the type from the active type map.
+	m_active_type_map.erase(type_name);
+
+	return true;
+}
+
 void TypeManager::CompileTypeTables()
 {
-	for(auto i : m_type_to_extension_map)
+	for(auto i : m_active_type_map)
 	{
 		for(auto j : i.second)
 		{
