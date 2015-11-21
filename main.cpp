@@ -39,11 +39,12 @@ int main(int argc, char **argv)
 	// We'll keep the scanner threads in this vector so we can join() them later.
 	std::vector<std::thread> scanner_threads;
 
-	// Instantiate classes for file and directory inclusion/exclusion.
+	// Instantiate classes for file and directory inclusion/exclusion management.
 	TypeManager tm;
 	DirInclusionManager dim;
 
-	ArgParse ap;
+	// Instantiate the argument parser.
+	ArgParse ap(tm);
 
 	// Parse command-line options and args.
 	ap.Parse(argc, argv);

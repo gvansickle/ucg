@@ -24,16 +24,23 @@
 #include <vector>
 #include <set>
 
+class TypeManager;
+
 /**
  * Command-line parser.
  */
 class ArgParse
 {
 public:
-	ArgParse();
+	ArgParse(TypeManager &tm);
 	virtual ~ArgParse();
 
 	void Parse(int argc, char **argv);
+
+public:  /// @todo This should really be private, but we'll need to make parse_opt a member so it has access first.
+
+	/// Reference to the TypeManager passed into the constructor.
+	TypeManager &m_type_manager;
 
 public:
 	bool m_ignore_case;
