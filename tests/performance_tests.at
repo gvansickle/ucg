@@ -38,14 +38,15 @@ m4_define([TIME_ONE_PROG],[
 # $1 == program name.
 # $2 == search pattern.
 # $3 == params
-PREP_ONE_PROG([$1], [$2], [$3])
-AT_CHECK([time $1 $2 ${BOOST_PATH} $3],
+NOENV=$(if $(echo $1 | egrep -q 'ack'); then echo --noenv; else echo ""; fi)
+PREP_ONE_PROG([$1 ${NOENV}], [$2], [$3])
+AT_CHECK([time $1 ${NOENV} $2 ${BOOST_PATH} $3],
 	0,
 	stdout,
 	stderr,
 	[],
 	[
-		EXTRACT_AND_APPEND_TIME([$1])
+		EXTRACT_AND_APPEND_TIME([$1 ${NOENV}])
 	])
 ])
 
@@ -53,6 +54,11 @@ AT_CHECK([time $1 $2 ${BOOST_PATH} $3],
 ### Start of the performance tests.
 ###
 AT_BANNER([UniversalCodeGrep performance tests])
+
+AT_SETUP([Create report log file])
+echo "ucg Performance Test Results" > $PERF_RESULTS_FILE
+AT_CLEANUP
+
 
 AT_SETUP([Boost: find all '#endif's])
 

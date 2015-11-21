@@ -51,7 +51,6 @@ m4_include([sanity.at])
 ### Run some performance tests.
 ###
 # Create the common perf test results file.
-echo "ucg Performance Test Results" > $PERF_RESULTS_FILE
 m4_include([performance_tests.at])
 
 
