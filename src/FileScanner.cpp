@@ -62,12 +62,13 @@ void FileScanner::Run()
 	}
 
 	// The regex we're looking for, possibly ignoring case, possibly with match-whole-word.
+	auto stack_regex = m_regex;
 	if(m_word_regexp)
 	{
 		// Surround the regex with \b (word boundary) assertions.
-		m_regex = "\\b(?:" + m_regex + ")\\b";
+		stack_regex = "\\b(?:" + m_regex + ")\\b";
 	}
-	std::regex expression(m_regex,
+	std::regex expression(stack_regex,
 			std::regex_constants::ECMAScript |
 			std::regex_constants::optimize   |
 			static_cast<typeof(std::regex_constants::icase)>(std::regex_constants::icase * m_ignore_case));
