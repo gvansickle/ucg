@@ -40,7 +40,9 @@ static std::mutex f_assign_affinity_mutex;
 FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
-		bool ignore_case) : m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex), m_ignore_case(ignore_case),
+		bool ignore_case,
+		bool word_regexp) : m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex),
+				m_ignore_case(ignore_case), m_word_regexp(word_regexp),
 				m_next_core(0), m_use_mmap(false), m_manually_assign_cores(false)
 {
 
@@ -59,12 +61,18 @@ void FileScanner::Run()
 		AssignToNextCore();
 	}
 
-	// The regex we're looking for, possibly ignoring case.
+	// The regex we're looking for, possibly ignoring case, possibly with match-whole-word.
+	if(m_word_regexp)
+	{
+		// Surround the regex with \b (word boundary) assertions.
+		m_regex = "\\b(?:" + m_regex + ")\\b";
+	}
 	std::regex expression(m_regex,
 			std::regex_constants::ECMAScript |
 			std::regex_constants::optimize   |
 			static_cast<typeof(std::regex_constants::icase)>(std::regex_constants::icase * m_ignore_case));
 
+	// Pull new filenames off the input queue until it's closed.
 	std::string next_string;
 	while(m_in_queue.wait_pull(next_string) != queue_op_status::closed)
 	{
