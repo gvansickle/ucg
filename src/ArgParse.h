@@ -43,8 +43,15 @@ public:  /// @todo This should really be private, but we'll need to make parse_o
 	TypeManager &m_type_manager;
 
 public:
-	bool m_ignore_case;
+
+	/// The regex to be matched.
 	std::string m_pattern;
+
+	/// true if the case of PATTERN should be ignored.
+	bool m_ignore_case { false };
+
+	/// true if PATTERN should only match whole words.
+	bool m_word_regexp { false };
 
 	/// The file and directory paths given on the command line.
 	std::vector<std::string> m_paths;
@@ -53,13 +60,13 @@ public:
 	std::set<std::string> m_excludes;
 
 	/// Number of FileScanner threads to use.
-	int m_jobs;
+	int m_jobs { 0 };
 
 	/// Whether to use color output or not.
-	bool m_color;
+	bool m_color { true };
 
 	/// Whether to recurse into subdirectories or not.
-	bool m_recurse;
+	bool m_recurse { true };
 };
 
 #endif /* ARGPARSE_H_ */

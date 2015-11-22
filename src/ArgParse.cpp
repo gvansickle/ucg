@@ -71,7 +71,8 @@ error_t argp_err_exit_status = STATUS_EX_USAGE;
 
 static struct argp_option options[] = {
 		{0,0,0,0, "Searching:" },
-		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN"},
+		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
+		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
 		{0,0,0,0, "File presentation:" },
 		{"color", OPT_COLOR, 0, 0, "Render the output with ANSI color codes."},
 		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
@@ -82,12 +83,12 @@ static struct argp_option options[] = {
 		{"ignore-directory", OPT_IGNORE_DIR, "name", OPTION_ALIAS },
 		{"noignore-dir",  OPT_NOIGNORE_DIR, "name", 0,  "Do not exclude directories with this name."},
 		{"noignore-directory", OPT_NOIGNORE_DIR, "name", OPTION_ALIAS },
-		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)" },
+		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
 		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files."},
 		{0,0,0,0, "Miscellaneous:" },
-		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use" },
+		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
 		{ 0 }
 	};
 
@@ -99,6 +100,9 @@ error_t parse_opt (int key, char *arg, struct argp_state *state)
 	{
 	case 'i':
 		arguments->m_ignore_case = true;
+		break;
+	case 'w':
+		arguments->m_word_regexp = true;
 		break;
 	case OPT_IGNORE_DIR:
 		arguments->m_excludes.insert(arg);
@@ -181,11 +185,7 @@ static struct argp argp = { options, parse_opt, args_doc, doc };
 
 
 ArgParse::ArgParse(TypeManager &type_manager)
-	: m_ignore_case(false),
-	  m_jobs(0),
-	  m_color(true),
-	  m_recurse(true),
-	  m_type_manager(type_manager)
+	: m_type_manager(type_manager)
 {
 
 }
