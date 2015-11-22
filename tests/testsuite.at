@@ -48,6 +48,12 @@ m4_include([sanity.at])
 
 
 ###
+### Check the search pattern modifiers (e.g. --ignore-case)
+###
+m4_include([search_modifiers.at])
+
+
+###
 ### Run some performance tests.
 ###
 # Create the common perf test results file.

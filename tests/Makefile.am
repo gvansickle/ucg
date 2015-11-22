@@ -61,6 +61,7 @@ TESTSUITE_AT = \
 	testsuite.at \
 	version.at \
 	sanity.at \
+	search_modifiers.at \
 	performance_tests.at
 
 # The actual shell script which is the testsuite.
