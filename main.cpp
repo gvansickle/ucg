@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 	std::thread ot {&OutputTask::Run, &output_task};
 
 	// Start the scanner threads.
-	FileScanner fs(q, out_q, ap.m_pattern, ap.m_ignore_case);
+	FileScanner fs(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp);
 	for(int t=0; t<ap.m_jobs; ++t)
 	{
 		std::thread fst {&FileScanner::Run, &fs};
