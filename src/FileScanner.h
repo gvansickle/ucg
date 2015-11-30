@@ -22,9 +22,17 @@
 
 
 #include <string>
+#include <regex>
+
+#include "config.h"
+
+#ifdef HAVE_LIBPCRE
+#include <pcre.h>
+#endif
 
 #include "sync_queue_impl_selector.h"
 #include "MatchList.h"
+
 
 /**
  * Class which does the actual regex scanning of a file.
@@ -72,11 +80,38 @@ private:
 	 */
 	void FreeFile(const char * file_data, size_t file_size);
 
+	/**
+	 * Scan @a file_data for matches of @a regex using C++11's <regex> facilities.  Add hits to @a ml.
+	 *
+	 * @param regex
+	 * @param file_data
+	 * @param file_size
+	 * @param ml
+	 */
+	void ScanFileCpp11(const std::regex &regex, const char *file_data, size_t file_size, MatchList &ml);
+
+	/**
+	 * Scan @a file_data for matches of m_pcre_regex using libpcre.  Add hits to @a ml.
+	 *
+	 * @param file_data
+	 * @param file_size
+	 * @param ml
+	 */
+	void ScanFileLibPCRE(const char *file_data, size_t file_size, MatchList &ml);
+
 	sync_queue<std::string>& m_in_queue;
 
 	sync_queue<MatchList> &m_output_queue;
 
 	std::string m_regex;
+
+#ifdef HAVE_LIBPCRE
+	/// The compiled libpcre regex.
+	pcre *m_pcre_regex;
+
+	/// The results of pcre_study()ing m_pcre_regex.
+	pcre_extra *m_pcre_extra;
+#endif
 
 	bool m_ignore_case;
 
