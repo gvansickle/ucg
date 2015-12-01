@@ -38,7 +38,7 @@ static const std::set<Type> f_builtin_type_array =
 {
 	{ "actionscript", {".as", ".mxml"} },
 	{ "ada", {".ada", ".adb", ".ads"} },
-	{ "asm", {".asm", ".s"} },
+	{ "asm", {".asm", ".s", ".S"} },
 	{ "asp", {".asp"} },
 	{ "aspx", {".master", ".ascx", ".asmx", ".aspx", ".svc"} },
 	{ "batch", {".bat", ".cmd"} },
@@ -69,6 +69,7 @@ static const std::set<Type> f_builtin_type_array =
 	{ "less", {".less"} },
 	{ "lisp", {".lisp", ".lsp"} },
 	{ "lua", {".lua", R"(/^#!.*\blua(jit)?/)"} },
+	{ "m4", {".m4"} },
 	{ "make", {".mk", ".mak", "makefile", "Makefile", "Makefile.Debug", "Makefile.Release"} },
 	{ "matlab", {".m"} },
 	{ "objc", {".m", ".h"} },
@@ -95,13 +96,17 @@ static const std::set<Type> f_builtin_type_array =
 	{ "stylus", {".styl"} },
 	{ "tcl", {".tcl", ".itcl", ".itk"} },
 	{ "tex", {".tex", ".cls", ".sty"} },
+	{ "text", {".txt", "ChangeLog", "README"} },
 	{ "tt", {".tt", ".tt2", ".ttml"} },
 	{ "vb", {".bas", ".cls", ".frm", ".ctl", ".vb", ".resx"} },
 	{ "verilog", {".v", ".vh", ".sv"} },
 	{ "vhdl", {".vhd", ".vhdl"} },
 	{ "vim", {".vim"} },
 	{ "xml", {".xml", ".dtd", ".xsl", ".xslt", ".ent", R"(/<[?]xml/)"} },
-	{ "yaml", {".yaml", ".yml"} }
+	{ "yaml", {".yaml", ".yml"} },
+	// Below here are types corresponding to some of the files ack 2.14 finds as non-binary by scanning them.
+	// We'll do that at some point too, but for now just include them here.
+	{ "miscellaneous", {".qbk", ".w", ".ipp", ".patch", ".in", "configure"} }
 };
 
 
