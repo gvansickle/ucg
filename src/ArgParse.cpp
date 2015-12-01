@@ -92,7 +92,7 @@ static struct argp_option options[] = {
 		{ 0 }
 	};
 
-error_t parse_opt (int key, char *arg, struct argp_state *state)
+error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 {
 	class ArgParse *arguments = static_cast<ArgParse*>(state->input);
 
@@ -181,7 +181,7 @@ error_t parse_opt (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
-static struct argp argp = { options, parse_opt, args_doc, doc };
+struct argp ArgParse::argp = { options, ArgParse::parse_opt, args_doc, doc };
 
 
 ArgParse::ArgParse(TypeManager &type_manager)
