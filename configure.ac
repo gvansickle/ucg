@@ -60,9 +60,9 @@ AC_SUBST([CPU_COUNT])
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
 AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
-# By default, compile C and C++ with the maximum possible debugging info and least optimization for maximum debugability.
+# By default, compile C and C++ with the maximum possible debugging info and maximum optimization.
+# For debugging, do a "make CXXFLAGS=-O0".
 AC_SUBST([AM_CFLAGS], ["-ggdb3 -O3"])
-# -Wold-style-cast
 AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 
 
@@ -188,21 +188,21 @@ AC_SEARCH_LIBS([argp_parse],[argp])
 
 AC_REPLACE_FUNCS([sched_setaffinity])
 
-AC_LANG_PUSH([C++])
+#AC_LANG_PUSH([C++])
 # At least gcc 4.8.x claims to support C++11, but its std::regex library is mostly stubbed in.
 # Attempt to detect this.  On gcc 4.8.x, std::regex_iterator<> is not defined, which we use anyway, so we'll use that
 # type's existence and linkability as our test.
-SAVE_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS $CXX11_FLAG"
-AC_MSG_CHECKING([whether C++ <regex> library is usable])
-AC_LINK_IFELSE(
-	[AC_LANG_PROGRAM([[#include <regex>]],[[std::regex_iterator<const char *> test;]])],
-	[AC_MSG_RESULT([yes])],
-	[AC_MSG_ERROR([std::regex_iterator<> is not defined in your C++ standard library. \
-gcc < 4.9.0 is known to have this problem.])]
-	)
-CXXFLAGS="$SAVE_CXXFLAGS"
-AC_LANG_POP([C++])
+#SAVE_CXXFLAGS="$CXXFLAGS"
+#CXXFLAGS="$CXXFLAGS $CXX11_FLAG"
+#AC_MSG_CHECKING([whether C++ <regex> library is usable])
+#AC_LINK_IFELSE(
+#	[AC_LANG_PROGRAM([[#include <regex>]],[[std::regex_iterator<const char *> test;]])],
+#	[AC_MSG_RESULT([yes])],
+#	[AC_MSG_ERROR([std::regex_iterator<> is not defined in your C++ standard library. \
+#gcc < 4.9.0 is known to have this problem.])]
+#	)
+#CXXFLAGS="$SAVE_CXXFLAGS"
+#AC_LANG_POP([C++])
 
 
 ###

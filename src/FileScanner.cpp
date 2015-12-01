@@ -238,6 +238,7 @@ void FileScanner::FreeFile(const char* file_data, size_t file_size)
 
 void FileScanner::ScanFileCpp11(const std::regex& expression, const char *file_data, size_t file_size, MatchList& ml)
 {
+#ifndef HAVE_LIBPCRE
 	// Scan the mmapped file for the regex.
 	std::regex_iterator<const char *> rit(file_data, file_data+file_size, expression);
 	std::regex_iterator<const char *> rend;
@@ -268,6 +269,7 @@ void FileScanner::ScanFileCpp11(const std::regex& expression, const char *file_d
 
 		++rit;
 	}
+#endif
 }
 
 void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, MatchList& ml)
