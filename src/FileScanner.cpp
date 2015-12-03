@@ -24,10 +24,6 @@
 #include "config.h"
 
 #include <iostream>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include <regex>
 #include <thread>
 #include <mutex>
