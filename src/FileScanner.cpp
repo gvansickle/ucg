@@ -76,53 +76,66 @@ void FileScanner::Run()
 	{
 		MatchList ml(next_string);
 
-		// Try to open and read the file.
-		File f(next_string);
-
-		if(f.size() == 0)
+		try
 		{
-			std::cerr << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
-			continue;
-		}
+			// Try to open and read the file.  This could throw.
+			File f(next_string);
 
-		const char *file_data = f.data();
-		size_t file_size = f.size();
-
-		// Scan the file for the regex.
-		std::regex_iterator<const char *> rit(file_data, file_data+file_size, expression);
-		std::regex_iterator<const char *> rend;
-		while(rit != rend)
-		{
-			//std::cout << "Match in file " << next_string << std::endl;
-
-			long long lineno = 1+std::count(file_data, file_data+rit->position(), '\n');
-			auto line_ending = "\n";
-			auto line_start = std::find_end(file_data, file_data+rit->position(),
-					line_ending, line_ending+1);
-			if(line_start == file_data+rit->position())
+			if(f.size() == 0)
 			{
-				// The line has no starting '\n', so it must be the first line.
-				line_start = file_data;
+				std::cerr << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
+				continue;
 			}
-			else
+
+			const char *file_data = f.data();
+			size_t file_size = f.size();
+
+			// Scan the file for the regex.
+			std::regex_iterator<const char *> rit(file_data, file_data+file_size, expression);
+			std::regex_iterator<const char *> rend;
+			while(rit != rend)
 			{
-				// The line had a starting '\n', clip it off.
-				++line_start;
+				//std::cout << "Match in file " << next_string << std::endl;
+
+				long long lineno = 1+std::count(file_data, file_data+rit->position(), '\n');
+				auto line_ending = "\n";
+				auto line_start = std::find_end(file_data, file_data+rit->position(),
+						line_ending, line_ending+1);
+				if(line_start == file_data+rit->position())
+				{
+					// The line has no starting '\n', so it must be the first line.
+					line_start = file_data;
+				}
+				else
+				{
+					// The line had a starting '\n', clip it off.
+					++line_start;
+				}
+				auto line_end = std::find(file_data+rit->position(), file_data+file_size, '\n');
+				auto pre_match = std::string(line_start, file_data+rit->position());
+				auto match = std::string(rit->begin()->str());
+				auto post_match = std::string(file_data+rit->position()+rit->length(), line_end);
+				Match m = { pre_match, match, post_match };
+				ml.AddMatch(lineno, m);
+
+				++rit;
 			}
-			auto line_end = std::find(file_data+rit->position(), file_data+file_size, '\n');
-			auto pre_match = std::string(line_start, file_data+rit->position());
-			auto match = std::string(rit->begin()->str());
-			auto post_match = std::string(file_data+rit->position()+rit->length(), line_end);
-			Match m = { pre_match, match, post_match };
-			ml.AddMatch(lineno, m);
 
-			++rit;
+			if(!ml.empty())
+			{
+				/// @todo Move semantics here?
+				m_output_queue.wait_push(ml);
+			}
 		}
-
-		if(!ml.empty())
+		catch(const std::system_error& error)
 		{
-			/// @todo Move semantics here?
-			m_output_queue.wait_push(ml);
+			// A system error.  Currently should only be errors from File.
+			std::cerr << "Error: " << error.code() << " - " << error.code().message() << std::endl;
+		}
+		catch(...)
+		{
+			// Rethrow whatever it was.
+			throw;
 		}
 	}
 }
