@@ -26,6 +26,9 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <pwd.h> // for GetUserHomeDir()-->getpwuid().
+#include <unistd.h> // for GetUserHomeDir()-->getuid().
+
 #include "config.h"
 #include "TypeManager.h"
 
@@ -221,4 +224,45 @@ void ArgParse::Parse(int argc, char **argv)
 		m_paths.push_back(".");
 	}
 
+}
+
+void ArgParse::FindAndParseConfigFiles()
+{
+	// Parse the global config file.
+	/// @todo
+
+	// Parse the user's config file.
+	std::string homedir = GetUserHomeDir();
+	if(!homedir.empty())
+	{
+		// See if we can open the user's .ucgrc file.
+		homedir += "/.ucgrc";
+		//auto home_file = open(homedir, O_RDONLY);
+		/// @todo
+	}
+
+	// Find and parse the project config file.
+	/// @todo
+}
+
+std::string ArgParse::GetUserHomeDir() const
+{
+	std::string retval;
+
+	// First try the $HOME environment variable.
+	const char * home_path = getenv("HOME");
+
+	if(home_path == nullptr)
+	{
+		// No HOME variable, check the user database.
+		home_path = getpwuid(getuid())->pw_dir;
+	}
+
+	if(home_path != nullptr)
+	{
+		// Found user's HOME dir.
+		retval = home_path;
+	}
+
+	return retval;
 }

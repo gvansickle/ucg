@@ -21,6 +21,7 @@ libsrc_a_SOURCES = \
 	DirInclusionManager.cpp DirInclusionManager.h \
 	Globber.cpp Globber.h \
 	MatchList.cpp MatchList.h \
+	File.cpp File.h \
 	FileScanner.cpp FileScanner.h \
 	OutputTask.cpp OutputTask.h \
 	sync_queue.h \

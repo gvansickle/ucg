@@ -52,26 +52,6 @@ private:
 	 */
 	void AssignToNextCore();
 
-	/**
-	 * Return a pointer to a buffer containing the contents of the file described by #file_descriptor.
-	 * May be mmap()'ed or read() into a newed buffer depending on m_use_mmap.
-	 *
-	 * @note file_descriptor will be closed after this function returns.
-	 *
-	 * @param file_descriptor  File descriptor (from open()) of the file to read in / mmap.
-	 * @param file_size        Size of the file.
-	 * @return
-	 */
-	const char* GetFile(int file_descriptor, size_t file_size);
-
-	/**
-	 * Frees the resources allocated by GetFile().
-	 *
-	 * @param file_data  Pointer to the file data, as returned by GetFile().
-	 * @param file_size  The same file_size used in the call to GetFile().
-	 */
-	void FreeFile(const char * file_data, size_t file_size);
-
 	sync_queue<std::string>& m_in_queue;
 
 	sync_queue<MatchList> &m_output_queue;
