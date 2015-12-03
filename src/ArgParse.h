@@ -26,6 +26,7 @@
 #include <argp.h>
 
 class TypeManager;
+class File;
 
 /**
  * Command-line and config file parser.
@@ -54,6 +55,8 @@ private:
 	/// Get the home directory of the user.  Returns an empty string if no
 	/// home dir can be found.
 	std::string GetUserHomeDir() const;
+
+	std::vector<char *> ConvertRCFileToArgv(const File &f);
 
 public:
 

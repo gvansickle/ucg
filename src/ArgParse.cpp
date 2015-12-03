@@ -19,8 +19,10 @@
 
 #include "ArgParse.h"
 
+#include <algorithm>
 #include <vector>
 #include <string>
+#include <locale>
 #include <thread>
 #include <argp.h>
 #include <cstdlib>
@@ -31,6 +33,7 @@
 
 #include "config.h"
 #include "TypeManager.h"
+#include "File.h"
 
 // Not static, argp.h externs this.
 const char *argp_program_version = PACKAGE_STRING "\n"
@@ -262,6 +265,46 @@ std::string ArgParse::GetUserHomeDir() const
 	{
 		// Found user's HOME dir.
 		retval = home_path;
+	}
+
+	return retval;
+}
+
+std::vector<char*> ArgParse::ConvertRCFileToArgv(const File& f)
+{
+	// The RC files we support are text files with one command-line parameter per line.
+	// Comments are supported, as lines beginning with '#'.
+	const char *pos = f.data();
+	const char *end = f.data() + f.size();
+	std::vector<char*> retval;
+
+	while(pos != end)
+	{
+		// Eat all leading whitespace, including newlines.
+		pos = std::find_if_not(pos, end, [](char c){ return std::isspace(c); });
+
+		if(pos != end)
+		{
+			// We found some non-whitespace text.
+			if(*pos == '#')
+			{
+				// It's a comment, skip it.
+				pos = std::find_if(pos, end, [](char c){ return c == '\n'; });
+				// pos now points at the '\n', but the eat-ws line above will consume it.
+			}
+			else
+			{
+				// It's something that is intended to be a command-line param.
+				// Find the end of the line.  Everything between [pos, param_end) is the parameter.
+				const char *param_end = std::find_if(pos, end, [](char c){ return (c=='\r') || (c=='\n'); });
+
+				char *param = new char[(param_end - pos) + 1];
+				std::copy(pos, param_end, param);
+				param[param_end - pos] = '\0';
+
+				retval.push_back(param);
+			}
+		}
 	}
 
 	return retval;
