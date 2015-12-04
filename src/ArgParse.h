@@ -37,7 +37,7 @@ public:
 	ArgParse(TypeManager &tm);
 	virtual ~ArgParse();
 
-	void FindAndParseConfigFiles();
+	void FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv);
 
 	void Parse(int argc, char **argv);
 

@@ -24,6 +24,9 @@
 #include <string>
 #include <locale>
 #include <thread>
+#include <iostream>
+#include <system_error>
+
 #include <argp.h>
 #include <cstdlib>
 #include <cstring>
@@ -201,9 +204,40 @@ ArgParse::~ArgParse()
 	// TODO Auto-generated destructor stub
 }
 
+/**
+ * Why?  There's a legitimate reason, honestly:
+ * 1. argp's argp_parse() is expecting an argv array of char*'s.
+ * 2. For handling the rc files, we're creating vectors of new[]'ed char*'s.
+ * 3. main's argv of course is an array of char*'s of unknown allocation.
+ * 4. We combine #2 and #3 into one big vector<char*>, pass it to argp_parse().
+ * 5. Then when we're all done, we have to delete[] all these strings, and we don't want to have to free() the ones from
+ *    main()'s argv that we strdup()'ed.
+ * @param orig  The string to be duplicated.
+ * @return  A new[]-allocated copy of #orig.
+ */
+static char * cpp_strdup(const char *orig)
+{
+	char *retval = new char[strlen(orig)+1];
+	strcpy(retval, orig);
+	return retval;
+}
+
 void ArgParse::Parse(int argc, char **argv)
 {
-	argp_parse(&argp, argc, argv, 0, 0, this);
+	std::vector<char*> user_argv, combined_argv;
+
+	// Read all the config files.
+	FindAndParseConfigFiles(nullptr, &user_argv, nullptr);
+
+	// Combine all the argvs into one.
+	combined_argv.push_back(cpp_strdup(argv[0]));
+	combined_argv.insert(combined_argv.end(), user_argv.begin(), user_argv.end());
+	for(int i=1; i<argc; ++i)
+	{
+		combined_argv.push_back(cpp_strdup(argv[i]));
+	}
+
+	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
 
 	//// Now set up defaults.
 
@@ -229,7 +263,7 @@ void ArgParse::Parse(int argc, char **argv)
 
 }
 
-void ArgParse::FindAndParseConfigFiles()
+void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv)
 {
 	// Parse the global config file.
 	/// @todo
@@ -240,8 +274,25 @@ void ArgParse::FindAndParseConfigFiles()
 	{
 		// See if we can open the user's .ucgrc file.
 		homedir += "/.ucgrc";
-		//auto home_file = open(homedir, O_RDONLY);
-		/// @todo
+		try
+		{
+			File home_file(homedir);
+
+			if(home_file.size() == 0)
+			{
+				std::cerr << "INFO: config file \"" << homedir << "\" is zero-length." << std::endl;
+			}
+			else
+			{
+				auto vec_argv = ConvertRCFileToArgv(home_file);
+
+				user_argv->insert(user_argv->end(), vec_argv.cbegin(), vec_argv.cend());
+			}
+		}
+		catch(const std::system_error &e)
+		{
+			std::cerr << "INFO: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+		}
 	}
 
 	// Find and parse the project config file.
@@ -303,6 +354,8 @@ std::vector<char*> ArgParse::ConvertRCFileToArgv(const File& f)
 				param[param_end - pos] = '\0';
 
 				retval.push_back(param);
+
+				pos = param_end;
 			}
 		}
 	}
