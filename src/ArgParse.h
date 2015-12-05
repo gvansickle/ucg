@@ -56,6 +56,17 @@ private:
 	/// home dir can be found.
 	std::string GetUserHomeDir() const;
 
+	std::string GetProjectRCFilename() const;
+
+	/**
+	 * Pre-parse the given config (.ucgrc) file, removing comments and returning a vector of
+	 * command-line parameters as char *'s.
+	 *
+	 * @note The returned char *'s must be delete[]ed or they will leak.
+	 *
+	 * @param f  The config File.
+	 * @return  vector<char*> of command-line params.
+	 */
 	std::vector<char *> ConvertRCFileToArgv(const File &f);
 
 public:

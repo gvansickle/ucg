@@ -321,6 +321,19 @@ std::string ArgParse::GetUserHomeDir() const
 	return retval;
 }
 
+
+std::string ArgParse::GetProjectRCFilename() const
+{
+	// Walk up the directory hierarchy from the cwd until we:
+	// 1. Get to the user's $HOME dir, in which case we don't return an rc filename even if it exists.
+	// 2. Find an rc file, which we'll then return the name of.
+	// 3. Can't go up the hierarchy any more (i.e. we hit root).
+	/// @todo We might want to reconsider if we want to start at cwd or rather at whatever
+	///       paths may have been specified on the command line.  cwd is what Ack is documented
+	///       to do, and is easier.
+
+}
+
 std::vector<char*> ArgParse::ConvertRCFileToArgv(const File& f)
 {
 	// The RC files we support are text files with one command-line parameter per line.
