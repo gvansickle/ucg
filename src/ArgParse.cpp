@@ -32,7 +32,10 @@
 #include <cstring>
 
 #include <pwd.h> // for GetUserHomeDir()-->getpwuid().
+#include <fcntl.h>
 #include <unistd.h> // for GetUserHomeDir()-->getuid().
+#include <sys/stat.h>
+#include <libgen.h>   // Don't know where "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
 
 #include "config.h"
 #include "TypeManager.h"
@@ -321,6 +324,38 @@ std::string ArgParse::GetUserHomeDir() const
 	return retval;
 }
 
+/**
+ * Checks two file descriptors (file, dir, whatever) and checks if they are referring to the same entity.
+ *
+ * @param fd1
+ * @param fd2
+ * @return  true if fd1 and fd2 are fstat()able and refer to the same entity, false otherwise.
+ */
+static bool is_same_file(int fd1, int fd2)
+{
+	struct stat s1, s2;
+
+	if(fstat(fd1, &s1) < 0)
+	{
+		return false;
+	}
+	if(fstat(fd2, &s2) < 0)
+	{
+		return false;
+	}
+
+	if(
+		(s1.st_dev == s2.st_dev) // Same device
+		&& (s1.st_ino == s2.st_ino) // Same inode
+		)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 
 std::string ArgParse::GetProjectRCFilename() const
 {
@@ -332,6 +367,58 @@ std::string ArgParse::GetProjectRCFilename() const
 	///       paths may have been specified on the command line.  cwd is what Ack is documented
 	///       to do, and is easier.
 
+	std::string retval;
+
+	// Get a file descriptor to the user's home dir, if there is one.
+	auto homedirname = GetUserHomeDir();
+	int home_fd = -1;
+	if(!homedirname.empty())
+	{
+		home_fd = open(homedirname.c_str(), O_RDONLY | O_DIRECTORY);
+	}
+
+	// Get the current working directory's absolute pathname.
+	char *original_cwd = get_current_dir_name();
+
+	auto current_cwd = original_cwd;
+	while((current_cwd != nullptr) && (current_cwd[0] != '.'))
+	{
+		// See if this is the user's $HOME dir.
+		auto cwd_fd = open(current_cwd, O_RDONLY | O_DIRECTORY);
+		if(is_same_file(cwd_fd, home_fd))
+		{
+			// We've hit the user's home directory without finding a config file.
+			break;
+		}
+
+		// Try to open the config file.
+		auto test_rc_filename = std::string(current_cwd)+"/.ucgrc";
+		auto rc_file = open(test_rc_filename.c_str(), O_RDONLY);
+		if(rc_file != -1)
+		{
+			// Found it.  Return its name.
+			retval = test_rc_filename;
+			close(rc_file);
+			break;
+		}
+
+		if(strlen(current_cwd) == 1)
+		{
+			// We've hit the root and didn't find a config file.
+			break;
+		}
+
+		// Go up one directory.
+		current_cwd = dirname(current_cwd);
+	}
+
+	// Free the cwd string.
+	free(original_cwd);
+
+	// Close the homedir we opened above.
+	close(home_fd);
+
+	return retval;
 }
 
 std::vector<char*> ArgParse::ConvertRCFileToArgv(const File& f)
