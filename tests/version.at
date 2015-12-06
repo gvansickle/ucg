@@ -23,7 +23,7 @@ AT_CHECK([ucg --version | sed 1q],
 	[0],
 	[AT_PACKAGE_NAME AT_PACKAGE_VERSION
 ],
-[],
+[stderr],
 [cat >$[]XFAILFILE <<'_EOT'
 
 ===================================================================================

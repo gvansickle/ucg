@@ -23,11 +23,13 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <argp.h>
 
 class TypeManager;
+class File;
 
 /**
- * Command-line parser.
+ * Command-line and config file parser.
  */
 class ArgParse
 {
@@ -35,12 +37,37 @@ public:
 	ArgParse(TypeManager &tm);
 	virtual ~ArgParse();
 
+	void FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv);
+
 	void Parse(int argc, char **argv);
 
-public:  /// @todo This should really be private, but we'll need to make parse_opt a member so it has access first.
+private:
 
 	/// Reference to the TypeManager passed into the constructor.
 	TypeManager &m_type_manager;
+
+	/// The argp struct we'll pass to arg_parse() from the GNU argp library.
+	static struct argp argp;
+
+	/// The callback which receives the parsed options.
+	static error_t parse_opt (int key, char *arg, struct argp_state *state);
+
+	/// Get the home directory of the user.  Returns an empty string if no
+	/// home dir can be found.
+	std::string GetUserHomeDir() const;
+
+	std::string GetProjectRCFilename() const;
+
+	/**
+	 * Pre-parse the given config (.ucgrc) file, removing comments and returning a vector of
+	 * command-line parameters as char *'s.
+	 *
+	 * @note The returned char *'s must be delete[]ed or they will leak.
+	 *
+	 * @param f  The config File.
+	 * @return  vector<char*> of command-line params.
+	 */
+	std::vector<char *> ConvertRCFileToArgv(const File &f);
 
 public:
 

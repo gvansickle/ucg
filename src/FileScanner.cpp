@@ -18,15 +18,12 @@
 /** @file */
 
 #include "FileScanner.h"
+#include "File.h"
 #include "MatchList.h"
 
 #include "config.h"
 
 #include <iostream>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include <regex>
 #include <thread>
 #include <mutex>
@@ -79,77 +76,67 @@ void FileScanner::Run()
 	{
 		MatchList ml(next_string);
 
-		// Open the file.
-		int fd = open(next_string.c_str(), O_RDONLY, 0);
-
-		if(fd == -1)
+		try
 		{
-			// Couldn't open the file, skip it.
-			std::cerr << "ERROR: Couldn't open file \"" << next_string << "\"" << std::endl;
-			continue;
-		}
+			// Try to open and read the file.  This could throw.
+			File f(next_string);
 
-		// Check the file size.
-		struct stat st;
-		fstat(fd, &st);
-		size_t file_size = st.st_size;
-		// If filesize is 0, skip.
-		if(file_size == 0)
-		{
-			std::cerr << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
-			close(fd);
-			continue;
-		}
-
-		// Read or mmap the file into memory.
-		const char *file_data = GetFile(fd, file_size);
-
-		if(file_data == MAP_FAILED)
-		{
-			// Mapping failed.
-			std::cerr << "ERROR: Couldn't map file \"" << next_string << "\"" << std::endl;
-			continue;
-		}
-
-		// Scan the mmapped file for the regex.
-		std::regex_iterator<const char *> rit(file_data, file_data+file_size, expression);
-		std::regex_iterator<const char *> rend;
-		while(rit != rend)
-		{
-			//std::cout << "Match in file " << next_string << std::endl;
-
-			long long lineno = 1+std::count(file_data, file_data+rit->position(), '\n');
-			auto line_ending = "\n";
-			auto line_start = std::find_end(file_data, file_data+rit->position(),
-					line_ending, line_ending+1);
-			if(line_start == file_data+rit->position())
+			if(f.size() == 0)
 			{
-				// The line has no starting '\n', so it must be the first line.
-				line_start = file_data;
+				std::cerr << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
+				continue;
 			}
-			else
+
+			const char *file_data = f.data();
+			size_t file_size = f.size();
+
+			// Scan the file for the regex.
+			std::regex_iterator<const char *> rit(file_data, file_data+file_size, expression);
+			std::regex_iterator<const char *> rend;
+			while(rit != rend)
 			{
-				// The line had a starting '\n', clip it off.
-				++line_start;
+				//std::cout << "Match in file " << next_string << std::endl;
+
+				long long lineno = 1+std::count(file_data, file_data+rit->position(), '\n');
+				auto line_ending = "\n";
+				auto line_start = std::find_end(file_data, file_data+rit->position(),
+						line_ending, line_ending+1);
+				if(line_start == file_data+rit->position())
+				{
+					// The line has no starting '\n', so it must be the first line.
+					line_start = file_data;
+				}
+				else
+				{
+					// The line had a starting '\n', clip it off.
+					++line_start;
+				}
+				auto line_end = std::find(file_data+rit->position(), file_data+file_size, '\n');
+				auto pre_match = std::string(line_start, file_data+rit->position());
+				auto match = std::string(rit->begin()->str());
+				auto post_match = std::string(file_data+rit->position()+rit->length(), line_end);
+				Match m = { pre_match, match, post_match };
+				ml.AddMatch(lineno, m);
+
+				++rit;
 			}
-			auto line_end = std::find(file_data+rit->position(), file_data+file_size, '\n');
-			auto pre_match = std::string(line_start, file_data+rit->position());
-			auto match = std::string(rit->begin()->str());
-			auto post_match = std::string(file_data+rit->position()+rit->length(), line_end);
-			Match m = { pre_match, match, post_match };
-			ml.AddMatch(lineno, m);
 
-			++rit;
+			if(!ml.empty())
+			{
+				/// @todo Move semantics here?
+				m_output_queue.wait_push(ml);
+			}
 		}
-
-		if(!ml.empty())
+		catch(const std::system_error& error)
 		{
-			/// @todo Move semantics here?
-			m_output_queue.wait_push(ml);
+			// A system error.  Currently should only be errors from File.
+			std::cerr << "Error: " << error.code() << " - " << error.code().message() << std::endl;
 		}
-
-		// Clean up.
-		FreeFile(file_data, file_size);
+		catch(...)
+		{
+			// Rethrow whatever it was.
+			throw;
+		}
 	}
 }
 
@@ -174,49 +161,4 @@ void FileScanner::AssignToNextCore()
 	m_next_core++;
 	m_next_core %= std::thread::hardware_concurrency();
 #endif
-}
-
-const char* FileScanner::GetFile(int file_descriptor, size_t file_size)
-{
-	const char *file_data = static_cast<const char *>(MAP_FAILED);
-
-	if(m_use_mmap)
-	{
-		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE, file_descriptor, 0));
-
-		if(file_data == MAP_FAILED)
-		{
-			// Mapping failed.
-			close(file_descriptor);
-			return file_data;
-		}
-
-		// Hint that we'll be sequentially reading the mmapped file soon.
-		posix_madvise(const_cast<char*>(file_data), file_size, POSIX_MADV_SEQUENTIAL | POSIX_MADV_WILLNEED);
-
-	}
-	else
-	{
-		file_data = new char [file_size];
-
-		// Read in the whole file.
-		while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
-	}
-
-	// We don't need the file descriptor anymore.
-	close(file_descriptor);
-
-	return file_data;
-}
-
-void FileScanner::FreeFile(const char* file_data, size_t file_size)
-{
-	if(m_use_mmap)
-	{
-		munmap(const_cast<char*>(file_data), file_size);
-	}
-	else
-	{
-		delete [] file_data;
-	}
 }
