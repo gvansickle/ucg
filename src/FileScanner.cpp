@@ -18,15 +18,12 @@
 /** @file */
 
 #include "FileScanner.h"
+#include "File.h"
 #include "MatchList.h"
 
 #include "config.h"
 
 #include <iostream>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #ifdef HAVE_LIBPCRE
 #include <pcre.h>
 #endif
@@ -118,37 +115,20 @@ void FileScanner::Run()
 	{
 		MatchList ml(next_string);
 
-		// Open the file.
-		int fd = open(next_string.c_str(), O_RDONLY, 0);
-
-		if(fd == -1)
+		try
 		{
-			// Couldn't open the file, skip it.
-			std::cerr << "ERROR: Couldn't open file \"" << next_string << "\"" << std::endl;
-			continue;
-		}
+			// Try to open and read the file.  This could throw.
+			File f(next_string);
 
-		// Check the file size.
-		struct stat st;
-		fstat(fd, &st);
-		size_t file_size = st.st_size;
-		// If filesize is 0, skip.
-		if(file_size == 0)
-		{
-			std::cerr << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
-			close(fd);
-			continue;
-		}
+			if(f.size() == 0)
+			{
+				std::cerr << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
+				continue;
+			}
 
-		// Read or mmap the file into memory.
-		const char *file_data = GetFile(fd, file_size);
+			const char *file_data = f.data();
+			size_t file_size = f.size();
 
-		if(file_data == MAP_FAILED)
-		{
-			// Mapping failed.
-			std::cerr << "ERROR: Couldn't map file \"" << next_string << "\"" << std::endl;
-			continue;
-		}
 
 		// Scan the file data for the regex.
 #if HAVE_LIBPCRE
@@ -157,14 +137,24 @@ void FileScanner::Run()
 		ScanFileCpp11(expression, file_data, file_size, ml);
 #endif
 
-		if(!ml.empty())
-		{
-			/// @todo Move semantics here?
-			m_output_queue.wait_push(ml);
-		}
 
-		// Clean up.
-		FreeFile(file_data, file_size);
+
+			if(!ml.empty())
+			{
+				/// @todo Move semantics here?
+				m_output_queue.wait_push(ml);
+			}
+		}
+		catch(const std::system_error& error)
+		{
+			// A system error.  Currently should only be errors from File.
+			std::cerr << "Error: " << error.code() << " - " << error.code().message() << std::endl;
+		}
+		catch(...)
+		{
+			// Rethrow whatever it was.
+			throw;
+		}
 	}
 }
 
@@ -189,51 +179,6 @@ void FileScanner::AssignToNextCore()
 	m_next_core++;
 	m_next_core %= std::thread::hardware_concurrency();
 #endif
-}
-
-const char* FileScanner::GetFile(int file_descriptor, size_t file_size)
-{
-	const char *file_data = static_cast<const char *>(MAP_FAILED);
-
-	if(m_use_mmap)
-	{
-		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE, file_descriptor, 0));
-
-		if(file_data == MAP_FAILED)
-		{
-			// Mapping failed.
-			close(file_descriptor);
-			return file_data;
-		}
-
-		// Hint that we'll be sequentially reading the mmapped file soon.
-		posix_madvise(const_cast<char*>(file_data), file_size, POSIX_MADV_SEQUENTIAL | POSIX_MADV_WILLNEED);
-
-	}
-	else
-	{
-		file_data = new char [file_size];
-
-		// Read in the whole file.
-		while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
-	}
-
-	// We don't need the file descriptor anymore.
-	close(file_descriptor);
-
-	return file_data;
-}
-
-void FileScanner::FreeFile(const char* file_data, size_t file_size)
-{
-	if(m_use_mmap)
-	{
-		munmap(const_cast<char*>(file_data), file_size);
-	}
-	else
-	{
-		delete [] file_data;
-	}
 }
 
 void FileScanner::ScanFileCpp11(const std::regex& expression, const char *file_data, size_t file_size, MatchList& ml)
