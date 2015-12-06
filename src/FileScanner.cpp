@@ -97,6 +97,7 @@ void FileScanner::Run()
 		AssignToNextCore();
 	}
 
+#ifndef HAVE_LIBPCRE
 	// Create the std::regex we're looking for, possibly ignoring case, possibly with match-whole-word.
 	auto stack_regex = m_regex;
 	if(m_word_regexp)
@@ -108,6 +109,7 @@ void FileScanner::Run()
 			std::regex_constants::ECMAScript |
 			std::regex_constants::optimize   |
 			m_ignore_case ? std::regex_constants::icase : static_cast<typeof(std::regex_constants::icase)>(0));
+#endif
 
 	// Pull new filenames off the input queue until it's closed.
 	std::string next_string;
