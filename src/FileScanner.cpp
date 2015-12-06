@@ -122,22 +122,19 @@ void FileScanner::Run()
 
 			if(f.size() == 0)
 			{
-				std::cerr << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
+				std::clog << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
 				continue;
 			}
 
 			const char *file_data = f.data();
 			size_t file_size = f.size();
 
-
-		// Scan the file data for the regex.
+			// Scan the file data for the regex.
 #if HAVE_LIBPCRE
-		ScanFileLibPCRE(file_data, file_size, ml);
+			ScanFileLibPCRE(file_data, file_size, ml);
 #else
-		ScanFileCpp11(expression, file_data, file_size, ml);
+			ScanFileCpp11(expression, file_data, file_size, ml);
 #endif
-
-
 
 			if(!ml.empty())
 			{
@@ -148,7 +145,7 @@ void FileScanner::Run()
 		catch(const std::system_error& error)
 		{
 			// A system error.  Currently should only be errors from File.
-			std::cerr << "Error: " << error.code() << " - " << error.code().message() << std::endl;
+			std::cerr << "ERROR: " << error.code() << " - " << error.code().message() << std::endl;
 		}
 		catch(...)
 		{
