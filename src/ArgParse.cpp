@@ -227,14 +227,15 @@ static char * cpp_strdup(const char *orig)
 
 void ArgParse::Parse(int argc, char **argv)
 {
-	std::vector<char*> user_argv, combined_argv;
+	std::vector<char*> user_argv, project_argv, combined_argv;
 
 	// Read all the config files.
-	FindAndParseConfigFiles(nullptr, &user_argv, nullptr);
+	FindAndParseConfigFiles(nullptr, &user_argv, &project_argv);
 
 	// Combine all the argvs into one.
 	combined_argv.push_back(cpp_strdup(argv[0]));
 	combined_argv.insert(combined_argv.end(), user_argv.begin(), user_argv.end());
+	combined_argv.insert(combined_argv.end(), project_argv.begin(), project_argv.end());
 	for(int i=1; i<argc; ++i)
 	{
 		combined_argv.push_back(cpp_strdup(argv[i]));
@@ -283,7 +284,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 
 			if(home_file.size() == 0)
 			{
-				std::cerr << "INFO: config file \"" << homedir << "\" is zero-length." << std::endl;
+				std::clog << "INFO: config file \"" << homedir << "\" is zero-length." << std::endl;
 			}
 			else
 			{
@@ -294,12 +295,37 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 		}
 		catch(const std::system_error &e)
 		{
-			std::cerr << "INFO: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+			std::clog << "INFO: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
 		}
 	}
 
 	// Find and parse the project config file.
-	/// @todo
+	auto proj_rc_filename = GetProjectRCFilename();
+	if(!proj_rc_filename.empty())
+	{
+		// We found it, see if we can open it.
+		try
+		{
+			File proj_rc_file(proj_rc_filename);
+
+			if(proj_rc_file.size() == 0)
+			{
+				std::clog << "INFO: config file \"" << proj_rc_filename << "\" is zero-length." << std::endl;
+			}
+			else
+			{
+				std::clog << "INFO: parsing config file \"" << proj_rc_filename << "\"." << std::endl;
+
+				auto vec_argv = ConvertRCFileToArgv(proj_rc_file);
+
+				project_argv->insert(user_argv->end(), vec_argv.cbegin(), vec_argv.cend());
+			}
+		}
+		catch(const std::system_error &e)
+		{
+			std::clog << "INFO: Couldn't open config file \"" << proj_rc_filename << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+		}
+	}
 }
 
 std::string ArgParse::GetUserHomeDir() const
@@ -380,6 +406,8 @@ std::string ArgParse::GetProjectRCFilename() const
 	// Get the current working directory's absolute pathname.
 	char *original_cwd = get_current_dir_name();
 
+	std::clog << "INFO: cwd = \"" << original_cwd << "\"" << std::endl;
+
 	auto current_cwd = original_cwd;
 	while((current_cwd != nullptr) && (current_cwd[0] != '.'))
 	{
@@ -388,15 +416,24 @@ std::string ArgParse::GetProjectRCFilename() const
 		if(is_same_file(cwd_fd, home_fd))
 		{
 			// We've hit the user's home directory without finding a config file.
+			close(cwd_fd);
 			break;
 		}
+		close(cwd_fd);
 
 		// Try to open the config file.
-		auto test_rc_filename = std::string(current_cwd)+"/.ucgrc";
+		auto test_rc_filename = std::string(current_cwd);
+		if(*test_rc_filename.rbegin() != '/')
+		{
+			test_rc_filename += "/";
+		}
+		test_rc_filename += ".ucgrc";
+		std::clog << "INFO: checking for rc file \"" << test_rc_filename << "\"" << std::endl;
 		auto rc_file = open(test_rc_filename.c_str(), O_RDONLY);
 		if(rc_file != -1)
 		{
 			// Found it.  Return its name.
+			std::clog << "INFO: found rc file \"" << test_rc_filename << "\"" << std::endl;
 			retval = test_rc_filename;
 			close(rc_file);
 			break;
