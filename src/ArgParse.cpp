@@ -213,7 +213,7 @@ ArgParse::~ArgParse()
  * 2. For handling the rc files, we're creating vectors of new[]'ed char*'s.
  * 3. main's argv of course is an array of char*'s of unknown allocation.
  * 4. We combine #2 and #3 into one big vector<char*>, pass it to argp_parse().
- * 5. Then when we're all done, we have to delete[] all these strings, and we don't want to have to free() the ones from
+ * 5. Then when we're all done, we have to delete[] all these strings, and we don't want to have to separately track and free() the ones from
  *    main()'s argv that we strdup()'ed.
  * @param orig  The string to be duplicated.
  * @return  A new[]-allocated copy of #orig.
@@ -265,11 +265,16 @@ void ArgParse::Parse(int argc, char **argv)
 		m_paths.push_back(".");
 	}
 
+	// Free the strings we cpp_strdup()'ed
+	for(char *c : combined_argv)
+	{
+		delete [] c;
+	}
 }
 
 void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv)
 {
-	// Parse the global config file.
+	// Find and parse the global config file.
 	/// @todo
 
 	// Parse the user's config file.
@@ -284,7 +289,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 
 			if(home_file.size() == 0)
 			{
-				std::clog << "INFO: config file \"" << homedir << "\" is zero-length." << std::endl;
+				//std::clog << "INFO: config file \"" << homedir << "\" is zero-length." << std::endl;
 			}
 			else
 			{
@@ -295,7 +300,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 		}
 		catch(const std::system_error &e)
 		{
-			std::clog << "INFO: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+			//std::clog << "INFO: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
 		}
 	}
 
@@ -310,11 +315,11 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 
 			if(proj_rc_file.size() == 0)
 			{
-				std::clog << "INFO: config file \"" << proj_rc_filename << "\" is zero-length." << std::endl;
+				//std::clog << "INFO: config file \"" << proj_rc_filename << "\" is zero-length." << std::endl;
 			}
 			else
 			{
-				std::clog << "INFO: parsing config file \"" << proj_rc_filename << "\"." << std::endl;
+				//std::clog << "INFO: parsing config file \"" << proj_rc_filename << "\"." << std::endl;
 
 				auto vec_argv = ConvertRCFileToArgv(proj_rc_file);
 
@@ -323,7 +328,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 		}
 		catch(const std::system_error &e)
 		{
-			std::clog << "INFO: Couldn't open config file \"" << proj_rc_filename << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+			//std::clog << "INFO: Couldn't open config file \"" << proj_rc_filename << "\", error " << e.code() << " - " << e.code().message() << std::endl;
 		}
 	}
 }
@@ -406,7 +411,7 @@ std::string ArgParse::GetProjectRCFilename() const
 	// Get the current working directory's absolute pathname.
 	char *original_cwd = get_current_dir_name();
 
-	std::clog << "INFO: cwd = \"" << original_cwd << "\"" << std::endl;
+	//std::clog << "INFO: cwd = \"" << original_cwd << "\"" << std::endl;
 
 	auto current_cwd = original_cwd;
 	while((current_cwd != nullptr) && (current_cwd[0] != '.'))
@@ -428,12 +433,12 @@ std::string ArgParse::GetProjectRCFilename() const
 			test_rc_filename += "/";
 		}
 		test_rc_filename += ".ucgrc";
-		std::clog << "INFO: checking for rc file \"" << test_rc_filename << "\"" << std::endl;
+		//std::clog << "INFO: checking for rc file \"" << test_rc_filename << "\"" << std::endl;
 		auto rc_file = open(test_rc_filename.c_str(), O_RDONLY);
 		if(rc_file != -1)
 		{
 			// Found it.  Return its name.
-			std::clog << "INFO: found rc file \"" << test_rc_filename << "\"" << std::endl;
+			//std::clog << "INFO: found rc file \"" << test_rc_filename << "\"" << std::endl;
 			retval = test_rc_filename;
 			close(rc_file);
 			break;

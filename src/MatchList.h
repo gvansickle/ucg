@@ -37,6 +37,7 @@ class MatchList
 {
 public:
 	MatchList() {};
+	MatchList(const MatchList &lvalue) = default;
 	MatchList(const std::string &filename);
 	virtual ~MatchList();
 
@@ -44,7 +45,7 @@ public:
 
 	void Print(bool istty, bool enable_color);
 
-	bool empty() { return m_match_list.empty(); };
+	bool empty() const noexcept { return m_match_list.empty(); };
 
 private:
 
