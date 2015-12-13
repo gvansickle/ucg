@@ -124,7 +124,7 @@ void FileScanner::Run()
 
 			if(f.size() == 0)
 			{
-				std::clog << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
+				//std::clog << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
 				continue;
 			}
 

@@ -46,7 +46,7 @@ File::File(const std::string &filename)
 	// If filesize is 0, skip.
 	if(m_file_size == 0)
 	{
-		std::cerr << "WARNING: Filesize of \"" << filename << "\" is 0" << std::endl;
+		//std::cerr << "WARNING: Filesize of \"" << filename << "\" is 0" << std::endl;
 		close(m_file_descriptor);
 		m_file_descriptor = -1;
 		/// @todo Throw here?

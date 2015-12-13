@@ -72,6 +72,7 @@ static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 #define OPT_IGNORE_DIR     3
 #define OPT_NOIGNORE_DIR     4
 #define OPT_TYPE			5
+#define OPT_NOENV			6
 ///@}
 
 /// Status code to use for a bad parameter which terminates the program via argp_failure().
@@ -100,6 +101,7 @@ static struct argp_option options[] = {
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
 		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files."},
 		{0,0,0,0, "Miscellaneous:" },
+		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc files."},
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
 		{ 0 }
 	};
@@ -150,6 +152,9 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
 			}
 		}
+		break;
+	case OPT_NOENV:
+		// The --noenv option is handled specially outside of the argp parser.
 		break;
 	case 'j':
 		if(atoi(arg) < 1)
@@ -229,18 +234,28 @@ void ArgParse::Parse(int argc, char **argv)
 {
 	std::vector<char*> user_argv, project_argv, combined_argv;
 
-	// Read all the config files.
-	FindAndParseConfigFiles(nullptr, &user_argv, &project_argv);
+	// Check the command line for the --noenv option.
+	auto noenv = std::count_if(argv, argv+argc, [](char *s){ return strcmp(s, "--noenv") == 0; });
+
+	if(noenv == 0)
+	{
+		// Read all the config files.
+		FindAndParseConfigFiles(nullptr, &user_argv, &project_argv);
+	}
 
 	// Combine all the argvs into one.
 	combined_argv.push_back(cpp_strdup(argv[0]));
-	combined_argv.insert(combined_argv.end(), user_argv.begin(), user_argv.end());
-	combined_argv.insert(combined_argv.end(), project_argv.begin(), project_argv.end());
+	if(noenv == 0)
+	{
+		combined_argv.insert(combined_argv.end(), user_argv.begin(), user_argv.end());
+		combined_argv.insert(combined_argv.end(), project_argv.begin(), project_argv.end());
+	}
 	for(int i=1; i<argc; ++i)
 	{
 		combined_argv.push_back(cpp_strdup(argv[i]));
 	}
 
+	// Parse the combined list of arguments.
 	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
 
 	//// Now set up defaults.
@@ -323,7 +338,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 
 				auto vec_argv = ConvertRCFileToArgv(proj_rc_file);
 
-				project_argv->insert(user_argv->end(), vec_argv.cbegin(), vec_argv.cend());
+				project_argv->insert(project_argv->end(), vec_argv.cbegin(), vec_argv.cend());
 			}
 		}
 		catch(const std::system_error &e)
