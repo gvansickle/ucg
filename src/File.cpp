@@ -35,7 +35,6 @@ File::File(const std::string &filename)
 	if(m_file_descriptor == -1)
 	{
 		// Couldn't open the file, throw exception.
-		std::cerr << "ERROR: Couldn't open file \"" << filename << "\"" << std::endl;
 		throw std::system_error(errno, std::system_category());
 	}
 
