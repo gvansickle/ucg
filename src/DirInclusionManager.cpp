@@ -29,6 +29,7 @@ static const std::string f_builtin_dir_excludes[] =
 	".hg",
 	".metadata",
 	".svn",
+	"CMakeFiles",
 	"CVS",
 	"autom4te.cache",
 	""
