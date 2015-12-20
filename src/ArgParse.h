@@ -80,6 +80,9 @@ public:
 	/// true if PATTERN should only match whole words.
 	bool m_word_regexp { false };
 
+	/// true if PATTERN should be treated as literal chars (i.e. not a regex).
+	bool m_pattern_is_literal { false };
+
 	/// The file and directory paths given on the command line.
 	std::vector<std::string> m_paths;
 

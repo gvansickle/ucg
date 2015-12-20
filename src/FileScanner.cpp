@@ -41,8 +41,9 @@ FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case,
-		bool word_regexp) : m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex),
-				m_ignore_case(ignore_case), m_word_regexp(word_regexp),
+		bool word_regexp,
+		bool pattern_is_literal) : m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex),
+				m_ignore_case(ignore_case), m_word_regexp(word_regexp), m_pattern_is_literal(pattern_is_literal),
 				m_next_core(0), m_use_mmap(false), m_manually_assign_cores(false)
 {
 #ifdef HAVE_LIBPCRE
@@ -53,7 +54,14 @@ FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 
 	if(ignore_case)
 	{
+		// Ignore case while matching.
 		options |= PCRE_CASELESS;
+	}
+
+	if(m_pattern_is_literal)
+	{
+		// Surround the pattern with \Q...\E so it's treated as a literal string.
+		regex = "\\Q" + regex + "\\E";
 	}
 
 	if(m_word_regexp)

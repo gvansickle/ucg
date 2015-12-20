@@ -44,7 +44,8 @@ public:
 			sync_queue<MatchList> &output_queue,
 			std::string regex,
 			bool ignore_case,
-			bool word_regexp);
+			bool word_regexp,
+			bool pattern_is_literal);
 	virtual ~FileScanner();
 
 	void Run();
@@ -96,6 +97,8 @@ private:
 	bool m_ignore_case;
 
 	bool m_word_regexp;
+
+	bool m_pattern_is_literal;
 
 	int m_next_core;
 
