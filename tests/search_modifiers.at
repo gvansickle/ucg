@@ -17,7 +17,10 @@
 
 AT_BANNER([UniversalCodeGrep search modifier checks])
 
-# --ignore-case
+
+###
+### --ignore-case
+###
 AT_SETUP(['--ignore-case' and '--word-regexp' combos])
 
 AT_DATA([test_file.cpp], [Generated test file
@@ -28,19 +31,63 @@ inside-ptr-sentence
 ])
 
 # --ignore-case should give us 4 hits.
-AT_CHECK([ucg '--ignore-case' 'ptr' test_file.cpp | wc -l],[0],[4
+AT_CHECK([ucg --noenv '--ignore-case' 'ptr' test_file.cpp | wc -l],[0],[4
 ],[stderr])
 
 # --word-regexp should give us two hits.
-AT_CHECK([ucg '--word-regexp' 'ptr' test_file.cpp | wc -l],[0],[2
+AT_CHECK([ucg --noenv '--word-regexp' 'ptr' test_file.cpp | wc -l],[0],[2
 ],[stderr])
 
 # -wi should give us the same two hits.
-AT_CHECK([ucg '-wi' 'ptr' test_file.cpp | wc -l],[0],[2
+AT_CHECK([ucg --noenv '-wi' 'ptr' test_file.cpp | wc -l],[0],[2
 ],[stderr])
 
 # Nothing searching for 'PtR' should give us one hit.
-AT_CHECK([ucg PtR test_file.cpp | wc -l],[0],[1
+AT_CHECK([ucg --noenv PtR test_file.cpp | wc -l],[0],[1
+],[stderr])
+
+AT_CLEANUP
+
+
+###
+### --literal
+###
+AT_SETUP([--literal vs. --word-regexp vs. --ignore-case])
+
+AT_DATA([test_file.c], [Generated test file for --literal
+n
+N
+[[n]]
+blah [[N]] bl.h
+bl.h
+blahbl.h
+blah
+something BL.H
+something Bl.H somethingelse
+])
+
+# Should only find one literal '[n]'
+AT_CHECK([ucg --noenv --literal '[[n]]' test_file.c | wc -l],[0],[1
+],[stderr])
+
+# Should find two literal '[n]'s when ignoring case.
+AT_CHECK([ucg --noenv --literal --ignore-case '[[n]]' test_file.c | wc -l],[0],[2
+],[stderr])
+
+# Should find 2 literal 'bl.h's when using --word-regexp. 
+AT_CHECK([ucg --noenv --word-regexp --literal 'bl.h' test_file.c | wc -l],[0],[2
+],[stderr])
+
+# Should find 3 literal 'bl.h's without --word-regexp. 
+AT_CHECK([ucg --noenv --literal 'bl.h' test_file.c | wc -l],[0],[3
+],[stderr])
+
+# Should find 4 'bl.h's without any modifiers. 
+AT_CHECK([ucg --noenv 'bl.h' test_file.c | wc -l],[0],[4
+],[stderr])
+
+# Should find 4 'bl.h's with all modifiers. 
+AT_CHECK([ucg --noenv -Qiw 'bl.h' test_file.c | wc -l],[0],[4
 ],[stderr])
 
 AT_CLEANUP
