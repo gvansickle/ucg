@@ -86,6 +86,7 @@ static struct argp_option options[] = {
 		{0,0,0,0, "Searching:" },
 		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
 		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
+		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
 		{0,0,0,0, "File presentation:" },
 		{"color", OPT_COLOR, 0, 0, "Render the output with ANSI color codes."},
 		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
@@ -117,6 +118,9 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case 'w':
 		arguments->m_word_regexp = true;
+		break;
+	case 'Q':
+		arguments->m_pattern_is_literal = true;
 		break;
 	case OPT_IGNORE_DIR:
 		arguments->m_excludes.insert(arg);

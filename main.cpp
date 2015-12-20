@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 	tm.CompileTypeTables();
 	dim.CompileExclusionTables();
 
-	std::clog << "Num jobs: " << ap.m_jobs << std::endl;
+	//std::clog << "Num jobs: " << ap.m_jobs << std::endl;
 
 	// Create the Globber->FileScanner queue.
 	sync_queue<std::string> q;
@@ -71,8 +71,8 @@ int main(int argc, char **argv)
 	// Start the output task thread.
 	std::thread ot {&OutputTask::Run, &output_task};
 
-	// Start the scanner threads.
-	FileScanner fs(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp);
+	// Create the FileScanner object and start the scanner threads.
+	FileScanner fs(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp, ap.m_pattern_is_literal);
 	for(int t=0; t<ap.m_jobs; ++t)
 	{
 		std::thread fst {&FileScanner::Run, &fs};
