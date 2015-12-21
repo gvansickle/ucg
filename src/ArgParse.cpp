@@ -319,7 +319,11 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 		}
 		catch(const std::system_error &e)
 		{
-			//std::clog << "INFO: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+			if(e.code() != std::errc::no_such_file_or_directory)
+			{
+				std::clog << "WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+			}
+			// Otherwise, the file just doesn't exist.
 		}
 	}
 
@@ -347,7 +351,11 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 		}
 		catch(const std::system_error &e)
 		{
-			//std::clog << "INFO: Couldn't open config file \"" << proj_rc_filename << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+			if(e.code() != std::errc::no_such_file_or_directory)
+			{
+				std::clog << "WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+			}
+			// Otherwise, the file just doesn't exist.
 		}
 	}
 }
@@ -428,6 +436,9 @@ std::string ArgParse::GetProjectRCFilename() const
 	}
 
 	// Get the current working directory's absolute pathname.
+	/// @note GRVS - get_current_dir_name() under Cygwin will currently return a DOS path if this is started
+	///              under the Eclipse gdb.  This mostly doesn't cause problems, except for terminating the loop
+	///              (see below).
 	char *original_cwd = get_current_dir_name();
 
 	//std::clog << "INFO: cwd = \"" << original_cwd << "\"" << std::endl;
@@ -463,7 +474,10 @@ std::string ArgParse::GetProjectRCFilename() const
 			break;
 		}
 
-		if(strlen(current_cwd) == 1)
+		/// @note GRVS - get_current_dir_name() under Cygwin will currently return a DOS path if this is started
+		///              under the Eclipse gdb.  This mostly doesn't cause problems, except for terminating the loop.
+		///              The clause below after the || handles this.
+		if((strlen(current_cwd) == 1) || (strlen(current_cwd) <= 4 && current_cwd[1] == ':'))
 		{
 			// We've hit the root and didn't find a config file.
 			break;
