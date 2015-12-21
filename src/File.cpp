@@ -35,7 +35,7 @@ File::File(const std::string &filename)
 	if(m_file_descriptor == -1)
 	{
 		// Couldn't open the file, throw exception.
-		throw std::system_error(errno, std::system_category());
+		throw std::system_error(errno, std::generic_category());
 	}
 
 	// Check the file size.
