@@ -69,6 +69,8 @@ private:
 	 */
 	std::vector<char *> ConvertRCFileToArgv(const File &f);
 
+	void HandleTYPELogic(std::vector<char *> *v);
+
 public:
 
 	/// The regex to be matched.

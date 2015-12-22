@@ -197,6 +197,11 @@ bool TypeManager::notype(const std::string& type_name)
 	return true;
 }
 
+bool TypeManager::IsType(const std::string& type) const
+{
+	return m_active_type_map.count(type) != 0;
+}
+
 void TypeManager::CompileTypeTables()
 {
 	for(auto i : m_active_type_map)
@@ -221,3 +226,4 @@ void TypeManager::CompileTypeTables()
 		}
 	}
 }
+

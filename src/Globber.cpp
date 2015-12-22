@@ -118,6 +118,6 @@ void Globber::Run()
 	}
 	fts_close(fts);
 
-	std::clog << "NUM FILES INCLUDED: " << m_num_files_found << std::endl;
+	//std::clog << "NUM FILES INCLUDED: " << m_num_files_found << std::endl;
 }
 

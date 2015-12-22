@@ -57,6 +57,14 @@ public:
 
 	bool notype(const std::string &type_name);
 
+	/**
+	 * Determines if #type is in the m_active_type_map as a type name.
+	 *
+	 * @param type  Name of the type to check.
+	 * @return true if #type names a type, false otherwise.
+	 */
+	bool IsType(const std::string &type) const;
+
 	void CompileTypeTables();
 
 private:

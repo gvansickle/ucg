@@ -73,6 +73,9 @@ static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 #define OPT_NOIGNORE_DIR     4
 #define OPT_TYPE			5
 #define OPT_NOENV			6
+#define OPT_TYPE_SET		7
+#define OPT_TYPE_ADD		8
+#define OPT_TYPE_DEL		9
 ///@}
 
 /// Status code to use for a bad parameter which terminates the program via argp_failure().
@@ -101,6 +104,10 @@ static struct argp_option options[] = {
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
 		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files."},
+		{0,0,0,0, "File type specification:"},
+		{"type-set", OPT_TYPE_SET, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
+		{"type-add", OPT_TYPE_ADD, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is appended to."},
+		{"type-del", OPT_TYPE_DEL, "TYPE", 0, "Remove any existing definition of type TYPE."},
 		{0,0,0,0, "Miscellaneous:" },
 		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc files."},
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
@@ -156,6 +163,11 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
 			}
 		}
+		break;
+	case OPT_TYPE_SET:
+	case OPT_TYPE_ADD:
+	case OPT_TYPE_DEL:
+		// These options are all handled specially outside of the argp parser.
 		break;
 	case OPT_NOENV:
 		// The --noenv option is handled specially outside of the argp parser.
@@ -258,6 +270,8 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		combined_argv.push_back(cpp_strdup(argv[i]));
 	}
+
+	HandleTYPELogic(&combined_argv);
 
 	// Parse the combined list of arguments.
 	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
@@ -536,4 +550,37 @@ std::vector<char*> ArgParse::ConvertRCFileToArgv(const File& f)
 	}
 
 	return retval;
+}
+
+void ArgParse::HandleTYPELogic(std::vector<char*> *v)
+{
+	for(auto arg = v->begin(); arg != v->end(); ++arg)
+	{
+		auto arglen = strlen(*arg);
+		if((arglen < 3) || (std::strncmp("--", *arg, 2) != 0))
+		{
+			// We only care about double-dash options here.
+			continue;
+		}
+
+		std::string argtxt(*arg+2);
+
+		// Is this a type specification of the form "--TYPE"?
+		if(m_type_manager.IsType(argtxt))
+		{
+			// Yes, replace it with something digestible by argp: --type=TYPE.
+			std::string new_param("--type=" + argtxt);
+			delete [] *arg;
+			*arg = cpp_strdup(new_param.c_str());
+		}
+
+		// Is this a type specification of the form '--noTYPE'?
+		else if(argtxt.compare(0, 2, "no") == 0 && m_type_manager.IsType(argtxt.substr(2)))
+		{
+			// Yes, replace it with something digestible by argp: --type=noTYPE.
+			std::string new_param("--type=" + argtxt);
+			delete [] *arg;
+			*arg = cpp_strdup(new_param.c_str());
+		}
+	}
 }
