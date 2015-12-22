@@ -66,10 +66,14 @@ private:
 
 	std::map<std::string, std::vector<std::string>> m_builtin_type_map;
 
-	/// Map of file types to the associated filename extensions.
+	/// Map of file type names to the associated filename filters.
 	/// This is the active map, which will eventually be compiled into the
 	/// hash tables used at filename-scanning time.
 	std::map<std::string, std::vector<std::string>> m_active_type_map;
+
+	/// Map of file type filters which have been removed by calls to notype().
+	/// Maps to the type(s) which were specified in the notype() call(s).
+	std::unordered_multimap<std::string, std::string> m_removed_type_filters;
 
 	/// File extensions which will be examined.  Maps to file type.
 	std::unordered_multimap<std::string, std::string> m_include_extensions;
