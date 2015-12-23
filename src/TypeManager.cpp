@@ -41,6 +41,8 @@ static const std::set<Type> f_builtin_type_array =
 	{ "asm", {".asm", ".s", ".S"} },
 	{ "asp", {".asp"} },
 	{ "aspx", {".master", ".ascx", ".asmx", ".aspx", ".svc"} },
+	{ "autoconf", {".ac", ".in"} },
+	{ "automake", {".am", ".in"} },
 	{ "batch", {".bat", ".cmd"} },
 	{ "cc", {".c", ".h", ".xs"} },
 	{ "cfmx", {".cfc", ".cfm", ".cfml"} },
@@ -106,7 +108,7 @@ static const std::set<Type> f_builtin_type_array =
 	{ "yaml", {".yaml", ".yml"} },
 	// Below here are types corresponding to some of the files ack 2.14 finds as non-binary by scanning them.
 	// We'll do that at some point too, but for now just include them here.
-	{ "miscellaneous", {".qbk", ".w", ".ipp", ".patch", ".in", "configure"} }
+	{ "miscellaneous", {".qbk", ".w", ".ipp", ".patch", "configure"} }
 };
 
 
@@ -191,6 +193,12 @@ bool TypeManager::notype(const std::string& type_name)
 		return false;
 	}
 
+	// Add the filters to the removed-filters map.
+	for(auto i : it_type->second)
+	{
+		m_removed_type_filters.insert(std::make_pair(i, type_name));
+	}
+
 	// Remove the type from the active type map.
 	m_active_type_map.erase(type_name);
 
@@ -208,6 +216,15 @@ void TypeManager::CompileTypeTables()
 	{
 		for(auto j : i.second)
 		{
+			// First check if this filter spec has been removed by a call to notype().
+			// Remember that more than one type can contain the same filter spec.
+			if(m_removed_type_filters.count(j) != 0)
+			{
+				// It has, skip the insertion into the file-search-time maps.
+				continue;
+			}
+
+			// Determine the filter type and put it in the correct map.
 			if(j[0] == '.')
 			{
 				// First char is a '.', this is an extension specification.
