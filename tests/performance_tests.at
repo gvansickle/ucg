@@ -38,7 +38,7 @@ m4_define([TIME_ONE_PROG],[
 # $1 == program name.
 # $2 == search pattern.
 # $3 == params
-NOENV=$(if $(echo $1 | egrep -q 'ack'); then echo --noenv; else echo ""; fi)
+NOENV=$(if $(echo $1 | egrep -q 'ucg|ack'); then echo --noenv; else echo ""; fi)
 PREP_ONE_PROG([$1 ${NOENV}], [$2], [$3])
 AT_CHECK([time $1 ${NOENV} $2 ${BOOST_PATH} $3],
 	0,

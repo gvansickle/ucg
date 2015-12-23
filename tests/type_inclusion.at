@@ -59,3 +59,45 @@ AT_CHECK([ucg '--type=html' '--type=nocpp' ptr | wc -l],[0],[3
 ],[stderr])
 
 AT_CLEANUP
+
+
+###
+### Overlapping file type specs.
+###
+AT_SETUP([Overlapping file type specs])
+
+AT_DATA([test_file.cpp],[#include
+])
+
+AT_DATA([test_file.c],[#include
+])
+
+AT_DATA([test_file.h],[#include
+])
+
+# --type=cpp should give us 2 hits.
+AT_CHECK([ucg --noenv --type=cpp 'include' | wc -l],[0],[2
+],[stderr])
+
+# --type=nohh should give us 2 hits.
+AT_CHECK([ucg --noenv --type=nohh 'include' | wc -l],[0],[2
+],[stderr])
+
+# --type=cpp --type=nocc should give us 1 hit, in the .cpp file.
+AT_CHECK([ucg --noenv --type=cpp --type=nocc 'include' | wc -l],[0],[1
+],[stderr])
+
+# --type=nocpp --type=cc should give us 1 hit, in the .c file.
+AT_CHECK([ucg --noenv --type=nocpp --type=cc 'include' | wc -l],[0],[1
+],[stderr])
+
+# --type=nocpp --type=nocc should give us 0 hits.
+AT_CHECK([ucg --noenv --type=nocpp --type=nocc 'include' | wc -l],[0],[0
+],[stderr])
+
+# No --type= param should give us 3 hits.
+AT_CHECK([ucg --noenv 'include' | wc -l],[0],[3
+],[stderr])
+
+AT_CLEANUP
+
