@@ -650,7 +650,8 @@ void ArgParse::HandleTypeAddOrSet(const std::string& argtxt)
 		// Malformed type spec, filter field is blank.
 		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Filter field is empty.");
 	}
-	std::string type = argtxt.substr(9, first_colon-9-1);
+	std::string type = argtxt.substr(9, first_colon-9);
+	std::cerr << "TYPE=" << type << std::endl;
 	std::string filter = argtxt.substr(first_colon+1, second_colon-first_colon-1);
 	std::string filter_args = argtxt.substr(second_colon+1);
 

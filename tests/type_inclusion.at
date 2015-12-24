@@ -101,3 +101,31 @@ AT_CHECK([ucg --noenv 'include' | wc -l],[0],[3
 
 AT_CLEANUP
 
+
+###
+### User-defined file type specs.
+###
+AT_SETUP([User-defined file type specs])
+
+AT_DATA([test_file.xqz],[#include
+])
+
+AT_DATA([UserDefinedName],[#include
+])
+
+AT_DATA([test_file.7],[#include
+])
+
+# No params should give us 0 hits.
+AT_CHECK([ucg --noenv 'include' | wc -l],[0],[0
+],[stderr])
+
+# Defining all the types should give us 3 hits.
+AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName 'include' | wc -l],[0],[3
+],[stderr])
+
+# The short form "--TYPE/--noTYPE" should work on the user defined types.
+AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName --type1 'include' | wc -l],[0],[3
+],[stderr])
+
+AT_CLEANUP
