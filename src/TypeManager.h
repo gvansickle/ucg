@@ -65,6 +65,18 @@ public:
 	 */
 	bool IsType(const std::string &type) const;
 
+	void TypeAddIs(const std::string &type, const std::string &name);
+
+	void TypeAddExt(const std::string &type, const std::string &ext);
+
+	/**
+	 * Deletes #type from the m_active_type_map.
+	 *
+	 * @param type  Name of the type to delete.
+	 * @return true if #type named a type, false if it did not.
+	 */
+	bool TypeDel(const std::string &type);
+
 	void CompileTypeTables();
 
 private:

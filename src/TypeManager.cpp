@@ -210,6 +210,23 @@ bool TypeManager::IsType(const std::string& type) const
 	return m_active_type_map.count(type) != 0;
 }
 
+void TypeManager::TypeAddIs(const std::string& type, const std::string& name)
+{
+	m_active_type_map[type].push_back(name);
+}
+
+void TypeManager::TypeAddExt(const std::string& type, const std::string& ext)
+{
+	m_active_type_map[type].push_back("."+ext);
+}
+
+bool TypeManager::TypeDel(const std::string& type)
+{
+	auto num_erased = m_active_type_map.erase(type);
+
+	return num_erased > 0;
+}
+
 void TypeManager::CompileTypeTables()
 {
 	for(auto i : m_active_type_map)

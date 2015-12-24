@@ -25,6 +25,7 @@
 #include <locale>
 #include <thread>
 #include <iostream>
+#include <sstream>
 #include <system_error>
 
 #include <argp.h>
@@ -563,6 +564,12 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 			continue;
 		}
 
+		if(std::strcmp("--", *arg) == 0)
+		{
+			// This is a "--", ignore all further command-line params.
+			break;
+		}
+
 		std::string argtxt(*arg+2);
 
 		// Is this a type specification of the form "--TYPE"?
@@ -582,5 +589,88 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 			delete [] *arg;
 			*arg = cpp_strdup(new_param.c_str());
 		}
+
+		// Is this a type-add?
+		else if(argtxt.compare(0, 9, "type-add=") == 0)
+		{
+			HandleTypeAddOrSet(argtxt);
+		}
+
+		// Is this a type-set?
+		else if(argtxt.compare(0, 9, "type-set=") == 0)
+		{
+			m_type_manager.TypeDel(argtxt.substr(9));
+			HandleTypeAddOrSet(argtxt);
+		}
+
+		// Is this a type-del?
+		else if(argtxt.compare(0, 9, "type-del=") == 0)
+		{
+			// Tell the TypeManager to delete the type.
+			m_type_manager.TypeDel(argtxt.substr(9));
+		}
+	}
+}
+
+static std::vector<std::string> split(const std::string &s, char delimiter)
+{
+	std::vector<std::string> retval;
+	std::stringstream ss(s);
+	std::string element;
+
+	while(std::getline(ss, element, delimiter))
+	{
+		if(!element.empty())
+		{
+			retval.push_back(element);
+		}
+	}
+
+	// This should allow for return value optimization.
+	return retval;
+}
+
+void ArgParse::HandleTypeAddOrSet(const std::string& argtxt)
+{
+	std::string::size_type first_colon, second_colon;
+	first_colon = argtxt.find_first_of(":");
+	if(first_colon == std::string::npos)
+	{
+		// Malformed type spec.
+		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Can't find first colon.");
+	}
+	second_colon = argtxt.find_first_of(":", first_colon+1);
+	if(second_colon == std::string::npos)
+	{
+		// Malformed type spec.
+		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Can't find second colon.");
+	}
+	if(second_colon <= first_colon+1)
+	{
+		// Malformed type spec, filter field is blank.
+		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Filter field is empty.");
+	}
+	std::string type = argtxt.substr(9, first_colon-9-1);
+	std::string filter = argtxt.substr(first_colon+1, second_colon-first_colon-1);
+	std::string filter_args = argtxt.substr(second_colon+1);
+
+	if(filter == "is")
+	{
+		// filter_args is a literal filename.
+		m_type_manager.TypeAddIs(type, filter_args);
+	}
+	else if(filter == "ext")
+	{
+		// filter_args is a list of one or more comma-separated filename extensions.
+		auto exts = split(filter_args,',');
+		for(auto ext : exts)
+		{
+			m_type_manager.TypeAddExt(type, ext);
+		}
+	}
+	else
+	{
+		// Unsupported filter type.
+		throw ArgParseException("Unsupported filter type \"" + filter + "\" in type spec \"--" + argtxt + "\".");
 	}
 }
