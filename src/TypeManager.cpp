@@ -177,6 +177,22 @@ bool TypeManager::type(const std::string& type_name)
 	}
 	m_first_type_has_been_seen = true;
 
+	// Remove the filters from the removed-filters map, if they have been added.
+	/// @note Ack doesn't appear to do this.  If you give it a command line such as:
+	/// ack --noenv --type=nocpp --type=nocc --type=hh '#endif' ~/src/boost_1_58_0
+	/// you'll get no hits even though there are .h files in the directory.
+	/// Ag doesn't appear to support more than one type spec at a time, an no --noTYPEs, so
+	/// doesn't run into this issue.  I think the correct behavior here is to 'un-remove'
+	/// any removed filters in this situation, such that:
+	/// ucg --noenv --type=nocpp --type=nocc --type=hh '#endif' ~/src/boost_1_58_0
+	/// and
+	/// ucg --noenv --type=hh '#endif' ~/src/boost_1_58_0
+	/// give the same results.
+	for(auto i : it_type->second)
+	{
+		m_removed_type_filters.erase(i);
+	}
+
 	// Add the type to the active type map.
 	m_active_type_map.insert(*it_type);
 
