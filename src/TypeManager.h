@@ -84,7 +84,10 @@ private:
 	/// Flag to keep track of the first call to type().
 	bool m_first_type_has_been_seen = { false };
 
-	std::map<std::string, std::vector<std::string>> m_builtin_type_map;
+	/// Map of file type names to the associated filename filters.
+	/// This contains both built-in types and user-defined types created by TypeAdd*().
+	/// Both built-in and user types can be removed with TypeDel().
+	std::map<std::string, std::vector<std::string>> m_builtin_and_user_type_map;
 
 	/// Map of file type names to the associated filename filters.
 	/// This is the active map, which will eventually be compiled into the

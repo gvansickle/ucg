@@ -117,7 +117,7 @@ TypeManager::TypeManager()
 	// Populate the type map with the built-in defaults.
 	for(auto t : f_builtin_type_array)
 	{
-		m_builtin_type_map[t.m_type_name] = t.m_type_extensions;
+		m_builtin_and_user_type_map[t.m_type_name] = t.m_type_extensions;
 		m_active_type_map[t.m_type_name] = t.m_type_extensions;
 	}
 }
@@ -162,9 +162,9 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const
 
 bool TypeManager::type(const std::string& type_name)
 {
-	auto it_type = m_builtin_type_map.find(type_name);
+	auto it_type = m_builtin_and_user_type_map.find(type_name);
 
-	if(it_type == m_builtin_type_map.end())
+	if(it_type == m_builtin_and_user_type_map.end())
 	{
 		// No such type currently is defined.
 		return false;
@@ -201,9 +201,9 @@ bool TypeManager::type(const std::string& type_name)
 
 bool TypeManager::notype(const std::string& type_name)
 {
-	auto it_type = m_builtin_type_map.find(type_name);
+	auto it_type = m_builtin_and_user_type_map.find(type_name);
 
-	if(it_type == m_builtin_type_map.end())
+	if(it_type == m_builtin_and_user_type_map.end())
 	{
 		// No such type currently is defined.
 		return false;
@@ -223,22 +223,25 @@ bool TypeManager::notype(const std::string& type_name)
 
 bool TypeManager::IsType(const std::string& type) const
 {
-	return m_active_type_map.count(type) != 0;
+	return m_builtin_and_user_type_map.count(type) != 0;
 }
 
 void TypeManager::TypeAddIs(const std::string& type, const std::string& name)
 {
+	m_builtin_and_user_type_map[type].push_back(name);
 	m_active_type_map[type].push_back(name);
 }
 
 void TypeManager::TypeAddExt(const std::string& type, const std::string& ext)
 {
+	m_builtin_and_user_type_map[type].push_back("."+ext);
 	m_active_type_map[type].push_back("."+ext);
 }
 
 bool TypeManager::TypeDel(const std::string& type)
 {
-	auto num_erased = m_active_type_map.erase(type);
+	m_active_type_map.erase(type);
+	auto num_erased = m_builtin_and_user_type_map.erase(type);
 
 	return num_erased > 0;
 }

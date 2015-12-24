@@ -129,7 +129,7 @@ AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefined
 ],[stderr])
 
 # The short form "--TYPE/--noTYPE" should work on the user defined types.
-AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName --type1 'include' | wc -l],[0],[3
+AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName --type1 'include' | wc -l],[0],[2
 ],[stderr])
 
 AT_CLEANUP
