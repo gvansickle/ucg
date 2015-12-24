@@ -87,12 +87,16 @@ AT_CHECK([ucg --noenv --type=nohh 'include' | wc -l],[0],[2
 AT_CHECK([ucg --noenv --type=cpp --type=nocc 'include' | wc -l],[0],[1
 ],[stderr])
 
-# --type=nocpp --type=cc should give us 1 hit, in the .c file.
-AT_CHECK([ucg --noenv --type=nocpp --type=cc 'include' | wc -l],[0],[1
+# --type=nocpp --type=cc should give us 2 hits, in the .c and .h files.
+AT_CHECK([ucg --noenv --type=nocpp --type=cc 'include' | wc -l],[0],[2
 ],[stderr])
 
 # --type=nocpp --type=nocc should give us 0 hits.
 AT_CHECK([ucg --noenv --type=nocpp --type=nocc 'include' | wc -l],[0],[0
+],[stderr])
+
+# --type=nocpp --type=nocc --type=hh should give us 1 hit, the same as if we only specified --type=hh.
+AT_CHECK([ucg --noenv --type=nocpp --type=nocc --type=hh 'include' | wc -l],[0],[1
 ],[stderr])
 
 # No --type= param should give us 3 hits.
