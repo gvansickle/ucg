@@ -120,16 +120,27 @@ AT_DATA([UserDefinedName],[#include
 AT_DATA([test_file.7],[#include
 ])
 
-# No params should give us 0 hits.
-AT_CHECK([ucg --noenv 'include' | wc -l],[0],[0
+AT_DATA([test_file.h],[#include
+])
+
+# No params should give us 1 hit in the .h file.
+AT_CHECK([ucg --noenv 'include' | wc -l],[0],[1
 ],[stderr])
 
-# Defining all the types should give us 3 hits.
-AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName 'include' | wc -l],[0],[3
+# Defining two new types, and not specifying a --type=TYPE, should give us 4 hits.
+AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName 'include' | wc -l],[0],[4
 ],[stderr])
 
-# The short form "--TYPE/--noTYPE" should work on the user defined types.
+# The short form "--TYPE" should work on the user defined types.
 AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName --type1 'include' | wc -l],[0],[2
+],[stderr])
+
+# The short form "--noTYPE" should work on the user defined types.  This should give us 2 hits, in the .h file and the UserDefinedName file.
+AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName --notype1 'include' | wc -l],[0],[2
+],[stderr])
+
+# "--type-add" should work on the user defined types.
+AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-add=type1:is:UserDefinedName --type1 'include' | wc -l],[0],[3
 ],[stderr])
 
 AT_CLEANUP
