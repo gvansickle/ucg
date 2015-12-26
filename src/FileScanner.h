@@ -20,7 +20,7 @@
 #ifndef FILESCANNER_H_
 #define FILESCANNER_H_
 
-
+#include <stdexcept>
 #include <string>
 #include <regex>
 
@@ -32,6 +32,15 @@
 
 #include "sync_queue_impl_selector.h"
 #include "MatchList.h"
+
+
+/**
+ * FileScanner will throw this if it runs into trouble compiling the regex.
+ */
+struct FileScannerException : public std::runtime_error
+{
+	FileScannerException(const std::string &message) : std::runtime_error(message) {};
+};
 
 
 /**
