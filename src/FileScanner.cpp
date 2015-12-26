@@ -83,7 +83,7 @@ FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 		/// 			 out and I don't know how widespread the issue is, we'll do it the old-fashioned way.
 		std::ostringstream ss;
 		ss << error_offset;
-		throw FileScannerException("Compilation of regex \"" + regex + "\" failed at offset " + ss.str() + ": " + error);
+		throw FileScannerException(std::string("Compilation of regex \"") + regex + "\" failed at offset " + ss.str() + ": " + error);
 	}
 
 	m_pcre_extra = pcre_study(m_pcre_regex, PCRE_STUDY_JIT_COMPILE, &error);
