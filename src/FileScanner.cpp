@@ -53,6 +53,9 @@ FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 	int error_offset;
 	int options = 0;
 
+	// For now, we won't support capturing.  () will be treated as (?:).
+	options = PCRE_NO_AUTO_CAPTURE;
+
 	if(ignore_case)
 	{
 		// Ignore case while matching.
