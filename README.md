@@ -2,6 +2,25 @@
 
 UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is an extremely fast grep-like tool specialized for searching large bodies of source code.
 
+Table of Contents
+=================
+
+  * [UniversalCodeGrep](#universalcodegrep)
+    * [License](#license)
+    * [Installation](#installation)
+      * [Prerequisites](#prerequisites)
+      * [Supported OSes and Distributions](#supported-oses-and-distributions)
+    * [Usage](#usage)
+      * [Command Line Options](#command-line-options)
+        * [Searching](#searching)
+        * [File presentation](#file-presentation)
+        * [File inclusion/exclusion:](#file-inclusionexclusion)
+        * [File type specification:](#file-type-specification)
+        * [Miscellaneous:](#miscellaneous)
+        * [Informational options:](#informational-options)
+    * [Author](#author)
+
+
 `ucg` is written in C++ and takes advantage of the C++11 and newer facilities of the language to reduce reliance on non-standard libraries, increase portability, and increase scanning speed.
 
 As a consequence of `ucg`'s use of these facilities and its overall design for maximum concurrency and speed, `ucg` is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with `ucg` 0.2.0, [`ag`](http://geoff.greer.fm/ag/) 0.30.0, and `ack` 2.14 produces the following results:
