@@ -23,7 +23,7 @@ AT_SETUP([Error code with bad search path])
 
 # Note that the stdout match text here has a literal '\n' in it due to the line break; don't try
 # to put this on one line.
-AT_CHECK([ucg 'a' /thisDirDoesntExist], [2], [ucg: "/thisDirDoesntExist": No such file or directory
+AT_CHECK([ucg 'a' /thisDirDoesntExist], [1], [ucg: "/thisDirDoesntExist": No such file or directory
 ], [stderr])
 
 AT_CLEANUP
