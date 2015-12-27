@@ -27,3 +27,13 @@ AT_CHECK([ucg 'a' /thisDirDoesntExist], [1], [ucg: "/thisDirDoesntExist": No suc
 ], [stderr])
 
 AT_CLEANUP
+
+
+###
+### Check for proper handling of a bad regex.
+###
+AT_SETUP([Error code with bad regex])
+
+AT_CHECK([ucg '*'], [255], [stdout], [stderr])
+
+AT_CLEANUP 

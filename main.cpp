@@ -67,14 +67,16 @@ int main(int argc, char **argv)
 		// Set up the globber.
 		Globber g(ap.m_paths, tm, dim, ap.m_recurse, q);
 
-		// Set up the output task.
+		// Set up the output task object.
 		OutputTask output_task(ap.m_color, out_q);
+
+		// Create the FileScanner object.
+		FileScanner fs(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp, ap.m_pattern_is_literal);
 
 		// Start the output task thread.
 		std::thread ot {&OutputTask::Run, &output_task};
 
-		// Create the FileScanner object and start the scanner threads.
-		FileScanner fs(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp, ap.m_pattern_is_literal);
+		// Start the scanner threads.
 		for(int t=0; t<ap.m_jobs; ++t)
 		{
 			std::thread fst {&FileScanner::Run, &fs};
@@ -114,6 +116,11 @@ int main(int argc, char **argv)
 		}
 
 		return 0;
+	}
+	catch(const FileScannerException &e)
+	{
+		std::cerr << "ucg: Error during regex parsing: " << e.what() << std::endl;
+		return 255;
 	}
 	catch(const ArgParseException &e)
 	{
