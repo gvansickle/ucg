@@ -112,7 +112,9 @@ int main(int argc, char **argv)
 		if(g.Error())
 		{
 			std::cout << "ucg: \"" << g.ErrorPath() << "\": No such file or directory" << std::endl;
-			return 1;
+			// Ack returns 1 in this situation, which conflicts with the "matches were found" return value.
+			// grep returns 2 here, which I think makes more sense.
+			return 2;
 		}
 
 		return 0;

@@ -89,6 +89,23 @@ done
 
 AT_CLEANUP
 
+###
+### Degenerate regex, exponential (O(2^n), where n is match string size)
+###
+AT_SETUP([Boost: search with degenerate regex])
+
+# Skip this test if we can't find the Boost source tree.
+AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+
+AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
+
+# Loop through the programs we're comparing performance with.
+for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
+	TIME_ONE_PROG(["${PROGNAME}"], ['(O+O+)+S'])
+done
+
+AT_CLEANUP
+
 
 AT_SETUP([Boost: search with --ignore-dir=doc])
 
