@@ -2,10 +2,11 @@
 
 UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is an extremely fast grep-like tool specialized for searching large bodies of source code.
 
-Table of Contents
-=================
+# Table of Contents
 
   * [UniversalCodeGrep](#universalcodegrep)
+  * [Table of Contents](#table-of-contents)
+  * [Introduction](#introduction)
     * [License](#license)
     * [Installation](#installation)
       * [Prerequisites](#prerequisites)
@@ -20,10 +21,11 @@ Table of Contents
         * [Informational options:](#informational-options)
     * [Author](#author)
 
+# Introduction
 
-`ucg` is written in C++ and takes advantage of the C++11 and newer facilities of the language to reduce reliance on non-standard libraries, increase portability, and increase scanning speed.
+`ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to reduce reliance on non-standard libraries, increase portability, and increase scanning speed.  Regex scanning is provided by the [PCRE library](http://www.pcre.org/), with its (JIT compilation feature)[http://www.pcre.org/original/doc/html/pcrejit.html] providing a huge performance gain on most platforms.
 
-As a consequence of `ucg`'s use of these facilities and its overall design for maximum concurrency and speed, `ucg` is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with `ucg` 0.2.0, [`ag`](http://geoff.greer.fm/ag/) 0.30.0, and `ack` 2.14 produces the following results:
+As a consequence of its use of these facilities and its overall design for maximum concurrency and speed, `ucg` is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with `ucg` 0.2.0, [`ag`](http://geoff.greer.fm/ag/) 0.30.0, and `ack` 2.14 produces the following results:
 
 | Command | Approximate Real Time |
 |---------|-----------------------|
