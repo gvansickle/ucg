@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <set>
+#include <iomanip>
 
 struct Type
 {
@@ -280,3 +281,50 @@ void TypeManager::CompileTypeTables()
 	}
 }
 
+void TypeManager::PrintTypesForHelp(std::ostream& s) const
+{
+	for(auto t : m_builtin_and_user_type_map)
+	{
+		s << "  " << std::setw(15) << std::left << t.first;
+
+		std::string extensions, names;
+		for(auto e : t.second)
+		{
+			if(e[0] == '.')
+			{
+				// It's an extension.
+				if(extensions.empty())
+				{
+					extensions += e;
+				}
+				else
+				{
+					extensions += " " + e;
+				}
+			}
+			else if(e[0] == '/')
+			{
+				/// @todo First-line regex, currently not supported.
+			}
+			else
+			{
+				// It's a literal filename.
+				if(names.empty())
+				{
+					names += e;
+				}
+				else
+				{
+					names += " " + e;
+				}
+			}
+		}
+		s << extensions;
+		if(!extensions.empty() && !names.empty())
+		{
+			s << "; ";
+		}
+		s << names;
+		s << std::endl;
+	}
+}

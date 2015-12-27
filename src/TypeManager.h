@@ -20,6 +20,7 @@
 #ifndef TYPEMANAGER_H_
 #define TYPEMANAGER_H_
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <map>
@@ -78,6 +79,8 @@ public:
 	bool TypeDel(const std::string &type);
 
 	void CompileTypeTables();
+
+	void PrintTypesForHelp(std::ostream &s) const;
 
 private:
 

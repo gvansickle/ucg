@@ -77,6 +77,7 @@ static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 #define OPT_TYPE_SET		7
 #define OPT_TYPE_ADD		8
 #define OPT_TYPE_DEL		9
+#define OPT_HELP_TYPES		10
 ///@}
 
 /// Status code to use for a bad parameter which terminates the program via argp_failure().
@@ -112,6 +113,9 @@ static struct argp_option options[] = {
 		{0,0,0,0, "Miscellaneous:" },
 		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc files."},
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
+		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
+		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
+		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
 		{ 0 }
 	};
 
@@ -172,6 +176,11 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case OPT_NOENV:
 		// The --noenv option is handled specially outside of the argp parser.
+		break;
+	case OPT_HELP_TYPES:
+		// Consume the rest of the options/args.
+		state->next = state->argc;
+		arguments->PrintHelpTypes();
 		break;
 	case 'j':
 		if(atoi(arg) < 1)
@@ -304,6 +313,15 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		delete [] c;
 	}
+}
+
+
+void ArgParse::PrintHelpTypes() const
+{
+	std::cout << "ucg recognizes the following file types:" << std::endl;
+	std::cout << std::endl;
+	m_type_manager.PrintTypesForHelp(std::cout);
+	std::cout << std::endl;
 }
 
 void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv)
@@ -629,6 +647,7 @@ static std::vector<std::string> split(const std::string &s, char delimiter)
 	// This should allow for return value optimization.
 	return retval;
 }
+
 
 void ArgParse::HandleTypeAddOrSet(const std::string& argtxt)
 {

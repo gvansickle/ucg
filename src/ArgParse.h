@@ -63,6 +63,8 @@ private:
 	/// The callback which receives the parsed options.
 	static error_t parse_opt (int key, char *arg, struct argp_state *state);
 
+	void PrintHelpTypes() const;
+
 	/// Get the home directory of the user.  Returns an empty string if no
 	/// home dir can be found.
 	std::string GetUserHomeDir() const;
