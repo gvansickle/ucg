@@ -93,9 +93,7 @@ Version 0.2.0 of `ucg` supports a significant subset of the options supported by
 #### File type specification:
 | Option | Description |
 |----------------------|------------------------------------------|
-| `--type-add=TYPE:FILTER:FILTERARGS` | Files FILTERed with the given FILTERARGS are |
-|                                               | treated as belonging to type TYPE.  Any existing |
-                             definition of type TYPE is appended to. |
+| `--type-add=TYPE:FILTER:FILTERARGS` | Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is appended to. |
 | `--type-del=TYPE`                   | Remove any existing definition of type TYPE. |
 | `--type-set=TYPE:FILTER:FILTERARGS` | Files FILTERed with the given FILTERARGS are
                              treated as belonging to type TYPE.  Any existing
