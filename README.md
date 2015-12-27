@@ -2,11 +2,12 @@
 
 UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is an extremely fast grep-like tool specialized for searching large bodies of source code.
 
-# Table of Contents
+## Table of Contents
 
   * [UniversalCodeGrep](#universalcodegrep)
-  * [Table of Contents](#table-of-contents)
-  * [Introduction](#introduction)
+    * [Table of Contents](#table-of-contents)
+    * [Introduction](#introduction)
+      * [Speed](#speed)
     * [License](#license)
     * [Installation](#installation)
       * [Prerequisites](#prerequisites)
@@ -19,11 +20,16 @@ UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is a
         * [File type specification:](#file-type-specification)
         * [Miscellaneous:](#miscellaneous)
         * [Informational options:](#informational-options)
+    * [.ucgrc Files](#ucgrc-files)
+    * [User-Defined File Types](#user-defined-file-types)
     * [Author](#author)
 
-# Introduction
+## Introduction
 
-`ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to reduce reliance on non-standard libraries, increase portability, and increase scanning speed.  Regex scanning is provided by the [PCRE library](http://www.pcre.org/), with its [JIT compilation feature](http://www.pcre.org/original/doc/html/pcrejit.html) providing a huge performance gain on most platforms.
+UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with [Ack](http://beyondgrep.com/), to some extent with [`ag`](http://geoff.greer.fm/ag/), and where appropriate `grep`.  Search patterns are specified as PCRE regexes. 
+
+### Speed
+`ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the [PCRE library](http://www.pcre.org/), with its [JIT compilation feature](http://www.pcre.org/original/doc/html/pcrejit.html) providing a huge performance gain on most platforms.
 
 As a consequence of its use of these facilities and its overall design for maximum concurrency and speed, `ucg` is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with `ucg` 0.2.0, [`ag`](http://geoff.greer.fm/ag/) 0.30.0, and `ack` 2.14 produces the following results:
 
@@ -132,6 +138,9 @@ Version 0.2.0 of `ucg` supports a significant subset of the options supported by
 | `--usage`                         | give a short usage message          |
 | `-V, --version`                   | print program version               |
 
+## .ucgrc Files
+
+## User-Defined File Types
 
 ## Author
 
