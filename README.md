@@ -11,6 +11,8 @@ UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is a
     * [License](#license)
     * [Installation](#installation)
       * [Prerequisites](#prerequisites)
+        * [gcc version 4.8 or greater.](#gcc-version-48-or-greater)
+        * [pcre version 8.2 or greater.](#pcre-version-82-or-greater)
       * [Supported OSes and Distributions](#supported-oses-and-distributions)
     * [Usage](#usage)
       * [Command Line Options](#command-line-options)
@@ -24,6 +26,8 @@ UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is a
       * [Format](#format)
       * [Location and Read Order](#location-and-read-order)
     * [User-Defined File Types](#user-defined-file-types)
+      * [Extension List Filter](#extension-list-filter)
+      * [Literal Filename Filter](#literal-filename-filter)
     * [Author](#author)
 
 ## Introduction
@@ -75,11 +79,18 @@ This should be available from your Linux distro.
 
 ### Supported OSes and Distributions
 
-UniversalCodeGrep should build and function anywhere there's a `gcc` 4.9 or greater available.  It has been tested on the following OSes/distros:
+UniversalCodeGrep should build and function anywhere the prerequisites are available.  It has been built and tested on the following OSes/distros:
 
 - Linux
-  - Ubuntu 15.04 (with gcc 4.9.2, the current default compiler on this distro)
-- Windows 7 + Cygwin 64-bit (with gcc 4.9.3, the current default compiler on this distro)
+  - Ubuntu 15.04
+  - CentOS 7
+  - Fedora 22
+  - Fedora 23
+  - RHEL 7
+  - SLE 12
+  - openSUSE 13.2
+  - openSUSE Leap 42.1
+- Windows 7 + Cygwin 64-bit (Note however that speed here is comparable to `ag`)
 
 ## Usage
 
@@ -89,7 +100,7 @@ Invoking `ucg` is the same as with `ack` or `ag`:
 ucg [OPTION...] PATTERN [FILES OR DIRECTORIES]
 ```
 
-...where `PATTERN` is an ECMAScript-compatible regular expression.
+...where `PATTERN` is an PCRE-compatible regular expression.
 
 If no `FILES OR DIRECTORIES` are specified, searching starts in the current directory.
 
@@ -165,9 +176,19 @@ Options read later will override earlier options.
 
 ## User-Defined File Types
 
-`ucg` supports user-defined file types with the `--type-set=TYPE:FILTER:FILTERARGS` and `--type-add=TYPE:FILTER:FILTERARGS` command-line options.  Only two FILTERs are currently supported, `is` (literal filename) and `ext` (extension list).
+`ucg` supports user-defined file types with the `--type-set=TYPE:FILTER:FILTERARGS` and `--type-add=TYPE:FILTER:FILTERARGS` command-line options.  Only two FILTERs are currently supported, `ext` (extension list) and `is` (literal filename).
 
+### Extension List Filter
 
+The extension list filter allows you to specify a comma-separated list of file extensions which are to be considered as belonging to file type TYPE.
+Example:
+`--type-set=type1:ext:abc,xqz,def`
+
+### Literal Filename Filter
+
+The literal filename filter simply specifies a single literal filename which is to be considered as belonging to file type TYPE.
+Example:
+`--type-add=autoconf:is:configure.ac`
 
 ## Author
 
