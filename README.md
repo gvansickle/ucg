@@ -153,7 +153,7 @@ Version 0.2.0 of `ucg` supports a significant subset of the options supported by
 | `--usage`                         | give a short usage message          |
 | `-V, --version`                   | print program version               |
 
-## .ucgrc Files
+## Configuration (.ucgrc) Files
 
 UniversalCodeGrep supports configuration files with the name `.ucgrc`, in which command-line options can be stored on a per-user and per-directory-hierarchy basis.
 
