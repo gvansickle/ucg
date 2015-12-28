@@ -21,12 +21,14 @@ UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is a
         * [Miscellaneous:](#miscellaneous)
         * [Informational options:](#informational-options)
     * [.ucgrc Files](#ucgrc-files)
+      * [Format](#format)
+      * [Location and Read Order](#location-and-read-order)
     * [User-Defined File Types](#user-defined-file-types)
     * [Author](#author)
 
 ## Introduction
 
-UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with [Ack](http://beyondgrep.com/), to some extent with [`ag`](http://geoff.greer.fm/ag/), and where appropriate `grep`.  Search patterns are specified as PCRE regexes. 
+UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with [Ack](http://beyondgrep.com/), to some extent with [`ag`](http://geoff.greer.fm/ag/), and where appropriate with `grep`.  Search patterns are specified as PCRE regexes. 
 
 ### Speed
 `ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the [PCRE library](http://www.pcre.org/), with its [JIT compilation feature](http://www.pcre.org/original/doc/html/pcrejit.html) providing a huge performance gain on most platforms.
@@ -99,8 +101,6 @@ Version 0.2.0 of `ucg` supports a significant subset of the options supported by
 | `-Q, --literal`      |     Treat all characters in PATTERN as literal. |
 | `-w, --word-regexp`  |      PATTERN must match a complete word.        |
 
-
-
 #### File presentation
 
 | Option | Description |
@@ -139,6 +139,16 @@ Version 0.2.0 of `ucg` supports a significant subset of the options supported by
 | `-V, --version`                   | print program version               |
 
 ## .ucgrc Files
+
+UniversalCodeGrep supports configuration files with the name `.ucgrc`, in which command-line options can be stored on a per-user and per-directory-hierarchy basis.
+
+### Format
+
+`.ucgrc` files are text files with a simple format.  Each line of text can be either:
+1. A single-line comment.  The line must start with a `#` and the comment continues for the rest of the line.
+2. A command-line parameter.  This must be exactly as if it was given on the command line.
+
+### Location and Read Order
 
 ## User-Defined File Types
 
