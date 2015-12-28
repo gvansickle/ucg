@@ -145,10 +145,17 @@ UniversalCodeGrep supports configuration files with the name `.ucgrc`, in which 
 ### Format
 
 `.ucgrc` files are text files with a simple format.  Each line of text can be either:
+
 1. A single-line comment.  The line must start with a `#` and the comment continues for the rest of the line.
 2. A command-line parameter.  This must be exactly as if it was given on the command line.
 
 ### Location and Read Order
+
+When `ucg` is invoked, it looks for command-line options from the following locations in the following order:
+
+1. The `.ucgrc` file in the user's `$HOME` directory, if any.
+2. The first `.ucgrc` file found, if any, by walking up the component directories of the current working directory.  This traversal stops at either the user's `$HOME` directory or the root directory.  This is called the project config file, and is intended to live in the top-level directory of a project directory hierarchy.
+3. The command line itself.
 
 ## User-Defined File Types
 
