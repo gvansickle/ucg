@@ -65,9 +65,13 @@ This will install the `ucg` executable in `/usr/local/bin`.  If you wish to inst
 
 ### Prerequisites
 
-- `gcc` version 4.9 or greater.
+#### `gcc` version 4.8 or greater.
 
-Versions of `gcc` prior to 4.9 are known to ship with an incomplete implementation of the standard `<regex>` library.  Since `ucg` depends on this C++11 feature, `configure` attempts to detect a broken `<regex>` at configure-time.
+Versions of `gcc` prior to 4.8 do not have sufficiently complete C++11 support to build `ucg`.
+
+#### `pcre` version 8.2 or greater.
+
+This should be available from your Linux distro.
 
 ### Supported OSes and Distributions
 
@@ -160,6 +164,8 @@ When `ucg` is invoked, it looks for command-line options from the following loca
 Options read later will override earlier options.
 
 ## User-Defined File Types
+
+`ucg` supports user-defined file types with the `--type-set=TYPE:FILTER:FILTERARGS` and `--type-add=TYPE:FILTER:FILTERARGS` command-line options.  Only two FILTERs are currently supported, `is` (literal filename) and `ext` (extension list).
 
 
 
