@@ -115,7 +115,7 @@ Version 0.2.0 of `ucg` supports a significant subset of the options supported by
 | `--noignore-dir=name, --noignore-directory=name` | Do not exclude directories with this name. |
 | `-n, --no-recurse`                               | Do not recurse into subdirectories.        |
 | `-r, -R, --recurse`                              | Recurse into subdirectories (default: on). |
-| `--type=[no]TYPE`                                | Include only [exclude all] TYPE files.     |
+| `--type=[no]TYPE`                                | Include only [exclude all] TYPE files.  Types may also be specified as `--[no]TYPE`.     |
 
 #### File type specification:
 | Option | Description |
@@ -157,7 +157,11 @@ When `ucg` is invoked, it looks for command-line options from the following loca
 2. The first `.ucgrc` file found, if any, by walking up the component directories of the current working directory.  This traversal stops at either the user's `$HOME` directory or the root directory.  This is called the project config file, and is intended to live in the top-level directory of a project directory hierarchy.
 3. The command line itself.
 
+Options read later will override earlier options.
+
 ## User-Defined File Types
+
+
 
 ## Author
 
