@@ -87,12 +87,16 @@ AT_CHECK([ucg --noenv --type=nohh 'include' | wc -l],[0],[2
 AT_CHECK([ucg --noenv --type=cpp --type=nocc 'include' | wc -l],[0],[1
 ],[stderr])
 
-# --type=nocpp --type=cc should give us 1 hit, in the .c file.
-AT_CHECK([ucg --noenv --type=nocpp --type=cc 'include' | wc -l],[0],[1
+# --type=nocpp --type=cc should give us 2 hits, in the .c and .h files.
+AT_CHECK([ucg --noenv --type=nocpp --type=cc 'include' | wc -l],[0],[2
 ],[stderr])
 
 # --type=nocpp --type=nocc should give us 0 hits.
 AT_CHECK([ucg --noenv --type=nocpp --type=nocc 'include' | wc -l],[0],[0
+],[stderr])
+
+# --type=nocpp --type=nocc --type=hh should give us 1 hit, the same as if we only specified --type=hh.
+AT_CHECK([ucg --noenv --type=nocpp --type=nocc --type=hh 'include' | wc -l],[0],[1
 ],[stderr])
 
 # No --type= param should give us 3 hits.
@@ -101,3 +105,42 @@ AT_CHECK([ucg --noenv 'include' | wc -l],[0],[3
 
 AT_CLEANUP
 
+
+###
+### User-defined file type specs.
+###
+AT_SETUP([User-defined file type specs])
+
+AT_DATA([test_file.xqz],[#include
+])
+
+AT_DATA([UserDefinedName],[#include
+])
+
+AT_DATA([test_file.7],[#include
+])
+
+AT_DATA([test_file.h],[#include
+])
+
+# No params should give us 1 hit in the .h file.
+AT_CHECK([ucg --noenv 'include' | wc -l],[0],[1
+],[stderr])
+
+# Defining two new types, and not specifying a --type=TYPE, should give us 4 hits.
+AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName 'include' | wc -l],[0],[4
+],[stderr])
+
+# The short form "--TYPE" should work on the user defined types.
+AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName --type1 'include' | wc -l],[0],[2
+],[stderr])
+
+# The short form "--noTYPE" should work on the user defined types.  This should give us 2 hits, in the .h file and the UserDefinedName file.
+AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName --notype1 'include' | wc -l],[0],[2
+],[stderr])
+
+# "--type-add" should work on the user defined types.
+AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-add=type1:is:UserDefinedName --type1 'include' | wc -l],[0],[3
+],[stderr])
+
+AT_CLEANUP

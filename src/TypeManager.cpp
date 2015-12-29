@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <set>
+#include <iomanip>
 
 struct Type
 {
@@ -117,7 +118,7 @@ TypeManager::TypeManager()
 	// Populate the type map with the built-in defaults.
 	for(auto t : f_builtin_type_array)
 	{
-		m_builtin_type_map[t.m_type_name] = t.m_type_extensions;
+		m_builtin_and_user_type_map[t.m_type_name] = t.m_type_extensions;
 		m_active_type_map[t.m_type_name] = t.m_type_extensions;
 	}
 }
@@ -162,9 +163,9 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const
 
 bool TypeManager::type(const std::string& type_name)
 {
-	auto it_type = m_builtin_type_map.find(type_name);
+	auto it_type = m_builtin_and_user_type_map.find(type_name);
 
-	if(it_type == m_builtin_type_map.end())
+	if(it_type == m_builtin_and_user_type_map.end())
 	{
 		// No such type currently is defined.
 		return false;
@@ -177,6 +178,22 @@ bool TypeManager::type(const std::string& type_name)
 	}
 	m_first_type_has_been_seen = true;
 
+	// Remove the filters from the removed-filters map, if they have been added.
+	/// @note Ack doesn't appear to do this.  If you give it a command line such as:
+	/// ack --noenv --type=nocpp --type=nocc --type=hh '#endif' ~/src/boost_1_58_0
+	/// you'll get no hits even though there are .h files in the directory.
+	/// Ag doesn't appear to support more than one type spec at a time, an no --noTYPEs, so
+	/// doesn't run into this issue.  I think the correct behavior here is to 'un-remove'
+	/// any removed filters in this situation, such that:
+	/// ucg --noenv --type=nocpp --type=nocc --type=hh '#endif' ~/src/boost_1_58_0
+	/// and
+	/// ucg --noenv --type=hh '#endif' ~/src/boost_1_58_0
+	/// give the same results.
+	for(auto i : it_type->second)
+	{
+		m_removed_type_filters.erase(i);
+	}
+
 	// Add the type to the active type map.
 	m_active_type_map.insert(*it_type);
 
@@ -185,9 +202,9 @@ bool TypeManager::type(const std::string& type_name)
 
 bool TypeManager::notype(const std::string& type_name)
 {
-	auto it_type = m_builtin_type_map.find(type_name);
+	auto it_type = m_builtin_and_user_type_map.find(type_name);
 
-	if(it_type == m_builtin_type_map.end())
+	if(it_type == m_builtin_and_user_type_map.end())
 	{
 		// No such type currently is defined.
 		return false;
@@ -203,6 +220,31 @@ bool TypeManager::notype(const std::string& type_name)
 	m_active_type_map.erase(type_name);
 
 	return true;
+}
+
+bool TypeManager::IsType(const std::string& type) const
+{
+	return m_builtin_and_user_type_map.count(type) != 0;
+}
+
+void TypeManager::TypeAddIs(const std::string& type, const std::string& name)
+{
+	m_builtin_and_user_type_map[type].push_back(name);
+	m_active_type_map[type].push_back(name);
+}
+
+void TypeManager::TypeAddExt(const std::string& type, const std::string& ext)
+{
+	m_builtin_and_user_type_map[type].push_back("."+ext);
+	m_active_type_map[type].push_back("."+ext);
+}
+
+bool TypeManager::TypeDel(const std::string& type)
+{
+	m_active_type_map.erase(type);
+	auto num_erased = m_builtin_and_user_type_map.erase(type);
+
+	return num_erased > 0;
 }
 
 void TypeManager::CompileTypeTables()
@@ -236,5 +278,53 @@ void TypeManager::CompileTypeTables()
 				m_included_literal_filenames.emplace(j, i.first);
 			}
 		}
+	}
+}
+
+void TypeManager::PrintTypesForHelp(std::ostream& s) const
+{
+	for(auto t : m_builtin_and_user_type_map)
+	{
+		s << "  " << std::setw(15) << std::left << t.first;
+
+		std::string extensions, names;
+		for(auto e : t.second)
+		{
+			if(e[0] == '.')
+			{
+				// It's an extension.
+				if(extensions.empty())
+				{
+					extensions += e;
+				}
+				else
+				{
+					extensions += " " + e;
+				}
+			}
+			else if(e[0] == '/')
+			{
+				/// @todo First-line regex, currently not supported.
+			}
+			else
+			{
+				// It's a literal filename.
+				if(names.empty())
+				{
+					names += e;
+				}
+				else
+				{
+					names += " " + e;
+				}
+			}
+		}
+		s << extensions;
+		if(!extensions.empty() && !names.empty())
+		{
+			s << "; ";
+		}
+		s << names;
+		s << std::endl;
 	}
 }

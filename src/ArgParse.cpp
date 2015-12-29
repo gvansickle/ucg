@@ -25,6 +25,7 @@
 #include <locale>
 #include <thread>
 #include <iostream>
+#include <sstream>
 #include <system_error>
 
 #include <argp.h>
@@ -73,6 +74,10 @@ static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 #define OPT_NOIGNORE_DIR     4
 #define OPT_TYPE			5
 #define OPT_NOENV			6
+#define OPT_TYPE_SET		7
+#define OPT_TYPE_ADD		8
+#define OPT_TYPE_DEL		9
+#define OPT_HELP_TYPES		10
 ///@}
 
 /// Status code to use for a bad parameter which terminates the program via argp_failure().
@@ -100,10 +105,17 @@ static struct argp_option options[] = {
 		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
-		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files."},
+		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
+		{0,0,0,0, "File type specification:"},
+		{"type-set", OPT_TYPE_SET, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
+		{"type-add", OPT_TYPE_ADD, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is appended to."},
+		{"type-del", OPT_TYPE_DEL, "TYPE", 0, "Remove any existing definition of type TYPE."},
 		{0,0,0,0, "Miscellaneous:" },
 		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc files."},
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
+		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
+		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
+		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
 		{ 0 }
 	};
 
@@ -157,8 +169,18 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 			}
 		}
 		break;
+	case OPT_TYPE_SET:
+	case OPT_TYPE_ADD:
+	case OPT_TYPE_DEL:
+		// These options are all handled specially outside of the argp parser.
+		break;
 	case OPT_NOENV:
 		// The --noenv option is handled specially outside of the argp parser.
+		break;
+	case OPT_HELP_TYPES:
+		// Consume the rest of the options/args.
+		state->next = state->argc;
+		arguments->PrintHelpTypes();
 		break;
 	case 'j':
 		if(atoi(arg) < 1)
@@ -259,6 +281,8 @@ void ArgParse::Parse(int argc, char **argv)
 		combined_argv.push_back(cpp_strdup(argv[i]));
 	}
 
+	HandleTYPELogic(&combined_argv);
+
 	// Parse the combined list of arguments.
 	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
 
@@ -289,6 +313,15 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		delete [] c;
 	}
+}
+
+
+void ArgParse::PrintHelpTypes() const
+{
+	std::cout << "ucg recognizes the following file types:" << std::endl;
+	std::cout << std::endl;
+	m_type_manager.PrintTypesForHelp(std::cout);
+	std::cout << std::endl;
 }
 
 void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv)
@@ -536,4 +569,127 @@ std::vector<char*> ArgParse::ConvertRCFileToArgv(const File& f)
 	}
 
 	return retval;
+}
+
+void ArgParse::HandleTYPELogic(std::vector<char*> *v)
+{
+	for(auto arg = v->begin(); arg != v->end(); ++arg)
+	{
+		auto arglen = strlen(*arg);
+		if((arglen < 3) || (std::strncmp("--", *arg, 2) != 0))
+		{
+			// We only care about double-dash options here.
+			continue;
+		}
+
+		if(std::strcmp("--", *arg) == 0)
+		{
+			// This is a "--", ignore all further command-line params.
+			break;
+		}
+
+		std::string argtxt(*arg+2);
+
+		// Is this a type specification of the form "--TYPE"?
+		if(m_type_manager.IsType(argtxt))
+		{
+			// Yes, replace it with something digestible by argp: --type=TYPE.
+			std::string new_param("--type=" + argtxt);
+			delete [] *arg;
+			*arg = cpp_strdup(new_param.c_str());
+		}
+
+		// Is this a type specification of the form '--noTYPE'?
+		else if(argtxt.compare(0, 2, "no") == 0 && m_type_manager.IsType(argtxt.substr(2)))
+		{
+			// Yes, replace it with something digestible by argp: --type=noTYPE.
+			std::string new_param("--type=" + argtxt);
+			delete [] *arg;
+			*arg = cpp_strdup(new_param.c_str());
+		}
+
+		// Is this a type-add?
+		else if(argtxt.compare(0, 9, "type-add=") == 0)
+		{
+			HandleTypeAddOrSet(argtxt);
+		}
+
+		// Is this a type-set?
+		else if(argtxt.compare(0, 9, "type-set=") == 0)
+		{
+			m_type_manager.TypeDel(argtxt.substr(9));
+			HandleTypeAddOrSet(argtxt);
+		}
+
+		// Is this a type-del?
+		else if(argtxt.compare(0, 9, "type-del=") == 0)
+		{
+			// Tell the TypeManager to delete the type.
+			m_type_manager.TypeDel(argtxt.substr(9));
+		}
+	}
+}
+
+static std::vector<std::string> split(const std::string &s, char delimiter)
+{
+	std::vector<std::string> retval;
+	std::stringstream ss(s);
+	std::string element;
+
+	while(std::getline(ss, element, delimiter))
+	{
+		if(!element.empty())
+		{
+			retval.push_back(element);
+		}
+	}
+
+	// This should allow for return value optimization.
+	return retval;
+}
+
+
+void ArgParse::HandleTypeAddOrSet(const std::string& argtxt)
+{
+	std::string::size_type first_colon, second_colon;
+	first_colon = argtxt.find_first_of(":");
+	if(first_colon == std::string::npos)
+	{
+		// Malformed type spec.
+		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Can't find first colon.");
+	}
+	second_colon = argtxt.find_first_of(":", first_colon+1);
+	if(second_colon == std::string::npos)
+	{
+		// Malformed type spec.
+		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Can't find second colon.");
+	}
+	if(second_colon <= first_colon+1)
+	{
+		// Malformed type spec, filter field is blank.
+		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Filter field is empty.");
+	}
+	std::string type = argtxt.substr(9, first_colon-9);
+	std::string filter = argtxt.substr(first_colon+1, second_colon-first_colon-1);
+	std::string filter_args = argtxt.substr(second_colon+1);
+
+	if(filter == "is")
+	{
+		// filter_args is a literal filename.
+		m_type_manager.TypeAddIs(type, filter_args);
+	}
+	else if(filter == "ext")
+	{
+		// filter_args is a list of one or more comma-separated filename extensions.
+		auto exts = split(filter_args,',');
+		for(auto ext : exts)
+		{
+			m_type_manager.TypeAddExt(type, ext);
+		}
+	}
+	else
+	{
+		// Unsupported filter type.
+		throw ArgParseException("Unsupported filter type \"" + filter + "\" in type spec \"--" + argtxt + "\".");
+	}
 }

@@ -20,6 +20,7 @@
 #ifndef TYPEMANAGER_H_
 #define TYPEMANAGER_H_
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <map>
@@ -57,14 +58,39 @@ public:
 
 	bool notype(const std::string &type_name);
 
+	/**
+	 * Determines if #type is in the m_active_type_map as a type name.
+	 *
+	 * @param type  Name of the type to check.
+	 * @return true if #type names a type, false otherwise.
+	 */
+	bool IsType(const std::string &type) const;
+
+	void TypeAddIs(const std::string &type, const std::string &name);
+
+	void TypeAddExt(const std::string &type, const std::string &ext);
+
+	/**
+	 * Deletes #type from the m_active_type_map.
+	 *
+	 * @param type  Name of the type to delete.
+	 * @return true if #type named a type, false if it did not.
+	 */
+	bool TypeDel(const std::string &type);
+
 	void CompileTypeTables();
+
+	void PrintTypesForHelp(std::ostream &s) const;
 
 private:
 
 	/// Flag to keep track of the first call to type().
 	bool m_first_type_has_been_seen = { false };
 
-	std::map<std::string, std::vector<std::string>> m_builtin_type_map;
+	/// Map of file type names to the associated filename filters.
+	/// This contains both built-in types and user-defined types created by TypeAdd*().
+	/// Both built-in and user types can be removed with TypeDel().
+	std::map<std::string, std::vector<std::string>> m_builtin_and_user_type_map;
 
 	/// Map of file type names to the associated filename filters.
 	/// This is the active map, which will eventually be compiled into the

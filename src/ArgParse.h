@@ -20,6 +20,7 @@
 #ifndef ARGPARSE_H_
 #define ARGPARSE_H_
 
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <set>
@@ -27,6 +28,16 @@
 
 class TypeManager;
 class File;
+
+
+/**
+ * ArgParse will throw this if it runs into trouble parsing the rc files or command line.
+ */
+struct ArgParseException : public std::runtime_error
+{
+	ArgParseException(const std::string &message) : std::runtime_error(message) {};
+};
+
 
 /**
  * Command-line and config file parser.
@@ -52,6 +63,8 @@ private:
 	/// The callback which receives the parsed options.
 	static error_t parse_opt (int key, char *arg, struct argp_state *state);
 
+	void PrintHelpTypes() const;
+
 	/// Get the home directory of the user.  Returns an empty string if no
 	/// home dir can be found.
 	std::string GetUserHomeDir() const;
@@ -68,6 +81,10 @@ private:
 	 * @return  vector<char*> of command-line params.
 	 */
 	std::vector<char *> ConvertRCFileToArgv(const File &f);
+
+	void HandleTYPELogic(std::vector<char *> *v);
+
+	void HandleTypeAddOrSet(const std::string &s);
 
 public:
 
