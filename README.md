@@ -10,6 +10,8 @@ UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is a
       * [Speed](#speed)
     * [License](#license)
     * [Installation](#installation)
+      * [Binary RPMs](#binary-rpms)
+      * [Building the Source Tarball](#building-the-source-tarball)
       * [Prerequisites](#prerequisites)
         * [gcc version 4.8 or greater.](#gcc-version-48-or-greater)
         * [pcre version 8.2 or greater.](#pcre-version-82-or-greater)
@@ -22,13 +24,14 @@ UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is a
         * [File type specification:](#file-type-specification)
         * [Miscellaneous:](#miscellaneous)
         * [Informational options:](#informational-options)
-    * [.ucgrc Files](#ucgrc-files)
+    * [Configuration (.ucgrc) Files](#configuration-ucgrc-files)
       * [Format](#format)
       * [Location and Read Order](#location-and-read-order)
     * [User-Defined File Types](#user-defined-file-types)
       * [Extension List Filter](#extension-list-filter)
       * [Literal Filename Filter](#literal-filename-filter)
     * [Author](#author)
+
 
 ## Introduction
 
