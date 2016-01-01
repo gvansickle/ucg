@@ -51,6 +51,12 @@ As a consequence of its use of these facilities and its overall design for maxim
 
 ## Installation
 
+### Binary RPMs
+
+Binary RPMs for a number of recent Linux distros are available [here](https://github.com/gvansickle/ucg/releases/latest).  Note that when installing via `zypper`, `yum`, `dnf`, or whatever's appropriate for your system, you will probably get the same sort of security warnings you get if you install Google Chrome from its RPM.
+
+### Building the Source Tarball
+
 UniversalCodeGrep installs from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.2.0/universalcodegrep-0.2.0.tar.gz)) in the standard autotools manner:
 
 ```sh
