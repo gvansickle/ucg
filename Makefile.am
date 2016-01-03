@@ -46,7 +46,10 @@ endif
 FORCE:
 build_info.cpp: FORCE
 	echo "// git describe" > "$@"
-	if [ -x $$(which git) ]; then GIT_DESCRIBE="$$(cd $(top_srcdir) && git describe --dirty && cd - > /dev/null)"; else GIT_DESCRIBE="unknown"; fi; \
+	if (which git && cd $(top_srcdir) && git describe > /dev/null); then \
+		GIT_DESCRIBE="$$(cd $(top_srcdir) && git describe --dirty)"; \
+	else GIT_DESCRIBE="unknown"; \
+	fi; \
 	echo "const char *g_git_describe = \"$${GIT_DESCRIBE}\";" >> "$@"
 	echo "// CXX" >> "$@"
 	echo "const char *g_cxx = \"$(CXX)\";" >> "$@"
