@@ -341,8 +341,8 @@ void ArgParse::PrintVersionText(FILE* stream, struct argp_state* state)
 
 	// In addition, we want to print the compiler/version we were built with, the libpcre version and some other info on it,
 	// and any source control version info we can get.
-	std::fprintf(stream, "\nlibpcre info:\n");
-	std::fprintf(stream, " version: %s\n", pcre_version());
+	std::fprintf(stream, "\n\nlibpcre info:\n");
+	std::fprintf(stream, " Version: %s\n", pcre_version());
 	std::string s;
 	int is_jit;
 	s = "no";
