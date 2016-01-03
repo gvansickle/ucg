@@ -15,6 +15,9 @@
  * CoFlo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef BUILD_INFO_H
+#define BUILD_INFO_H
+
 /** @file build_info.h
  * Header for the built source file build_info.cpp.  Declarations to strings determined at make-time,
  * e.g. repo info (git describe), compiler name and version info, etc.
@@ -34,3 +37,5 @@ const char *g_cxx;
 /// - "g++ (GCC) 4.9.3"
 /// - "clang version 3.5.2 (tags/RELEASE_352/final)"
 const char *g_cxx_version_str;
+
+#endif // BUILD_INFO_H
