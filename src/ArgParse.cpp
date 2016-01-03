@@ -15,9 +15,14 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file */
-
+/** @file ArgParse.cpp
+ * This is the implementation of the ArgParse class.  Because of the use of GNU argp (a C library) for arg parsing,
+ * there's a healthy mix of C in here as well as C++; a tribute to the interoperability of the two languages.
+ */
+#include <config.h>
 #include "ArgParse.h"
+
+#include "../build_info.h"
 
 #include <algorithm>
 #include <vector>
@@ -29,8 +34,12 @@
 #include <system_error>
 
 #include <argp.h>
+#ifdef HAVE_LIBPCRE
+#include <pcre.h>
+#endif
 #include <cstdlib>
 #include <cstring>
+#include <cstdio>
 
 #include <pwd.h> // for GetUserHomeDir()-->getpwuid().
 #include <fcntl.h>
@@ -41,6 +50,15 @@
 #include "config.h"
 #include "TypeManager.h"
 #include "File.h"
+
+
+// Our --version output isn't just a static string, so we'll register with argp for a version callback.
+static void PrintVersionTextRedirector(FILE *stream, struct argp_state *state)
+{
+	static_cast<ArgParse*>(state->input)->PrintVersionText(stream, state);
+}
+void (*argp_program_version_hook)(FILE *stream, struct argp_state *state) = PrintVersionTextRedirector;
+
 
 // Not static, argp.h externs this.
 const char *argp_program_version = PACKAGE_STRING "\n"
@@ -230,12 +248,10 @@ struct argp ArgParse::argp = { options, ArgParse::parse_opt, args_doc, doc };
 ArgParse::ArgParse(TypeManager &type_manager)
 	: m_type_manager(type_manager)
 {
-
 }
 
 ArgParse::~ArgParse()
 {
-	// TODO Auto-generated destructor stub
 }
 
 /**
@@ -281,6 +297,9 @@ void ArgParse::Parse(int argc, char **argv)
 		combined_argv.push_back(cpp_strdup(argv[i]));
 	}
 
+	// We have to handle User Defined Types and --TYPEs ourselves, before finally calling argp_parse().  argp doesn't
+	// support dynamically added options, which we need for the --TYPEs that will be created by the User Defined Type
+	// mechanism.
 	HandleTYPELogic(&combined_argv);
 
 	// Parse the combined list of arguments.
@@ -315,6 +334,64 @@ void ArgParse::Parse(int argc, char **argv)
 	}
 }
 
+void ArgParse::PrintVersionText(FILE* stream, struct argp_state* state)
+{
+	// Print the version string and copyright notice.
+	std::fprintf(stream, argp_program_version);
+
+	// In addition, we want to print the compiler/version we were built with, the libpcre version and some other info on it,
+	// and any source control version info we can get.
+
+	std::fprintf(stream, "\n\nBuild info\n");
+
+	//
+	// Provenance info.
+	//
+	std::fprintf(stream, "\nRepo version: %s\n", g_git_describe);
+
+	//
+	// Compiler info
+	//
+	std::fprintf(stream, "\nCompiler info:\n");
+	std::fprintf(stream, " Name ($(CXX)): %s\n", g_cxx);
+	std::fprintf(stream, " Version string: \"%s\"\n", g_cxx_version_str);
+
+	//
+	// libpcre info
+	//
+	std::fprintf(stream, "\nlibpcre info:\n");
+	std::fprintf(stream, " Version: %s\n", pcre_version());
+	std::string s;
+	int is_jit;
+	s = "no";
+	if(pcre_config(PCRE_CONFIG_JIT, &is_jit) == 0)
+	{
+		s = is_jit ? "yes" : "no";
+	}
+	std::fprintf(stream, " JIT support built in?: %s\n", s.c_str());
+	const char *jittarget = "none";
+	if(pcre_config(PCRE_CONFIG_JITTARGET, &jittarget) == 0)
+	{
+		if(jittarget == NULL)
+		{
+			jittarget = "none";
+		}
+	}
+	std::fprintf(stream, " JIT target architecture: %s\n", jittarget);
+	int nl;
+	s = "unknown";
+	std::map<int, std::string> newline_desc { {10, "LF"}, {13, "CR"}, {3338, "CRLF"}, {-2, "ANYCRLF"}, {-1, "ANY"},
+											{21, "LF(EBCDIC)"}, {37, "LF(37)(EBCDIC)"}, {3349, "CRLF(EBCDIC)"}, {3365, "CRLF(37)(EBCDIC)"}};
+	if(pcre_config(PCRE_CONFIG_NEWLINE, &nl) == 0)
+	{
+		auto nl_type_name = newline_desc.find(nl);
+		if(nl_type_name != newline_desc.end())
+		{
+			s = nl_type_name->second;
+		}
+	}
+	std::fprintf(stream, " Newline style: %s\n", s.c_str());
+}
 
 void ArgParse::PrintHelpTypes() const
 {
