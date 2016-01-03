@@ -19,10 +19,10 @@
  * This is the implementation of the ArgParse class.  Because of the use of GNU argp (a C library) for arg parsing,
  * there's a healthy mix of C in here as well as C++; a tribute to the interoperability of the two languages.
  */
-
+#include <config.h>
 #include "ArgParse.h"
 
-#include "config.h"
+#include "../build_info.h"
 
 #include <algorithm>
 #include <vector>
@@ -341,7 +341,25 @@ void ArgParse::PrintVersionText(FILE* stream, struct argp_state* state)
 
 	// In addition, we want to print the compiler/version we were built with, the libpcre version and some other info on it,
 	// and any source control version info we can get.
-	std::fprintf(stream, "\n\nlibpcre info:\n");
+
+	std::fprintf(stream, "\n\nBuild info\n");
+
+	//
+	// Provenance info.
+	//
+	std::fprintf(stream, "\nRepo version: %s\n", g_git_describe);
+
+	//
+	// Compiler info
+	//
+	std::fprintf(stream, "\nCompiler info:\n");
+	std::fprintf(stream, " Name ($(CXX)): %s\n", g_cxx);
+	std::fprintf(stream, " Version string: \"%s\"\n", g_cxx_version_str);
+
+	//
+	// libpcre info
+	//
+	std::fprintf(stream, "\nlibpcre info:\n");
 	std::fprintf(stream, " Version: %s\n", pcre_version());
 	std::string s;
 	int is_jit;

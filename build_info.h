@@ -26,16 +26,16 @@
 /// Output of "git describe" in the top_srcdir at make time.  This will look like either:
 /// - "0.2.0-4-g6fe34f4-dirty", with "-dirty" only appearing if there are uncommitted changes in the workspace, or
 /// - "unknown" if git didn't exist on the machine or it wasn't a git repo.
-const char *g_git_describe;
+extern const char *g_git_describe;
 
 /// The C++ compiler used to build, i.e. the contents of make variable $CXX.
 /// This will be "gcc", "clang++", etc., the name of the actual binary.
-const char *g_cxx;
+extern const char *g_cxx;
 
 /// The C++ compiler's version string.
 /// This is the first line of the output of "$(CXX) --version".  It will look something like:
 /// - "g++ (GCC) 4.9.3"
 /// - "clang version 3.5.2 (tags/RELEASE_352/final)"
-const char *g_cxx_version_str;
+extern const char *g_cxx_version_str;
 
 #endif // BUILD_INFO_H
