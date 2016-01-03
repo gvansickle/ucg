@@ -52,6 +52,17 @@ public:
 
 	void Parse(int argc, char **argv);
 
+//private:
+	/**
+	 * Argp overload of argp_program_version_hook.
+	 *
+	 * @note This would preferably be private, and maybe non-static, but argp needs it to be statically overloaded (global fn ptr).
+	 *
+	 * @param stream
+	 * @param state
+	 */
+	static void PrintVersionText(FILE *stream, struct argp_state *state);
+
 private:
 
 	/// Reference to the TypeManager passed into the constructor.
