@@ -31,7 +31,9 @@ dist_doc_DATA = README.md COPYING AUTHORS
 
 # The Automake rules for the ucg executable.
 bin_PROGRAMS=ucg
-ucg_SOURCES=main.cpp
+ucg_SOURCES=main.cpp build_info.h
+nodist_ucg_SOURCES=build_info.cpp
+CLEANFILES=build_info.cpp
 
 if BUILD_BOOST_FROM_TARBALL
 # Collect all the Boost libraries we need into a single variable.
@@ -39,6 +41,18 @@ BOOST_LOCAL_LIB = $(top_builddir)/third_party/$(BOOST_TARBALL_DIRNAME)/stage/lib
 ALLBOOSTLIBS = $(BOOST_LOCAL_LIB)/libboost_thread.a \
 	$(BOOST_LOCAL_LIB)/libboost_system.a
 endif
+
+# Collect some make-time info. 
+FORCE:
+build_info.cpp: FORCE
+	echo "// git describe" > "$@"
+	if [ -x $$(which git) ]; then GIT_DESCRIBE="$$(cd $(top_srcdir) && git describe --dirty && cd - > /dev/null)"; else GIT_DESCRIBE="unknown"; fi; \
+	echo "const char *g_git_describe = \"$${GIT_DESCRIBE}\";" >> "$@"
+	echo "// CXX" >> "$@"
+	echo "const char *g_cxx = \"$(CXX)\";" >> "$@"
+# This is known to work for g++ and clang++.
+	CXX_VERSION_STR=$$(if $$("$(CXX)" --version > /dev/null); then echo "$$($(CXX) --version | sed -r -n 's/^(.*[0-9]+\.[0-9]+\.[0-9]+.*)$$/\1/p')"; else echo "unknown"; fi;); \
+	echo "const char *g_cxx_version_str = \"$${CXX_VERSION_STR}\";" >> "$@";
 
 ucg_CPPFLAGS = -I $(top_srcdir)/src \
 	$(BOOST_TR1_CPPFLAGS) $(BOOST_CPPFLAGS) \
