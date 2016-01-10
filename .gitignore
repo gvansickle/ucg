@@ -7,3 +7,6 @@ autom4te.cache
 /build-aux/depcomp
 /build-aux/install-sh
 /build-aux/missing
+Makefile.in
+/tests/testsuite
+/tests/package.m4
