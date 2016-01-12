@@ -59,13 +59,22 @@ As a consequence of its use of these facilities and its overall design for maxim
 
 ## Installation
 
+### Red Hat/Fedora/CentOS dnf/yum Repository
+
+If you are a Red Hat, Fedora, or CentOS user, the easiest way to install UniversalCodeGrep is from the Fedora Copr-hosted dnf/yum repository [here](https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep).  Installation is as simple as:
+
+```sh
+sudo dnf copr enable grvs/UniversalCodeGrep
+sudo dnf install universalcodegrep
+```
+
 ### Binary RPMs
 
-Binary RPMs for a number of recent Linux distros are available [here](https://github.com/gvansickle/ucg/releases/latest).  Note that when installing via `zypper`, `yum`, `dnf`, or whatever's appropriate for your system, you will probably get the same sort of security warnings you get if you install Google Chrome from its RPM.
+Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/latest).  Note that when installing via `zypper`, `yum`, `dnf`, or whatever's appropriate for your system, you will probably get the same sort of security warnings you get if you install Google Chrome from its RPM.
 
 ### Building the Source Tarball
 
-UniversalCodeGrep installs from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.2.0/universalcodegrep-0.2.0.tar.gz)) in the standard autotools manner:
+UniversalCodeGrep can be built and installed from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.2.0/universalcodegrep-0.2.0.tar.gz)) in the standard autotools manner:
 
 ```sh
 tar -xaf universalcodegrep-0.2.0.tar.gz
@@ -81,13 +90,13 @@ This will install the `ucg` executable in `/usr/local/bin`.  If you wish to inst
 ./configure --prefix=~/<install-root-dir>
 ```
 
-### Prerequisites
+#### Build Prerequisites
 
-#### `gcc` version 4.8 or greater.
+##### `gcc` version 4.8 or greater.
 
 Versions of `gcc` prior to 4.8 do not have sufficiently complete C++11 support to build `ucg`.
 
-#### `pcre` version 8.2 or greater.
+##### `pcre` version 8.2 or greater.
 
 This should be available from your Linux distro.
 
