@@ -8,25 +8,14 @@
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
     <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-	<script>
-	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-	  ga('create', 'UA-71934244-1', 'auto');
-	  ga('send', 'pageview');
-
-	</script>
   </head>
   <body>
     <section class="page-header">
       <h1 class="project-name">UniversalCodeGrep</h1>
       <h2 class="project-tagline">ucg - UniversalCodeGrep</h2>
       <a href="https://github.com/gvansickle/ucg" class="btn">View on GitHub</a>
-	  <a href="https://github.com/gvansickle/ucg/releases/latest" class="btn">Latest Release: 0.2.0</a>
-	  <br/>
-	  NEW!: Red Hat / Fedora / CentOS users can now install the latest UniversalCodeGrep releases from ucg's <a href="https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep/">COPR</a> dnf/yum repository.
+      <a href="https://github.com/gvansickle/ucg/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/gvansickle/ucg/tarball/master" class="btn">Download .tar.gz</a>
     </section>
 
     <section class="main-content">
@@ -56,14 +45,20 @@
 <a href="#installation">Installation</a>
 
 <ul>
+<li><a href="#red-hatfedoracentos-dnfyum-repository">Red Hat/Fedora/CentOS dnf/yum Repository</a></li>
 <li><a href="#binary-rpms">Binary RPMs</a></li>
-<li><a href="#building-the-source-tarball">Building the Source Tarball</a></li>
 <li>
-<a href="#prerequisites">Prerequisites</a>
+<a href="#building-the-source-tarball">Building the Source Tarball</a>
+
+<ul>
+<li>
+<a href="#build-prerequisites">Build Prerequisites</a>
 
 <ul>
 <li><a href="#gcc-version-48-or-greater">gcc version 4.8 or greater.</a></li>
 <li><a href="#pcre-version-82-or-greater">pcre version 8.2 or greater.</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#supported-oses-and-distributions">Supported OSes and Distributions</a></li>
@@ -152,14 +147,22 @@
 <a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
 
 <h3>
+<a id="red-hatfedoracentos-dnfyum-repository" class="anchor" href="#red-hatfedoracentos-dnfyum-repository" aria-hidden="true"><span class="octicon octicon-link"></span></a>Red Hat/Fedora/CentOS dnf/yum Repository</h3>
+
+<p>If you are a Red Hat, Fedora, or CentOS user, the easiest way to install UniversalCodeGrep is from the Fedora Copr-hosted dnf/yum repository <a href="https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep">here</a>.  Installation is as simple as:</p>
+
+<div class="highlight highlight-source-shell"><pre>sudo dnf copr <span class="pl-c1">enable</span> grvs/UniversalCodeGrep
+sudo dnf install universalcodegrep</pre></div>
+
+<h3>
 <a id="binary-rpms" class="anchor" href="#binary-rpms" aria-hidden="true"><span class="octicon octicon-link"></span></a>Binary RPMs</h3>
 
-<p>Binary RPMs for a number of recent Linux distros are available <a href="https://github.com/gvansickle/ucg/releases/latest">here</a>.  Note that when installing via <code>zypper</code>, <code>yum</code>, <code>dnf</code>, or whatever's appropriate for your system, you will probably get the same sort of security warnings you get if you install Google Chrome from its RPM.</p>
+<p>Binary RPMs for openSUSE are available <a href="https://github.com/gvansickle/ucg/releases/latest">here</a>.  Note that when installing via <code>zypper</code>, <code>yum</code>, <code>dnf</code>, or whatever's appropriate for your system, you will probably get the same sort of security warnings you get if you install Google Chrome from its RPM.</p>
 
 <h3>
 <a id="building-the-source-tarball" class="anchor" href="#building-the-source-tarball" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building the Source Tarball</h3>
 
-<p>UniversalCodeGrep installs from the distribution tarball (available <a href="https://github.com/gvansickle/ucg/releases/download/0.2.0/universalcodegrep-0.2.0.tar.gz">here</a>) in the standard autotools manner:</p>
+<p>UniversalCodeGrep can be built and installed from the distribution tarball (available <a href="https://github.com/gvansickle/ucg/releases/download/0.2.0/universalcodegrep-0.2.0.tar.gz">here</a>) in the standard autotools manner:</p>
 
 <div class="highlight highlight-source-shell"><pre>tar -xaf universalcodegrep-0.2.0.tar.gz
 <span class="pl-c1">cd</span> universalcodegrep-0.2.0.tar.gz
@@ -171,16 +174,16 @@ make install</pre></div>
 
 <div class="highlight highlight-source-shell"><pre>./configure --prefix=<span class="pl-k">~</span>/<span class="pl-k">&lt;</span>install-root-dir<span class="pl-k">&gt;</span></pre></div>
 
-<h3>
-<a id="prerequisites" class="anchor" href="#prerequisites" aria-hidden="true"><span class="octicon octicon-link"></span></a>Prerequisites</h3>
-
 <h4>
-<a id="gcc-version-48-or-greater" class="anchor" href="#gcc-version-48-or-greater" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>gcc</code> version 4.8 or greater.</h4>
+<a id="build-prerequisites" class="anchor" href="#build-prerequisites" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build Prerequisites</h4>
+
+<h5>
+<a id="gcc-version-48-or-greater" class="anchor" href="#gcc-version-48-or-greater" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>gcc</code> version 4.8 or greater.</h5>
 
 <p>Versions of <code>gcc</code> prior to 4.8 do not have sufficiently complete C++11 support to build <code>ucg</code>.</p>
 
-<h4>
-<a id="pcre-version-82-or-greater" class="anchor" href="#pcre-version-82-or-greater" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>pcre</code> version 8.2 or greater.</h4>
+<h5>
+<a id="pcre-version-82-or-greater" class="anchor" href="#pcre-version-82-or-greater" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>pcre</code> version 8.2 or greater.</h5>
 
 <p>This should be available from your Linux distro.</p>
 
@@ -195,7 +198,6 @@ make install</pre></div>
 <ul>
 <li>Ubuntu 15.04</li>
 <li>CentOS 7</li>
-<li>Fedora 21</li>
 <li>Fedora 22</li>
 <li>Fedora 23</li>
 <li>RHEL 7</li>
@@ -433,7 +435,7 @@ Example:
 <h2>
 <a id="author" class="anchor" href="#author" aria-hidden="true"><span class="octicon octicon-link"></span></a>Author</h2>
 
-<p><a href="https://github.com/gvansickle">Gary R. Van Sickle</a></p>
+<p>Gary R. Van Sickle</p>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/gvansickle/ucg">UniversalCodeGrep</a> is maintained by <a href="https://github.com/gvansickle">gvansickle</a>.</span>
