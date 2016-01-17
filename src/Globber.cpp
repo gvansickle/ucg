@@ -48,7 +48,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 
 Globber::~Globber()
 {
-	// TODO Auto-generated destructor stub
+
 }
 
 void Globber::Run()
@@ -63,17 +63,26 @@ void Globber::Run()
 		// Check if this start path exists and is a file or directory.
 		DIR *d = opendir(dirs[i]);
 		int f = open(dirs[i], O_RDONLY);
+
+		if((d==NULL) && (f==-1))
+		{
+			m_bad_path = dirs[i];
+		}
+
+		// Close the dir/file we opened.
 		if(d != NULL)
 		{
 			closedir(d);
 		}
-		else if(f != -1)
+		if(f != -1)
 		{
 			close(f);
 		}
-		else
+
+		if(!m_bad_path.empty())
 		{
-			m_bad_path = dirs[i];
+			// If we couldn't open the specified file/dir, we don't start the globbing, but ultimately
+			// return to main() and exit with an error.
 			return;
 		}
 
