@@ -217,4 +217,4 @@ Example:
 
 ## Author
 
-Gary R. Van Sickle
+[Gary R. Van Sickle](https://github.com/gvansickle)
