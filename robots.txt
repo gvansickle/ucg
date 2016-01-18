@@ -1,1 +1,1 @@
-Sitemap: http://gvansickle.github.io/ucg/sitemap.txt
+Sitemap: https://gvansickle.github.io/ucg/sitemap.txt
