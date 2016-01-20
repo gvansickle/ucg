@@ -28,7 +28,9 @@
 class Match
 {
 public:
-	Match();
+	Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset);
+	Match() = default;
+	Match(const Match &other) = default;
 	~Match() { };
 
 	/// @note Data members not private, this is more of a struct than a class.

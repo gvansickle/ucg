@@ -28,12 +28,11 @@ MatchList::MatchList(const std::string &filename) : m_filename(filename)
 
 MatchList::~MatchList()
 {
-	// TODO Auto-generated destructor stub
 }
 
 void MatchList::AddMatch(long long lineno, const Match &match)
 {
-	Match m = match;
+	Match m(match);
 	m_match_list[lineno] = m;
 }
 

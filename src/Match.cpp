@@ -19,9 +19,26 @@
 
 #include "Match.h"
 
-Match::Match()
-{
-	// TODO Auto-generated constructor stub
+#include <algorithm>
 
+Match::Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset)
+{
+	auto line_ending = "\n";
+	auto line_start = std::find_end(start_of_array, start_of_array+match_start_offset,
+			line_ending, line_ending+1);
+	if(line_start == start_of_array+match_start_offset)
+	{
+		// The line has no starting '\n', so it must be the first line.
+		line_start = start_of_array;
+	}
+	else
+	{
+		// The line had a starting '\n', clip it off.
+		++line_start;
+	}
+	auto line_end = std::find(start_of_array+match_start_offset, start_of_array+array_size, '\n');
+	m_pre_match = std::string(line_start, start_of_array+match_start_offset);
+	m_match = std::string(start_of_array+match_start_offset, start_of_array+match_end_offset);
+	m_post_match = std::string(start_of_array+match_start_offset+(match_end_offset-match_start_offset), line_end);
 }
 

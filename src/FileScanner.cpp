@@ -19,6 +19,7 @@
 
 #include "FileScanner.h"
 #include "File.h"
+#include "Match.h"
 #include "MatchList.h"
 
 #include "config.h"
@@ -341,7 +342,9 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 		}
 
 		// There was a match.  Package it up in the MatchList which was passed in.
+		Match m(file_data, file_size, ovector[0], ovector[1]);
 		long long lineno = 1+std::count(file_data, file_data+ovector[0], '\n');
+#if 0
 		auto line_ending = "\n";
 		auto line_start = std::find_end(file_data, file_data+ovector[0],
 				line_ending, line_ending+1);
@@ -360,6 +363,7 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 		auto match = std::string(file_data+ovector[0], file_data+ovector[1]);
 		auto post_match = std::string(file_data+ovector[0]+(ovector[1]-ovector[0]), line_end);
 		Match m = { pre_match, match, post_match };
+#endif
 		ml.AddMatch(lineno, m);
 	}
 }

@@ -23,14 +23,7 @@
 #include <string>
 #include <map>
 
-#if 0
-struct Match
-{
-	std::string m_pre_match;
-	std::string m_match;
-	std::string m_post_match;
-};
-#endif
+#include "Match.h"
 
 /*
  *
