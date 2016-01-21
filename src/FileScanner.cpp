@@ -342,28 +342,9 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 		}
 
 		// There was a match.  Package it up in the MatchList which was passed in.
-		Match m(file_data, file_size, ovector[0], ovector[1]);
 		long long lineno = 1+std::count(file_data, file_data+ovector[0], '\n');
-#if 0
-		auto line_ending = "\n";
-		auto line_start = std::find_end(file_data, file_data+ovector[0],
-				line_ending, line_ending+1);
-		if(line_start == file_data+ovector[0])
-		{
-			// The line has no starting '\n', so it must be the first line.
-			line_start = file_data;
-		}
-		else
-		{
-			// The line had a starting '\n', clip it off.
-			++line_start;
-		}
-		auto line_end = std::find(file_data+ovector[0], file_data+file_size, '\n');
-		auto pre_match = std::string(line_start, file_data+ovector[0]);
-		auto match = std::string(file_data+ovector[0], file_data+ovector[1]);
-		auto post_match = std::string(file_data+ovector[0]+(ovector[1]-ovector[0]), line_end);
-		Match m = { pre_match, match, post_match };
-#endif
-		ml.AddMatch(lineno, m);
+		Match m(file_data, file_size, ovector[0], ovector[1], lineno);
+
+		ml.AddMatch(m);
 	}
 }

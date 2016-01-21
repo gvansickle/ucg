@@ -21,7 +21,7 @@
 #define MATCHLIST_H_
 
 #include <string>
-#include <map>
+#include <vector>
 
 #include "Match.h"
 
@@ -36,9 +36,9 @@ public:
 	MatchList(const std::string &filename);
 	virtual ~MatchList();
 
-	void AddMatch(long long lineno, const Match &match);
+	void AddMatch(const Match &match);
 
-	void Print(bool istty, bool enable_color);
+	void Print(bool istty, bool enable_color) const;
 
 	bool empty() const noexcept { return m_match_list.empty(); };
 
@@ -46,7 +46,7 @@ private:
 
 	std::string m_filename;
 
-	std::map<long long, Match> m_match_list;
+	std::vector<Match> m_match_list;
 };
 
 #endif /* MATCHLIST_H_ */

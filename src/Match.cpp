@@ -21,7 +21,7 @@
 
 #include <algorithm>
 
-Match::Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset)
+Match::Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset, long long line_number)
 {
 	auto line_ending = "\n";
 	// Find the start of the line.
@@ -43,8 +43,11 @@ Match::Match(const char *start_of_array, size_t array_size, size_t match_start_o
 
 	// Find the end of the matched line.
 	auto line_end = std::find(start_of_array+match_start_offset, start_of_array+array_size, line_ending[0]);
+
+	// Form the match substrings.
 	m_pre_match = std::string(line_start, start_of_array+match_start_offset);
 	m_match = std::string(start_of_array+match_start_offset, start_of_array+match_end_offset);
 	m_post_match = std::string(start_of_array+match_start_offset+(match_end_offset-match_start_offset), line_end);
+	m_line_number = line_number;
 }
 
