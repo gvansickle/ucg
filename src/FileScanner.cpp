@@ -240,6 +240,7 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 {
 	// Match output vector.  We won't support submatches, so we only need two entries, plus a third for pcre's own use.
 	int ovector[3] = {-1, 0, 0};
+	long long prev_lineno = 0;
 
 	// Loop while the start_offset is less than the file_size.
 	while(ovector[1] < file_size)
@@ -343,6 +344,12 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 
 		// There was a match.  Package it up in the MatchList which was passed in.
 		long long lineno = 1+std::count(file_data, file_data+ovector[0], '\n');
+		if(prev_lineno == lineno)
+		{
+			// Skip multiple matches on one line.
+			continue;
+		}
+		prev_lineno = lineno;
 		Match m(file_data, file_size, ovector[0], ovector[1], lineno);
 
 		ml.AddMatch(m);
