@@ -17,6 +17,7 @@
 
 noinst_LIBRARIES = libsrc.a 
 libsrc_a_SOURCES = \
+	ArgParse.cpp ArgParse.h \
 	DirInclusionManager.cpp DirInclusionManager.h \
 	Globber.cpp Globber.h \
 	Match.cpp Match.h \
@@ -26,7 +27,6 @@ libsrc_a_SOURCES = \
 	OutputTask.cpp OutputTask.h \
 	sync_queue.h \
 	sync_queue_impl_selector.h \
-	ArgParse.cpp ArgParse.h \
 	TypeManager.cpp TypeManager.h
 
 libsrc_a_CPPFLAGS = -I $(top_srcdir)/lib $(AM_CPPFLAGS)
