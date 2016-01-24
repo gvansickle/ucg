@@ -21,14 +21,9 @@
 #define MATCHLIST_H_
 
 #include <string>
-#include <map>
+#include <vector>
 
-struct Match
-{
-	std::string m_pre_match;
-	std::string m_match;
-	std::string m_post_match;
-};
+#include "Match.h"
 
 /*
  *
@@ -41,9 +36,9 @@ public:
 	MatchList(const std::string &filename);
 	virtual ~MatchList();
 
-	void AddMatch(long long lineno, const Match &match);
+	void AddMatch(const Match &match);
 
-	void Print(bool istty, bool enable_color);
+	void Print(bool istty, bool enable_color) const;
 
 	bool empty() const noexcept { return m_match_list.empty(); };
 
@@ -51,7 +46,7 @@ private:
 
 	std::string m_filename;
 
-	std::map<long long, Match> m_match_list;
+	std::vector<Match> m_match_list;
 };
 
 #endif /* MATCHLIST_H_ */

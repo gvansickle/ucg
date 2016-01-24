@@ -25,12 +25,13 @@
 OutputTask::OutputTask(bool enable_color, sync_queue<MatchList> &input_queue)
 	: m_input_queue(input_queue), m_enable_color(enable_color)
 {
+	// Determine if the output is going to a terminal.  If so we'll use colors, group the matches under
+	// the filename, etc.
 	m_output_is_tty = isatty(fileno(stdout));
 }
 
 OutputTask::~OutputTask()
 {
-	// TODO Auto-generated destructor stub
 }
 
 void OutputTask::Run()

@@ -19,6 +19,7 @@
 
 #include "FileScanner.h"
 #include "File.h"
+#include "Match.h"
 #include "MatchList.h"
 
 #include "config.h"
@@ -239,6 +240,9 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 {
 	// Match output vector.  We won't support submatches, so we only need two entries, plus a third for pcre's own use.
 	int ovector[3] = {-1, 0, 0};
+	long long line_no = 1;
+	long long prev_lineno = 0;
+	const char *prev_lineno_search_end = file_data;
 
 	// Loop while the start_offset is less than the file_size.
 	while(ovector[1] < file_size)
@@ -341,25 +345,17 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 		}
 
 		// There was a match.  Package it up in the MatchList which was passed in.
-		long long lineno = 1+std::count(file_data, file_data+ovector[0], '\n');
-		auto line_ending = "\n";
-		auto line_start = std::find_end(file_data, file_data+ovector[0],
-				line_ending, line_ending+1);
-		if(line_start == file_data+ovector[0])
+		long long num_lines_since_last_match = std::count(prev_lineno_search_end, file_data+ovector[0], '\n');
+		line_no += num_lines_since_last_match;
+		prev_lineno_search_end = file_data+ovector[0];
+		if(line_no == prev_lineno)
 		{
-			// The line has no starting '\n', so it must be the first line.
-			line_start = file_data;
+			// Skip multiple matches on one line.
+			continue;
 		}
-		else
-		{
-			// The line had a starting '\n', clip it off.
-			++line_start;
-		}
-		auto line_end = std::find(file_data+ovector[0], file_data+file_size, '\n');
-		auto pre_match = std::string(line_start, file_data+ovector[0]);
-		auto match = std::string(file_data+ovector[0], file_data+ovector[1]);
-		auto post_match = std::string(file_data+ovector[0]+(ovector[1]-ovector[0]), line_end);
-		Match m = { pre_match, match, post_match };
-		ml.AddMatch(lineno, m);
+		prev_lineno = line_no;
+		Match m(file_data, file_size, ovector[0], ovector[1], line_no);
+
+		ml.AddMatch(m);
 	}
 }

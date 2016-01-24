@@ -75,7 +75,7 @@ done
 AT_CLEANUP
 
 
-AT_SETUP([Boost: search with simple regex])
+AT_SETUP([Boost: search with regex 'BOOST.*HPP'])
 
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
