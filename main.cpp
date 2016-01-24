@@ -33,9 +33,13 @@
 #include "FileScanner.h"
 #include "OutputTask.h"
 
+// This is for gnulib's error.c.
+char *program_name;
 
 int main(int argc, char **argv)
 {
+	program_name = argv[0];
+
 	try
 	{
 		// We'll keep the scanner threads in this vector so we can join() them later.
