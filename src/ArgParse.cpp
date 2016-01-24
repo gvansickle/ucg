@@ -546,7 +546,8 @@ std::string ArgParse::GetProjectRCFilename() const
 	int home_fd = -1;
 	if(!homedirname.empty())
 	{
-		home_fd = open(homedirname.c_str(), O_RDONLY | O_DIRECTORY);
+		home_fd = open(homedirname.c_str(), O_RDONLY);
+		/// @todo Should probably check for is-a-dir here.
 	}
 
 	// Get the current working directory's absolute pathname.
@@ -561,7 +562,8 @@ std::string ArgParse::GetProjectRCFilename() const
 	while((current_cwd != nullptr) && (current_cwd[0] != '.'))
 	{
 		// See if this is the user's $HOME dir.
-		auto cwd_fd = open(current_cwd, O_RDONLY | O_DIRECTORY);
+		auto cwd_fd = open(current_cwd, O_RDONLY);
+		/// @todo Should probably check for is-a-dir here.
 		if(is_same_file(cwd_fd, home_fd))
 		{
 			// We've hit the user's home directory without finding a config file.
