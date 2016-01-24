@@ -22,8 +22,7 @@
 #include "TypeManager.h"
 #include "DirInclusionManager.h"
 
-#include <fts.h>
-#include <fnmatch.h>
+#include <fts_.h>  /// @note This is the gnulib fts.
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>

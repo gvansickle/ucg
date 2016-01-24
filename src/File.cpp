@@ -25,7 +25,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#else
+#define MAP_FAILED ((void*)-1)
+#endif
 
 File::File(const std::string &filename)
 {
@@ -79,6 +84,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 
 	if(m_use_mmap)
 	{
+#ifdef HAVE_SYS_MMAN_H
 		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE, file_descriptor, 0));
 
 		if(file_data == MAP_FAILED)
@@ -90,7 +96,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 
 		// Hint that we'll be sequentially reading the mmapped file soon.
 		posix_madvise(const_cast<char*>(file_data), file_size, POSIX_MADV_SEQUENTIAL | POSIX_MADV_WILLNEED);
-
+#endif
 	}
 	else
 	{
@@ -110,7 +116,9 @@ void File::FreeFileData(const char* file_data, size_t file_size)
 {
 	if(m_use_mmap)
 	{
+#ifdef HAVE_SYS_MMAN_H
 		munmap(const_cast<char*>(file_data), file_size);
+#endif
 	}
 	else
 	{

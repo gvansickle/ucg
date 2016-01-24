@@ -74,6 +74,8 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 AC_PROG_CC
 # This is required instead of AC_PROG_CC_C_O by automake's "subdir-objects" option.
 AM_PROG_CC_C_O
+# This is for gnulib.
+gl_EARLY
 AC_PROG_CXX
 AC_PROG_RANLIB
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
@@ -135,7 +137,8 @@ AC_SUBST([BOOST_LIBTOOL_FLAGS],[""])
 ### Checks for header files.
 ###
 
-# N/A
+# We don't have this header on MinGW.
+AC_CHECK_HEADERS([pwd.h],[],[],[])
 
 
 ###
@@ -184,6 +187,10 @@ AC_LANG_POP([C++])
 ###
 ### Checks for library functions.
 ###
+
+# For gnulib.
+gl_INIT
+
 AC_SEARCH_LIBS([argp_parse],[argp])
 
 AC_REPLACE_FUNCS([sched_setaffinity])
@@ -225,6 +232,7 @@ AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 ### Create the Makefiles for the program.
 ###
 AC_CONFIG_FILES([Makefile
+	lib/Makefile
 	src/Makefile
 	third_party/Makefile])
 AC_OUTPUT

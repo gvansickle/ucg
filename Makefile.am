@@ -22,9 +22,12 @@
 ACLOCAL_AMFLAGS = -I m4 --install
 
 # The subdirectories containing the source code, docs, and tests.
-# Note: The code in src depends on the libraries in third_party, so make sure the latter is always listed before the former.
+# Note: The code in src depends on the libraries in third_party and/or lib, so make sure the latter are always listed before the former.
 # Note that we can't list these other libraries in e.g. *_DEPENDENCIES because that replaces all Automake-generated dependencies.
-SUBDIRS = third_party src . tests
+SUBDIRS = lib third_party src . tests
+
+# Per gnulib-tool instructions.
+EXTRA_DIST = m4/gnulib-cache.m4
 
 # Make sure README.rd and other docs get distributed and installed correctly.
 dist_doc_DATA = README.md COPYING AUTHORS
@@ -77,11 +80,12 @@ dist-hook:
 	echo -n "$$(cd $(top_srcdir) && git describe --dirty | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
 
 ucg_CPPFLAGS = -I $(top_srcdir)/src \
+	-I $(top_srcdir)/lib \
 	$(BOOST_TR1_CPPFLAGS) $(BOOST_CPPFLAGS) \
 	$(AM_CPPFLAGS) 
 ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
 ucg_LDFLAGS = $(BOOST_LIBTOOL_FLAGS) $(BOOST_LDFLAGS) \
 	$(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.a $(ALLBOOSTLIBS)
+ucg_LDADD = ./src/libsrc.a ./lib/libgnu.a $(ALLBOOSTLIBS)
 

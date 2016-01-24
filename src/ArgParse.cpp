@@ -19,7 +19,9 @@
  * This is the implementation of the ArgParse class.  Because of the use of GNU argp (a C library) for arg parsing,
  * there's a healthy mix of C in here as well as C++; a tribute to the interoperability of the two languages.
  */
+
 #include <config.h>
+
 #include "ArgParse.h"
 
 #include "../build_info.h"
@@ -41,13 +43,15 @@
 #include <cstring>
 #include <cstdio>
 
+#ifdef HAVE_PWD_H
 #include <pwd.h> // for GetUserHomeDir()-->getpwuid().
+#endif
+
 #include <fcntl.h>
 #include <unistd.h> // for GetUserHomeDir()-->getuid().
 #include <sys/stat.h>
 #include <libgen.h>   // Don't know where "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
 
-#include "config.h"
 #include "TypeManager.h"
 #include "File.h"
 
