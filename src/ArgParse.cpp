@@ -481,11 +481,13 @@ std::string ArgParse::GetUserHomeDir() const
 	// First try the $HOME environment variable.
 	const char * home_path = getenv("HOME");
 
+#ifdef HAVE_PWD_H  /// @todo Come up with a better alternative for MinGW.
 	if(home_path == nullptr)
 	{
 		// No HOME variable, check the user database.
 		home_path = getpwuid(getuid())->pw_dir;
 	}
+#endif
 
 	if(home_path != nullptr)
 	{
@@ -554,7 +556,11 @@ std::string ArgParse::GetProjectRCFilename() const
 	/// @note GRVS - get_current_dir_name() under Cygwin will currently return a DOS path if this is started
 	///              under the Eclipse gdb.  This mostly doesn't cause problems, except for terminating the loop
 	///              (see below).
+#ifdef HAVE_GET_CURRENT_DIR_NAME
 	char *original_cwd = get_current_dir_name();
+#else
+	char *original_cwd = getcwd(NULL, 0);
+#endif
 
 	//std::clog << "INFO: cwd = \"" << original_cwd << "\"" << std::endl;
 
