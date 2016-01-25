@@ -59,12 +59,12 @@ AC_SUBST([CPU_COUNT])
 
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
-AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
+AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra -DPCRE_STATIC"])
 # By default, compile C and C++ with the maximum possible debugging info and maximum optimization.
 # For debugging, do a "make CXXFLAGS=-O0".
 AC_SUBST([AM_CFLAGS], ["-ggdb3 -O3"])
 AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
-
+AC_SUBST([AM_LDFLAGS], ["-static"])
 
 ###
 ### Checks for programs
