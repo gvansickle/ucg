@@ -183,6 +183,12 @@ AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 AC_LANG_POP([C++])
 
+case $host in
+*mingw*)
+	# We're on MinGW.  On this platform we want static linking.
+	AX_APPEND_COMPILE_FLAGS([-DPCRE_STATIC],[AM_CPPFLAGS])
+	AX_APPEND_LINK_FLAGS([-static],[AM_LDFLAGS])
+esac
 
 ###
 ### Checks for library functions.
