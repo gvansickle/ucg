@@ -9,12 +9,11 @@ UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is a
 
 ## Table of Contents
 
-  * [UniversalCodeGrep](#universalcodegrep)
-    * [Table of Contents](#table-of-contents)
     * [Introduction](#introduction)
       * [Speed](#speed)
     * [License](#license)
     * [Installation](#installation)
+      * [Ubuntu PPA](#ubuntu-ppa)
       * [Red Hat/Fedora/CentOS dnf/yum Repository](#red-hatfedoracentos-dnfyum-repository)
       * [Binary RPMs](#binary-rpms)
       * [Building the Source Tarball](#building-the-source-tarball)
@@ -38,8 +37,6 @@ UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is a
       * [Literal Filename Filter](#literal-filename-filter)
     * [Author](#author)
 
-
-
 ## Introduction
 
 UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with [Ack](http://beyondgrep.com/), to some extent with [`ag`](http://geoff.greer.fm/ag/), and where appropriate with `grep`.  Search patterns are specified as PCRE regexes. 
@@ -61,12 +58,27 @@ As a consequence of its use of these facilities and its overall design for maxim
 
 ## Installation
 
+### Ubuntu PPA
+
+If you are a Ubuntu user, the easiest way to install UniversalCodeGrep is from the Launchpad PPA [here](https://launchpad.net/~grvs/+archive/ubuntu/ucg).  To install from the command line:
+
+```sh
+# Add the PPA to your system:
+sudo add-apt-repository ppa:grvs/ucg
+# Pull down the latest lists of software from all archives:
+sudo apt-get update
+# Install ucg:
+sudo apt-get install universalcodegrep
+```
+
 ### Red Hat/Fedora/CentOS dnf/yum Repository
 
 If you are a Red Hat, Fedora, or CentOS user, the easiest way to install UniversalCodeGrep is from the Fedora Copr-hosted dnf/yum repository [here](https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep).  Installation is as simple as:
 
 ```sh
+# Add the Copr repo to your system:
 sudo dnf copr enable grvs/UniversalCodeGrep
+# Install UniversalCodeGrep:
 sudo dnf install universalcodegrep
 ```
 
