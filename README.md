@@ -5,7 +5,7 @@
        src="https://scan.coverity.com/projects/7451/badge.svg"/>
 </a>
 
-UniversalCodeGrep (ucg) is another [Ack](http://beyondgrep.com/) clone.  It is an extremely fast grep-like tool specialized for searching large bodies of source code.
+UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.
 
 ## Table of Contents
 
@@ -51,6 +51,15 @@ As a consequence of its use of these facilities and its overall design for maxim
 | `time ucg 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 0.53 seconds |
 | `time ag 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 11.1 seconds |
 | `time ack 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 18.3 seconds |
+
+UniversalCodeGrep is in fact about 25% faster than `grep` itself.  Again under Fedora 23 and searching the Boost 1.58.0 source tree, `ucg` bests grep not only in ease-of-use but in raw speed:
+
+| Command | Approximate Real Time |
+|---------|-----------------------|
+| `time grep -Ern --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx 'BOOST.*HPP' ~/src/boost_1_58_0/ | sort > grepout.txt` | ~ 0.611 seconds |
+| `time ucg --cpp 'BOOST.*HPP' ~/src/boost_1_58_0/ | sort > ucgout.txt`  | ~ 0.451 seconds |
+
+The resulting match files (*out.txt) are identical.
 
 ## License
 
