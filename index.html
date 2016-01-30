@@ -8,34 +8,21 @@
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
     <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-	<script>
-	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-	  ga('create', 'UA-71934244-1', 'auto');
-	  ga('send', 'pageview');
-
-	</script>
   </head>
   <body>
     <section class="page-header">
       <h1 class="project-name">UniversalCodeGrep</h1>
-      <h2 class="project-tagline">Easy as Ack, Faster than grep</h2>
+      <h2 class="project-tagline">ucg - UniversalCodeGrep</h2>
       <a href="https://github.com/gvansickle/ucg" class="btn">View on GitHub</a>
-	  <a href="https://github.com/gvansickle/ucg/releases/latest" class="btn">Latest Release: 0.2.0</a>
-	  <br/>
-	  NEW!: 2016-01-29: Ubuntu users can now install the latest UniversalCodeGrep releases from ucg's <a href="https://launchpad.net/~grvs/+archive/ubuntu/ucg">PPA</a>.
-	  <br/>
-	  NEW!: 2016-01-10: Red Hat / Fedora / CentOS users can now install the latest UniversalCodeGrep releases from ucg's <a href="https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep/">COPR</a> dnf/yum repository.
+      <a href="https://github.com/gvansickle/ucg/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/gvansickle/ucg/tarball/master" class="btn">Download .tar.gz</a>
     </section>
 
     <section class="main-content">
       <h1>
 <a id="universalcodegrep" class="anchor" href="#universalcodegrep" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>UniversalCodeGrep</h1>
 
-<p>UniversalCodeGrep (ucg) is another <a href="http://beyondgrep.com/">Ack</a> clone.  It is an extremely fast grep-like tool specialized for searching large bodies of source code.</p>
+<p>UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.</p>
 
 <h2>
 <a id="table-of-contents" class="anchor" href="#table-of-contents" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Table of Contents</h2>
@@ -144,6 +131,29 @@
 </tr>
 </tbody>
 </table>
+
+<p>UniversalCodeGrep is in fact about 25% faster than <code>grep</code> itself.  Again under Fedora 23 and searching the Boost 1.58.0 source tree, <code>ucg</code> bests grep not only in ease-of-use but in raw speed:</p>
+
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Approximate Real Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>time grep -Ern --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx 'BOOST.*HPP' ~/src/boost_1_58_0/ | sort &gt; grepout.txt</code></td>
+<td>~ 0.611 seconds</td>
+</tr>
+<tr>
+<td><code>time ucg --cpp 'BOOST.*HPP' ~/src/boost_1_58_0/ | sort &gt; ucgout.txt</code></td>
+<td>~ 0.451 seconds</td>
+</tr>
+</tbody>
+</table>
+
+<p>The resulting match files (*out.txt) are identical.</p>
 
 <h2>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
