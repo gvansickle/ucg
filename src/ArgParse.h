@@ -20,6 +20,8 @@
 #ifndef ARGPARSE_H_
 #define ARGPARSE_H_
 
+#include <config.h>
+
 #include <stdexcept>
 #include <string>
 #include <vector>

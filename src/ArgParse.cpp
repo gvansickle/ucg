@@ -19,7 +19,9 @@
  * This is the implementation of the ArgParse class.  Because of the use of GNU argp (a C library) for arg parsing,
  * there's a healthy mix of C in here as well as C++; a tribute to the interoperability of the two languages.
  */
+
 #include <config.h>
+
 #include "ArgParse.h"
 
 #include "../build_info.h"
@@ -41,13 +43,15 @@
 #include <cstring>
 #include <cstdio>
 
+#ifdef HAVE_PWD_H
 #include <pwd.h> // for GetUserHomeDir()-->getpwuid().
+#endif
+
 #include <fcntl.h>
 #include <unistd.h> // for GetUserHomeDir()-->getuid().
 #include <sys/stat.h>
 #include <libgen.h>   // Don't know where "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
 
-#include "config.h"
 #include "TypeManager.h"
 #include "File.h"
 
@@ -542,14 +546,19 @@ std::string ArgParse::GetProjectRCFilename() const
 	int home_fd = -1;
 	if(!homedirname.empty())
 	{
-		home_fd = open(homedirname.c_str(), O_RDONLY | O_DIRECTORY);
+		home_fd = open(homedirname.c_str(), O_RDONLY);
+		/// @todo Should probably check for is-a-dir here.
 	}
 
 	// Get the current working directory's absolute pathname.
 	/// @note GRVS - get_current_dir_name() under Cygwin will currently return a DOS path if this is started
 	///              under the Eclipse gdb.  This mostly doesn't cause problems, except for terminating the loop
 	///              (see below).
+#ifdef HAVE_GET_CURRENT_DIR_NAME
 	char *original_cwd = get_current_dir_name();
+#else
+	char *original_cwd = getcwd(NULL, 0);
+#endif
 
 	//std::clog << "INFO: cwd = \"" << original_cwd << "\"" << std::endl;
 
@@ -557,7 +566,8 @@ std::string ArgParse::GetProjectRCFilename() const
 	while((current_cwd != nullptr) && (current_cwd[0] != '.'))
 	{
 		// See if this is the user's $HOME dir.
-		auto cwd_fd = open(current_cwd, O_RDONLY | O_DIRECTORY);
+		auto cwd_fd = open(current_cwd, O_RDONLY);
+		/// @todo Should probably check for is-a-dir here.
 		if(is_same_file(cwd_fd, home_fd))
 		{
 			// We've hit the user's home directory without finding a config file.

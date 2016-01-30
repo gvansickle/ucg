@@ -23,7 +23,6 @@
 #include "DirInclusionManager.h"
 
 #include <fts.h>
-#include <fnmatch.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
