@@ -217,9 +217,11 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case OPT_COLOR:
 		arguments->m_color = true;
+		arguments->m_nocolor = false;
 		break;
 	case OPT_NOCOLOR:
 		arguments->m_color = false;
+		arguments->m_nocolor = true;
 		break;
 	case ARGP_KEY_ARG:
 		if(state->arg_num == 0)

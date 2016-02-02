@@ -30,7 +30,7 @@
 class OutputTask
 {
 public:
-	OutputTask(bool enable_color, sync_queue<MatchList> &input_queue);
+	OutputTask(bool flag_color, bool flag_nocolor, sync_queue<MatchList> &input_queue);
 	virtual ~OutputTask();
 
 	void Run();

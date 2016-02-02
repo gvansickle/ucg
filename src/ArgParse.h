@@ -123,7 +123,9 @@ public:
 	int m_jobs { 0 };
 
 	/// Whether to use color output or not.
-	bool m_color { true };
+	/// both false == not specified on command line.
+	bool m_color { false };
+	bool m_nocolor { false };
 
 	/// Whether to recurse into subdirectories or not.
 	bool m_recurse { true };

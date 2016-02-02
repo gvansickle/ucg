@@ -50,23 +50,22 @@ void MatchList::Print(bool istty, bool enable_color) const
 		no_dotslash_fn = std::string(m_filename.begin(), m_filename.end());
 	}
 
+	std::string color_filename("\x1B[32;1m"); // 32=green, 1=bold
+	std::string color_match("\x1B[30;43;1m"); // 30=black, 43=yellow bkgnd, 1=bold
+	std::string color_lineno("\x1B[33;1m");   // 33=yellow, 1=bold
+	std::string color_default("\x1B[0m");
+
+	if(!enable_color)
+	{
+		color_filename = "";
+		color_match = "";
+		color_lineno = "";
+		color_default = "";
+	}
+
 	if(istty)
 	{
 		// Render to a TTY device.
-
-		std::string color_filename("\x1B[32;1m"); // 32=green, 1=bold
-		std::string color_match("\x1B[30;43;1m"); // 30=black, 43=yellow bkgnd, 1=bold
-		std::string color_lineno("\x1B[33;1m");   // 33=yellow, 1=bold
-		std::string color_default("\x1B[0m");
-
-		if(!enable_color)
-		{
-			color_filename = "";
-			color_match = "";
-			color_lineno = "";
-			color_default = "";
-		}
-
 
 		std::cout << std::endl;
 		std::cout << color_filename << no_dotslash_fn << color_default << std::endl;
@@ -82,8 +81,8 @@ void MatchList::Print(bool istty, bool enable_color) const
 
 		for(auto it : m_match_list)
 		{
-			std::cout << no_dotslash_fn << ":" << it.m_line_number << ":"
-					<< it.m_pre_match << it.m_match << it.m_post_match << std::endl;
+			std::cout << color_filename << no_dotslash_fn << color_default << ":" << color_lineno << it.m_line_number << color_default << ":"
+					<< it.m_pre_match << color_match << it.m_match << color_default << it.m_post_match << std::endl;
 		}
 	}
 }
