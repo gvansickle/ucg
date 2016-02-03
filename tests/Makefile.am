@@ -59,6 +59,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 # The .at files which make up the test suite.
 TESTSUITE_AT = \
 	testsuite.at \
+	file_presentation.at \
 	type_inclusion.at \
 	version.at \
 	sanity.at \

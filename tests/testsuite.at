@@ -1,6 +1,6 @@
 # testsuite.at for UniversalCodeGrep
 #
-# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -32,7 +32,7 @@ dnl @<:@ = "["
 ### Start of the test suite proper.
 ###
 AT_INIT([UniversalCodeGrep Test Suite])
-AT_COPYRIGHT([Copyright (C) 2015 Gary R. Van Sickle])
+AT_COPYRIGHT([Copyright (C) 2015-2016 Gary R. Van Sickle])
 AT_COLOR_TESTS
 
 # We have one main executable to test.
@@ -52,6 +52,10 @@ m4_include([sanity.at])
 ###
 m4_include([search_modifiers.at])
 
+###
+### File presentation tests.
+###
+m4_include([file_presentation.at])
 
 ###
 ### Check type inclusion options.
