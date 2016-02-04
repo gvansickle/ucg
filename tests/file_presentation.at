@@ -17,7 +17,10 @@
 
 AT_BANNER([UniversalCodeGrep file presentation checks])
 
-AT_SETUP([color-vs-file tests])
+#
+# Color-vs-file output tests
+#
+AT_SETUP([Color-vs-file tests])
 
 AT_DATA([test_file.txt],
 [abcd
@@ -44,5 +47,40 @@ AT_CHECK([ucg --noenv 'bc' > testout1.txt && cat testout1.txt],[0],
 [test_file.txt:1:abcd
 test_file.txt:3:abcd
 ])
+
+AT_CLEANUP
+
+#
+# Color-vs-terminal tests
+#
+AT_SETUP([Color-vs-terminal tests])
+
+AT_DATA([test_file.txt],
+[abcd
+efgh
+abcd
+])
+
+AT_DATA([expout],
+[
+@<:@32;1mtest_file.txt@<:@0m
+@<:@33;1m1@<:@0m:a@<:@30;43;1mbc@<:@0md
+@<:@33;1m3@<:@0m:a@<:@30;43;1mbc@<:@0md
+])
+
+# Check for color output to a TTY.
+## Note: sed in here because Cygwin's script outputs \r\n's.
+AT_CHECK([script -qfc "ucg --noenv --color 'bc'" /dev/null | sed s/\r\n/\n/],[0],[expout])
+
+# Check for nocolor to a TTY.
+AT_CHECK([script -qfc "ucg --noenv --nocolor 'bc'" /dev/null | sed s/\r\n/\n/],[0],
+[
+test_file.txt
+1:abcd
+3:abcd
+])
+
+# Check for default (should be color).
+AT_CHECK([script -qfc "ucg --noenv 'bc'" /dev/null | sed s/\r\n/\n/],[0],[expout])
 
 AT_CLEANUP
