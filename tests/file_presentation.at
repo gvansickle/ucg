@@ -69,11 +69,11 @@ AT_DATA([expout],
 ])
 
 # Check for color output to a TTY.
-## Note: sed in here because Cygwin's script outputs \r\n's.
-AT_CHECK([script -qfc "ucg --noenv --color 'bc'" /dev/null | sed s/\r\n/\n/],[0],[expout])
+## Note: sed in here because script outputs \r\n's, even on Linuxes.
+AT_CHECK([script -qfc "ucg --noenv --color 'bc'" /dev/null | sed 's/\r$//'],[0],[expout])
 
 # Check for nocolor to a TTY.
-AT_CHECK([script -qfc "ucg --noenv --nocolor 'bc'" /dev/null | sed s/\r\n/\n/],[0],
+AT_CHECK([script -qfc "ucg --noenv --nocolor 'bc'" /dev/null | sed 's/\r$//'],[0],
 [
 test_file.txt
 1:abcd
@@ -81,6 +81,6 @@ test_file.txt
 ])
 
 # Check for default (should be color).
-AT_CHECK([script -qfc "ucg --noenv 'bc'" /dev/null | sed s/\r\n/\n/],[0],[expout])
+AT_CHECK([script -qfc "ucg --noenv 'bc'" /dev/null | sed 's/\r$//'],[0],[expout])
 
 AT_CLEANUP
