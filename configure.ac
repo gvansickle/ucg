@@ -1,6 +1,6 @@
 # configure.ac for UniversalCodeGrep
 #
-# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -18,11 +18,11 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([UniversalCodeGrep], [0.2.0], [https://github.com/gvansickle/ucg/issues],,[https://github.com/gvansickle/ucg])
+AC_INIT([UniversalCodeGrep], [0.2.1], [https://github.com/gvansickle/ucg/issues],,[https://github.com/gvansickle/ucg])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
 AC_CONFIG_HEADERS([config.h])
-AC_COPYRIGHT([Copyright (C) 2015 Gary R. Van Sickle])
+AC_COPYRIGHT([Copyright (C) 2015-2016 Gary R. Van Sickle])
 
 # Use the auxilliary build tools (e.g. install-sh, config.sub, etc.) in ./build-aux.
 AC_CONFIG_AUX_DIR([build-aux])
