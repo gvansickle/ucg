@@ -1,6 +1,6 @@
 # Top-level Makefile.am for UniversalCodeGrep
 #
-# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
