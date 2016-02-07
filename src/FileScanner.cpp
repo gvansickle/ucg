@@ -30,6 +30,7 @@
 #include <pcre.h>
 #endif
 #include <regex>
+#include <sstream>
 #include <thread>
 #include <mutex>
 #ifndef HAVE_SCHED_SETAFFINITY
