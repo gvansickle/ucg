@@ -63,6 +63,22 @@ echo "ucg Performance Test Results" > $PERF_RESULTS_FILE
 AT_CLEANUP
 
 #
+# Get the versions of the programs we're comparing to.
+#
+AT_SETUP([Getting program versions])
+
+# Loop through the programs we're comparing performance with.
+for PROGNAME in $PERF_PROGRAMS_TO_COMPARE grep; do
+	AS_ECHO([--]) >> $PERF_RESULTS_FILE
+	AS_ECHO(["$PROGNAME --version:"]) >> $PERF_RESULTS_FILE
+	AS_ECHO(["$($PROGNAME --version)"]) >> $PERF_RESULTS_FILE
+	AS_ECHO([--]) >> $PERF_RESULTS_FILE
+done;
+
+AT_CLEANUP
+
+
+#
 # Compare to grep.
 #
 AT_SETUP([Boost: compare performance to grep, 'BOOST.*HPP'])
