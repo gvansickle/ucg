@@ -66,7 +66,7 @@ void (*argp_program_version_hook)(FILE *stream, struct argp_state *state) = Prin
 
 // Not static, argp.h externs this.
 const char *argp_program_version = PACKAGE_STRING "\n"
-	"Copyright (C) 2015 Gary R. Van Sickle.\n"
+	"Copyright (C) 2015-2016 Gary R. Van Sickle.\n"
 	"\n"
 	"This program is free software; you can redistribute it and/or modify\n"
 	"it under the terms of version 3 of the GNU General Public License as\n"
