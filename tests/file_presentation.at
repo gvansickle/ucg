@@ -62,8 +62,7 @@ abcd
 ])
 
 AT_DATA([expout],
-[
-@<:@32;1mtest_file.cpp@<:@0m
+[@<:@32;1mtest_file.cpp@<:@0m
 @<:@33;1m1@<:@0m:a@<:@30;43;1mbc@<:@0md
 @<:@33;1m3@<:@0m:a@<:@30;43;1mbc@<:@0md
 ])
@@ -74,8 +73,7 @@ AT_CHECK([script -qfc "ucg --noenv --cpp --color 'bc'" /dev/null | sed 's/\r$//'
 
 # Check for nocolor to a TTY.
 AT_CHECK([script -qfc "ucg --noenv --cpp --nocolor 'bc'" /dev/null | sed 's/\r$//'],[0],
-[
-test_file.cpp
+[test_file.cpp
 1:abcd
 3:abcd
 ])

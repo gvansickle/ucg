@@ -21,6 +21,7 @@
 
 #include <unistd.h>
 #include <stdio.h>
+#include <iostream>
 
 OutputTask::OutputTask(bool flag_color, bool flag_nocolor, sync_queue<MatchList> &input_queue)
 	: m_input_queue(input_queue)
@@ -49,9 +50,16 @@ OutputTask::~OutputTask()
 void OutputTask::Run()
 {
 	MatchList ml;
+	bool first_matchlist_printed = false;
 
 	while(m_input_queue.wait_pull(ml) != queue_op_status::closed)
 	{
+		if(first_matchlist_printed && m_output_is_tty)
+		{
+			// Print a blank line between the match lists (i.e. the groups of matches in one file).
+			std::cout << std::endl;
+		}
 		ml.Print(m_output_is_tty, m_enable_color);
+		first_matchlist_printed = true;
 	}
 }
