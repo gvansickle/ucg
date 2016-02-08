@@ -27,7 +27,7 @@ ACLOCAL_AMFLAGS = -I m4 --install
 SUBDIRS = third_party src . tests
 
 # Make sure README.rd and other docs get distributed and installed correctly.
-dist_doc_DATA = README.md COPYING AUTHORS
+dist_doc_DATA = README.md NEWS.md COPYING AUTHORS
 
 # The Automake rules for the ucg executable.
 bin_PROGRAMS=ucg
