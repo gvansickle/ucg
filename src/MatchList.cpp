@@ -67,7 +67,6 @@ void MatchList::Print(bool istty, bool enable_color) const
 	{
 		// Render to a TTY device.
 
-		std::cout << std::endl;
 		std::cout << color_filename << no_dotslash_fn << color_default << std::endl;
 		for(auto it : m_match_list)
 		{
