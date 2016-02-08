@@ -1,7 +1,7 @@
-# NEWS file for UniversalCodeGrep project.
+# NEWS file for the UniversalCodeGrep project.
 
 
-## [Unreleased]
+## [0.2.1] - 2016-02-08
 ### Added
 - Added auto-versioning support, improved --version output to display built-from vcs/tarball info, compiler version, libpcre version and info.  Resolves #4.
 - Added performance test vs. grep on Boost --cpp files with regex 'BOOST.*HPP' to testsuite.
