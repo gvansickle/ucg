@@ -13,10 +13,10 @@
 - Merged pull request #36 from SilverNexus/master: Add CMakeFiles to automatically excluded dirs.
 
 ### Fixed
-- Refactored Globber's bad-start-path detection logic to eliminate a file descriptor leak.  Resolves #46 / Coverity CID 53718.
 - Files with thousands of matches no longer take anywhere near as long to output.  Should help performance in the average case as well.  Changed some naive O(n^2) algorithms to O(n) ones.  Resolves #35.
-- Merged pull request #54 from ismail/clang-fix: Add sstream include to fix compilation with clang with libc++.
+- Refactored Globber's bad-start-path detection logic to eliminate a file descriptor leak.  Resolves #46 / Coverity CID 53718.
 - Fixed extra newline at the start of tty output.  Resolves #50.
+- Merged pull request #54 from ismail/clang-fix: Add sstream include to fix compilation with clang with libc++.
 
 
 ## [0.2.0] - 2015-12-28
