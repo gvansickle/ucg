@@ -2,6 +2,9 @@
 
 
 ## [0.2.1] - 2016-02-08
+
+Minor bugfix/feature release of UniversalCodeGrep (ucg).
+
 ### Added
 - Added auto-versioning support, improved --version output to display built-from vcs/tarball info, compiler version, libpcre version and info.  Resolves #4.
 - Added performance test vs. grep on Boost --cpp files with regex 'BOOST.*HPP' to testsuite.
