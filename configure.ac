@@ -177,6 +177,7 @@ AS_IF([test -n $CXX11_FLAG],
 # Boost generates a ton of these warnings.
 AX_APPEND_COMPILE_FLAGS([-Wno-unused-local-typedefs], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
+AX_APPEND_COMPILE_FLAGS([-Werror=format-security],[AM_CXXFLAGS])
 # Put this back in to help with profiling.
 #AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 AC_LANG_POP([C++])
