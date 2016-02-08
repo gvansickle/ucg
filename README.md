@@ -97,11 +97,11 @@ Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/
 
 ### Building the Source Tarball
 
-UniversalCodeGrep can be built and installed from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.2.0/universalcodegrep-0.2.0.tar.gz)) in the standard autotools manner:
+UniversalCodeGrep can be built and installed from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.2.1/universalcodegrep-0.2.1.tar.gz)) in the standard autotools manner:
 
 ```sh
-tar -xaf universalcodegrep-0.2.0.tar.gz
-cd universalcodegrep-0.2.0.tar.gz
+tar -xaf universalcodegrep-0.2.1.tar.gz
+cd universalcodegrep-0.2.1.tar.gz
 ./configure
 make
 make install
@@ -152,7 +152,7 @@ If no `FILES OR DIRECTORIES` are specified, searching starts in the current dire
 
 ### Command Line Options
 
-Version 0.2.0 of `ucg` supports a significant subset of the options supported by `ack`.  Future releases will have support for more options.
+Version 0.2.1 of `ucg` supports a significant subset of the options supported by `ack`.  Future releases will have support for more options.
 
 #### Searching
 
