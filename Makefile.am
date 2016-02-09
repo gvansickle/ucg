@@ -53,7 +53,7 @@ build_info.cpp: FORCE verify-provenance
 		GIT_DESCRIBE=$$(cat $(top_srcdir)/.tarball-version); \
 	elif (which git && cd $(top_srcdir) && git describe > /dev/null); then \
 		: We are building from a git repo. ; \
-		GIT_DESCRIBE="$$(cd $(top_srcdir) && git describe --dirty)"; \
+		GIT_DESCRIBE="$$(cd $(top_srcdir) && git describe --long --dirty)"; \
 	else GIT_DESCRIBE="unknown"; \
 	fi; \
 	echo "const char *g_git_describe = \"$${GIT_DESCRIBE}\";" >> "$@"
@@ -74,7 +74,7 @@ verify-provenance:
 	fi;
 	
 dist-hook:
-	echo -n "$$(cd $(top_srcdir) && git describe --dirty | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
+	echo -n "$$(cd $(top_srcdir) && git describe --long --dirty | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
 
 ucg_CPPFLAGS = -I $(top_srcdir)/src \
 	$(BOOST_TR1_CPPFLAGS) $(BOOST_CPPFLAGS) \
