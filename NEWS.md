@@ -6,7 +6,7 @@
 Minor bugfix/feature release of UniversalCodeGrep (ucg).
 
 ### Added
-- Added auto-versioning support, improved --version output to display built-from vcs/tarball info, compiler version, libpcre version and info.  Resolves #4.
+- Added auto-versioning support, improved --version output to display built-from vcs/tarball info, compiler version, libpcre version and info.  Resolves #4, #56.
 - Added performance test vs. grep on Boost --cpp files with regex 'BOOST.*HPP' to testsuite.
 - Added color-vs-file and color-vs-tty tests to the testsuite.
 - Performance test suite now captures version info of the programs that are being compared.  Resolves #22.
@@ -21,6 +21,8 @@ Minor bugfix/feature release of UniversalCodeGrep (ucg).
 - Fixed extra newline at the start of tty output.  Resolves #50.
 - Merged pull request #54 from ismail/clang-fix: Add sstream include to fix compilation with clang with libc++.
 
+### Security
+- Now compiling with -Wformat, -Wformat-security, -Werror=format-security if compiler supports it.  Resolves #57.
 
 ## [0.2.0] - 2015-12-28
 - No news yet.

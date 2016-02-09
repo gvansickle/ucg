@@ -343,7 +343,7 @@ void ArgParse::Parse(int argc, char **argv)
 void ArgParse::PrintVersionText(FILE* stream, struct argp_state* state)
 {
 	// Print the version string and copyright notice.
-	std::fprintf(stream, argp_program_version);
+	std::fputs(argp_program_version, stream);
 
 	// In addition, we want to print the compiler/version we were built with, the libpcre version and some other info on it,
 	// and any source control version info we can get.
