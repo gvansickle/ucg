@@ -8,27 +8,14 @@
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
     <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-	<script>
-	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-	  ga('create', 'UA-71934244-1', 'auto');
-	  ga('send', 'pageview');
-
-	</script>
   </head>
   <body>
     <section class="page-header">
       <h1 class="project-name">UniversalCodeGrep</h1>
-      <h2 class="project-tagline">Easy as Ack, Faster than grep</h2>
+      <h2 class="project-tagline">ucg - UniversalCodeGrep</h2>
       <a href="https://github.com/gvansickle/ucg" class="btn">View on GitHub</a>
-	  <a href="https://github.com/gvansickle/ucg/releases/latest" class="btn">Latest Release: 0.2.0</a>
-	  <br/>
-	  NEW!: 2016-01-29: Ubuntu users can now install the latest UniversalCodeGrep releases from ucg's <a href="https://launchpad.net/~grvs/+archive/ubuntu/ucg">PPA</a>.
-	  <br/>
-	  NEW!: 2016-01-10: Red Hat / Fedora / CentOS users can now install the latest UniversalCodeGrep releases from ucg's <a href="https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep/">COPR</a> dnf/yum repository.
+      <a href="https://github.com/gvansickle/ucg/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/gvansickle/ucg/tarball/master" class="btn">Download .tar.gz</a>
     </section>
 
     <section class="main-content">
@@ -120,7 +107,7 @@
 
 <p><code>ucg</code> is intended to address the impatient programmer's code searching needs.  <code>ucg</code> is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the <a href="http://www.pcre.org/">PCRE library</a>, with its <a href="http://www.pcre.org/original/doc/html/pcrejit.html">JIT compilation feature</a> providing a huge performance gain on most platforms.</p>
 
-<p>As a consequence of its use of these facilities and its overall design for maximum concurrency and speed, <code>ucg</code> is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with <code>ucg</code> 0.2.0, <a href="http://geoff.greer.fm/ag/"><code>ag</code></a> 0.30.0, and <code>ack</code> 2.14 produces the following results:</p>
+<p>As a consequence of its use of these facilities and its overall design for maximum concurrency and speed, <code>ucg</code> is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with <code>ucg</code> 0.2.1, <a href="http://geoff.greer.fm/ag/"><code>ag</code></a> 0.31.0, and <code>ack</code> 2.14 produces the following results:</p>
 
 <table>
 <thead>
@@ -132,20 +119,20 @@
 <tbody>
 <tr>
 <td><code>time ucg 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
-<td>~ 0.53 seconds</td>
+<td>~ 0.509 seconds</td>
 </tr>
 <tr>
 <td><code>time ag 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
-<td>~ 11.1 seconds</td>
+<td>~ 10.66 seconds</td>
 </tr>
 <tr>
 <td><code>time ack 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
-<td>~ 18.3 seconds</td>
+<td>~ 17.19 seconds</td>
 </tr>
 </tbody>
 </table>
 
-<p>UniversalCodeGrep is in fact about 25% faster than <code>grep</code> itself.  Again under Fedora 23 and searching the Boost 1.58.0 source tree, <code>ucg</code> bests grep not only in ease-of-use but in raw speed:</p>
+<p>UniversalCodeGrep is in fact somewhat faster than <code>grep</code> itself.  Again under Fedora 23 and searching the Boost 1.58.0 source tree, <code>ucg</code> bests grep 2.22 not only in ease-of-use but in raw speed:</p>
 
 <table>
 <thead>
@@ -157,11 +144,11 @@
 <tbody>
 <tr>
 <td><code>time grep -Ern --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx 'BOOST.*HPP' ~/src/boost_1_58_0/ | sort &gt; grepout.txt</code></td>
-<td>~ 0.611 seconds</td>
+<td>~ 0.570 seconds</td>
 </tr>
 <tr>
 <td><code>time ucg --cpp 'BOOST.*HPP' ~/src/boost_1_58_0/ | sort &gt; ucgout.txt</code></td>
-<td>~ 0.451 seconds</td>
+<td>~ 0.498 seconds</td>
 </tr>
 </tbody>
 </table>
@@ -206,10 +193,10 @@ sudo dnf install universalcodegrep</pre></div>
 <h3>
 <a id="building-the-source-tarball" class="anchor" href="#building-the-source-tarball" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Building the Source Tarball</h3>
 
-<p>UniversalCodeGrep can be built and installed from the distribution tarball (available <a href="https://github.com/gvansickle/ucg/releases/download/0.2.0/universalcodegrep-0.2.0.tar.gz">here</a>) in the standard autotools manner:</p>
+<p>UniversalCodeGrep can be built and installed from the distribution tarball (available <a href="https://github.com/gvansickle/ucg/releases/download/0.2.1/universalcodegrep-0.2.1.tar.gz">here</a>) in the standard autotools manner:</p>
 
-<div class="highlight highlight-source-shell"><pre>tar -xaf universalcodegrep-0.2.0.tar.gz
-<span class="pl-c1">cd</span> universalcodegrep-0.2.0.tar.gz
+<div class="highlight highlight-source-shell"><pre>tar -xaf universalcodegrep-0.2.1.tar.gz
+<span class="pl-c1">cd</span> universalcodegrep-0.2.1.tar.gz
 ./configure
 make
 make install</pre></div>
@@ -267,7 +254,7 @@ make install</pre></div>
 <h3>
 <a id="command-line-options" class="anchor" href="#command-line-options" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Command Line Options</h3>
 
-<p>Version 0.2.0 of <code>ucg</code> supports a significant subset of the options supported by <code>ack</code>.  Future releases will have support for more options.</p>
+<p>Version 0.2.1 of <code>ucg</code> supports a significant subset of the options supported by <code>ack</code>.  Future releases will have support for more options.</p>
 
 <h4>
 <a id="searching" class="anchor" href="#searching" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Searching</h4>
