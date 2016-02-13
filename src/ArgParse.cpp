@@ -477,7 +477,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 		{
 			if(e.code() != std::errc::no_such_file_or_directory)
 			{
-				std::clog << "WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+				std::clog << "ucg: WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
 			}
 			// Otherwise, the file just doesn't exist.
 		}
