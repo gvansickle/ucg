@@ -98,38 +98,6 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 AX_PATH_LIB_PCRE([],
 	[AC_MSG_ERROR([compiling this program requires that libpcre is installed.])])
 
-# The Boost source distribution's tarball.
-# If the user doesn't already have a suitable Boost installation, we'll do something similar to what we do
-# for DParser, and build it from the source tarball and link to it statically.
-# The reason here though is more complex:
-#   1. Boost (at least as of 1.48.0) wants to install into the wrong /lib directory on some systems, notably some x86_64 systems.
-#   2. Neither of the Autoconf macro packages for detecting Boost that I've tried works completely correctly when
-#      more than one Boost installation is on a system, e.g. one in /usr/lib and one in /usr/local/lib. E.g., if an
-#      old copy is in /usr/include & /usr/lib and a suitable copy is in /usr/local/include and /usr/local/lib, both
-#      will by default find the correct paths, but ultimately make the program try to link with the libs in /usr/lib
-#      even though it's correctly using the headers in /usr/local/include.
-GRVS_ARG_WITH_FILE([FILE_PATH_BOOST_SOURCE_TARBALL], [boost-tarball], [boost source distribution tarball],
-	[],[AC_MSG_WARN([No Boost source tarball specified.])])
-AM_CONDITIONAL([BUILD_BOOST_FROM_TARBALL],[test -f "$FILE_PATH_BOOST_SOURCE_TARBALL"])
-
-# The list of Boost libraries we need, in a form that Boost's bootstrap.sh can understand.
-AC_SUBST([REQUIRED_BOOST_LIBS],[system,thread])
-# Extract the "boost_1_xx_x" part of the filename.
-BOOST_TARBALL_DIRNAME=$(echo "${FILE_PATH_BOOST_SOURCE_TARBALL}" | grep -o 'boost_._.._.')
-BOOST_TARBALL_TARBZ2=$(basename "${FILE_PATH_BOOST_SOURCE_TARBALL}")
-BOOST_TARBALL_TAR=$(basename "${BOOST_TARBALL_TARBZ2}" .bz2)
-AC_SUBST([BOOST_TARBALL_DIRNAME])
-AC_SUBST([BOOST_TARBALL_TARBZ2])
-AC_SUBST([BOOST_TARBALL_TAR])
-
-
-# A path to a boost source tarball must be specified.
-# Populate the necessary variables.
-AC_SUBST([BOOST_CPPFLAGS],['-I "$(top_builddir)/third_party/$(BOOST_TARBALL_DIRNAME)"'])
-AM_CPPFLAGS="$AM_CPPFLAGS $BOOST_CPPFLAGS"
-AC_SUBST([BOOST_LDFLAGS],[""])
-AC_SUBST([BOOST_LIBTOOL_FLAGS],[""])
-
 
 ###
 ### Checks for header files.
@@ -161,7 +129,7 @@ AC_LANG_PUSH([C++])
 # Determine what switches we need to get at least some level of C++11 support.
 CXX11_FLAG=""
 for switch in -std=gnu++11 -std=c++11; do
-	AC_MSG_CHECKING(whether $CXX supports C++11 features with $switch)
+	AC_MSG_CHECKING([whether $CXX supports C++11 features with $switch])
 	AX_APPEND_COMPILE_FLAGS([$switch],[CXX11_FLAG])
 	AS_IF([test -n $CXX11_FLAG],
 		[AC_MSG_RESULT([yes]); break;],

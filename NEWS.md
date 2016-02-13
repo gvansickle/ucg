@@ -1,5 +1,12 @@
 # NEWS file for the UniversalCodeGrep project.
 
+## [UNRELEASED]
+
+### Changed
+- Removed Boost configuration cruft from earlier development.
+- File() now throws a FileException if fstat() indicates the open()ed file isn't a regular file.
+- Now checking fstat() call's return value.
+- Globber now prints an error message but continues if it runs into an unreadable directory.
 
 ## [0.2.1] - 2016-02-08
 
