@@ -433,11 +433,15 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 				user_argv->insert(user_argv->end(), vec_argv.cbegin(), vec_argv.cend());
 			}
 		}
+		catch(const FileException &e)
+		{
+			std::clog << "ucg: WARNING: " << e.what() << std::endl;
+		}
 		catch(const std::system_error &e)
 		{
 			if(e.code() != std::errc::no_such_file_or_directory)
 			{
-				std::clog << "WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+				std::clog << "ucg: WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
 			}
 			// Otherwise, the file just doesn't exist.
 		}
@@ -464,6 +468,10 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 
 				project_argv->insert(project_argv->end(), vec_argv.cbegin(), vec_argv.cend());
 			}
+		}
+		catch(const FileException &e)
+		{
+			std::clog << "ucg: WARNING: " << e.what() << std::endl;
 		}
 		catch(const std::system_error &e)
 		{
