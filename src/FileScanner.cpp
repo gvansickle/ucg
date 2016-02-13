@@ -165,10 +165,15 @@ void FileScanner::Run()
 				m_output_queue.wait_push(ml);
 			}
 		}
+		catch(const FileException &error)
+		{
+			// The File constructor threw an exception.
+			std::cerr << "ucg: ERROR: " << error.what() << std::endl;
+		}
 		catch(const std::system_error& error)
 		{
 			// A system error.  Currently should only be errors from File.
-			std::cerr << "ERROR: " << error.code() << " - " << error.code().message() << std::endl;
+			std::cerr << "ucg: ERROR: " << error.code() << " - " << error.code().message() << std::endl;
 		}
 		catch(...)
 		{

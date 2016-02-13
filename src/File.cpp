@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UltimateCodeSearch.
  *
@@ -40,7 +40,24 @@ File::File(const std::string &filename)
 
 	// Check the file size.
 	struct stat st;
-	fstat(m_file_descriptor, &st);
+	int retval = fstat(m_file_descriptor, &st);
+	if(retval != 0)
+	{
+		// fstat() failed, throw an exception.
+		close(m_file_descriptor);
+		m_file_descriptor = -1;
+		throw std::system_error(errno, std::generic_category());
+	}
+
+	// Make sure this is a regular file.
+	if(!S_ISREG(st.st_mode))
+	{
+		// Not a regular file, we shouldn't have been called.
+		close(m_file_descriptor);
+		m_file_descriptor = -1;
+		throw FileException("File is not regular file: \"" + filename + "\"");
+	}
+
 	m_file_size = st.st_size;
 	// If filesize is 0, skip.
 	if(m_file_size == 0)
@@ -63,8 +80,6 @@ File::File(const std::string &filename)
 		std::cerr << "ERROR: Couldn't map file \"" << filename << "\"" << std::endl;
 		throw std::system_error(errno, std::system_category());
 	}
-
-
 }
 
 File::~File()
