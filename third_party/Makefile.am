@@ -44,12 +44,10 @@ MOSTLYCLEANFILES =
 CLEANFILES =
 
 
-if BUILD_BOOST_FROM_TARBALL
 ###
-### The Automake rules for building static versions of the Boost libraries we need from an upstream source tarball.
+### Include third-party Makefile.am's here.
 ###
-include $(srcdir)/Makefile-Boost.am
-endif
+
 
 # The stamp file which will depend on all active third-party builds.
 # We do this this way so as to maximize parallel build potential.
@@ -72,13 +70,6 @@ stampfile-all-third-party-builds-complete: $(third_party_complete_deps)
 # Also delete the generated .tar files, they're cheap to rebuild.
 MOSTLYCLEANFILES +=  $(CLEANFILES_REPORT_BOILERPLATE) stampfile-all-third-party-builds-complete
 	 
-# Hook "mostlyclean" to avoid rm'ing the untarred boost tarball when we don't have to.
-mostlyclean-local:
-	@: 'Remove the Boost local installation tree.'
-	test ! -d "$(BOOST_LOCAL)" || rm -rf "$(BOOST_LOCAL)"
-	@: 'Remove the Boost local build tree.'
-	test ! -d "$(BOOST_BUILD_DIR)" || rm -rf "$(BOOST_BUILD_DIR)"	
-
 # We need to hook 'clean' here because we need to rm the entire untarred source trees, not just individual files.	
 clean-local:
 	@:; # Strip any spaces off the ends of the directory list.

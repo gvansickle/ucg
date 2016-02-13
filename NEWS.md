@@ -1,5 +1,9 @@
 # NEWS file for the UniversalCodeGrep project.
 
+## [UNRELEASED]
+
+### Changed
+- Removed Boost configuration cruft from earlier development.
 
 ## [0.2.1] - 2016-02-08
 

@@ -35,12 +35,6 @@ ucg_SOURCES=main.cpp build_info.h
 nodist_ucg_SOURCES=build_info.cpp
 CLEANFILES=build_info.cpp
 
-if BUILD_BOOST_FROM_TARBALL
-# Collect all the Boost libraries we need into a single variable.
-BOOST_LOCAL_LIB = $(top_builddir)/third_party/$(BOOST_TARBALL_DIRNAME)/stage/lib
-ALLBOOSTLIBS = $(BOOST_LOCAL_LIB)/libboost_thread.a \
-	$(BOOST_LOCAL_LIB)/libboost_system.a
-endif
 
 # Collect some make-time info. 
 FORCE:
@@ -77,11 +71,9 @@ dist-hook:
 	echo -n "$$(cd $(top_srcdir) && git describe --long --dirty | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
 
 ucg_CPPFLAGS = -I $(top_srcdir)/src \
-	$(BOOST_TR1_CPPFLAGS) $(BOOST_CPPFLAGS) \
 	$(AM_CPPFLAGS) 
 ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
-ucg_LDFLAGS = $(BOOST_LIBTOOL_FLAGS) $(BOOST_LDFLAGS) \
-	$(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.a $(ALLBOOSTLIBS)
+ucg_LDFLAGS = $(AM_LDFLAGS)
+ucg_LDADD = ./src/libsrc.a
 
