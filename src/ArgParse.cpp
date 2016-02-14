@@ -59,7 +59,7 @@
 // Our --version output isn't just a static string, so we'll register with argp for a version callback.
 static void PrintVersionTextRedirector(FILE *stream, struct argp_state *state)
 {
-	static_cast<ArgParse*>(state->input)->PrintVersionText(stream, state);
+	static_cast<ArgParse*>(state->input)->PrintVersionText(stream);
 }
 void (*argp_program_version_hook)(FILE *stream, struct argp_state *state) = PrintVersionTextRedirector;
 
@@ -109,6 +109,11 @@ static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 // Not static, argp.h externs this.
 error_t argp_err_exit_status = STATUS_EX_USAGE;
 
+/// Argp Option Definitions
+// Disable (at least on gcc) the large number of spurious warnings about missing initializers
+// the declaration of options[] and ArgParse::argp normally cause.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 static struct argp_option options[] = {
 		{0,0,0,0, "Searching:" },
 		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
@@ -140,6 +145,12 @@ static struct argp_option options[] = {
 		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
 		{ 0 }
 	};
+
+/// The argp struct for argp.
+struct argp ArgParse::argp = { options, ArgParse::parse_opt, args_doc, doc };
+
+#pragma GCC diagnostic pop // Re-enable -Wmissing-field-initializers
+
 
 error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 {
@@ -248,8 +259,6 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
-struct argp ArgParse::argp = { options, ArgParse::parse_opt, args_doc, doc };
-
 
 ArgParse::ArgParse(TypeManager &type_manager)
 	: m_type_manager(type_manager)
@@ -340,7 +349,7 @@ void ArgParse::Parse(int argc, char **argv)
 	}
 }
 
-void ArgParse::PrintVersionText(FILE* stream, struct argp_state* state)
+void ArgParse::PrintVersionText(FILE* stream)
 {
 	// Print the version string and copyright notice.
 	std::fputs(argp_program_version, stream);
@@ -407,10 +416,11 @@ void ArgParse::PrintHelpTypes() const
 	std::cout << std::endl;
 }
 
-void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv)
+void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std::vector<char*> *user_argv, std::vector<char*> *project_argv)
 {
 	// Find and parse the global config file.
 	/// @todo
+	/// @note global_argv commented out above to avoid unused parameter warning.
 
 	// Parse the user's config file.
 	std::string homedir = GetUserHomeDir();

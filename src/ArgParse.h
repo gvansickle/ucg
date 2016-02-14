@@ -60,10 +60,9 @@ public:
 	 *
 	 * @note This would preferably be private, and maybe non-static, but argp needs it to be statically overloaded (global fn ptr).
 	 *
-	 * @param stream
-	 * @param state
+	 * @param stream  Output stream from argp where we are to send the version info.
 	 */
-	static void PrintVersionText(FILE *stream, struct argp_state *state);
+	static void PrintVersionText(FILE *stream);
 
 private:
 
