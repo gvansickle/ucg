@@ -19,7 +19,7 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
   * [Building the Source Tarball](#building-the-source-tarball)
 	* [Build Prerequisites](#build-prerequisites)
 	  * [gcc version 4.8 or greater.](#gcc-version-48-or-greater)
-	  * [pcre version 8.2 or greater.](#pcre-version-82-or-greater)
+	  * [pcre version 8.21 or greater.](#pcre-version-821-or-greater)
   * [Supported OSes and Distributions](#supported-oses-and-distributions)
 * [Usage](#usage)
   * [Command Line Options](#command-line-options)
@@ -119,7 +119,7 @@ This will install the `ucg` executable in `/usr/local/bin`.  If you wish to inst
 
 Versions of `gcc` prior to 4.8 do not have sufficiently complete C++11 support to build `ucg`.
 
-##### `pcre` version 8.2 or greater.
+##### `pcre` version 8.21 or greater.
 
 This should be available from your Linux distro.
 
