@@ -100,8 +100,10 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 AX_PATH_LIB_PCRE([],
 	[AC_MSG_ERROR([compiling this program requires that libpcre is installed.])])
 
-AC_LANG_PUSH([C++])
 # Check the version of the PCRE library.  AX_PATH_LIB_PCRE() might find a version older than we need.
+AC_LANG_PUSH([C++])
+SAVE_CPPFLAGS="$CPPFLAGS";
+CPPFLAGS="$CPPFLAGS -P" # -P to prevent #line annotations in gcc >~5.x, which break the sed mechanism below.
 AC_MSG_CHECKING([whether libpcre is new enough])
 AC_PREPROC_IFELSE(
 	[AC_LANG_PROGRAM([[#include <pcre.h>]],[[
@@ -114,6 +116,7 @@ AX_COMPARE_VERSION([$libpcreversion],[ge],[8.21],
 	[AC_MSG_RESULT([yes, libpcre version = $libpcreversion])],
 	[AC_MSG_ERROR([no, libpcre version = $libpcreversion.  Compiling this program requires a libpcre version >= 8.21])]
 	)
+CPPFLAGS="$SAVE_CPPFLAGS"
 AC_LANG_POP([C++])
 
 
