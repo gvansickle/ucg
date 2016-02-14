@@ -74,6 +74,7 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 AC_PROG_CC
 # This is required instead of AC_PROG_CC_C_O by automake's "subdir-objects" option.
 AM_PROG_CC_C_O
+AC_PROG_CXXCPP # Needed for the AC_PREPROC_IFELSE() check of pcre version below.
 AC_PROG_CXX
 AC_PROG_RANLIB
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
@@ -81,6 +82,7 @@ AC_PROG_RANLIB
 # Probably remove this when/if that is fixed. 
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_SED
+
 
 ## Checks for maintainer tools.
 
@@ -97,6 +99,22 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 # or even exist (clang has no Linux <regex> support) for production use.
 AX_PATH_LIB_PCRE([],
 	[AC_MSG_ERROR([compiling this program requires that libpcre is installed.])])
+
+AC_LANG_PUSH([C++])
+# Check the version of the PCRE library.  AX_PATH_LIB_PCRE() might find a version older than we need.
+AC_MSG_CHECKING([whether libpcre is new enough])
+AC_PREPROC_IFELSE(
+	[AC_LANG_PROGRAM([[#include <pcre.h>]],[[
+		libpcreversion=PCRE_MAJOR . PCRE_MINOR
+		]])],
+	[libpcreversion=$(cat conftest.i | $SED -r -n 's/libpcreversion=(.*)/\1/p' | $SED -r 's/(\t| )//g')],
+	[AC_MSG_ERROR([could not determine libpcre version])]
+	)
+AX_COMPARE_VERSION([$libpcreversion],[ge],[8.21],
+	[AC_MSG_RESULT([yes, libpcre version = $libpcreversion])],
+	[AC_MSG_ERROR([no, libpcre version = $libpcreversion.  Compiling this program requires a libpcre version >= 8.21])]
+	)
+AC_LANG_POP([C++])
 
 
 ###
