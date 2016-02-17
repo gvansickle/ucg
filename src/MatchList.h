@@ -34,13 +34,15 @@ public:
 	MatchList() {};
 	MatchList(const MatchList &lvalue) = default;
 	MatchList(const std::string &filename);
-	virtual ~MatchList();
+	~MatchList();
 
 	void AddMatch(const Match &match);
 
 	void Print(bool istty, bool enable_color) const;
 
 	bool empty() const noexcept { return m_match_list.empty(); };
+
+	std::vector<Match>::size_type GetNumberOfMatchedLines() const;
 
 private:
 

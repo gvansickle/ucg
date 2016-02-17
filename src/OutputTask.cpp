@@ -61,5 +61,8 @@ void OutputTask::Run()
 		}
 		ml.Print(m_output_is_tty, m_enable_color);
 		first_matchlist_printed = true;
+
+		// Count up the total number of matches.
+		m_total_matched_lines += ml.GetNumberOfMatchedLines();
 	}
 }

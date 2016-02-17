@@ -118,7 +118,18 @@ int main(int argc, char **argv)
 			return 1;
 		}
 
-		return 0;
+		auto total_matched_lines = output_task.GetTotalMatchedLines();
+
+		if(total_matched_lines == 0)
+		{
+			// No matches, return a grep-compatible 1.
+			return 1;
+		}
+		else
+		{
+			// Found some matches, return success.
+			return 0;
+		}
 	}
 	catch(const FileScannerException &e)
 	{
