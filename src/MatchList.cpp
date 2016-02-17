@@ -85,3 +85,9 @@ void MatchList::Print(bool istty, bool enable_color) const
 		}
 	}
 }
+
+std::vector<Match>::size_type MatchList::GetNumberOfMatchedLines() const
+{
+	// One Match in the MatchList equals one matched line.
+	return m_match_list.size();
+}

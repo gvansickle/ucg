@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -24,8 +24,8 @@
 
 #include "sync_queue_impl_selector.h"
 
-/*
- *
+/**
+ * Task which serializes the output from the FileScanner threads.
  */
 class OutputTask
 {
@@ -35,13 +35,21 @@ public:
 
 	void Run();
 
+	long long GetTotalMatchedLines() const { return m_total_matched_lines; };
+
 private:
 
+	/// The queue from which we'll pull our MatchLists.
 	sync_queue<MatchList> &m_input_queue;
 
+	/// Whether stdout is a TTY.  Determined in constructor.
 	bool m_output_is_tty;
 
+	/// Whether to output color or not.  Determined in constructor.
 	bool m_enable_color;
+
+	/// The total number of matched lines as reported by the incoming MatchLists.
+	long long m_total_matched_lines { 0 };
 };
 
 #endif /* OUTPUTTASK_H_ */
