@@ -634,8 +634,11 @@ std::string ArgParse::GetProjectRCFilename() const
 	// Free the cwd string.
 	free(original_cwd);
 
-	// Close the homedir we opened above.
-	close(home_fd);
+	if(home_fd != -1)
+	{
+		// Close the homedir we opened above.
+		close(home_fd);
+	}
 
 	return retval;
 }
