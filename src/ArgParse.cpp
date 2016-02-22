@@ -590,14 +590,18 @@ std::string ArgParse::GetProjectRCFilename() const
 		{
 			// ...check if this dir is the user's $HOME dir.
 			int cwd_fd = open(current_cwd, O_RDONLY);
-			/// @todo Should probably check for is-a-dir here.
-			if(is_same_file(cwd_fd, home_fd))
+			if(cwd_fd != -1)
 			{
-				// We've hit the user's home directory without finding a config file.
+				/// @todo Should probably check for is-a-dir here.
+				if(is_same_file(cwd_fd, home_fd))
+				{
+					// We've hit the user's home directory without finding a config file.
+					close(cwd_fd);
+					break;
+				}
 				close(cwd_fd);
-				break;
 			}
-			close(cwd_fd);
+			// else couldn't open the current cwd, so we can't check if it's the same directory as home_fd.
 		}
 
 		// Try to open the config file.
@@ -608,7 +612,7 @@ std::string ArgParse::GetProjectRCFilename() const
 		}
 		test_rc_filename += ".ucgrc";
 		//std::clog << "INFO: checking for rc file \"" << test_rc_filename << "\"" << std::endl;
-		auto rc_file = open(test_rc_filename.c_str(), O_RDONLY);
+		int rc_file = open(test_rc_filename.c_str(), O_RDONLY);
 		if(rc_file != -1)
 		{
 			// Found it.  Return its name.
