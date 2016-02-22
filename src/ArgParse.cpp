@@ -562,7 +562,7 @@ std::string ArgParse::GetProjectRCFilename() const
 	std::string retval;
 
 	// Get a file descriptor to the user's home dir, if there is one.
-	auto homedirname = GetUserHomeDir();
+	std::string homedirname = GetUserHomeDir();
 	int home_fd = -1;
 	if(!homedirname.empty())
 	{
@@ -582,19 +582,23 @@ std::string ArgParse::GetProjectRCFilename() const
 
 	//std::clog << "INFO: cwd = \"" << original_cwd << "\"" << std::endl;
 
-	auto current_cwd = original_cwd;
+	char *current_cwd = original_cwd;
 	while((current_cwd != nullptr) && (current_cwd[0] != '.'))
 	{
-		// See if this is the user's $HOME dir.
-		auto cwd_fd = open(current_cwd, O_RDONLY);
-		/// @todo Should probably check for is-a-dir here.
-		if(is_same_file(cwd_fd, home_fd))
+		// If we were able to get a file descriptor to $HOME above...
+		if(home_fd != -1)
 		{
-			// We've hit the user's home directory without finding a config file.
+			// ...check if this dir is the user's $HOME dir.
+			int cwd_fd = open(current_cwd, O_RDONLY);
+			/// @todo Should probably check for is-a-dir here.
+			if(is_same_file(cwd_fd, home_fd))
+			{
+				// We've hit the user's home directory without finding a config file.
+				close(cwd_fd);
+				break;
+			}
 			close(cwd_fd);
-			break;
 		}
-		close(cwd_fd);
 
 		// Try to open the config file.
 		auto test_rc_filename = std::string(current_cwd);

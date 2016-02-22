@@ -54,7 +54,6 @@ public:
 
 	void Parse(int argc, char **argv);
 
-//private:
 	/**
 	 * Argp overload of argp_program_version_hook.
 	 *
@@ -100,6 +99,12 @@ private:
 
 public:
 
+	/// @name The Parsed Options
+	/// These are the options parsed from the config files and command line.  They're public:,
+	/// which is a deliberate design decision to allow easy read access to the resulting parsed info.  If I
+	/// get ambitious, it might make sense to factor these into a separate struct that gets passed around instead.
+	///@{
+
 	/// The regex to be matched.
 	std::string m_pattern;
 
@@ -128,6 +133,8 @@ public:
 
 	/// Whether to recurse into subdirectories or not.
 	bool m_recurse { true };
+
+	///@}
 };
 
 #endif /* ARGPARSE_H_ */
