@@ -137,7 +137,7 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const
 	if(last_period != name.end())
 	{
 		// There was a period, might be an extension.
-		if(name[0] != '.')
+		if(last_period != name.begin())
 		{
 			// Name doesn't start with a period, it still could be an extension.
 			auto ext = std::string(last_period, name.end());
