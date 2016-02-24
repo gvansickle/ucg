@@ -8,6 +8,9 @@
 - Now checking fstat() call's return value.
 - Globber now prints an error message but continues if it runs into an unreadable directory.
 
+### Fixed
+- Hidden files were incorrectly being ignored even if they had recognized extensions.  Resolves #63.
+
 ## [0.2.1] - 2016-02-08
 
 Minor bugfix/feature release of UniversalCodeGrep (ucg).
