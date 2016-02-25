@@ -8,7 +8,7 @@
 - Removed Boost configuration cruft from earlier development.
 
 ### Fixed
-- Now properly returning and exit status of 1 if no matches found.  Resolves #60.
+- Now properly returning an exit status of 1 if no matches found.  Resolves #60.
 - Improved error checking when looking for project .ucgrc file.  Resolves #47 / Coverity CID 53716, 53717.
 - Hidden files were incorrectly being ignored even if they had recognized extensions.  Resolves #63.
 - Now checking for libpcre > 8.21 at configure-time.  Resolves #45.
