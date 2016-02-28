@@ -88,19 +88,22 @@ static char doc[] = "ucg: the UniversalCodeGrep tool.";
 
 static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
-/// @name Keys for options without short-options.
-///@{
-#define OPT_COLOR          1
-#define OPT_NOCOLOR        2
-#define OPT_IGNORE_DIR     3
-#define OPT_NOIGNORE_DIR     4
-#define OPT_TYPE			5
-#define OPT_NOENV			6
-#define OPT_TYPE_SET		7
-#define OPT_TYPE_ADD		8
-#define OPT_TYPE_DEL		9
-#define OPT_HELP_TYPES		10
-///@}
+/// Keys for options without short-options.
+enum OPT
+{
+	OPT_COLOR = 1,
+	OPT_NOCOLOR,
+	OPT_IGNORE_DIR,
+	OPT_NOIGNORE_DIR,
+	OPT_TYPE,
+	OPT_NOENV,
+	OPT_TYPE_SET,
+	OPT_TYPE_ADD,
+	OPT_TYPE_DEL,
+	OPT_HELP_TYPES,
+	OPT_COLUMN,
+	OPT_NOCOLUMN
+};
 
 /// Status code to use for a bad parameter which terminates the program via argp_failure().
 /// Ack returns 255 in this case, so we'll use that instead of BSD's EX_USAGE, which is 64.
@@ -119,6 +122,9 @@ static struct argp_option options[] = {
 		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
 		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
 		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
+		{0,0,0,0, "Search Output:"},
+		{"column", OPT_COLUMN, 0, 0, "Print column of first match after line number."},
+		{"nocolumn", OPT_NOCOLUMN, 0, 0, "Don't print column of first match (default)."},
 		{0,0,0,0, "File presentation:" },
 		{"color", OPT_COLOR, 0, 0, "Render the output with ANSI color codes."},
 		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
