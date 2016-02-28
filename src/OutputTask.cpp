@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <iostream>
 
-OutputTask::OutputTask(bool flag_color, bool flag_nocolor, sync_queue<MatchList> &input_queue)
+OutputTask::OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, sync_queue<MatchList> &input_queue)
 	: m_input_queue(input_queue)
 {
 	// Determine if the output is going to a terminal.  If so we'll use color by default, group the matches under
@@ -41,6 +41,8 @@ OutputTask::OutputTask(bool flag_color, bool flag_nocolor, sync_queue<MatchList>
 	{
 		m_enable_color = false;
 	}
+
+	m_print_column = flag_column;
 }
 
 OutputTask::~OutputTask()
@@ -59,7 +61,7 @@ void OutputTask::Run()
 			// Print a blank line between the match lists (i.e. the groups of matches in one file).
 			std::cout << std::endl;
 		}
-		ml.Print(m_output_is_tty, m_enable_color);
+		ml.Print(m_output_is_tty, m_enable_color, m_print_column);
 		first_matchlist_printed = true;
 
 		// Count up the total number of matches.
