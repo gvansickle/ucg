@@ -40,7 +40,7 @@ fi
 # Paths to source that we'll test against.
 # @todo Maybe take this in as a parameter?  The only issue is that this doesn't work during a "make distcheck",
 # which arguably is not a big deal.
-BOOST_PATH=${abs_top_srcdir}/../../boost_1_58_0
+BOOST_PATH=${abs_top_srcdir}/../boost_1_58_0
 
 # The file where we'll put the results of the performance tests.
 # This file will be created by testsuite.at.
