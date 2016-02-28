@@ -173,6 +173,12 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	case 'Q':
 		arguments->m_pattern_is_literal = true;
 		break;
+	case OPT_COLUMN:
+		arguments->m_column = true;
+		break;
+	case OPT_NOCOLUMN:
+		arguments->m_column = false;
+		break;
 	case OPT_IGNORE_DIR:
 		arguments->m_excludes.insert(arg);
 		break;
