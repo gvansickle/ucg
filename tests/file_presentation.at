@@ -17,6 +17,51 @@
 
 AT_BANNER([UniversalCodeGrep file presentation checks])
 
+
+#
+# --[no]column tests
+#
+AT_SETUP([--[[no]]column tests])
+
+AT_DATA([test_file.cpp],
+[if(0)
+{
+	//< tab
+	do_something();
+    //< spaces
+    do_something_else();
+}
+])
+
+# Check for column output to a non-tty.
+AT_CHECK([ucg --noenv --cpp --column 'do_something'],[0],
+[test_file.cpp:4:2:	do_something();
+test_file.cpp:6:5:    do_something_else();
+])
+
+# Check that --nocolumn works for output to a non-tty.
+AT_CHECK([ucg --noenv --cpp --nocolumn 'do_something'],[0],
+[test_file.cpp:4:	do_something();
+test_file.cpp:6:    do_something_else();
+])
+
+# Check that no column is the default for output to a non-tty.
+AT_CHECK([ucg --noenv --cpp 'do_something'],[0],
+[test_file.cpp:4:	do_something();
+test_file.cpp:6:    do_something_else();
+])
+
+# Check for column output to a TTY.
+## Note: sed in here because script outputs \r\n's, even on Linuxes.
+AT_CHECK([script -qfc "ucg --noenv --cpp --nocolor --column 'do_something'" /dev/null | sed 's/\r$//'],[0],
+[test_file.cpp
+4:2:	do_something();
+6:5:    do_something_else();
+])
+
+AT_CLEANUP
+
+
 #
 # Color-vs-file output tests
 #
