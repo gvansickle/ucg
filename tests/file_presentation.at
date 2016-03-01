@@ -59,6 +59,22 @@ AT_CHECK([script -qfc "ucg --noenv --cpp --nocolor --column 'do_something'" /dev
 6:5:    do_something_else();
 ])
 
+# Check for nocolumn output to a TTY.
+## Note: sed in here because script outputs \r\n's, even on Linuxes.
+AT_CHECK([script -qfc "ucg --noenv --cpp --nocolor --nocolumn 'do_something'" /dev/null | sed 's/\r$//'],[0],
+[test_file.cpp
+4:	do_something();
+6:    do_something_else();
+])
+
+# Check for default (nocolumn) output to a TTY.
+## Note: sed in here because script outputs \r\n's, even on Linuxes.
+AT_CHECK([script -qfc "ucg --noenv --cpp --nocolor 'do_something'" /dev/null | sed 's/\r$//'],[0],
+[test_file.cpp
+4:	do_something();
+6:    do_something_else();
+])
+
 AT_CLEANUP
 
 
