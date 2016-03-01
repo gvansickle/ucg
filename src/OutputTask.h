@@ -30,7 +30,7 @@
 class OutputTask
 {
 public:
-	OutputTask(bool flag_color, bool flag_nocolor, sync_queue<MatchList> &input_queue);
+	OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, sync_queue<MatchList> &input_queue);
 	virtual ~OutputTask();
 
 	void Run();
@@ -47,6 +47,9 @@ private:
 
 	/// Whether to output color or not.  Determined in constructor.
 	bool m_enable_color;
+
+	/// Whether to print the column number of the first match or not.
+	bool m_print_column;
 
 	/// The total number of matched lines as reported by the incoming MatchLists.
 	long long m_total_matched_lines { 0 };

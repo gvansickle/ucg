@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 		Globber g(ap.m_paths, tm, dim, ap.m_recurse, q);
 
 		// Set up the output task object.
-		OutputTask output_task(ap.m_color, ap.m_nocolor, out_q);
+		OutputTask output_task(ap.m_color, ap.m_nocolor, ap.m_column, out_q);
 
 		// Create the FileScanner object.
 		FileScanner fs(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp, ap.m_pattern_is_literal);

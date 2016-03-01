@@ -35,7 +35,7 @@ void MatchList::AddMatch(const Match &match)
 	m_match_list.push_back(match);
 }
 
-void MatchList::Print(bool istty, bool enable_color) const
+void MatchList::Print(bool istty, bool enable_color, bool print_column) const
 {
 	std::string no_dotslash_fn;
 
@@ -70,8 +70,12 @@ void MatchList::Print(bool istty, bool enable_color) const
 		std::cout << color_filename << no_dotslash_fn << color_default << std::endl;
 		for(auto it : m_match_list)
 		{
-			std::cout << color_lineno << it.m_line_number << color_default << ":"
-					<< it.m_pre_match << color_match << it.m_match << color_default << it.m_post_match << std::endl;
+			std::cout << color_lineno << it.m_line_number << color_default << ":";
+			if(print_column)
+			{
+				std::cout << it.m_pre_match.length()+1 << ":";
+			}
+			std::cout << it.m_pre_match << color_match << it.m_match << color_default << it.m_post_match << std::endl;
 		}
 	}
 	else
@@ -80,8 +84,13 @@ void MatchList::Print(bool istty, bool enable_color) const
 
 		for(auto it : m_match_list)
 		{
-			std::cout << color_filename << no_dotslash_fn << color_default << ":" << color_lineno << it.m_line_number << color_default << ":"
-					<< it.m_pre_match << color_match << it.m_match << color_default << it.m_post_match << std::endl;
+			std::cout << color_filename << no_dotslash_fn << color_default << ":"
+					<< color_lineno << it.m_line_number << color_default << ":";
+			if(print_column)
+			{
+				std::cout << it.m_pre_match.length()+1 << ":";
+			}
+			std::cout << it.m_pre_match << color_match << it.m_match << color_default << it.m_post_match << std::endl;
 		}
 	}
 }

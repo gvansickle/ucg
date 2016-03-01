@@ -38,7 +38,7 @@ public:
 
 	void AddMatch(const Match &match);
 
-	void Print(bool istty, bool enable_color) const;
+	void Print(bool istty, bool enable_color, bool print_column) const;
 
 	bool empty() const noexcept { return m_match_list.empty(); };
 

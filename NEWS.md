@@ -2,6 +2,9 @@
 
 ## [UNRELEASED]
 
+### New Features
+- Now supports --[no]column option which prints the column number of a match after the line number.  Default is --nocolumn.  Note that tabs count as only one column, consistent with the behavior of ack and ag.
+
 ### Changed
 - File finding stage now prints an error message but continues if it runs into an unreadable directory.
 - Don't try to read a file if fstat() indicates it isn't a regular file.

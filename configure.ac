@@ -162,9 +162,6 @@ AS_IF([test -n $CXX11_FLAG],
 
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does. 
-
-# Boost generates a ton of these warnings.
-AX_APPEND_COMPILE_FLAGS([-Wno-unused-local-typedefs], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])
@@ -178,7 +175,7 @@ AC_LANG_POP([C++])
 ###
 AC_SEARCH_LIBS([argp_parse],[argp])
 
-AC_REPLACE_FUNCS([sched_setaffinity])
+AC_CHECK_FUNCS([sched_setaffinity])
 
 AC_CHECK_FUNCS([get_current_dir_name])
 
