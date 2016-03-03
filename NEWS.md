@@ -4,6 +4,7 @@
 
 ### New Features
 - Now supports --[no]column option which prints the column number of a match after the line number.  Default is --nocolumn.  Note that tabs count as only one column, consistent with the behavior of ack and ag.
+- Added -k/--known-types option for compatibility with ack.
 
 ### Changed
 - File finding stage now prints an error message but continues if it runs into an unreadable directory.
