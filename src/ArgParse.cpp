@@ -138,6 +138,7 @@ static struct argp_option options[] = {
 		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
+		{"known-types", 'k', 0, 0, "Only search in files of recognized types (default: on)."},
 		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 		{0,0,0,0, "File type specification:"},
 		{"type-set", OPT_TYPE_SET, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
@@ -195,6 +196,9 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case 'n':
 		arguments->m_recurse = false;
+		break;
+	case 'k':
+		// No argument variable because currently we only support searching known types.
 		break;
 	case OPT_TYPE:
 		if(std::strncmp("no", arg, 2) == 0)
