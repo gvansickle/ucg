@@ -1,0 +1,145 @@
+# file_presentation.at for UniversalCodeGrep
+#
+# Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+#
+# This file is part of UniversalCodeGrep.
+#
+# UniversalCodeGrep is free software: you can redistribute it and/or modify it under the
+# terms of version 3 of the GNU General Public License as published by the Free
+# Software Foundation.
+#
+# UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along with
+# UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
+
+AT_BANNER([UniversalCodeGrep file presentation checks])
+
+
+#
+# --[no]column tests
+#
+AT_SETUP([--[[no]]column tests])
+
+AT_DATA([test_file.cpp],
+[if(0)
+{
+	//< tab
+	do_something();
+    //< spaces
+    do_something_else();
+}
+])
+
+# Check for column output to a non-tty.
+AT_CHECK([ucg --noenv --cpp --column 'do_something'],[0],
+[test_file.cpp:4:2:	do_something();
+test_file.cpp:6:5:    do_something_else();
+])
+
+# Check that --nocolumn works for output to a non-tty.
+AT_CHECK([ucg --noenv --cpp --nocolumn 'do_something'],[0],
+[test_file.cpp:4:	do_something();
+test_file.cpp:6:    do_something_else();
+])
+
+# Check that no column is the default for output to a non-tty.
+AT_CHECK([ucg --noenv --cpp 'do_something'],[0],
+[test_file.cpp:4:	do_something();
+test_file.cpp:6:    do_something_else();
+])
+
+# Check for column output to a TTY.
+## Note: sed in here because script outputs \r\n's, even on Linuxes.
+AT_CHECK([script -qfc "ucg --noenv --cpp --nocolor --column 'do_something'" /dev/null | sed 's/\r$//'],[0],
+[test_file.cpp
+4:2:	do_something();
+6:5:    do_something_else();
+])
+
+# Check for nocolumn output to a TTY.
+## Note: sed in here because script outputs \r\n's, even on Linuxes.
+AT_CHECK([script -qfc "ucg --noenv --cpp --nocolor --nocolumn 'do_something'" /dev/null | sed 's/\r$//'],[0],
+[test_file.cpp
+4:	do_something();
+6:    do_something_else();
+])
+
+# Check for default (nocolumn) output to a TTY.
+## Note: sed in here because script outputs \r\n's, even on Linuxes.
+AT_CHECK([script -qfc "ucg --noenv --cpp --nocolor 'do_something'" /dev/null | sed 's/\r$//'],[0],
+[test_file.cpp
+4:	do_something();
+6:    do_something_else();
+])
+
+AT_CLEANUP
+
+
+#
+# Color-vs-file output tests
+#
+AT_SETUP([Color-vs-file tests])
+
+AT_DATA([test_file.cpp],
+[abcd
+efgh
+abcd
+])
+
+AT_DATA([expout],
+[@<:@32;1mtest_file.cpp@<:@0m:@<:@33;1m1@<:@0m:a@<:@30;43;1mbc@<:@0md
+@<:@32;1mtest_file.cpp@<:@0m:@<:@33;1m3@<:@0m:a@<:@30;43;1mbc@<:@0md
+])
+
+# Check for color output to a file.
+AT_CHECK([ucg --noenv --cpp --color 'bc' > testout1.txt && cat testout1.txt],[0],[expout])
+
+# Check for nocolor to a file.
+AT_CHECK([ucg --noenv --cpp --nocolor 'bc' > testout1.txt && cat testout1.txt],[0],
+[test_file.cpp:1:abcd
+test_file.cpp:3:abcd
+])
+
+# Check for default (should be no color).
+AT_CHECK([ucg --noenv --cpp 'bc' > testout1.txt && cat testout1.txt],[0],
+[test_file.cpp:1:abcd
+test_file.cpp:3:abcd
+])
+
+AT_CLEANUP
+
+#
+# Color-vs-terminal tests
+#
+AT_SETUP([Color-vs-terminal tests])
+
+AT_DATA([test_file.cpp],
+[abcd
+efgh
+abcd
+])
+
+AT_DATA([expout],
+[@<:@32;1mtest_file.cpp@<:@0m
+@<:@33;1m1@<:@0m:a@<:@30;43;1mbc@<:@0md
+@<:@33;1m3@<:@0m:a@<:@30;43;1mbc@<:@0md
+])
+
+# Check for color output to a TTY.
+## Note: sed in here because script outputs \r\n's, even on Linuxes.
+AT_CHECK([script -qfc "ucg --noenv --cpp --color 'bc'" /dev/null | sed 's/\r$//'],[0],[expout])
+
+# Check for nocolor to a TTY.
+AT_CHECK([script -qfc "ucg --noenv --cpp --nocolor 'bc'" /dev/null | sed 's/\r$//'],[0],
+[test_file.cpp
+1:abcd
+3:abcd
+])
+
+# Check for default (should be color).
+AT_CHECK([script -qfc "ucg --noenv --cpp 'bc'" /dev/null | sed 's/\r$//'],[0],[expout])
+
+AT_CLEANUP

@@ -1,6 +1,6 @@
 # performance_tests.at for UniversalCodeGrep
 #
-# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -55,11 +55,48 @@ AT_CHECK([time $1 ${NOENV} $2 ${BOOST_PATH} $3],
 ###
 AT_BANNER([UniversalCodeGrep performance tests])
 
+#
+# Create the logfile.
+#
 AT_SETUP([Create report log file])
 echo "ucg Performance Test Results" > $PERF_RESULTS_FILE
 AT_CLEANUP
 
+#
+# Get the versions of the programs we're comparing to.
+#
+AT_SETUP([Getting program versions])
 
+# Loop through the programs we're comparing performance with.
+for PROGNAME in $PERF_PROGRAMS_TO_COMPARE grep; do
+	AS_ECHO([--]) >> $PERF_RESULTS_FILE
+	AS_ECHO(["$PROGNAME --version:"]) >> $PERF_RESULTS_FILE
+	AS_ECHO(["$($PROGNAME --version)"]) >> $PERF_RESULTS_FILE
+	AS_ECHO([--]) >> $PERF_RESULTS_FILE
+done;
+
+AT_CLEANUP
+
+
+#
+# Compare to grep.
+#
+AT_SETUP([Boost: compare performance to grep, 'BOOST.*HPP'])
+
+# Skip this test if we can't find the Boost source tree.
+AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+
+AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
+
+TIME_ONE_PROG([ucg --cpp], ['BOOST.*HPP'])
+TIME_ONE_PROG([grep -Ern --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx], ['BOOST.*HPP'])
+
+AT_CLEANUP
+
+
+#
+# Search on literal string.
+#
 AT_SETUP([Boost: find all '#endif's])
 
 # Skip this test if we can't find the Boost source tree.
@@ -75,6 +112,9 @@ done
 AT_CLEANUP
 
 
+#
+# Search with regex 'BOOST.*HPP'
+#
 AT_SETUP([Boost: search with regex 'BOOST.*HPP'])
 
 # Skip this test if we can't find the Boost source tree.
@@ -90,6 +130,9 @@ done
 AT_CLEANUP
 
 
+#
+# Search with ignore of part of the dir tree.
+#
 AT_SETUP([Boost: search with --ignore-dir=doc])
 
 # Skip this test if we can't find the Boost source tree.
@@ -103,3 +146,5 @@ for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
 done
 
 AT_CLEANUP
+
+

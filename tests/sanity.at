@@ -1,6 +1,6 @@
 # sanity.at for UniversalCodeGrep
 #
-# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -36,4 +36,66 @@ AT_SETUP([Error code with bad regex])
 
 AT_CHECK([ucg '*'], [255], [stdout], [stderr])
 
-AT_CLEANUP 
+AT_CLEANUP
+
+###
+### Check that we return 0 on matches, 1 on no matches.
+###
+AT_SETUP([Return code with matches == 0])
+
+AT_DATA([file1.cpp],[abcd
+efgh
+ijkl
+mnop
+])
+
+AT_CHECK([ucg --noenv 'ijkl'], [0], [stdout], [stderr])
+
+AT_CLEANUP
+
+AT_SETUP([Return code with no matches == 1])
+
+AT_DATA([file1.cpp],[abcd
+efgh
+ijkl
+mnop
+])
+
+AT_CHECK([ucg --noenv 'jklm'], [1], [stdout], [stderr])
+
+AT_CLEANUP
+
+
+
+###
+### Hidden file checks 
+###
+AT_SETUP([Hidden file handling, search])
+
+AT_DATA([.hidden_no_extension],[hidden-no-extension
+])
+
+AT_DATA([.hidden_with_extension.sh],[hidden-with-extension
+])
+
+# With no specified files/dirs, should only pick up the hidden *.sh file.
+AT_CHECK([ucg --noenv 'hidden'],[0],[.hidden_with_extension.sh:1:hidden-with-extension
+],[stderr])
+
+AT_CLEANUP
+
+AT_SETUP([Hidden file handling, specified])
+
+AT_DATA([.hidden_no_extension],[hidden-no-extension
+])
+
+AT_DATA([.hidden_with_extension.sh],[hidden-with-extension
+])
+
+# Specifying both files should get us two matches, but it currently doesn't due to issue #64.
+AT_XFAIL_IF([true])
+AT_CHECK([ucg --noenv 'hidden' .hidden* | wc -l],[0],[2
+],[stderr])
+
+AT_CLEANUP
+

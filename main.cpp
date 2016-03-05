@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 		Globber g(ap.m_paths, tm, dim, ap.m_recurse, q);
 
 		// Set up the output task object.
-		OutputTask output_task(ap.m_color, out_q);
+		OutputTask output_task(ap.m_color, ap.m_nocolor, ap.m_column, out_q);
 
 		// Create the FileScanner object.
 		FileScanner fs(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp, ap.m_pattern_is_literal);
@@ -122,7 +122,18 @@ int main(int argc, char **argv)
 			return 1;
 		}
 
-		return 0;
+		auto total_matched_lines = output_task.GetTotalMatchedLines();
+
+		if(total_matched_lines == 0)
+		{
+			// No matches, return a grep-compatible 1.
+			return 1;
+		}
+		else
+		{
+			// Found some matches, return success.
+			return 0;
+		}
 	}
 	catch(const FileScannerException &e)
 	{

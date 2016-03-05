@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -54,16 +54,14 @@ public:
 
 	void Parse(int argc, char **argv);
 
-//private:
 	/**
 	 * Argp overload of argp_program_version_hook.
 	 *
 	 * @note This would preferably be private, and maybe non-static, but argp needs it to be statically overloaded (global fn ptr).
 	 *
-	 * @param stream
-	 * @param state
+	 * @param stream  Output stream from argp where we are to send the version info.
 	 */
-	static void PrintVersionText(FILE *stream, struct argp_state *state);
+	static void PrintVersionText(FILE *stream);
 
 private:
 
@@ -101,6 +99,12 @@ private:
 
 public:
 
+	/// @name The Parsed Options
+	/// These are the options parsed from the config files and command line.  They're public:,
+	/// which is a deliberate design decision to allow easy read access to the resulting parsed info.  If I
+	/// get ambitious, it might make sense to factor these into a separate struct that gets passed around instead.
+	///@{
+
 	/// The regex to be matched.
 	std::string m_pattern;
 
@@ -113,6 +117,9 @@ public:
 	/// true if PATTERN should be treated as literal chars (i.e. not a regex).
 	bool m_pattern_is_literal { false };
 
+	/// true if we should print the column of the first match after the line number.
+	bool m_column { false };
+
 	/// The file and directory paths given on the command line.
 	std::vector<std::string> m_paths;
 
@@ -123,10 +130,14 @@ public:
 	int m_jobs { 0 };
 
 	/// Whether to use color output or not.
-	bool m_color { true };
+	/// both false == not specified on command line.
+	bool m_color { false };
+	bool m_nocolor { false };
 
 	/// Whether to recurse into subdirectories or not.
 	bool m_recurse { true };
+
+	///@}
 };
 
 #endif /* ARGPARSE_H_ */

@@ -1,6 +1,6 @@
 # Top-level Makefile.am for UniversalCodeGrep
 #
-# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -30,7 +30,7 @@ SUBDIRS = lib third_party src . tests
 EXTRA_DIST = m4/gnulib-cache.m4
 
 # Make sure README.rd and other docs get distributed and installed correctly.
-dist_doc_DATA = README.md COPYING AUTHORS
+dist_doc_DATA = README.md NEWS.md COPYING AUTHORS
 
 # The Automake rules for the ucg executable.
 bin_PROGRAMS=ucg
@@ -38,12 +38,6 @@ ucg_SOURCES=main.cpp build_info.h
 nodist_ucg_SOURCES=build_info.cpp
 CLEANFILES=build_info.cpp
 
-if BUILD_BOOST_FROM_TARBALL
-# Collect all the Boost libraries we need into a single variable.
-BOOST_LOCAL_LIB = $(top_builddir)/third_party/$(BOOST_TARBALL_DIRNAME)/stage/lib
-ALLBOOSTLIBS = $(BOOST_LOCAL_LIB)/libboost_thread.a \
-	$(BOOST_LOCAL_LIB)/libboost_system.a
-endif
 
 # Collect some make-time info. 
 FORCE:
@@ -56,7 +50,7 @@ build_info.cpp: FORCE verify-provenance
 		GIT_DESCRIBE=$$(cat $(top_srcdir)/.tarball-version); \
 	elif (which git && cd $(top_srcdir) && git describe > /dev/null); then \
 		: We are building from a git repo. ; \
-		GIT_DESCRIBE="$$(cd $(top_srcdir) && git describe --dirty)"; \
+		GIT_DESCRIBE="$$(cd $(top_srcdir) && git describe --long --dirty)"; \
 	else GIT_DESCRIBE="unknown"; \
 	fi; \
 	echo "const char *g_git_describe = \"$${GIT_DESCRIBE}\";" >> "$@"
@@ -77,15 +71,13 @@ verify-provenance:
 	fi;
 	
 dist-hook:
-	echo -n "$$(cd $(top_srcdir) && git describe --dirty | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
+	echo -n "$$(cd $(top_srcdir) && git describe --long --dirty | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
 
 ucg_CPPFLAGS = -I $(top_srcdir)/src \
 	-I $(top_srcdir)/lib \
-	$(BOOST_TR1_CPPFLAGS) $(BOOST_CPPFLAGS) \
 	$(AM_CPPFLAGS) 
 ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
-ucg_LDFLAGS = $(BOOST_LIBTOOL_FLAGS) $(BOOST_LDFLAGS) \
-	$(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.a ./lib/libgnu.a $(ALLBOOSTLIBS)
+ucg_LDFLAGS = $(AM_LDFLAGS)
+ucg_LDADD = ./src/libsrc.a ./lib/libgnu.a
 

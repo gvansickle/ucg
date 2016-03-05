@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -59,14 +59,14 @@
 // Our --version output isn't just a static string, so we'll register with argp for a version callback.
 static void PrintVersionTextRedirector(FILE *stream, struct argp_state *state)
 {
-	static_cast<ArgParse*>(state->input)->PrintVersionText(stream, state);
+	static_cast<ArgParse*>(state->input)->PrintVersionText(stream);
 }
 void (*argp_program_version_hook)(FILE *stream, struct argp_state *state) = PrintVersionTextRedirector;
 
 
 // Not static, argp.h externs this.
 const char *argp_program_version = PACKAGE_STRING "\n"
-	"Copyright (C) 2015 Gary R. Van Sickle.\n"
+	"Copyright (C) 2015-2016 Gary R. Van Sickle.\n"
 	"\n"
 	"This program is free software; you can redistribute it and/or modify\n"
 	"it under the terms of version 3 of the GNU General Public License as\n"
@@ -88,19 +88,22 @@ static char doc[] = "ucg: the UniversalCodeGrep tool.";
 
 static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
-/// @name Keys for options without short-options.
-///@{
-#define OPT_COLOR          1
-#define OPT_NOCOLOR        2
-#define OPT_IGNORE_DIR     3
-#define OPT_NOIGNORE_DIR     4
-#define OPT_TYPE			5
-#define OPT_NOENV			6
-#define OPT_TYPE_SET		7
-#define OPT_TYPE_ADD		8
-#define OPT_TYPE_DEL		9
-#define OPT_HELP_TYPES		10
-///@}
+/// Keys for options without short-options.
+enum OPT
+{
+	OPT_COLOR = 1,
+	OPT_NOCOLOR,
+	OPT_IGNORE_DIR,
+	OPT_NOIGNORE_DIR,
+	OPT_TYPE,
+	OPT_NOENV,
+	OPT_TYPE_SET,
+	OPT_TYPE_ADD,
+	OPT_TYPE_DEL,
+	OPT_HELP_TYPES,
+	OPT_COLUMN,
+	OPT_NOCOLUMN
+};
 
 /// Status code to use for a bad parameter which terminates the program via argp_failure().
 /// Ack returns 255 in this case, so we'll use that instead of BSD's EX_USAGE, which is 64.
@@ -109,11 +112,19 @@ static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 // Not static, argp.h externs this.
 error_t argp_err_exit_status = STATUS_EX_USAGE;
 
+/// Argp Option Definitions
+// Disable (at least on gcc) the large number of spurious warnings about missing initializers
+// the declaration of options[] and ArgParse::argp normally cause.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 static struct argp_option options[] = {
 		{0,0,0,0, "Searching:" },
 		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
 		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
 		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
+		{0,0,0,0, "Search Output:"},
+		{"column", OPT_COLUMN, 0, 0, "Print column of first match after line number."},
+		{"nocolumn", OPT_NOCOLUMN, 0, 0, "Don't print column of first match (default)."},
 		{0,0,0,0, "File presentation:" },
 		{"color", OPT_COLOR, 0, 0, "Render the output with ANSI color codes."},
 		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
@@ -127,6 +138,7 @@ static struct argp_option options[] = {
 		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
+		{"known-types", 'k', 0, 0, "Only search in files of recognized types (default: on)."},
 		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 		{0,0,0,0, "File type specification:"},
 		{"type-set", OPT_TYPE_SET, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
@@ -140,6 +152,12 @@ static struct argp_option options[] = {
 		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
 		{ 0 }
 	};
+
+/// The argp struct for argp.
+struct argp ArgParse::argp = { options, ArgParse::parse_opt, args_doc, doc };
+
+#pragma GCC diagnostic pop // Re-enable -Wmissing-field-initializers
+
 
 error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 {
@@ -155,6 +173,12 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case 'Q':
 		arguments->m_pattern_is_literal = true;
+		break;
+	case OPT_COLUMN:
+		arguments->m_column = true;
+		break;
+	case OPT_NOCOLUMN:
+		arguments->m_column = false;
 		break;
 	case OPT_IGNORE_DIR:
 		arguments->m_excludes.insert(arg);
@@ -172,6 +196,9 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case 'n':
 		arguments->m_recurse = false;
+		break;
+	case 'k':
+		// No argument variable because currently we only support searching known types.
 		break;
 	case OPT_TYPE:
 		if(std::strncmp("no", arg, 2) == 0)
@@ -217,9 +244,11 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case OPT_COLOR:
 		arguments->m_color = true;
+		arguments->m_nocolor = false;
 		break;
 	case OPT_NOCOLOR:
 		arguments->m_color = false;
+		arguments->m_nocolor = true;
 		break;
 	case ARGP_KEY_ARG:
 		if(state->arg_num == 0)
@@ -245,8 +274,6 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	}
 	return 0;
 }
-
-struct argp ArgParse::argp = { options, ArgParse::parse_opt, args_doc, doc };
 
 
 ArgParse::ArgParse(TypeManager &type_manager)
@@ -338,10 +365,10 @@ void ArgParse::Parse(int argc, char **argv)
 	}
 }
 
-void ArgParse::PrintVersionText(FILE* stream, struct argp_state* state)
+void ArgParse::PrintVersionText(FILE* stream)
 {
 	// Print the version string and copyright notice.
-	std::fprintf(stream, argp_program_version);
+	std::fputs(argp_program_version, stream);
 
 	// In addition, we want to print the compiler/version we were built with, the libpcre version and some other info on it,
 	// and any source control version info we can get.
@@ -405,10 +432,11 @@ void ArgParse::PrintHelpTypes() const
 	std::cout << std::endl;
 }
 
-void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv)
+void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std::vector<char*> *user_argv, std::vector<char*> *project_argv)
 {
 	// Find and parse the global config file.
 	/// @todo
+	/// @note global_argv commented out above to avoid unused parameter warning.
 
 	// Parse the user's config file.
 	std::string homedir = GetUserHomeDir();
@@ -431,11 +459,15 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 				user_argv->insert(user_argv->end(), vec_argv.cbegin(), vec_argv.cend());
 			}
 		}
+		catch(const FileException &e)
+		{
+			std::clog << "ucg: WARNING: " << e.what() << std::endl;
+		}
 		catch(const std::system_error &e)
 		{
 			if(e.code() != std::errc::no_such_file_or_directory)
 			{
-				std::clog << "WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+				std::clog << "ucg: WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
 			}
 			// Otherwise, the file just doesn't exist.
 		}
@@ -463,11 +495,15 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vec
 				project_argv->insert(project_argv->end(), vec_argv.cbegin(), vec_argv.cend());
 			}
 		}
+		catch(const FileException &e)
+		{
+			std::clog << "ucg: WARNING: " << e.what() << std::endl;
+		}
 		catch(const std::system_error &e)
 		{
 			if(e.code() != std::errc::no_such_file_or_directory)
 			{
-				std::clog << "WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+				std::clog << "ucg: WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
 			}
 			// Otherwise, the file just doesn't exist.
 		}
@@ -544,7 +580,7 @@ std::string ArgParse::GetProjectRCFilename() const
 	std::string retval;
 
 	// Get a file descriptor to the user's home dir, if there is one.
-	auto homedirname = GetUserHomeDir();
+	std::string homedirname = GetUserHomeDir();
 	int home_fd = -1;
 	if(!homedirname.empty())
 	{
@@ -564,19 +600,27 @@ std::string ArgParse::GetProjectRCFilename() const
 
 	//std::clog << "INFO: cwd = \"" << original_cwd << "\"" << std::endl;
 
-	auto current_cwd = original_cwd;
+	char *current_cwd = original_cwd;
 	while((current_cwd != nullptr) && (current_cwd[0] != '.'))
 	{
-		// See if this is the user's $HOME dir.
-		auto cwd_fd = open(current_cwd, O_RDONLY);
-		/// @todo Should probably check for is-a-dir here.
-		if(is_same_file(cwd_fd, home_fd))
+		// If we were able to get a file descriptor to $HOME above...
+		if(home_fd != -1)
 		{
-			// We've hit the user's home directory without finding a config file.
-			close(cwd_fd);
-			break;
+			// ...check if this dir is the user's $HOME dir.
+			int cwd_fd = open(current_cwd, O_RDONLY);
+			if(cwd_fd != -1)
+			{
+				/// @todo Should probably check for is-a-dir here.
+				if(is_same_file(cwd_fd, home_fd))
+				{
+					// We've hit the user's home directory without finding a config file.
+					close(cwd_fd);
+					break;
+				}
+				close(cwd_fd);
+			}
+			// else couldn't open the current cwd, so we can't check if it's the same directory as home_fd.
 		}
-		close(cwd_fd);
 
 		// Try to open the config file.
 		auto test_rc_filename = std::string(current_cwd);
@@ -586,7 +630,7 @@ std::string ArgParse::GetProjectRCFilename() const
 		}
 		test_rc_filename += ".ucgrc";
 		//std::clog << "INFO: checking for rc file \"" << test_rc_filename << "\"" << std::endl;
-		auto rc_file = open(test_rc_filename.c_str(), O_RDONLY);
+		int rc_file = open(test_rc_filename.c_str(), O_RDONLY);
 		if(rc_file != -1)
 		{
 			// Found it.  Return its name.
@@ -612,8 +656,11 @@ std::string ArgParse::GetProjectRCFilename() const
 	// Free the cwd string.
 	free(original_cwd);
 
-	// Close the homedir we opened above.
-	close(home_fd);
+	if(home_fd != -1)
+	{
+		// Close the homedir we opened above.
+		close(home_fd);
+	}
 
 	return retval;
 }

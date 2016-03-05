@@ -21,6 +21,16 @@
 #define FILE_H_
 
 #include <string>
+#include <stdexcept>
+
+/**
+ * File() may throw this if it runs into trouble opening the given filename.
+ */
+struct FileException : public std::runtime_error
+{
+	FileException(const std::string &message) : std::runtime_error(message) {};
+};
+
 
 /**
  * A class to represent the contents and some metadata of a read-only file.

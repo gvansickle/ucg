@@ -29,6 +29,7 @@ static const std::string f_builtin_dir_excludes[] =
 	".hg",
 	".metadata",
 	".svn",
+	"CMakeFiles",
 	"CVS",
 	"autom4te.cache",
 	""
@@ -65,8 +66,11 @@ void DirInclusionManager::CompileExclusionTables()
 	}
 }
 
-bool DirInclusionManager::DirShouldBeExcluded(const std::string& path, const std::string &name) const
+bool DirInclusionManager::DirShouldBeExcluded(const std::string& /*path*/, const std::string &name) const
 {
+	/// @todo Commented out path above to avoid unused param warning.  Plan is to eventually use that
+	/// for full-path regex filtering, since we get the path for free from fts (see Globber.cpp).
+
 	if(m_excluded_literal_dirs.count(name) != 0)
 	{
 		// This directory shouldn't be traversed.

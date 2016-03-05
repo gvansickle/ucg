@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -30,6 +30,7 @@
 #include <pcre.h>
 #endif
 #include <regex>
+#include <sstream>
 #include <thread>
 #include <mutex>
 #ifndef HAVE_SCHED_SETAFFINITY
@@ -164,10 +165,15 @@ void FileScanner::Run()
 				m_output_queue.wait_push(ml);
 			}
 		}
+		catch(const FileException &error)
+		{
+			// The File constructor threw an exception.
+			std::cerr << "ucg: ERROR: " << error.what() << std::endl;
+		}
 		catch(const std::system_error& error)
 		{
 			// A system error.  Currently should only be errors from File.
-			std::cerr << "ERROR: " << error.code() << " - " << error.code().message() << std::endl;
+			std::cerr << "ucg: ERROR: " << error.code() << " - " << error.code().message() << std::endl;
 		}
 		catch(...)
 		{
@@ -200,7 +206,7 @@ void FileScanner::AssignToNextCore()
 #endif
 }
 
-void FileScanner::ScanFileCpp11(const std::regex& expression, const char *file_data, size_t file_size, MatchList& ml)
+void FileScanner::ScanFileCpp11(const std::regex& /*expression*/, const char */*file_data*/, size_t /*file_size*/, MatchList& /*ml*/)
 {
 #ifndef HAVE_LIBPCRE
 	// Scan the mmapped file for the regex.
@@ -243,9 +249,12 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 	long long line_no = 1;
 	long long prev_lineno = 0;
 	const char *prev_lineno_search_end = file_data;
+	// Up-cast file_size, which is a size_t (unsigned) to a ptrdiff_t (signed) which should be able to handle the
+	// same positive range, and not cause issues when compared with the ints of ovector[].
+	std::ptrdiff_t signed_file_size = file_size;
 
 	// Loop while the start_offset is less than the file_size.
-	while(ovector[1] < file_size)
+	while(ovector[1] < signed_file_size)
 	{
 		int options = 0;
 		int start_offset = ovector[1];
@@ -254,7 +263,7 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 		if (ovector[0] == ovector[1])
 		{
 			// Yes, are we at the end of the file?
-			if (ovector[0] == file_size)
+			if (ovector[0] == signed_file_size)
 			{
 				// Yes, we're done searching.
 				break;
@@ -312,7 +321,7 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 				else if(false /** @todo utf8 */)
 				{
 					// Increment a whole UTF8 character.
-					while(ovector[1] < file_size)
+					while(ovector[1] < signed_file_size)
 					{
 						if((file_data[ovector[1]] & 0xC0) != 0x80)
 						{
