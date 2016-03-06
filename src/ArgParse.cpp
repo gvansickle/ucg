@@ -308,7 +308,9 @@ void ArgParse::Parse(int argc, char **argv)
 	std::vector<char*> user_argv, project_argv, combined_argv;
 
 	// Check the command line for the --noenv option.
-	auto noenv = std::count_if(argv, argv+argc, [](char *s){ return strcmp(s, "--noenv") == 0; });
+	// Note that we have to handle 'ucg -- --noenv' properly, hence the one_past_end_or_double_dash search first.
+	auto one_past_end_or_double_dash = std::find_if(argv, argv+argc, [](char *s){ return std::strcmp(s, "--") == 0; });
+	auto noenv = std::count_if(argv, one_past_end_or_double_dash, [](char *s){ return std::strcmp(s, "--noenv") == 0; });
 
 	if(noenv == 0)
 	{
