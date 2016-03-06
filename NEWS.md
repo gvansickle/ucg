@@ -7,6 +7,7 @@
 - Added -k/--known-types option for compatibility with ack.
 
 ### Changed
+- Now checking for and rejecting non-option arguments and double-dash in .ucgrc files.
 - File finding stage now prints an error message but continues if it runs into an unreadable directory.
 - Don't try to read a file if fstat() indicates it isn't a regular file.
 - Removed Boost configuration cruft from earlier development.
