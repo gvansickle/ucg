@@ -102,7 +102,8 @@ enum OPT
 	OPT_TYPE_DEL,
 	OPT_HELP_TYPES,
 	OPT_COLUMN,
-	OPT_NOCOLUMN
+	OPT_NOCOLUMN,
+	OPT_TEST_NOENV_USER
 };
 
 /// Status code to use for a bad parameter which terminates the program via argp_failure().
@@ -150,6 +151,8 @@ static struct argp_option options[] = {
 		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
 		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
 		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
+		// Hidden options for debug, test, etc.
+		{"test-noenv-user", OPT_TEST_NOENV_USER, 0, OPTION_HIDDEN, "Don't search for or use $HOME/.ucgrc."},
 		{ 0 }
 	};
 
@@ -250,6 +253,9 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		arguments->m_color = false;
 		arguments->m_nocolor = true;
 		break;
+	case OPT_TEST_NOENV_USER:
+		// The --test-noenv-user option is handled specially outside of the argp parser.
+		break;
 	case ARGP_KEY_ARG:
 		if(state->arg_num == 0)
 		{
@@ -311,6 +317,13 @@ void ArgParse::Parse(int argc, char **argv)
 	// Note that we have to handle 'ucg -- --noenv' properly, hence the one_past_end_or_double_dash search first.
 	auto one_past_end_or_double_dash = std::find_if(argv, argv+argc, [](char *s){ return std::strcmp(s, "--") == 0; });
 	auto noenv = std::count_if(argv, one_past_end_or_double_dash, [](char *s){ return std::strcmp(s, "--noenv") == 0; });
+
+	// Check for some test options which only make sense on the command line.
+	auto noenv_user = std::count_if(argv, one_past_end_or_double_dash, [](char *s){ return std::strcmp(s, "--test-noenv-user") == 0; });
+	if(noenv_user != 0)
+	{
+		m_test_noenv_user = true;
+	}
 
 	if(noenv == 0)
 	{
@@ -440,38 +453,42 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 	/// @todo
 	/// @note global_argv commented out above to avoid unused parameter warning.
 
-	// Parse the user's config file.
-	std::string homedir = GetUserHomeDir();
-	if(!homedir.empty())
+	// Check if we're ignoring $HOME/.ucgrc for test purposes.
+	if(!m_test_noenv_user)
 	{
-		// See if we can open the user's .ucgrc file.
-		homedir += "/.ucgrc";
-		try
+		// Parse the user's config file.
+		std::string homedir = GetUserHomeDir();
+		if(!homedir.empty())
 		{
-			File home_file(homedir);
+			// See if we can open the user's .ucgrc file.
+			homedir += "/.ucgrc";
+			try
+			{
+				File home_file(homedir);
 
-			if(home_file.size() == 0)
-			{
-				//std::clog << "INFO: config file \"" << homedir << "\" is zero-length." << std::endl;
-			}
-			else
-			{
-				auto vec_argv = ConvertRCFileToArgv(home_file);
+				if(home_file.size() == 0)
+				{
+					//std::clog << "INFO: config file \"" << homedir << "\" is zero-length." << std::endl;
+				}
+				else
+				{
+					auto vec_argv = ConvertRCFileToArgv(home_file);
 
-				user_argv->insert(user_argv->end(), vec_argv.cbegin(), vec_argv.cend());
+					user_argv->insert(user_argv->end(), vec_argv.cbegin(), vec_argv.cend());
+				}
 			}
-		}
-		catch(const FileException &e)
-		{
-			std::clog << "ucg: WARNING: " << e.what() << std::endl;
-		}
-		catch(const std::system_error &e)
-		{
-			if(e.code() != std::errc::no_such_file_or_directory)
+			catch(const FileException &e)
 			{
-				std::clog << "ucg: WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+				std::clog << "ucg: WARNING: " << e.what() << std::endl;
 			}
-			// Otherwise, the file just doesn't exist.
+			catch(const std::system_error &e)
+			{
+				if(e.code() != std::errc::no_such_file_or_directory)
+				{
+					std::clog << "ucg: WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+				}
+				// Otherwise, the file just doesn't exist.
+			}
 		}
 	}
 
@@ -505,7 +522,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 		{
 			if(e.code() != std::errc::no_such_file_or_directory)
 			{
-				std::clog << "ucg: WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+				std::clog << "ucg: WARNING: Couldn't open config file \"" << proj_rc_filename << "\", error " << e.code() << " - " << e.code().message() << std::endl;
 			}
 			// Otherwise, the file just doesn't exist.
 		}

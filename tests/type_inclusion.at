@@ -47,15 +47,15 @@ AT_CHECK([ucg '--noenv' 'ptr' | wc -l],[0],[5
 ],[stderr])
 
 # No '--noenv' should give us 2 hits from the cpp file.
-AT_CHECK([ucg 'ptr' | wc -l],[0],[2
+AT_CHECK([ucg --test-noenv-user 'ptr' | wc -l],[0],[2
 ],[stderr])
 
 # Adding --type=html should again give us 2+3=5 hits.
-AT_CHECK([ucg '--type=html' 'ptr' | wc -l],[0],[5
+AT_CHECK([ucg --test-noenv-user '--type=html' 'ptr' | wc -l],[0],[5
 ],[stderr])
 
 # And adding --type=nocpp to that should give us the 3 hits in the html file.
-AT_CHECK([ucg '--type=html' '--type=nocpp' ptr | wc -l],[0],[3
+AT_CHECK([ucg --test-noenv-user '--type=html' '--type=nocpp' ptr | wc -l],[0],[3
 ],[stderr])
 
 AT_CLEANUP

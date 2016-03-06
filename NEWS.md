@@ -17,6 +17,7 @@
 - Hidden files were incorrectly being ignored even if they had recognized extensions.  Resolves #63.
 - Now checking for libpcre > 8.21 at configure-time.  Resolves #45.
 - Added handling of fstat() errors.  Resolves #48 / Coverity CID 53715.
+- If project rc file can't be opened, error message now reports its name instead of $HOME/.ucgrc's name.
 
 ## [0.2.1] - 2016-02-08
 

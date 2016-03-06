@@ -30,8 +30,7 @@ AT_DATA([file_to_search.cpp],
 [--NOENV
 ])
 
-### @todo Need a way to force ignoring of possible user's .ucgrc here.
-AT_CHECK([ucg -- --noenv], [0], 
+AT_CHECK([ucg --test-noenv-user -- --noenv], [0], 
 [file_to_search.cpp:1:--NOENV
 ], [stderr])
 
