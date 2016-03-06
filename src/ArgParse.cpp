@@ -714,6 +714,17 @@ std::vector<char*> ArgParse::ConvertRCFileToArgv(const File& f)
 				std::copy(pos, param_end, param);
 				param[param_end - pos] = '\0';
 
+				// Check if it's not an option.
+				if(std::strcmp(param, "--") == 0)
+				{
+					// Double-dash is not allowed in an rc file.
+					throw ArgParseException("Double-dash \"" + std::string(param) + "\" is not allowed in rc file \"" + f.name() + "\".");
+				}
+				else if(param[0] != '-')
+				{
+					throw ArgParseException("Non-option argument \"" + std::string(param) + "\" is not allowed in rc file \"" + f.name() + "\".");
+				}
+
 				retval.push_back(param);
 
 				pos = param_end;

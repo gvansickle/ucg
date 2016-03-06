@@ -35,3 +35,49 @@ AT_CHECK([ucg --test-noenv-user -- --noenv], [0],
 ], [stderr])
 
 AT_CLEANUP
+
+
+#
+# Check that non-options in the rc files are properly rejected.
+#
+AT_SETUP([Reject non-options in .ucgrc files])
+
+AT_DATA([.ucgrc],
+[--ignore-case
+endif
+# The endif should be rejected
+])
+
+AT_DATA([file_to_search.cpp],
+[some text
+some more text
+#endif
+])
+
+# If .ucgrc above isn't rejected, the 'endif' on its second line will result
+# in one match with the command line below.
+AT_CHECK([ucg --test-noenv-user file_to_search.cpp], [255], [stdout], [stderr])
+AT_CHECK([cat stderr | grep 'ucg: Error during arg parsing: Non-option argument "endif" is not allowed in rc file ".*/\.ucgrc"\.'], [0], [stdout], [stderr])
+
+AT_CLEANUP
+
+AT_SETUP([Reject '--' in .ucgrc files])
+
+AT_DATA([.ucgrc],
+[--ignore-case
+--
+# The -- should be rejected
+])
+
+AT_DATA([file_to_search.cpp],
+[some text
+some more text
+--test-noenv-user
+])
+
+# If .ucgrc above isn't rejected, the '--' on its second line will result
+# in '--test-noenv-user' being treated as the pattern to match, and one match will result with the command line below.
+AT_CHECK([ucg --test-noenv-user file_to_search.cpp], [255], [stdout], [stderr])
+AT_CHECK([cat stderr | grep 'ucg: Error during arg parsing: Double-dash "--" is not allowed in rc file ".*\.ucgrc"\.'], [0], [stdout], [stderr])
+
+AT_CLEANUP
