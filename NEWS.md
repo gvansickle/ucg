@@ -7,6 +7,7 @@
 - Added -k/--known-types option for compatibility with ack.
 
 ### Changed
+- Now checking for and rejecting non-option arguments and double-dash in .ucgrc files.
 - File finding stage now prints an error message but continues if it runs into an unreadable directory.
 - Don't try to read a file if fstat() indicates it isn't a regular file.
 - Removed Boost configuration cruft from earlier development.
@@ -17,6 +18,7 @@
 - Hidden files were incorrectly being ignored even if they had recognized extensions.  Resolves #63.
 - Now checking for libpcre > 8.21 at configure-time.  Resolves #45.
 - Added handling of fstat() errors.  Resolves #48 / Coverity CID 53715.
+- If project rc file can't be opened, error message now reports its name instead of $HOME/.ucgrc's name.
 
 ## [0.2.1] - 2016-02-08
 

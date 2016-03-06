@@ -29,6 +29,9 @@
 
 File::File(const std::string &filename)
 {
+	// Save the filename.
+	m_filename = filename;
+
 	// open() the file.  We have to do this regardless of whether we'll subsequently mmap() or read().
 	m_file_descriptor = open(filename.c_str(), O_RDONLY);
 

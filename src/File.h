@@ -46,6 +46,12 @@ public:
 
 	const char * data() const { return m_file_data; };
 
+	/**
+	 * Returns the name of this File as passed to the constructor.
+	 * @return  The name of this File as passed to the constructor.
+	 */
+	std::string name() const { return m_filename; };
+
 private:
 
 	/**
@@ -67,6 +73,8 @@ private:
 	 * @param file_size  The same file_size used in the call to GetFile().
 	 */
 	void FreeFileData(const char * file_data, size_t file_size);
+
+	std::string m_filename;
 
 	int m_file_descriptor { -1 };
 

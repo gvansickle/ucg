@@ -97,6 +97,9 @@ private:
 
 	void HandleTypeAddOrSet(const std::string &s);
 
+	/// If true, ArgParse won't look for or use $HOME/.ucgrc.
+	bool m_test_noenv_user { false };
+
 public:
 
 	/// @name The Parsed Options
