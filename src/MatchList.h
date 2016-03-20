@@ -36,7 +36,7 @@ public:
 	MatchList(const std::string &filename);
 	~MatchList();
 
-	void AddMatch(const Match &match);
+	void AddMatch(Match &&match);
 
 	void Print(bool istty, bool enable_color, bool print_column) const;
 

@@ -30,9 +30,9 @@ MatchList::~MatchList()
 {
 }
 
-void MatchList::AddMatch(const Match &match)
+void MatchList::AddMatch(Match &&match)
 {
-	m_match_list.push_back(match);
+	m_match_list.push_back(std::move(match));
 }
 
 void MatchList::Print(bool istty, bool enable_color, bool print_column) const

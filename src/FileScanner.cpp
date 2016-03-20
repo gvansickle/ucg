@@ -40,6 +40,12 @@
 
 static std::mutex f_assign_affinity_mutex;
 
+real_pcre_jit_stack *jit_callback(void *data)
+{
+	//std::cout << "JIT CALLBACK WAS CALLED" << std::endl;
+	return NULL;
+}
+
 FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
@@ -99,6 +105,18 @@ FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 		pcre_free(m_pcre_regex);
 		throw FileScannerException("PCRE study error: " + *error);
 	}
+
+	// Dump info about the compiled and studied pattern.
+	int retint;
+	pcre_fullinfo(m_pcre_regex, m_pcre_extra, PCRE_INFO_JIT, &retint);
+	//std::cout << "PCRE_INFO_JIT = " << retint << std::endl;
+	size_t retsize;
+	pcre_fullinfo(m_pcre_regex, m_pcre_extra, PCRE_INFO_JITSIZE, &retsize);
+	//std::cout << "PCRE_INFO_JITSIZE = " << retsize << " bytes." << std::endl;
+
+	// Set up a callback so we can tell if the JIT code is actually being run.
+	pcre_assign_jit_stack(m_pcre_extra, jit_callback, NULL);
+
 #endif
 }
 
@@ -365,6 +383,6 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 		prev_lineno = line_no;
 		Match m(file_data, file_size, ovector[0], ovector[1], line_no);
 
-		ml.AddMatch(m);
+		ml.AddMatch(std::move(m));
 	}
 }
