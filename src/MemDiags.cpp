@@ -17,27 +17,30 @@
 
 /** @file */
 
-#ifndef MATCH_H_
-#define MATCH_H_
+#include "MemDiags.h"
 
-#include <string>
+#include <malloc.h>
 
-/*
- *
- */
-class Match
+#if 0
+static void md_init_hook(void)
 {
-public:
-	Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset, long long line_number);
-	Match() = default;
-	Match(const Match &other) = default;
-	~Match() { };
+	old_malloc_hook = __malloc_hook;
+	old_free_hook = __free_hook;
+	__malloc_hook = md_malloc_hook;
+	__free_hook = md_free_hook;
+}
 
-	/// @note Data members not private, this is more of a struct than a class.
-	long long m_line_number;
-	std::string m_pre_match;
-	std::string m_match;
-	std::string m_post_match;
-};
+/* Override initializing hook from the C library. */
+void (*__malloc_initialize_hook) (void) = my_init_hook;
+#endif
 
-#endif /* MATCH_H_ */
+MemDiags::MemDiags()
+{
+	// TODO Auto-generated constructor stub
+
+}
+
+void MemDiags::PrintStats() const
+{
+	malloc_stats();
+}

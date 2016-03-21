@@ -17,27 +17,18 @@
 
 /** @file */
 
-#ifndef MATCH_H_
-#define MATCH_H_
-
-#include <string>
+#ifndef MEMDIAGS_H_
+#define MEMDIAGS_H_
 
 /*
  *
  */
-class Match
+class MemDiags
 {
 public:
-	Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset, long long line_number);
-	Match() = default;
-	Match(const Match &other) = default;
-	~Match() { };
+	MemDiags();
 
-	/// @note Data members not private, this is more of a struct than a class.
-	long long m_line_number;
-	std::string m_pre_match;
-	std::string m_match;
-	std::string m_post_match;
+	void PrintStats() const;
 };
 
-#endif /* MATCH_H_ */
+#endif /* MEMDIAGS_H_ */
