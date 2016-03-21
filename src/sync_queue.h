@@ -79,7 +79,7 @@ public:
 		return queue_op_status::success;
 	}
 
-	queue_op_status wait_push(const ValueType&& x)
+	queue_op_status wait_push(ValueType&& x)
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 

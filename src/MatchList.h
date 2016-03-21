@@ -31,12 +31,14 @@
 class MatchList
 {
 public:
-	MatchList() {};
-	MatchList(const MatchList &lvalue) = default;
 	MatchList(const std::string &filename);
+	MatchList() {};
+#if 0
+	MatchList(const MatchList &lvalue) = default;
 	~MatchList();
+#endif
 
-	void AddMatch(const Match &match);
+	void AddMatch(Match &&match);
 
 	void Print(bool istty, bool enable_color, bool print_column) const;
 

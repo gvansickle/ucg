@@ -161,8 +161,7 @@ void FileScanner::Run()
 
 			if(!ml.empty())
 			{
-				/// @todo Move semantics here?
-				m_output_queue.wait_push(ml);
+				m_output_queue.wait_push(std::move(ml));
 			}
 		}
 		catch(const FileException &error)
@@ -365,6 +364,6 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 		prev_lineno = line_no;
 		Match m(file_data, file_size, ovector[0], ovector[1], line_no);
 
-		ml.AddMatch(m);
+		ml.AddMatch(std::move(m));
 	}
 }

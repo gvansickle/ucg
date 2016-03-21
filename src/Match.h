@@ -30,11 +30,13 @@ class Match
 public:
 	Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset, long long line_number);
 	Match() = default;
+#if 0
 	Match(const Match &other) = default;
 	~Match() { };
+#endif
 
 	/// @note Data members not private, this is more of a struct than a class.
-	long long m_line_number;
+	long long m_line_number { 0 };
 	std::string m_pre_match;
 	std::string m_match;
 	std::string m_post_match;

@@ -26,13 +26,9 @@ MatchList::MatchList(const std::string &filename) : m_filename(filename)
 
 }
 
-MatchList::~MatchList()
+void MatchList::AddMatch(Match &&match)
 {
-}
-
-void MatchList::AddMatch(const Match &match)
-{
-	m_match_list.push_back(match);
+	m_match_list.push_back(std::move(match));
 }
 
 void MatchList::Print(bool istty, bool enable_color, bool print_column) const
