@@ -33,8 +33,11 @@ class MatchList
 public:
 	MatchList(const std::string &filename);
 	MatchList() {};
+
+	MatchList(const MatchList &lvalue) = delete;
+	MatchList(MatchList&&) = default;
+	MatchList& operator=(MatchList&&) = default;
 #if 0
-	MatchList(const MatchList &lvalue) = default;
 	~MatchList();
 #endif
 
@@ -42,14 +45,17 @@ public:
 
 	void Print(bool istty, bool enable_color, bool print_column) const;
 
+	/// @todo GRVS - This needs to return 'empty' after a move-from has occurred.
 	bool empty() const noexcept { return m_match_list.empty(); };
 
 	std::vector<Match>::size_type GetNumberOfMatchedLines() const;
 
 private:
 
+	/// The filename where the Matches in this MatchList were found.
 	std::string m_filename;
 
+	/// The Matches.
 	std::vector<Match> m_match_list;
 };
 
