@@ -161,6 +161,7 @@ void FileScanner::Run()
 
 			if(!ml.empty())
 			{
+				// Force move semantics here.
 				m_output_queue.wait_push(std::move(ml));
 			}
 		}

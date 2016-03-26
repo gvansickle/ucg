@@ -64,7 +64,7 @@ void MatchList::Print(bool istty, bool enable_color, bool print_column) const
 		// Render to a TTY device.
 
 		std::cout << color_filename << no_dotslash_fn << color_default << std::endl;
-		for(auto it : m_match_list)
+		for(const Match& it : m_match_list)
 		{
 			std::cout << color_lineno << it.m_line_number << color_default << ":";
 			if(print_column)
@@ -78,7 +78,7 @@ void MatchList::Print(bool istty, bool enable_color, bool print_column) const
 	{
 		// Render to a pipe or file.
 
-		for(auto it : m_match_list)
+		for(const Match& it : m_match_list)
 		{
 			std::cout << color_filename << no_dotslash_fn << color_default << ":"
 					<< color_lineno << it.m_line_number << color_default << ":";
