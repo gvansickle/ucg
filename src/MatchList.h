@@ -35,7 +35,7 @@ public:
 	MatchList() {};
 
 	MatchList(const MatchList &lvalue) = delete;
-	MatchList(MatchList&&) = default;
+	MatchList(MatchList&&) noexcept = default;
 	MatchList& operator=(MatchList&&) = default;
 #if 0
 	~MatchList();
@@ -58,5 +58,11 @@ private:
 	/// The Matches.
 	std::vector<Match> m_match_list;
 };
+
+// Require MatchList to be nothrow move constructible so that a container of them can use move on reallocation.
+static_assert(std::is_nothrow_move_constructible<MatchList>::value == true, "MatchList must be nothrow move constructible");
+
+// Require Match to not be copy constructible, so that uses don't end up accidentally copying it instead of moving.
+static_assert(std::is_copy_constructible<MatchList>::value == false, "MatchList must not be copy constructable");
 
 #endif /* MATCHLIST_H_ */
