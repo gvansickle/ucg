@@ -21,23 +21,9 @@
 
 #include <malloc.h>
 
-#if 0
-static void md_init_hook(void)
-{
-	old_malloc_hook = __malloc_hook;
-	old_free_hook = __free_hook;
-	__malloc_hook = md_malloc_hook;
-	__free_hook = md_free_hook;
-}
-
-/* Override initializing hook from the C library. */
-void (*__malloc_initialize_hook) (void) = my_init_hook;
-#endif
 
 MemDiags::MemDiags()
 {
-	// TODO Auto-generated constructor stub
-
 }
 
 void MemDiags::PrintStats() const
