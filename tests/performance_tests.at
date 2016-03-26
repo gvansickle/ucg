@@ -16,14 +16,14 @@
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
 
-m4_define([EXTRACT_AND_APPEND_TIME],[[
+m4_define([EXTRACT_AND_APPEND_TIME],[
 		# $1 == program name.
-		## @todo For some reason, AS_ECHO_N() won't expand in here.
-		$as_echo_n "$1 " >> $PERF_RESULTS_FILE;
-		cat stderr | egrep "real[[:space:]]*" | sed -r 's/real[[:space:]]*(.*)/\1/' | tr -d '\n' >> $PERF_RESULTS_FILE;
-		$as_echo_n " " >> $PERF_RESULTS_FILE;
-		cat stdout | wc -l >> $PERF_RESULTS_FILE;
-]])
+		AS_ECHO_N(["| $1 | "]) >> $PERF_RESULTS_FILE;
+		cat stderr | egrep "real[[[:space:]]]*" | sed -r 's/real[[[:space:]]]*(.*)/\1/' | tr -d '\n' >> $PERF_RESULTS_FILE;
+		AS_ECHO_N(" | ") >> $PERF_RESULTS_FILE;
+		cat stdout | wc -l | tr -d '\n' >> $PERF_RESULTS_FILE;
+		AS_ECHO([" |"]) >> $PERF_RESULTS_FILE;
+])
 
 m4_define([PREP_ONE_PROG],[
 # $1 == program name.
@@ -86,8 +86,10 @@ AT_SETUP([Boost: compare performance to grep, 'BOOST.*HPP'])
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
 
+AS_ECHO([""]) >> $PERF_RESULTS_FILE
 AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
-
+AS_ECHO(["| Command | Time | Matching Lines |"]) >> $PERF_RESULTS_FILE;
+AS_ECHO(["|---------|------|----------------|"]) >> $PERF_RESULTS_FILE;
 TIME_ONE_PROG([ucg --cpp], ['BOOST.*HPP'])
 TIME_ONE_PROG([grep -Ern --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx], ['BOOST.*HPP'])
 
@@ -102,6 +104,7 @@ AT_SETUP([Boost: find all '#endif's])
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
 
+AS_ECHO([""]) >> $PERF_RESULTS_FILE
 AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
 
 # Loop through the programs we're comparing performance with.
@@ -120,6 +123,7 @@ AT_SETUP([Boost: search with regex 'BOOST.*HPP'])
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
 
+AS_ECHO([""]) >> $PERF_RESULTS_FILE
 AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
 
 # Loop through the programs we're comparing performance with.
@@ -138,6 +142,7 @@ AT_SETUP([Boost: search with --ignore-dir=doc])
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
 
+AS_ECHO([""]) >> $PERF_RESULTS_FILE
 AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
 
 # Loop through the programs we're comparing performance with.
