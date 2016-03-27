@@ -57,6 +57,6 @@ public:
 static_assert(std::is_nothrow_move_constructible<Match>::value == true, "Match must be nothrow move constructible");
 
 // Require Match to not be copy constructible, so that uses don't end up accidentally copying it instead of moving.
-static_assert(std::is_copy_constructible<Match>::value == false, "Match must not be copy constructable");
+static_assert(std::is_copy_constructible<Match>::value == false, "Match must not be copy constructible");
 
 #endif /* MATCH_H_ */

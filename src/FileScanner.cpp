@@ -134,7 +134,7 @@ void FileScanner::Run()
 
 	// Pull new filenames off the input queue until it's closed.
 	std::string next_string;
-	while(m_in_queue.wait_pull(next_string) != queue_op_status::closed)
+	while(m_in_queue.wait_pull(std::move(next_string)) != queue_op_status::closed)
 	{
 		MatchList ml(next_string);
 

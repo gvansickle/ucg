@@ -32,14 +32,20 @@ class MatchList
 {
 public:
 	MatchList(const std::string &filename);
-	MatchList() {};
+	MatchList() = default;
 
+	/// Delete the copy constructor and the move assignment operator.  With the std::vector<Match> in here, this is an expensive
+	/// class to copy, so we only allow move-constructing.
 	MatchList(const MatchList &lvalue) = delete;
+	MatchList& operator=(const MatchList &other) = delete;
+
+	/// Since we deleted the copy constructor, we have to explicitly declare that we want the default move ctor and assignment op.
 	MatchList(MatchList&&) noexcept = default;
-	MatchList& operator=(MatchList&&) = default;
-#if 0
-	~MatchList();
-#endif
+	MatchList& operator=(MatchList&&) /* noexcept @todo See static_assert below. */ = default;
+
+	/// Also use the default destructor.
+	~MatchList() noexcept = default;
+
 
 	void AddMatch(Match &&match);
 
@@ -48,7 +54,7 @@ public:
 	/// @todo GRVS - This needs to return 'empty' after a move-from has occurred.
 	bool empty() const noexcept { return m_match_list.empty(); };
 
-	std::vector<Match>::size_type GetNumberOfMatchedLines() const;
+	std::vector<Match>::size_type GetNumberOfMatchedLines() const noexcept;
 
 private:
 
@@ -62,7 +68,11 @@ private:
 // Require MatchList to be nothrow move constructible so that a container of them can use move on reallocation.
 static_assert(std::is_nothrow_move_constructible<MatchList>::value == true, "MatchList must be nothrow move constructible");
 
-// Require Match to not be copy constructible, so that uses don't end up accidentally copying it instead of moving.
-static_assert(std::is_copy_constructible<MatchList>::value == false, "MatchList must not be copy constructable");
+// @todo Not sure why I can't get MatchList to be nothrow move assignable.  Adding noexcept to operator=(MatchList&&)
+// above doesn't help.
+//static_assert(std::is_nothrow_move_assignable<MatchList>::value == true, "MatchList must be nothrow move assignable");
+
+// Require MatchList to not be copy constructible, so that uses don't end up accidentally copying it instead of moving.
+static_assert(std::is_copy_constructible<MatchList>::value == false, "MatchList must not be copy constructible");
 
 #endif /* MATCHLIST_H_ */
