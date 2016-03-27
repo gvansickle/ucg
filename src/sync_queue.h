@@ -99,7 +99,6 @@ public:
 		return queue_op_status::success;
 	}
 
-#if 0
 	queue_op_status wait_pull(ValueType& x)
 	{
 		// Using a unique_lock<> here vs. a lock_guard<> because we'll be using a condition variable, which needs
@@ -128,7 +127,6 @@ public:
 
 		return queue_op_status::success;
 	}
-#endif
 
 	queue_op_status wait_pull(ValueType&& x)
 	{
@@ -154,7 +152,7 @@ public:
 
 		// Otherwise, we have something in the queue to pull off.
 		// Use move-assignment vs. copy-assignment for efficiency.
-		// Note that C++11 std::queue<>::front returns a non-const reference as well as a const one, so
+		// Note that C++11 std::queue<>::front() returns a non-const reference as well as a const one, so
 		// std::move() will work here.
 		x = std::move(m_underlying_queue.front());
 		m_underlying_queue.pop();

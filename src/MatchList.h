@@ -15,7 +15,7 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file */
+/** @file MatchList.h */
 
 #ifndef MATCHLIST_H_
 #define MATCHLIST_H_
@@ -25,8 +25,11 @@
 
 #include "Match.h"
 
-/*
- *
+/**
+ * Container class for holding all Matches found in a given file.
+ * For performance reasons, this class is only move constructible and assignable, not copy constructible or assignable.
+ * We'll be passing many instances of this class "by value" through the sync_queue<>s, and we want to make sure that it's
+ * using the move constructors and assignment operators to do so.
  */
 class MatchList
 {
@@ -46,7 +49,7 @@ public:
 	/// Also use the default destructor.
 	~MatchList() noexcept = default;
 
-
+	/// Add a match to this MatchList.  Note that this is done by moving, not copying, the given %match.
 	void AddMatch(Match &&match);
 
 	void Print(bool istty, bool enable_color, bool print_column) const;
@@ -61,12 +64,15 @@ private:
 	/// The filename where the Matches in this MatchList were found.
 	std::string m_filename;
 
-	/// The Matches.
+	/// The Matches found in this file.
 	std::vector<Match> m_match_list;
 };
 
 // Require MatchList to be nothrow move constructible so that a container of them can use move on reallocation.
 static_assert(std::is_nothrow_move_constructible<MatchList>::value == true, "MatchList must be nothrow move constructible");
+
+// Require MatchList to also be move assignable.
+static_assert(std::is_move_assignable<MatchList>::value == true, "MatchList must be move assignable");
 
 // @todo Not sure why I can't get MatchList to be nothrow move assignable.  Adding noexcept to operator=(MatchList&&)
 // above doesn't help.
