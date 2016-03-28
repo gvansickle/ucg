@@ -33,7 +33,7 @@ class Match
 {
 public:
 	Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset, long long line_number);
-	Match() = default;
+	Match() noexcept = default;
 
 	/// Delete the copy constructor and the move assignment operator.  With the std::strings in here, this is a relatively expensive
 	/// class to copy, so we only allow move-constructing.
@@ -45,7 +45,7 @@ public:
 	Match& operator=(Match &&) noexcept = default;
 
 	/// Also use the default destructor.
-	~Match() = default;
+	~Match() noexcept = default;
 
 
 	/// @note Data members not private, this is more of a struct than a class.
@@ -58,7 +58,18 @@ public:
 // Require Match to be nothrow move constructible so that a vector of them can use move on reallocation.
 static_assert(std::is_nothrow_move_constructible<Match>::value == true, "Match must be nothrow move constructible");
 
+// Require Match to be nothrow move assignable for similar reasons.
+// @note I can't get MatchList to be nothrow move assignable because std::string isn't in gcc up to at least 5.1, per this bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58265#c7.
+// This issue, combined with std::vector<>::push_back()'s specification, is what motivates the deletion of the copy ctor/assignment
+// operator in this class in the first place.
+// Per http://stackoverflow.com/a/18858875, the only way to get the "void push_back( T&& value );" overload of push_back() is to
+// either have a noexcept move ctor, or a non-noexcept move ctor and no copy ctor (actually, class can't be CopyInsertable).
+//static_assert(std::is_nothrow_move_assignable<Match>::value == true, "Match must be nothrow move assignable");
+
 // Require Match to not be copy constructible, so that uses don't end up accidentally copying it instead of moving.
 static_assert(std::is_copy_constructible<Match>::value == false, "Match must not be copy constructible");
+
+// Require Match to not be copy assignable, so that uses don't end up accidentally copying it instead of moving.
+static_assert(std::is_copy_assignable<Match>::value == false, "Match must not be copy assignable");
 
 #endif /* MATCH_H_ */

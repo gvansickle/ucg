@@ -54,7 +54,10 @@ public:
 
 	void Print(bool istty, bool enable_color, bool print_column) const;
 
-	/// @todo GRVS - This needs to return 'empty' after a move-from has occurred.
+	/// Returns a bool indicating whether the MatchList is empty.
+	/// @note You might expect that this needs to indicate 'empty' after a move-from has occurred.
+	/// That's not the case.  A moved-from object only has to be destructible, and the move and copy operations
+	/// have to still work the same as they did before the move operation.
 	bool empty() const noexcept { return m_match_list.empty(); };
 
 	std::vector<Match>::size_type GetNumberOfMatchedLines() const noexcept;
@@ -71,14 +74,18 @@ private:
 // Require MatchList to be nothrow move constructible so that a container of them can use move on reallocation.
 static_assert(std::is_nothrow_move_constructible<MatchList>::value == true, "MatchList must be nothrow move constructible");
 
-// Require MatchList to also be move assignable.
-static_assert(std::is_move_assignable<MatchList>::value == true, "MatchList must be move assignable");
-
-// @todo Not sure why I can't get MatchList to be nothrow move assignable.  Adding noexcept to operator=(MatchList&&)
-// above doesn't help.
+// Require MatchList to be nothrow move assignable for similar reasons.
+// @note I can't get MatchList to be nothrow move assignable because std::string isn't (though std::vector<Match> is).
+// See explanation in Match.h, which has the same issue, as to why we care.
 //static_assert(std::is_nothrow_move_assignable<MatchList>::value == true, "MatchList must be nothrow move assignable");
+
+// Require MatchList to be move assignable.
+static_assert(std::is_move_assignable<MatchList>::value == true, "MatchList must be move assignable");
 
 // Require MatchList to not be copy constructible, so that uses don't end up accidentally copying it instead of moving.
 static_assert(std::is_copy_constructible<MatchList>::value == false, "MatchList must not be copy constructible");
+
+// Require MatchList to not be copy assignable, so that uses don't end up accidentally copying it instead of moving.
+static_assert(std::is_copy_assignable<MatchList>::value == false, "MatchList must not be copy assignable");
 
 #endif /* MATCHLIST_H_ */
