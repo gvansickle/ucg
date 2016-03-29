@@ -1,11 +1,9 @@
 # UniversalCodeGrep
 
-<!--
 <a href="https://scan.coverity.com/projects/gvansickle-ucg">
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/7451/badge.svg"/>
 </a>
--->
 
 UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.
 
