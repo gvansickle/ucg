@@ -82,8 +82,12 @@ static_assert(std::is_nothrow_move_constructible<MatchList>::value == true, "Mat
 // Require MatchList to be move assignable.
 static_assert(std::is_move_assignable<MatchList>::value == true, "MatchList must be move assignable");
 
+#ifndef __COVERITY__ // Coverity can't handle this static_assert().
+
 // Require MatchList to not be copy constructible, so that uses don't end up accidentally copying it instead of moving.
 static_assert(std::is_copy_constructible<MatchList>::value == false, "MatchList must not be copy constructible");
+
+#endif // __COVERITY__
 
 // Require MatchList to not be copy assignable, so that uses don't end up accidentally copying it instead of moving.
 static_assert(std::is_copy_assignable<MatchList>::value == false, "MatchList must not be copy assignable");

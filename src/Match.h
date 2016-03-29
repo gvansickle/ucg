@@ -42,7 +42,7 @@ public:
 
 	/// Since we deleted the copy constructor, we have to explicitly declare that we want the default move ctor and assignment op.
 	Match(Match &&other) noexcept = default;
-	Match& operator=(Match &&) noexcept = default;
+	Match& operator=(Match &&) /* noexcept @todo See static_assert below. */ = default;
 
 	/// Also use the default destructor.
 	~Match() noexcept = default;
@@ -54,6 +54,8 @@ public:
 	std::string m_match;
 	std::string m_post_match;
 };
+
+#ifndef __COVERITY__ // Coverity can't handle these static_asserts.
 
 // Require Match to be nothrow move constructible so that a vector of them can use move on reallocation.
 static_assert(std::is_nothrow_move_constructible<Match>::value == true, "Match must be nothrow move constructible");
@@ -71,5 +73,7 @@ static_assert(std::is_copy_constructible<Match>::value == false, "Match must not
 
 // Require Match to not be copy assignable, so that uses don't end up accidentally copying it instead of moving.
 static_assert(std::is_copy_assignable<Match>::value == false, "Match must not be copy assignable");
+
+#endif // __COVERITY__
 
 #endif /* MATCH_H_ */
