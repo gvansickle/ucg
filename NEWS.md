@@ -10,6 +10,7 @@
 - Now checking for and rejecting non-option arguments and double-dash in .ucgrc files.
 - File finding stage now prints an error message but continues if it runs into an unreadable directory.
 - Don't try to read a file if fstat() indicates it isn't a regular file.
+- Improved codebase support for C++11's move semantics.  Reduces memory allocation/deallocation traffic by about 20%.
 - Removed Boost configuration cruft from earlier development.
 
 ### Fixed

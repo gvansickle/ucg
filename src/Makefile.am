@@ -22,6 +22,7 @@ libsrc_a_SOURCES = \
 	Globber.cpp Globber.h \
 	Match.cpp Match.h \
 	MatchList.cpp MatchList.h \
+	MemDiags.cpp MemDiags.h \
 	File.cpp File.h \
 	FileScanner.cpp FileScanner.h \
 	OutputTask.cpp OutputTask.h \
