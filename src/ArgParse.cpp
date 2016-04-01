@@ -91,7 +91,10 @@ static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 /// Keys for options without short-options.
 enum OPT
 {
-	OPT_COLOR = 1,
+	OPT_RESERVED = 0,
+	OPT_SMART_CASE,
+	OPT_NO_SMART_CASE,
+	OPT_COLOR,
 	OPT_NOCOLOR,
 	OPT_IGNORE_DIR,
 	OPT_NOIGNORE_DIR,
@@ -103,7 +106,8 @@ enum OPT
 	OPT_HELP_TYPES,
 	OPT_COLUMN,
 	OPT_NOCOLUMN,
-	OPT_TEST_NOENV_USER
+	OPT_TEST_NOENV_USER,
+	OPT_BRACKET_NO_STANDIN
 };
 
 /// Status code to use for a bad parameter which terminates the program via argp_failure().
@@ -121,6 +125,10 @@ error_t argp_err_exit_status = STATUS_EX_USAGE;
 static struct argp_option options[] = {
 		{0,0,0,0, "Searching:" },
 		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
+		{"[no]smart-case", OPT_BRACKET_NO_STANDIN, 0, 0, "Ignore case if PATTERN is all lowercase (default: enabled)."},
+		{"smart-case", OPT_SMART_CASE, 0, OPTION_HIDDEN, ""},
+		{"nosmart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN, ""},
+		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS, ""},
 		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
 		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
 		{0,0,0,0, "Search Output:"},
@@ -170,6 +178,12 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	{
 	case 'i':
 		arguments->m_ignore_case = true;
+		break;
+	case OPT_SMART_CASE:
+		/// @todo
+		break;
+	case OPT_NO_SMART_CASE:
+		/// @todo
 		break;
 	case 'w':
 		arguments->m_word_regexp = true;
@@ -274,6 +288,11 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 			// Not enough args.
 			argp_usage(state);
 		}
+		break;
+	case OPT_BRACKET_NO_STANDIN:
+		// "Bracketed-No" long option stand-ins (i.e. "--[no]whatever") should never actually
+		// be given on the command line.
+		argp_error(state, "unrecognized option \'%s\'", state->argv[state->next-1]);
 		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
