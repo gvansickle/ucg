@@ -100,6 +100,11 @@ private:
 	/// If true, ArgParse won't look for or use $HOME/.ucgrc.
 	bool m_test_noenv_user { false };
 
+	/// true if smart-case should be used.
+	/// This isn't public because the logic which makes the final decision on whether to ultimately match
+	/// case-insensitively or not is internal to this class, and its decision is exposed as m_ignore_case.
+	bool m_smart_case { true };
+
 public:
 
 	/// @name The Parsed Options
@@ -114,7 +119,6 @@ public:
 	/// true if the case of PATTERN should be ignored.
 	bool m_ignore_case { false };
 
-	/// true if the user specified
 
 	/// true if PATTERN should only match whole words.
 	bool m_word_regexp { false };

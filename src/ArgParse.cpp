@@ -26,6 +26,7 @@
 
 #include "../build_info.h"
 
+#include <locale>
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -178,12 +179,17 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	{
 	case 'i':
 		arguments->m_ignore_case = true;
+		// Shut off smart-case.
+		arguments->m_smart_case = false;
 		break;
 	case OPT_SMART_CASE:
-		/// @todo
+		arguments->m_smart_case = true;
+		// Shut off ignore-case.
+		arguments->m_ignore_case = false;
 		break;
 	case OPT_NO_SMART_CASE:
-		/// @todo
+		arguments->m_smart_case = false;
+		// Don't change ignore-case, regardless of whether it's on or off.
 		break;
 	case 'w':
 		arguments->m_word_regexp = true;
@@ -370,7 +376,7 @@ void ArgParse::Parse(int argc, char **argv)
 	// Parse the combined list of arguments.
 	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
 
-	//// Now set up defaults.
+	//// Now set up some defaults which we can only determine after all arg parsing is complete.
 
 	// Number of jobs.
 	if(m_jobs == 0)
@@ -390,6 +396,20 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		// Default to current directory.
 		m_paths.push_back(".");
+	}
+
+	// Is smart-case enabled?
+	if(m_smart_case)
+	{
+		// Is PATTERN all lower-case?
+		// Use the environment's default locale.
+		std::locale loc("");
+		// Look for the first uppercase char in PATTERN.
+		if(std::find_if(m_pattern.cbegin(), m_pattern.cend(), [&loc](decltype(m_pattern)::value_type c){ return std::isupper(c, loc); }) == m_pattern.cend())
+		{
+			// Didn't find one, so match without regard to case.
+			m_ignore_case = true;
+		}
 	}
 
 	// Free the strings we cpp_strdup()'ed

@@ -30,8 +30,12 @@ at_end_of_word_PtR
 inside-ptr-sentence
 ])
 
-# --ignore-case should give us 4 hits.
+# --ignore-case with 'ptr' should give us 4 hits.
 AT_CHECK([ucg --noenv '--ignore-case' 'ptr' test_file.cpp | wc -l],[0],[4
+],[stderr])
+
+# --ignore-case with 'ptR' should still give us 4 hits.
+AT_CHECK([ucg --noenv '--ignore-case' 'ptR' test_file.cpp | wc -l],[0],[4
 ],[stderr])
 
 # --word-regexp should give us two hits.
@@ -67,27 +71,27 @@ something Bl.H somethingelse
 ])
 
 # Should only find one literal '[n]'
-AT_CHECK([ucg --noenv --literal '[[n]]' test_file.c | wc -l],[0],[1
+AT_CHECK([ucg --noenv --no-smart-case --literal '[[n]]' test_file.c | wc -l],[0],[1
 ],[stderr])
 
 # Should find two literal '[n]'s when ignoring case.
-AT_CHECK([ucg --noenv --literal --ignore-case '[[n]]' test_file.c | wc -l],[0],[2
+AT_CHECK([ucg --noenv --no-smart-case --literal --ignore-case '[[n]]' test_file.c | wc -l],[0],[2
 ],[stderr])
 
 # Should find 2 literal 'bl.h's when using --word-regexp. 
-AT_CHECK([ucg --noenv --word-regexp --literal 'bl.h' test_file.c | wc -l],[0],[2
+AT_CHECK([ucg --noenv --no-smart-case --word-regexp --literal 'bl.h' test_file.c | wc -l],[0],[2
 ],[stderr])
 
 # Should find 3 literal 'bl.h's without --word-regexp. 
-AT_CHECK([ucg --noenv --literal 'bl.h' test_file.c | wc -l],[0],[3
+AT_CHECK([ucg --noenv --no-smart-case --literal 'bl.h' test_file.c | wc -l],[0],[3
 ],[stderr])
 
 # Should find 4 'bl.h's without any modifiers. 
-AT_CHECK([ucg --noenv 'bl.h' test_file.c | wc -l],[0],[4
+AT_CHECK([ucg --noenv --no-smart-case 'bl.h' test_file.c | wc -l],[0],[4
 ],[stderr])
 
 # Should find 4 'bl.h's with all modifiers. 
-AT_CHECK([ucg --noenv -Qiw 'bl.h' test_file.c | wc -l],[0],[4
+AT_CHECK([ucg --noenv --no-smart-case -Qiw 'bl.h' test_file.c | wc -l],[0],[4
 ],[stderr])
 
 AT_CLEANUP
