@@ -132,4 +132,9 @@ AT_CHECK([ucg --noenv --nosmart-case -i 'abc' | wc -l], [0], [3
 AT_CHECK([ucg --noenv --nosmart-case -i 'AbC' | wc -l], [0], [3
 ], [stderr])
 
+# With -i --smart-case, PATTERN=AbC, we should find only one match,
+# since --smart-case follwing -i should override -i.
+AT_CHECK([ucg --noenv -i --smart-case 'AbC' | wc -l], [0], [1
+], [stderr])
+
 AT_CLEANUP
