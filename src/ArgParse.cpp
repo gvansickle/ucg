@@ -398,12 +398,16 @@ void ArgParse::Parse(int argc, char **argv)
 		m_paths.push_back(".");
 	}
 
-	// Is smart-case enabled?
-	if(m_smart_case)
+	// Is smart-case enabled, and will we otherwise not be ignoring case?
+	if(m_smart_case && !m_ignore_case)
 	{
 		// Is PATTERN all lower-case?
-		// Use the environment's default locale.
-		std::locale loc("");
+
+		// Use a copy of the current global locale.  Since we never call std::locale::global() to set it,
+		// this should end up defaulting to the "classic" (i.e. "C") locale.
+		/// @todo This really should be the environment's default locale (loc("")).  Cygwin doesn't support this
+		/// at the moment (loc("") throws), and the rest of ucg isn't localized anyway, so this should work for now.
+		std::locale loc;
 		// Look for the first uppercase char in PATTERN.
 		if(std::find_if(m_pattern.cbegin(), m_pattern.cend(), [&loc](decltype(m_pattern)::value_type c){ return std::isupper(c, loc); }) == m_pattern.cend())
 		{

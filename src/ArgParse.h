@@ -119,7 +119,6 @@ public:
 	/// true if the case of PATTERN should be ignored.
 	bool m_ignore_case { false };
 
-
 	/// true if PATTERN should only match whole words.
 	bool m_word_regexp { false };
 
