@@ -48,9 +48,7 @@ class ArgParse
 {
 public:
 	ArgParse(TypeManager &tm);
-	virtual ~ArgParse();
-
-	void FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv);
+	~ArgParse();
 
 	void Parse(int argc, char **argv);
 
@@ -93,6 +91,8 @@ private:
 	 */
 	std::vector<char *> ConvertRCFileToArgv(const File &f);
 
+	void FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv);
+
 	void HandleTYPELogic(std::vector<char *> *v);
 
 	void HandleTypeAddOrSet(const std::string &s);
@@ -113,6 +113,8 @@ public:
 
 	/// true if the case of PATTERN should be ignored.
 	bool m_ignore_case { false };
+
+	/// true if the user specified
 
 	/// true if PATTERN should only match whole words.
 	bool m_word_regexp { false };

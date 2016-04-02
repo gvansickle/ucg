@@ -324,7 +324,7 @@ ArgParse::~ArgParse()
 static char * cpp_strdup(const char *orig)
 {
 	char *retval = new char[strlen(orig)+1];
-	strcpy(retval, orig);
+	std::strcpy(retval, orig);
 	return retval;
 }
 

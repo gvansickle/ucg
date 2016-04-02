@@ -91,3 +91,45 @@ AT_CHECK([ucg --noenv -Qiw 'bl.h' test_file.c | wc -l],[0],[4
 ],[stderr])
 
 AT_CLEANUP
+
+
+###
+### --[no]smart-case
+###
+AT_SETUP([--[[no]]smart-case])
+
+AT_DATA([test_file.c], [Generated test file for smart-case test
+abc def
+def ABC
+def AbC xyz
+])
+
+# Default is smart-case, should find three matches.
+AT_CHECK([ucg --noenv 'abc' | wc -l], [0], [3
+], [stderr])
+
+# Default is smart-case, with PATTERN=AbC, should find one match.
+AT_CHECK([ucg --noenv 'AbC' | wc -l], [0], [1
+], [stderr])
+
+# With explicit --smart-case, should still find three matches.
+AT_CHECK([ucg --noenv --smart-case 'abc' | wc -l], [0], [3
+], [stderr])
+
+# With --no-smart-case, we should find one match.
+AT_CHECK([ucg --noenv --no-smart-case 'abc' | wc -l], [0], [1
+], [stderr])
+
+# With --nosmart-case, we should find one match.
+AT_CHECK([ucg --noenv --nosmart-case 'abc' | wc -l], [0], [1
+], [stderr])
+
+# With --nosmart-case -i, PATTERN=abc, we should find three matches.
+AT_CHECK([ucg --noenv --nosmart-case -i 'abc' | wc -l], [0], [3
+], [stderr])
+
+# With --nosmart-case -i, PATTERN=AbC, we should find three matches.
+AT_CHECK([ucg --noenv --nosmart-case -i 'AbC' | wc -l], [0], [3
+], [stderr])
+
+AT_CLEANUP
