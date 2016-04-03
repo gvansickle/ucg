@@ -34,6 +34,7 @@ class Match
 public:
 	Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset, long long line_number);
 	Match() = default;
+
 	/// Delete the copy constructor and the move assignment operator.  With the std::strings in here, this is a relatively expensive
 	/// class to copy, so we only allow move-constructing.
 	Match(const Match &other) = delete;
