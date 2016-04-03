@@ -147,4 +147,17 @@ int main(int argc, char **argv)
 		std::cerr << "ucg: Error during arg parsing: " << e.what() << std::endl;
 		return 255;
 	}
+	catch(const std::runtime_error &e)
+	{
+		std::cerr << "ucg: std::runtime_error exception: " << e.what() << std::endl;
+		return 255;
+	}
+	catch(...)
+	{
+		// We shouldn't need this catch(...), but Cygwin seems to not properly call the default
+		// terminate handler (which should be abort()) if we let an exception escape main(), but will simply return
+		// without an error code.  I ran into this when trying to instantiate std::locale with locale=="" in ArgParse,
+		// and before I had the std::runtime_error catch clause above.
+		abort();
+	}
 }

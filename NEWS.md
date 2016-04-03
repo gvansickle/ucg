@@ -3,7 +3,8 @@
 ## [UNRELEASED]
 
 ### New Features
-- Now supports --[no]column option which prints the column number of a match after the line number.  Default is --nocolumn.  Note that tabs count as only one column, consistent with the behavior of ack and ag.
+- Added --[no]smart-case option, which is on by default.  With this feature enabled, matching is done case-insensitively if the given PATTERN is all lower-case. 
+- Added --[no]column option which prints the column number of a match after the line number.  Default is --nocolumn.  Note that tabs count as only one column, consistent with the behavior of ack and ag.
 - Added -k/--known-types option for compatibility with ack.
 
 ### Changed
