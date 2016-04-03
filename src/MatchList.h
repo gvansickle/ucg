@@ -15,7 +15,7 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file */
+/** @file MatchList.h */
 
 #ifndef MATCHLIST_H_
 #define MATCHLIST_H_
@@ -25,30 +25,71 @@
 
 #include "Match.h"
 
-/*
- *
+/**
+ * Container class for holding all Matches found in a given file.
+ * For performance reasons, this class is only move constructible and assignable, not copy constructible or assignable.
+ * We'll be passing many instances of this class "by value" through the sync_queue<>s, and we want to make sure that it's
+ * using the move constructors and assignment operators to do so.
  */
 class MatchList
 {
 public:
-	MatchList() {};
-	MatchList(const MatchList &lvalue) = default;
 	MatchList(const std::string &filename);
-	~MatchList();
+	MatchList() = default;
 
+	/// Delete the copy constructor and the move assignment operator.  With the std::vector<Match> in here, this is an expensive
+	/// class to copy, so we only allow move-constructing.
+	MatchList(const MatchList &lvalue) = delete;
+	MatchList& operator=(const MatchList &other) = delete;
+
+	/// Since we deleted the copy constructor, we have to explicitly declare that we want the default move ctor and assignment op.
+	MatchList(MatchList&&) noexcept = default;
+	MatchList& operator=(MatchList&&) /* noexcept @todo See static_assert below. */ = default;
+
+	/// Also use the default destructor.
+	~MatchList() noexcept = default;
+
+	/// Add a match to this MatchList.  Note that this is done by moving, not copying, the given %match.
 	void AddMatch(Match &&match);
 
 	void Print(bool istty, bool enable_color, bool print_column) const;
 
+	/// Returns a bool indicating whether the MatchList is empty.
+	/// @note You might expect that this needs to indicate 'empty' after a move-from has occurred.
+	/// That's not the case.  A moved-from object only has to be destructible, and the move and copy operations
+	/// have to still work the same as they did before the move operation.
 	bool empty() const noexcept { return m_match_list.empty(); };
 
-	std::vector<Match>::size_type GetNumberOfMatchedLines() const;
+	std::vector<Match>::size_type GetNumberOfMatchedLines() const noexcept;
 
 private:
 
+	/// The filename where the Matches in this MatchList were found.
 	std::string m_filename;
 
+	/// The Matches found in this file.
 	std::vector<Match> m_match_list;
 };
+
+// Require MatchList to be nothrow move constructible so that a container of them can use move on reallocation.
+static_assert(std::is_nothrow_move_constructible<MatchList>::value == true, "MatchList must be nothrow move constructible");
+
+// Require MatchList to be nothrow move assignable for similar reasons.
+// @note I can't get MatchList to be nothrow move assignable because std::string isn't (though std::vector<Match> is).
+// See explanation in Match.h, which has the same issue, as to why we care.
+//static_assert(std::is_nothrow_move_assignable<MatchList>::value == true, "MatchList must be nothrow move assignable");
+
+// Require MatchList to be move assignable.
+static_assert(std::is_move_assignable<MatchList>::value == true, "MatchList must be move assignable");
+
+#ifndef __COVERITY__ // Coverity can't handle this static_assert().
+
+// Require MatchList to not be copy constructible, so that uses don't end up accidentally copying it instead of moving.
+static_assert(std::is_copy_constructible<MatchList>::value == false, "MatchList must not be copy constructible");
+
+#endif // __COVERITY__
+
+// Require MatchList to not be copy assignable, so that uses don't end up accidentally copying it instead of moving.
+static_assert(std::is_copy_assignable<MatchList>::value == false, "MatchList must not be copy assignable");
 
 #endif /* MATCHLIST_H_ */

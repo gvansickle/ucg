@@ -26,6 +26,7 @@
 
 #include "../build_info.h"
 
+#include <locale>
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -91,7 +92,10 @@ static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 /// Keys for options without short-options.
 enum OPT
 {
-	OPT_COLOR = 1,
+	OPT_RESERVED = 0,
+	OPT_SMART_CASE,
+	OPT_NO_SMART_CASE,
+	OPT_COLOR,
 	OPT_NOCOLOR,
 	OPT_IGNORE_DIR,
 	OPT_NOIGNORE_DIR,
@@ -103,7 +107,8 @@ enum OPT
 	OPT_HELP_TYPES,
 	OPT_COLUMN,
 	OPT_NOCOLUMN,
-	OPT_TEST_NOENV_USER
+	OPT_TEST_NOENV_USER,
+	OPT_BRACKET_NO_STANDIN
 };
 
 /// Status code to use for a bad parameter which terminates the program via argp_failure().
@@ -121,6 +126,10 @@ error_t argp_err_exit_status = STATUS_EX_USAGE;
 static struct argp_option options[] = {
 		{0,0,0,0, "Searching:" },
 		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
+		{"[no]smart-case", OPT_BRACKET_NO_STANDIN, 0, 0, "Ignore case if PATTERN is all lowercase (default: enabled)."},
+		{"smart-case", OPT_SMART_CASE, 0, OPTION_HIDDEN, ""},
+		{"nosmart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN, ""},
+		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS, ""},
 		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
 		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
 		{0,0,0,0, "Search Output:"},
@@ -170,6 +179,17 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	{
 	case 'i':
 		arguments->m_ignore_case = true;
+		// Shut off smart-case.
+		arguments->m_smart_case = false;
+		break;
+	case OPT_SMART_CASE:
+		arguments->m_smart_case = true;
+		// Shut off ignore-case.
+		arguments->m_ignore_case = false;
+		break;
+	case OPT_NO_SMART_CASE:
+		arguments->m_smart_case = false;
+		// Don't change ignore-case, regardless of whether it's on or off.
 		break;
 	case 'w':
 		arguments->m_word_regexp = true;
@@ -275,6 +295,11 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 			argp_usage(state);
 		}
 		break;
+	case OPT_BRACKET_NO_STANDIN:
+		// "Bracketed-No" long option stand-ins (i.e. "--[no]whatever") should never actually
+		// be given on the command line.
+		argp_error(state, "unrecognized option \'%s\'", state->argv[state->next-1]);
+		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
 	}
@@ -305,7 +330,7 @@ ArgParse::~ArgParse()
 static char * cpp_strdup(const char *orig)
 {
 	char *retval = new char[strlen(orig)+1];
-	strcpy(retval, orig);
+	std::strcpy(retval, orig);
 	return retval;
 }
 
@@ -351,7 +376,7 @@ void ArgParse::Parse(int argc, char **argv)
 	// Parse the combined list of arguments.
 	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
 
-	//// Now set up defaults.
+	//// Now set up some defaults which we can only determine after all arg parsing is complete.
 
 	// Number of jobs.
 	if(m_jobs == 0)
@@ -371,6 +396,24 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		// Default to current directory.
 		m_paths.push_back(".");
+	}
+
+	// Is smart-case enabled, and will we otherwise not be ignoring case?
+	if(m_smart_case && !m_ignore_case)
+	{
+		// Is PATTERN all lower-case?
+
+		// Use a copy of the current global locale.  Since we never call std::locale::global() to set it,
+		// this should end up defaulting to the "classic" (i.e. "C") locale.
+		/// @todo This really should be the environment's default locale (loc("")).  Cygwin doesn't support this
+		/// at the moment (loc("") throws), and the rest of ucg isn't localized anyway, so this should work for now.
+		std::locale loc;
+		// Look for the first uppercase char in PATTERN.
+		if(std::find_if(m_pattern.cbegin(), m_pattern.cend(), [&loc](decltype(m_pattern)::value_type c){ return std::isupper(c, loc); }) == m_pattern.cend())
+		{
+			// Didn't find one, so match without regard to case.
+			m_ignore_case = true;
+		}
 	}
 
 	// Free the strings we cpp_strdup()'ed

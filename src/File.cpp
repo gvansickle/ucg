@@ -1,18 +1,18 @@
 /*
  * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
- * This file is part of UltimateCodeSearch.
+ * This file is part of UniversalCodeGrep.
  *
- * UltimateCodeSearch is free software: you can redistribute it and/or modify it under the
+ * UniversalCodeGrep is free software: you can redistribute it and/or modify it under the
  * terms of version 3 of the GNU General Public License as published by the Free
  * Software Foundation.
  *
- * UltimateCodeSearch is distributed in the hope that it will be useful, but WITHOUT ANY
+ * UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * UltimateCodeSearch.  If not, see <http://www.gnu.org/licenses/>.
+ * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /** @file */

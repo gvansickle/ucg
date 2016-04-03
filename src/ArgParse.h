@@ -48,9 +48,7 @@ class ArgParse
 {
 public:
 	ArgParse(TypeManager &tm);
-	virtual ~ArgParse();
-
-	void FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv);
+	~ArgParse();
 
 	void Parse(int argc, char **argv);
 
@@ -93,12 +91,19 @@ private:
 	 */
 	std::vector<char *> ConvertRCFileToArgv(const File &f);
 
+	void FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv);
+
 	void HandleTYPELogic(std::vector<char *> *v);
 
 	void HandleTypeAddOrSet(const std::string &s);
 
 	/// If true, ArgParse won't look for or use $HOME/.ucgrc.
 	bool m_test_noenv_user { false };
+
+	/// true if smart-case should be used.
+	/// This isn't public because the logic which makes the final decision on whether to ultimately match
+	/// case-insensitively or not is internal to this class, and its decision is exposed as m_ignore_case.
+	bool m_smart_case { true };
 
 public:
 

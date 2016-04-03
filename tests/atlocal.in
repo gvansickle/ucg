@@ -19,7 +19,7 @@
 
 ## Process this file with autoconf to produce atlocal.
 
-# @TODO Not sure if we need something like this or not.
+# We need this so we're able to find the binary we built.
 PATH=@abs_builddir@:@abs_top_builddir@/src:@abs_top_srcdir@/build-aux:$top_srcdir:$srcdir:$PATH
 
 XFAILFILE=$abs_builddir/.badversion
