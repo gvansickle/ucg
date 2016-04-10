@@ -1,6 +1,8 @@
 # NEWS file for the UniversalCodeGrep project.
 
-## [UNRELEASED]
+## [0.2.2] - 2016-04-09
+
+Minor feature/bugfix release of UniversalCodeGrep (ucg).
 
 ### New Features
 - Added --[no]smart-case option, which is on by default.  With this feature enabled, matching is done case-insensitively if the given PATTERN is all lower-case. 
