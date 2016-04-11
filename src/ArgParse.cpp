@@ -85,7 +85,7 @@ const char *argp_program_version = PACKAGE_STRING "\n"
 // Not static, argp.h externs this.
 const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 
-static char doc[] = "ucg: the UniversalCodeGrep tool.";
+static char doc[] = "ucg: the UniversalCodeGrep code search tool.";
 
 static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
