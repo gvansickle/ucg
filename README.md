@@ -95,7 +95,7 @@ sudo dnf install universalcodegrep
 
 ### openSUSE Binary RPMs
 
-Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/latest).
+Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/tag/0.2.2).
 
 ### Building the Source Tarball
 
