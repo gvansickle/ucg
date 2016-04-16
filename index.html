@@ -8,29 +8,14 @@
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
     <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-	<script>
-	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-	  ga('create', 'UA-71934244-1', 'auto');
-	  ga('send', 'pageview');
-
-	</script>
   </head>
   <body>
     <section class="page-header">
       <h1 class="project-name">UniversalCodeGrep</h1>
-      <h2 class="project-tagline">Easy as Ack, Faster than grep</h2>
+      <h2 class="project-tagline">ucg - UniversalCodeGrep</h2>
       <a href="https://github.com/gvansickle/ucg" class="btn">View on GitHub</a>
-	  <a href="https://github.com/gvansickle/ucg/releases/latest" class="btn">Latest Release: 0.2.1</a>
-      <br/>
-      NEW!: 2016-02-08: Version 0.2.1 released.  See <a href="https://github.com/gvansickle/ucg/blob/0.2.1/NEWS.md">NEWS</a> for a list of fixes and changes.
-	  <br/>
-	  NEW!: 2016-01-29: Ubuntu users can now install the latest UniversalCodeGrep releases from ucg's <a href="https://launchpad.net/~grvs/+archive/ubuntu/ucg">PPA</a>.
-	  <br/>
-	  NEW!: 2016-01-10: Red Hat / Fedora / CentOS users can now install the latest UniversalCodeGrep releases from ucg's <a href="https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep/">COPR</a> dnf/yum repository.
+      <a href="https://github.com/gvansickle/ucg/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/gvansickle/ucg/tarball/master" class="btn">Download .tar.gz</a>
     </section>
 
     <section class="main-content">
@@ -57,7 +42,7 @@
 <ul>
 <li><a href="#ubuntu-ppa">Ubuntu PPA</a></li>
 <li><a href="#red-hatfedoracentos-dnfyum-repository">Red Hat/Fedora/CentOS dnf/yum Repository</a></li>
-<li><a href="#binary-rpms">Binary RPMs</a></li>
+<li><a href="#opensuse-binary-rpms">openSUSE Binary RPMs</a></li>
 <li>
 <a href="#building-the-source-tarball">Building the Source Tarball</a>
 
@@ -84,6 +69,7 @@
 
 <ul>
 <li><a href="#searching">Searching</a></li>
+<li><a href="#search-output">Search Output</a></li>
 <li><a href="#file-presentation">File presentation</a></li>
 <li><a href="#file-inclusionexclusion">File inclusion/exclusion:</a></li>
 <li><a href="#file-type-specification">File type specification:</a></li>
@@ -115,34 +101,34 @@
 <h2>
 <a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Introduction</h2>
 
-<p>UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with <a href="http://beyondgrep.com/">Ack</a>, to some extent with <a href="http://geoff.greer.fm/ag/"><code>ag</code></a>, and where appropriate with <code>grep</code>.  Search patterns are specified as PCRE regexes. </p>
+<p>UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with <a href="http://beyondgrep.com/"><code>Ack</code></a>, to some extent with <a href="http://geoff.greer.fm/ag/"><code>ag</code></a>, and where appropriate with <code>grep</code>.  Search patterns are specified as PCRE regexes. </p>
 
 <h3>
 <a id="speed" class="anchor" href="#speed" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Speed</h3>
 
 <p><code>ucg</code> is intended to address the impatient programmer's code searching needs.  <code>ucg</code> is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the <a href="http://www.pcre.org/">PCRE library</a>, with its <a href="http://www.pcre.org/original/doc/html/pcrejit.html">JIT compilation feature</a> providing a huge performance gain on most platforms.</p>
 
-<p>As a consequence of its use of these facilities and its overall design for maximum concurrency and speed, <code>ucg</code> is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with <code>ucg</code> 0.2.1, <a href="http://geoff.greer.fm/ag/"><code>ag</code></a> 0.31.0, and <code>ack</code> 2.14 produces the following results:</p>
+<p>As a consequence of its use of these facilities and its overall design for maximum concurrency and speed, <code>ucg</code> is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with <code>ucg</code> 0.2.2, <a href="http://geoff.greer.fm/ag/"><code>ag</code></a> 0.31.0, and <code>ack</code> 2.14 produces the following results:</p>
 
 <table>
 <thead>
 <tr>
 <th>Command</th>
-<th>Approximate Real Time</th>
+<th>Elapsed Real Time, Average of 5 Runs</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>time ucg 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
-<td>~ 0.509 seconds</td>
+<td><code>time ucg --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
+<td>~ 0.404 seconds</td>
 </tr>
 <tr>
-<td><code>time ag 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
-<td>~ 10.66 seconds</td>
+<td><code>time ag --cpp 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
+<td>~ 5.8862 seconds</td>
 </tr>
 <tr>
-<td><code>time ack 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
-<td>~ 17.19 seconds</td>
+<td><code>time ack --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
+<td>~ 12.0398 seconds</td>
 </tr>
 </tbody>
 </table>
@@ -153,22 +139,22 @@
 <thead>
 <tr>
 <th>Command</th>
-<th>Approximate Real Time</th>
+<th>Elapsed Real Time, Average of 5 Runs</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>time grep -Ern --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx 'BOOST.*HPP' ~/src/boost_1_58_0/ | sort &gt; grepout.txt</code></td>
-<td>~ 0.570 seconds</td>
+<td><code>time grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
+<td>~ 0.9852 seconds</td>
 </tr>
 <tr>
-<td><code>time ucg --cpp 'BOOST.*HPP' ~/src/boost_1_58_0/ | sort &gt; ucgout.txt</code></td>
-<td>~ 0.498 seconds</td>
+<td><code>time ucg --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
+<td>~ 0.404 seconds</td>
 </tr>
 </tbody>
 </table>
 
-<p>The resulting match files (*out.txt) are identical.</p>
+<p>The resulting matches are identical.</p>
 
 <h2>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
@@ -201,17 +187,17 @@ sudo dnf copr <span class="pl-c1">enable</span> grvs/UniversalCodeGrep
 sudo dnf install universalcodegrep</pre></div>
 
 <h3>
-<a id="binary-rpms" class="anchor" href="#binary-rpms" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Binary RPMs</h3>
+<a id="opensuse-binary-rpms" class="anchor" href="#opensuse-binary-rpms" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>openSUSE Binary RPMs</h3>
 
-<p>Binary RPMs for openSUSE are available <a href="https://github.com/gvansickle/ucg/releases/latest">here</a>.  Note that when installing via <code>zypper</code>, <code>yum</code>, <code>dnf</code>, or whatever's appropriate for your system, you will probably get the same sort of security warnings you get if you install Google Chrome from its RPM.</p>
+<p>Binary RPMs for openSUSE are available <a href="https://github.com/gvansickle/ucg/releases/tag/0.2.2">here</a>.</p>
 
 <h3>
 <a id="building-the-source-tarball" class="anchor" href="#building-the-source-tarball" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Building the Source Tarball</h3>
 
-<p>UniversalCodeGrep can be built and installed from the distribution tarball (available <a href="https://github.com/gvansickle/ucg/releases/download/0.2.1/universalcodegrep-0.2.1.tar.gz">here</a>) in the standard autotools manner:</p>
+<p>UniversalCodeGrep can be built and installed from the distribution tarball (available <a href="https://github.com/gvansickle/ucg/releases/download/0.2.2/universalcodegrep-0.2.2.tar.gz">here</a>) in the standard autotools manner:</p>
 
-<div class="highlight highlight-source-shell"><pre>tar -xaf universalcodegrep-0.2.1.tar.gz
-<span class="pl-c1">cd</span> universalcodegrep-0.2.1.tar.gz
+<div class="highlight highlight-source-shell"><pre>tar -xaf universalcodegrep-0.2.2.tar.gz
+<span class="pl-c1">cd</span> universalcodegrep-0.2.2.tar.gz
 ./configure
 make
 make install</pre></div>
@@ -269,7 +255,7 @@ make install</pre></div>
 <h3>
 <a id="command-line-options" class="anchor" href="#command-line-options" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Command Line Options</h3>
 
-<p>Version 0.2.1 of <code>ucg</code> supports a significant subset of the options supported by <code>ack</code>.  Future releases will have support for more options.</p>
+<p>Version 0.2.2 of <code>ucg</code> supports a significant subset of the options supported by <code>ack</code>.  Future releases will have support for more options.</p>
 
 <h4>
 <a id="searching" class="anchor" href="#searching" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Searching</h4>
@@ -283,8 +269,12 @@ make install</pre></div>
 </thead>
 <tbody>
 <tr>
+<td><code>--[no]smart-case</code></td>
+<td>Ignore case if PATTERN is all lowercase (default: enabled).</td>
+</tr>
+<tr>
 <td><code>-i, --ignore-case</code></td>
-<td>Ignore case distinctions in PATTERN</td>
+<td>Ignore case distinctions in PATTERN.</td>
 </tr>
 <tr>
 <td><code>-Q, --literal</code></td>
@@ -293,6 +283,28 @@ make install</pre></div>
 <tr>
 <td><code>-w, --word-regexp</code></td>
 <td>PATTERN must match a complete word.</td>
+</tr>
+</tbody>
+</table>
+
+<h4>
+<a id="search-output" class="anchor" href="#search-output" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Search Output</h4>
+
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--column</code></td>
+<td>Print column of first match after line number.</td>
+</tr>
+<tr>
+<td><code>--nocolumn</code></td>
+<td>Don't print column of first match (default).</td>
 </tr>
 </tbody>
 </table>
@@ -337,6 +349,10 @@ make install</pre></div>
 <tr>
 <td><code>--noignore-dir=name, --noignore-directory=name</code></td>
 <td>Do not exclude directories with this name.</td>
+</tr>
+<tr>
+<td><code>-k, --known-types</code></td>
+<td>Only search in files of recognized types (default: on).</td>
 </tr>
 <tr>
 <td><code>-n, --no-recurse</code></td>
