@@ -1,14 +1,19 @@
 # NEWS file for the UniversalCodeGrep project.
 
-## [UNRELEASED]
+## [0.2.2] - 2016-04-09
+
+Minor feature/bugfix release of UniversalCodeGrep (ucg).
 
 ### New Features
-- Now supports --[no]column option which prints the column number of a match after the line number.  Default is --nocolumn.  Note that tabs count as only one column, consistent with the behavior of ack and ag.
+- Added --[no]smart-case option, which is on by default.  With this feature enabled, matching is done case-insensitively if the given PATTERN is all lower-case. 
+- Added --[no]column option which prints the column number of a match after the line number.  Default is --nocolumn.  Note that tabs count as only one column, consistent with the behavior of ack and ag.
 - Added -k/--known-types option for compatibility with ack.
 
 ### Changed
+- Now checking for and rejecting non-option arguments and double-dash in .ucgrc files.
 - File finding stage now prints an error message but continues if it runs into an unreadable directory.
 - Don't try to read a file if fstat() indicates it isn't a regular file.
+- Improved codebase support for C++11's move semantics.  Reduces memory allocation/deallocation traffic by about 20%.
 - Removed Boost configuration cruft from earlier development.
 
 ### Fixed
@@ -17,6 +22,7 @@
 - Hidden files were incorrectly being ignored even if they had recognized extensions.  Resolves #63.
 - Now checking for libpcre > 8.21 at configure-time.  Resolves #45.
 - Added handling of fstat() errors.  Resolves #48 / Coverity CID 53715.
+- If project rc file can't be opened, error message now reports its name instead of $HOME/.ucgrc's name.
 
 ## [0.2.1] - 2016-02-08
 

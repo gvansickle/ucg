@@ -46,6 +46,10 @@ AT_BANNER([UniversalCodeGrep sanity checks])
 m4_include([version.at])
 m4_include([sanity.at])
 
+###
+### Check the CLI argument and .ucgrc file handling.
+###
+m4_include([arg_and_rc_handling.at])
 
 ###
 ### Check the search pattern modifiers (e.g. --ignore-case).

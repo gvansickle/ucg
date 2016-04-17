@@ -18,7 +18,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([UniversalCodeGrep], [0.2.1], [https://github.com/gvansickle/ucg/issues],,[https://gvansickle.github.io/ucg/])
+AC_INIT([UniversalCodeGrep], [0.2.2], [https://github.com/gvansickle/ucg/issues],,[https://gvansickle.github.io/ucg/])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -148,20 +148,11 @@ AC_CHECK_HEADERS([pwd.h],[],[],[])
 ### Checks for compiler characteristics.
 ###
 
-AC_LANG_PUSH([C++])
 # Determine what switches we need to get at least some level of C++11 support.
-CXX11_FLAG=""
-for switch in -std=gnu++11 -std=c++11; do
-	AC_MSG_CHECKING([whether $CXX supports C++11 features with $switch])
-	AX_APPEND_COMPILE_FLAGS([$switch],[CXX11_FLAG])
-	AS_IF([test -n $CXX11_FLAG],
-		[AC_MSG_RESULT([yes]); break;],
-		[AC_MSG_RESULT([no]);])
-done
-AS_IF([test -n $CXX11_FLAG],
-	[AX_APPEND_COMPILE_FLAGS([$CXX11_FLAG],[AM_CXXFLAGS])],
-	[AC_MSG_FAILURE([Can't find working C++11 parameter])])
+# This macro will replace $CXX with "$CXX -c++11switch".
+AX_CXX_COMPILE_STDCXX_11([ext],[mandatory])
 
+AC_LANG_PUSH([C++])
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does. 
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])

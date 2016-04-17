@@ -26,6 +26,7 @@
 
 #include "../build_info.h"
 
+#include <locale>
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -84,14 +85,17 @@ const char *argp_program_version = PACKAGE_STRING "\n"
 // Not static, argp.h externs this.
 const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 
-static char doc[] = "ucg: the UniversalCodeGrep tool.";
+static char doc[] = "ucg: the UniversalCodeGrep code search tool.";
 
 static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
 /// Keys for options without short-options.
 enum OPT
 {
-	OPT_COLOR = 1,
+	OPT_RESERVED = 0,
+	OPT_SMART_CASE,
+	OPT_NO_SMART_CASE,
+	OPT_COLOR,
 	OPT_NOCOLOR,
 	OPT_IGNORE_DIR,
 	OPT_NOIGNORE_DIR,
@@ -102,7 +106,9 @@ enum OPT
 	OPT_TYPE_DEL,
 	OPT_HELP_TYPES,
 	OPT_COLUMN,
-	OPT_NOCOLUMN
+	OPT_NOCOLUMN,
+	OPT_TEST_NOENV_USER,
+	OPT_BRACKET_NO_STANDIN
 };
 
 /// Status code to use for a bad parameter which terminates the program via argp_failure().
@@ -120,6 +126,10 @@ error_t argp_err_exit_status = STATUS_EX_USAGE;
 static struct argp_option options[] = {
 		{0,0,0,0, "Searching:" },
 		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
+		{"[no]smart-case", OPT_BRACKET_NO_STANDIN, 0, 0, "Ignore case if PATTERN is all lowercase (default: enabled)."},
+		{"smart-case", OPT_SMART_CASE, 0, OPTION_HIDDEN, ""},
+		{"nosmart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN, ""},
+		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS, ""},
 		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
 		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
 		{0,0,0,0, "Search Output:"},
@@ -150,6 +160,8 @@ static struct argp_option options[] = {
 		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
 		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
 		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
+		// Hidden options for debug, test, etc.
+		{"test-noenv-user", OPT_TEST_NOENV_USER, 0, OPTION_HIDDEN, "Don't search for or use $HOME/.ucgrc."},
 		{ 0 }
 	};
 
@@ -167,6 +179,17 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	{
 	case 'i':
 		arguments->m_ignore_case = true;
+		// Shut off smart-case.
+		arguments->m_smart_case = false;
+		break;
+	case OPT_SMART_CASE:
+		arguments->m_smart_case = true;
+		// Shut off ignore-case.
+		arguments->m_ignore_case = false;
+		break;
+	case OPT_NO_SMART_CASE:
+		arguments->m_smart_case = false;
+		// Don't change ignore-case, regardless of whether it's on or off.
 		break;
 	case 'w':
 		arguments->m_word_regexp = true;
@@ -250,6 +273,9 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		arguments->m_color = false;
 		arguments->m_nocolor = true;
 		break;
+	case OPT_TEST_NOENV_USER:
+		// The --test-noenv-user option is handled specially outside of the argp parser.
+		break;
 	case ARGP_KEY_ARG:
 		if(state->arg_num == 0)
 		{
@@ -268,6 +294,11 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 			// Not enough args.
 			argp_usage(state);
 		}
+		break;
+	case OPT_BRACKET_NO_STANDIN:
+		// "Bracketed-No" long option stand-ins (i.e. "--[no]whatever") should never actually
+		// be given on the command line.
+		argp_error(state, "unrecognized option \'%s\'", state->argv[state->next-1]);
 		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
@@ -299,7 +330,7 @@ ArgParse::~ArgParse()
 static char * cpp_strdup(const char *orig)
 {
 	char *retval = new char[strlen(orig)+1];
-	strcpy(retval, orig);
+	std::strcpy(retval, orig);
 	return retval;
 }
 
@@ -308,7 +339,16 @@ void ArgParse::Parse(int argc, char **argv)
 	std::vector<char*> user_argv, project_argv, combined_argv;
 
 	// Check the command line for the --noenv option.
-	auto noenv = std::count_if(argv, argv+argc, [](char *s){ return strcmp(s, "--noenv") == 0; });
+	// Note that we have to handle 'ucg -- --noenv' properly, hence the one_past_end_or_double_dash search first.
+	auto one_past_end_or_double_dash = std::find_if(argv, argv+argc, [](char *s){ return std::strcmp(s, "--") == 0; });
+	auto noenv = std::count_if(argv, one_past_end_or_double_dash, [](char *s){ return std::strcmp(s, "--noenv") == 0; });
+
+	// Check for some test options which only make sense on the command line.
+	auto noenv_user = std::count_if(argv, one_past_end_or_double_dash, [](char *s){ return std::strcmp(s, "--test-noenv-user") == 0; });
+	if(noenv_user != 0)
+	{
+		m_test_noenv_user = true;
+	}
 
 	if(noenv == 0)
 	{
@@ -336,7 +376,7 @@ void ArgParse::Parse(int argc, char **argv)
 	// Parse the combined list of arguments.
 	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
 
-	//// Now set up defaults.
+	//// Now set up some defaults which we can only determine after all arg parsing is complete.
 
 	// Number of jobs.
 	if(m_jobs == 0)
@@ -356,6 +396,24 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		// Default to current directory.
 		m_paths.push_back(".");
+	}
+
+	// Is smart-case enabled, and will we otherwise not be ignoring case?
+	if(m_smart_case && !m_ignore_case)
+	{
+		// Is PATTERN all lower-case?
+
+		// Use a copy of the current global locale.  Since we never call std::locale::global() to set it,
+		// this should end up defaulting to the "classic" (i.e. "C") locale.
+		/// @todo This really should be the environment's default locale (loc("")).  Cygwin doesn't support this
+		/// at the moment (loc("") throws), and the rest of ucg isn't localized anyway, so this should work for now.
+		std::locale loc;
+		// Look for the first uppercase char in PATTERN.
+		if(std::find_if(m_pattern.cbegin(), m_pattern.cend(), [&loc](decltype(m_pattern)::value_type c){ return std::isupper(c, loc); }) == m_pattern.cend())
+		{
+			// Didn't find one, so match without regard to case.
+			m_ignore_case = true;
+		}
 	}
 
 	// Free the strings we cpp_strdup()'ed
@@ -438,38 +496,42 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 	/// @todo
 	/// @note global_argv commented out above to avoid unused parameter warning.
 
-	// Parse the user's config file.
-	std::string homedir = GetUserHomeDir();
-	if(!homedir.empty())
+	// Check if we're ignoring $HOME/.ucgrc for test purposes.
+	if(!m_test_noenv_user)
 	{
-		// See if we can open the user's .ucgrc file.
-		homedir += "/.ucgrc";
-		try
+		// Parse the user's config file.
+		std::string homedir = GetUserHomeDir();
+		if(!homedir.empty())
 		{
-			File home_file(homedir);
+			// See if we can open the user's .ucgrc file.
+			homedir += "/.ucgrc";
+			try
+			{
+				File home_file(homedir);
 
-			if(home_file.size() == 0)
-			{
-				//std::clog << "INFO: config file \"" << homedir << "\" is zero-length." << std::endl;
-			}
-			else
-			{
-				auto vec_argv = ConvertRCFileToArgv(home_file);
+				if(home_file.size() == 0)
+				{
+					//std::clog << "INFO: config file \"" << homedir << "\" is zero-length." << std::endl;
+				}
+				else
+				{
+					auto vec_argv = ConvertRCFileToArgv(home_file);
 
-				user_argv->insert(user_argv->end(), vec_argv.cbegin(), vec_argv.cend());
+					user_argv->insert(user_argv->end(), vec_argv.cbegin(), vec_argv.cend());
+				}
 			}
-		}
-		catch(const FileException &e)
-		{
-			std::clog << "ucg: WARNING: " << e.what() << std::endl;
-		}
-		catch(const std::system_error &e)
-		{
-			if(e.code() != std::errc::no_such_file_or_directory)
+			catch(const FileException &e)
 			{
-				std::clog << "ucg: WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+				std::clog << "ucg: WARNING: " << e.what() << std::endl;
 			}
-			// Otherwise, the file just doesn't exist.
+			catch(const std::system_error &e)
+			{
+				if(e.code() != std::errc::no_such_file_or_directory)
+				{
+					std::clog << "ucg: WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+				}
+				// Otherwise, the file just doesn't exist.
+			}
 		}
 	}
 
@@ -503,7 +565,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 		{
 			if(e.code() != std::errc::no_such_file_or_directory)
 			{
-				std::clog << "ucg: WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+				std::clog << "ucg: WARNING: Couldn't open config file \"" << proj_rc_filename << "\", error " << e.code() << " - " << e.code().message() << std::endl;
 			}
 			// Otherwise, the file just doesn't exist.
 		}
@@ -696,6 +758,17 @@ std::vector<char*> ArgParse::ConvertRCFileToArgv(const File& f)
 				char *param = new char[(param_end - pos) + 1];
 				std::copy(pos, param_end, param);
 				param[param_end - pos] = '\0';
+
+				// Check if it's not an option.
+				if(std::strcmp(param, "--") == 0)
+				{
+					// Double-dash is not allowed in an rc file.
+					throw ArgParseException("Double-dash \"" + std::string(param) + "\" is not allowed in rc file \"" + f.name() + "\".");
+				}
+				else if(param[0] != '-')
+				{
+					throw ArgParseException("Non-option argument \"" + std::string(param) + "\" is not allowed in rc file \"" + f.name() + "\".");
+				}
 
 				retval.push_back(param);
 

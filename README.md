@@ -15,51 +15,53 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
 * [Installation](#installation)
   * [Ubuntu PPA](#ubuntu-ppa)
   * [Red Hat/Fedora/CentOS dnf/yum Repository](#red-hatfedoracentos-dnfyum-repository)
-  * [Binary RPMs](#binary-rpms)
+  * [openSUSE Binary RPMs](#opensuse-binary-rpms)
   * [Building the Source Tarball](#building-the-source-tarball)
-	* [Build Prerequisites](#build-prerequisites)
-	  * [gcc version 4.8 or greater.](#gcc-version-48-or-greater)
-	  * [pcre version 8.21 or greater.](#pcre-version-821-or-greater)
+    * [Build Prerequisites](#build-prerequisites)
+      * [gcc version 4\.8 or greater\.](#gcc-version-48-or-greater)
+      * [pcre version 8\.21 or greater\.](#pcre-version-821-or-greater)
   * [Supported OSes and Distributions](#supported-oses-and-distributions)
 * [Usage](#usage)
   * [Command Line Options](#command-line-options)
-	* [Searching](#searching)
-	* [File presentation](#file-presentation)
-	* [File inclusion/exclusion:](#file-inclusionexclusion)
-	* [File type specification:](#file-type-specification)
-	* [Miscellaneous:](#miscellaneous)
-	* [Informational options:](#informational-options)
-* [Configuration (.ucgrc) Files](#configuration-ucgrc-files)
+    * [Searching](#searching)
+    * [Search Output](#search-output)
+    * [File presentation](#file-presentation)
+    * [File inclusion/exclusion:](#file-inclusionexclusion)
+    * [File type specification:](#file-type-specification)
+    * [Miscellaneous:](#miscellaneous)
+    * [Informational options:](#informational-options)
+* [Configuration (\.ucgrc) Files](#configuration-ucgrc-files)
   * [Format](#format)
   * [Location and Read Order](#location-and-read-order)
-* [User-Defined File Types](#user-defined-file-types)
+* [User\-Defined File Types](#user-defined-file-types)
   * [Extension List Filter](#extension-list-filter)
   * [Literal Filename Filter](#literal-filename-filter)
 * [Author](#author)
 
+
 ## Introduction
 
-UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with [Ack](http://beyondgrep.com/), to some extent with [`ag`](http://geoff.greer.fm/ag/), and where appropriate with `grep`.  Search patterns are specified as PCRE regexes. 
+UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with [`Ack`](http://beyondgrep.com/), to some extent with [`ag`](http://geoff.greer.fm/ag/), and where appropriate with `grep`.  Search patterns are specified as PCRE regexes. 
 
 ### Speed
 `ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the [PCRE library](http://www.pcre.org/), with its [JIT compilation feature](http://www.pcre.org/original/doc/html/pcrejit.html) providing a huge performance gain on most platforms.
 
-As a consequence of its use of these facilities and its overall design for maximum concurrency and speed, `ucg` is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with `ucg` 0.2.1, [`ag`](http://geoff.greer.fm/ag/) 0.31.0, and `ack` 2.14 produces the following results:
+As a consequence of its use of these facilities and its overall design for maximum concurrency and speed, `ucg` is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with `ucg` 0.2.2, [`ag`](http://geoff.greer.fm/ag/) 0.31.0, and `ack` 2.14 produces the following results:
 
-| Command | Approximate Real Time |
+| Command | Elapsed Real Time, Average of 5 Runs |
 |---------|-----------------------|
-| `time ucg 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 0.509 seconds |
-| `time ag 'BOOST.*HPP' ~/src/boost_1_58_0`  | ~ 10.66 seconds |
-| `time ack 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 17.19 seconds |
+| `time ucg --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 0.404 seconds |
+| `time ag --cpp 'BOOST.*HPP' ~/src/boost_1_58_0`  | ~ 5.8862 seconds |
+| `time ack --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 12.0398 seconds |
 
 UniversalCodeGrep is in fact somewhat faster than `grep` itself.  Again under Fedora 23 and searching the Boost 1.58.0 source tree, `ucg` bests grep 2.22 not only in ease-of-use but in raw speed:
 
-| Command | Approximate Real Time |
-|---------|-----------------------|
-| `time grep -Ern --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx 'BOOST.*HPP' ~/src/boost_1_58_0/ | sort > grepout.txt` | ~ 0.570 seconds |
-| `time ucg --cpp 'BOOST.*HPP' ~/src/boost_1_58_0/ | sort > ucgout.txt`  | ~ 0.498 seconds |
+| Command | Elapsed Real Time, Average of 5 Runs |
+|---------|--------------------------------------|
+| `time grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 0.9852 seconds |
+| `time ucg --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0`  | ~ 0.404 seconds |
 
-The resulting match files (*out.txt) are identical.
+The resulting matches are identical.
 
 ## License
 
@@ -91,17 +93,17 @@ sudo dnf copr enable grvs/UniversalCodeGrep
 sudo dnf install universalcodegrep
 ```
 
-### Binary RPMs
+### openSUSE Binary RPMs
 
-Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/latest).  Note that when installing via `zypper`, `yum`, `dnf`, or whatever's appropriate for your system, you will probably get the same sort of security warnings you get if you install Google Chrome from its RPM.
+Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/tag/0.2.2).
 
 ### Building the Source Tarball
 
-UniversalCodeGrep can be built and installed from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.2.1/universalcodegrep-0.2.1.tar.gz)) in the standard autotools manner:
+UniversalCodeGrep can be built and installed from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.2.2/universalcodegrep-0.2.2.tar.gz)) in the standard autotools manner:
 
 ```sh
-tar -xaf universalcodegrep-0.2.1.tar.gz
-cd universalcodegrep-0.2.1.tar.gz
+tar -xaf universalcodegrep-0.2.2.tar.gz
+cd universalcodegrep-0.2.2.tar.gz
 ./configure
 make
 make install
@@ -152,15 +154,23 @@ If no `FILES OR DIRECTORIES` are specified, searching starts in the current dire
 
 ### Command Line Options
 
-Version 0.2.1 of `ucg` supports a significant subset of the options supported by `ack`.  Future releases will have support for more options.
+Version 0.2.2 of `ucg` supports a significant subset of the options supported by `ack`.  Future releases will have support for more options.
 
 #### Searching
 
 | Option | Description |
 |----------------------|------------------------------------------|
-| `-i, --ignore-case`  |      Ignore case distinctions in PATTERN        |
-| `-Q, --literal`      |     Treat all characters in PATTERN as literal. |
-| `-w, --word-regexp`  |      PATTERN must match a complete word.        |
+| `--[no]smart-case`   | Ignore case if PATTERN is all lowercase (default: enabled). |
+| `-i, --ignore-case`  | Ignore case distinctions in PATTERN.                        |
+| `-Q, --literal`      | Treat all characters in PATTERN as literal.                 |
+| `-w, --word-regexp`  | PATTERN must match a complete word.                         |
+
+####  Search Output
+
+| Option | Description |
+|----------------------|------------------------------------------|
+| `--column`   | Print column of first match after line number. |
+| `--nocolumn` | Don't print column of first match (default).   |
 
 #### File presentation
 
@@ -174,6 +184,7 @@ Version 0.2.1 of `ucg` supports a significant subset of the options supported by
 |----------------------|------------------------------------------|
 | `--ignore-dir=name, --ignore-directory=name`     | Exclude directories with this name.        |
 | `--noignore-dir=name, --noignore-directory=name` | Do not exclude directories with this name. |
+| `-k, --known-types`                              | Only search in files of recognized types (default: on). |
 | `-n, --no-recurse`                               | Do not recurse into subdirectories.        |
 | `-r, -R, --recurse`                              | Recurse into subdirectories (default: on). |
 | `--type=[no]TYPE`                                | Include only [exclude all] TYPE files.  Types may also be specified as `--[no]TYPE`.     |
