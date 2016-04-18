@@ -28,5 +28,7 @@ MemDiags::MemDiags()
 
 void MemDiags::PrintStats() const
 {
+#if 0
 	malloc_stats();
+#endif
 }
