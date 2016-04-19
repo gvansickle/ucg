@@ -35,7 +35,8 @@ By making a contribution to this project, I certify that:
 ***
 ***
 Please confirm your certification to the above by adding the following
-sign-off line to all commits you submit to the UniversalCodeGrep project:
+sign-off line to every git commit message of your submisions to the
+UniversalCodeGrep project:
 
     Signed-off-by: Random J Developer <random@developer.example.org>
         
