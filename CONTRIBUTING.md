@@ -40,4 +40,5 @@ UniversalCodeGrep project:
 
     Signed-off-by: Random J Developer <random@developer.example.org>
         
-using your real name (no pseudonyms or anonymous contributions).
+Use your real name (no pseudonyms or anonymous contributions can be accepted).
+
