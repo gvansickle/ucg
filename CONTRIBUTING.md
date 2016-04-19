@@ -40,5 +40,11 @@ UniversalCodeGrep project:
 
     Signed-off-by: Random J Developer <random@developer.example.org>
         
-Use your real name (no pseudonyms or anonymous contributions can be accepted).
+Use your real name (no pseudonyms or anonymous contributions can be
+accepted).
+
+This line can be automatically added by git if you run the git
+`commit` command with the -s option. Signing can be done afterword
+with --amend -s.
+
 
