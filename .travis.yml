@@ -1,0 +1,16 @@
+sudo: false
+
+os:
+ - osx
+
+install:
+ - brew update && brew install pcre argp-standalone
+
+script:
+ - autoreconf -i
+ - mkdir build
+ - cd build
+ - ../configure
+ - make check
+
+ 
