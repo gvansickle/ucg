@@ -10,6 +10,9 @@ before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre argp-standalone; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev; fi
 
+before_script:
+ - echo "g++ --version:" && g++ --version && echo "====" 
+
 script:
  - autoreconf -i
  - mkdir build
@@ -17,4 +20,5 @@ script:
  - ../configure
  - make check
 
- 
+after_script:
+ - cd build && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
