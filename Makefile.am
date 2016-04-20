@@ -55,7 +55,7 @@ build_info.cpp: FORCE verify-provenance
 	echo "// CXX" >> "$@"
 	echo "const char *g_cxx = \"$(CXX)\";" >> "$@"
 # This is known to work for g++ and clang++.
-	CXX_VERSION_STR=$$(if $$($(CXX) --version > /dev/null); then echo "$$($(CXX) --version | sed -r -n 's/^(.*[0-9]+\.[0-9]+\.[0-9]+.*)$$/\1/p')"; else echo "unknown"; fi;); \
+	CXX_VERSION_STR=$$(if $$($(CXX) --version > /dev/null); then echo "$$($(CXX) --version | $SED -r -n 's/^(.*[0-9]+\.[0-9]+\.[0-9]+.*)$$/\1/p')"; else echo "unknown"; fi;); \
 	echo "const char *g_cxx_version_str = \"$${CXX_VERSION_STR}\";" >> "$@";
 
 # Make sure we're either trying to build from a git repo or a tarball, and not in some weird state.
