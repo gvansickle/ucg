@@ -8,7 +8,7 @@ os:
 
 before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre argp-standalone; fi
- - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq pcre argp; fi
+ - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev; fi
 
 script:
  - autoreconf -i
