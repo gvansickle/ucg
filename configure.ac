@@ -109,7 +109,7 @@ AC_PREPROC_IFELSE(
 	[AC_LANG_PROGRAM([[#include <pcre.h>]],[[
 		libpcreversion=PCRE_MAJOR . PCRE_MINOR
 		]])],
-	[libpcreversion=$(cat conftest.i | $SED -r -n 's/libpcreversion=(.*)/\1/p' | $SED -r 's/(\t| )//g')],
+	[libpcreversion=$(cat conftest.i | $SED -n 's/libpcreversion=\(.*\)/\1/p' | tr -d '\t ')],
 	[AC_MSG_ERROR([could not determine libpcre version])]
 	)
 AX_COMPARE_VERSION([$libpcreversion],[ge],[8.21],
