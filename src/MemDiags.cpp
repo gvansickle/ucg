@@ -19,8 +19,9 @@
 
 #include "MemDiags.h"
 
+#if TODO
 #include <malloc.h>
-
+#endif
 
 MemDiags::MemDiags()
 {
@@ -28,5 +29,7 @@ MemDiags::MemDiags()
 
 void MemDiags::PrintStats() const
 {
+#if TODO // This didn't work out as hoped.  valgrind seems to do better from the outside than we can do from inside.  Also not portable to BSDs.
 	malloc_stats();
+#endif
 }
