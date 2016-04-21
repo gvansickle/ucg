@@ -101,9 +101,12 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 #	[AC_MSG_ERROR([compiling this program requires that libpcre is installed.])])
 #AX_CHECK_LIBRARY([PCRE], [pcre.h], [pcre], [],
 #                   [AC_MSG_ERROR([Unable to find libpcre])])
-AC_SEARCH_LIBS([pcre_compile], [pcre],
+AC_SEARCH_LIBS([pcre_compile], [pcre /usr/local/Cellar/pcre/8.38/lib/libpcre.a],
 					[AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])],
 					[AC_MSG_ERROR([Unable to find libpcre])])
+AC_CHECK_FUNCS([pcre_free_study],
+	[],
+	[AC_MSG_ERROR([Unable to find pcre_free_study.])])
 #echo "PCRE_LDFLAGS=${PCRE_LDFLAGS}";
 #echo "PCRE_CPPFLAGS=${PCRE_CPPFLAGS}"; 
 
