@@ -61,11 +61,13 @@ else
   AC_MSG_RESULT([(testing)])
   AC_CHECK_LIB(pcre, pcre_study)
   if test "$ac_cv_lib_pcre_pcre_study" = "yes" ; then
+  echo "GRVS>>>>>>>>>IF"
      PCRE_LIBS="-lpcre"
      AC_MSG_CHECKING([lib pcre])
      AC_MSG_RESULT([$PCRE_LIBS])
      m4_ifval($1,$1)
   else
+  echo "GRVS>>>>>>>>>ELSE"
      OLDLDFLAGS="$LDFLAGS" ; LDFLAGS="$LDFLAGS -L$with_pcre/lib"
      OLDCPPFLAGS="$CPPFLAGS" ; CPPFLAGS="$CPPFLAGS -I$with_pcre/include"
      AC_CHECK_LIB(pcre, pcre_compile)
