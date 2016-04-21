@@ -99,6 +99,8 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 # or even exist (clang has no Linux <regex> support) for production use.
 AX_PATH_LIB_PCRE([],
 	[AC_MSG_ERROR([compiling this program requires that libpcre is installed.])])
+echo "PCRE_LIBS=${PCRE_LIBS}";
+echo "PCRE_CFLAGS=${PCRE_CFLAGS}"; 
 
 # Check the version of the PCRE library.  AX_PATH_LIB_PCRE() might find a version older than we need.
 AC_LANG_PUSH([C++])
