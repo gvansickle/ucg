@@ -20,6 +20,5 @@ script:
  - ../configure --with-pcre=/usr/local/Cellar/pcre/8.38/
  - if [ $TRAVIS_OS_NAME == osx ]; then find /usr/local/Cellar -iname '*pcre*'; fi
  - make check
+ - echo "build_info.cpp:" && cat build_info.cpp && echo "===="
 
-after_script:
- - cd build && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
