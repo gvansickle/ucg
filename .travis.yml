@@ -18,6 +18,7 @@ script:
  - mkdir build
  - cd build
  - ../configure --with-pcre=/usr/local/Cellar/pcre/8.38/
+ - find /usr/local/Cellar -iname '*pcre*'
  - make check
 
 after_script:
