@@ -97,10 +97,15 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 # We need libpcre for regex matching.  As of this writing there are no C++11 implementations
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
-AX_PATH_LIB_PCRE([],
-	[AC_MSG_ERROR([compiling this program requires that libpcre is installed.])])
-echo "PCRE_LIBS=${PCRE_LIBS}";
-echo "PCRE_CFLAGS=${PCRE_CFLAGS}"; 
+#AX_PATH_LIB_PCRE([],
+#	[AC_MSG_ERROR([compiling this program requires that libpcre is installed.])])
+#AX_CHECK_LIBRARY([PCRE], [pcre.h], [pcre], [],
+#                   [AC_MSG_ERROR([Unable to find libpcre])])
+AC_SEARCH_LIBS([pcre_compile], [pcre],
+					[AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])],
+					[AC_MSG_ERROR([Unable to find libpcre])])
+#echo "PCRE_LDFLAGS=${PCRE_LDFLAGS}";
+#echo "PCRE_CPPFLAGS=${PCRE_CPPFLAGS}"; 
 
 # Check the version of the PCRE library.  AX_PATH_LIB_PCRE() might find a version older than we need.
 AC_LANG_PUSH([C++])
