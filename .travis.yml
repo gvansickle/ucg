@@ -17,7 +17,7 @@ script:
  - autoreconf -i
  - mkdir build
  - cd build
- - ../configure --with-pcre=/usr/local/Cellar
+ - ../configure --with-pcre=/usr/local/Cellar/pcre/8.38/
  - make check
 
 after_script:
