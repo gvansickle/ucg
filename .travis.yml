@@ -20,7 +20,7 @@ script:
  - ### if [ $TRAVIS_OS_NAME == osx ]; then 
  - find /usr -iname '*pcre*'
  - pkg-config libpcre --print-variables
- - brew --prefix
+ - brew --prefix pcre
  - ../configure LDFLAGS=-L/usr/local/Cellar/pcre/8.38/lib CPPFLAGS=-I/usr/local/Cellar/pcre/8.38/include
  - if [ $TRAVIS_OS_NAME == osx ]; then find /usr/local/Cellar -iname '*pcre*'; fi
  - make check
