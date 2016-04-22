@@ -27,4 +27,5 @@ script:
  - if [ $TRAVIS_OS_NAME == osx ]; then find /usr/local/Cellar -iname '*pcre*'; fi
  - make check
  - echo "build_info.cpp:" && cat build_info.cpp && echo "===="
+ - find . -iname '*.log' -exec cat "{}" \; 
 
