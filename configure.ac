@@ -81,7 +81,6 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CXXCPP # Needed for the AC_PREPROC_IFELSE() check of pcre version below.
 AC_PROG_CXX
-AC_PROG_RANLIB
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 
