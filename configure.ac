@@ -18,6 +18,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
+LT_PREREQ([2.4.6])
 AC_INIT([UniversalCodeGrep], [0.2.2], [https://github.com/gvansickle/ucg/issues],,[https://gvansickle.github.io/ucg/])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
@@ -52,8 +53,12 @@ AM_INIT_AUTOMAKE([
 	-Werror
 ])
 
+
+# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
+# This will do that for us.
+AC_USE_SYSTEM_EXTENSIONS
+
 # Determine how many CPUs we have on the build machine.
-# We use this for building Boost in parallel with multiple jobs.
 AX_COUNT_CPUS
 AC_SUBST([CPU_COUNT])
 
@@ -82,7 +87,11 @@ AC_PROG_RANLIB
 # Probably remove this when/if that is fixed. 
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_SED
-
+# Initialize Libtool.  This looks like it doesn't belong here, but thing go awry if it's moved
+# up by AC_INIT.
+LT_INIT
+# Create a variable for updating the libtool script if it gets out of date.
+AC_SUBST([LIBTOOL_DEPS])
 
 ## Checks for maintainer tools.
 
@@ -93,6 +102,7 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 ###
 ### Checks for libraries
 ###
+
 
 # We need libpcre for regex matching.  As of this writing there are no C++11 implementations
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
@@ -178,7 +188,9 @@ AC_SEARCH_LIBS([argp_parse],[argp])
 
 AC_CHECK_FUNCS([sched_setaffinity])
 
+AC_LANG_PUSH([C++])
 AC_CHECK_FUNCS([get_current_dir_name])
+AC_LANG_POP([C++])
 
 #AC_LANG_PUSH([C++])
 # At least gcc 4.8.x claims to support C++11, but its std::regex library is mostly stubbed in.

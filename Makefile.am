@@ -78,3 +78,8 @@ ucg_CXXFLAGS = $(AM_CXXFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
 ucg_LDADD = ./src/libsrc.a
 
+# Rule to remake the libtool script if it gets out of date.
+libtool: $(LIBTOOL_DEPS)
+	$(SHELL) ./config.status libtool
+
+
