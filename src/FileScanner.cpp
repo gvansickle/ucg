@@ -97,7 +97,7 @@ FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 	{
 		// Study error.
 		pcre_free(m_pcre_regex);
-		throw FileScannerException("PCRE study error: " + *error);
+		throw FileScannerException(std::string("PCRE study error: ") + *error);
 	}
 #endif
 }
