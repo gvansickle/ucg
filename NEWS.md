@@ -1,5 +1,11 @@
 # NEWS file for the UniversalCodeGrep project.
 
+## [UNRELEASED]
+
+### New Features
+
+### Fixed
+
 ## [0.2.2] - 2016-04-09
 
 Minor feature/bugfix release of UniversalCodeGrep (ucg).
