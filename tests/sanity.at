@@ -94,8 +94,7 @@ AT_DATA([.hidden_with_extension.sh],[hidden-with-extension
 
 # Specifying both files should get us two matches, but it currently doesn't due to issue #64.
 AT_XFAIL_IF([true])
-AT_CHECK([ucg --noenv 'hidden' .hidden* | wc -l],[0],[2
-],[stderr])
+AT_CHECK([ucg --noenv 'hidden' .hidden* | LCT],[0],[2],[stderr])
 
 AT_CLEANUP
 
