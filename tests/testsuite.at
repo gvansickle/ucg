@@ -21,6 +21,12 @@
 ### "Helper" m4 defines.
 ###
 
+# Portable line counter.
+# Needed because "wc -l" on FreeBSD and Mac OSX prepend spaces to the count.
+# Might as well clip off the trailing newline while we're at it.
+# Nothing. Is. Ever. Easy.
+m4_define([LCT], [wc -l | tr -d '\t \r\n'])
+
 # A somewhat more explicit way of skipping tests.
 m4_define([AT_SKIP_TEST],[exit 77])
 
