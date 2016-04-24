@@ -52,8 +52,12 @@ AM_INIT_AUTOMAKE([
 	-Werror
 ])
 
+
+# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
+# This will do that for us.
+AC_USE_SYSTEM_EXTENSIONS
+
 # Determine how many CPUs we have on the build machine.
-# We use this for building Boost in parallel with multiple jobs.
 AX_COUNT_CPUS
 AC_SUBST([CPU_COUNT])
 
