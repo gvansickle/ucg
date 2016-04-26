@@ -182,12 +182,17 @@ AC_LANG_POP([C++])
 ###
 ### Checks for library functions.
 ###
+
+AC_LANG_PUSH([C++])
+
 AC_SEARCH_LIBS([argp_parse],[argp])
 
 AC_CHECK_FUNCS([sched_setaffinity])
 
 AC_LANG_PUSH([C++])
 AC_CHECK_FUNCS([get_current_dir_name])
+AC_LANG_POP([C++])
+
 AC_LANG_POP([C++])
 
 #AC_LANG_PUSH([C++])
