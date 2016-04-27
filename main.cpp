@@ -32,7 +32,7 @@
 #include "MatchList.h"
 #include "FileScanner.h"
 #include "OutputTask.h"
-#include "MemDiags.h"
+
 
 int main(int argc, char **argv)
 {
@@ -107,12 +107,6 @@ int main(int argc, char **argv)
 
 		// Wait for the output thread to complete.
 		ot.join();
-
-#if MEMUSE_DEBUG
-		// Dump memory stats.
-		MemDiags md;
-		md.PrintStats();
-#endif // MEMUSE_DEBUG
 
 		// Check for errors.
 		if(g.Error())
