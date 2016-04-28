@@ -22,8 +22,9 @@ script:
  - #brew search /.*pcre.*/
  - #glibtool --version
  - ../configure LIBS="-Xlinker -rpath -Xlinker /usr/local/Cellar/pcre/8.38/lib" LDFLAGS=-L/usr/local/Cellar/pcre/8.38/lib CPPFLAGS=-I/usr/local/Cellar/pcre/8.38/include
- - otool -L ucg
  - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr/local/Cellar -iname '*pcre*'; fi
+ - make
+ - otool -L ucg
  - make check TESTSUITEFLAGS='-v -d -x'
  - echo "build_info.cpp:" && cat build_info.cpp && echo "===="
  - find . -iname '*.log' -exec cat "{}" \; 
