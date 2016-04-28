@@ -115,7 +115,7 @@ AC_SEARCH_LIBS([pcre_compile], [pcre],
 					[AC_MSG_ERROR([Unable to find libpcre])])
 AC_CHECK_FUNCS([pcre_free_study],
 	[],
-	[])])
+	[])
 #	[AC_MSG_ERROR([Unable to find pcre_free_study.])])
 #echo "PCRE_LDFLAGS=${PCRE_LDFLAGS}";
 #echo "PCRE_CPPFLAGS=${PCRE_CPPFLAGS}"; 
