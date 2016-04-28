@@ -97,6 +97,9 @@ def ABC
 def AbC xyz
 ])
 
+### DEBUG Dump text file as hex to the console.
+AT_CHECK([hexdump -C -n128 test_file.c], [255], [stdout], [stderr])
+
 # Default is smart-case, should find three matches.
 AT_CHECK([ucg --noenv 'abc' | LCT], [0], [3], [stderr])
 
