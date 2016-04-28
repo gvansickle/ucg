@@ -105,7 +105,9 @@ FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 FileScanner::~FileScanner()
 {
 #ifdef HAVE_LIBPCRE
+#ifdef HAVE_PCRE_FREE_STUDY
 	pcre_free_study(m_pcre_extra);
+#endif
 	pcre_free(m_pcre_regex);
 #endif
 }
