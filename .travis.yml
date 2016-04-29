@@ -18,7 +18,7 @@ script:
  - mkdir build
  - cd build
  - if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help; fi 
- - ll $(brew --prefix pcre)
+ - ls -l $(brew --prefix pcre)
  - pkg-config libpcre --print-variables
  - #brew search /.*pcre.*/
  - #glibtool --version
