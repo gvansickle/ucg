@@ -17,8 +17,8 @@ script:
  - autoreconf -i
  - mkdir build
  - cd build
- - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr -iname '*pcre*' && brew --prefix pcre && brew --help; fi 
- - #pkg-config libpcre --print-variables
+ - if [ $TRAVIS_OS_NAME == osx ]; then find /usr -iname 'libpcre*.dylib' && brew --prefix pcre && brew --help; fi 
+ - pkg-config libpcre --print-variables
  - #brew search /.*pcre.*/
  - #glibtool --version
  - cat /usr/local/Cellar/pcre/8.38/lib/pkgconfig/libpcre.pc
