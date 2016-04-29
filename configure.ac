@@ -18,7 +18,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-#LT_PREREQ([2.4.2])
+LT_PREREQ([2.4.2])
 AC_INIT([UniversalCodeGrep], [0.2.2], [https://github.com/gvansickle/ucg/issues],,[https://gvansickle.github.io/ucg/])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
@@ -89,7 +89,7 @@ AC_PROG_RANLIB
 AC_PROG_SED
 # Initialize Libtool.  This looks like it doesn't belong here, but thing go awry if it's moved
 # up by AC_INIT.
-#LT_INIT
+LT_INIT
 # Create a variable for updating the libtool script if it gets out of date.
 AC_SUBST([LIBTOOL_DEPS])
 
