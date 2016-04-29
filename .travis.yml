@@ -17,7 +17,7 @@ script:
  - autoreconf -i
  - mkdir build
  - cd build
- - if [ $TRAVIS_OS_NAME == osx ]; then find /usr -iname 'libpcre*.dylib' && brew --prefix pcre && brew --help; fi 
+ - if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' && brew --prefix pcre && brew --help; fi 
  - pkg-config libpcre --print-variables
  - #brew search /.*pcre.*/
  - #glibtool --version
@@ -26,6 +26,8 @@ script:
  - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr/local/Cellar -iname '*pcre*'; fi
  - make
  - otool -L ucg
+ - otool -l ucg
+ - otool -l ucg | grep -A 3 LC_RPATH | grep path
  - make check TESTSUITEFLAGS='-v -d -x'
  - echo "build_info.cpp:" && cat build_info.cpp && echo "===="
  - find . -iname '*.log' -exec cat "{}" \; 
