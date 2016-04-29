@@ -28,6 +28,7 @@ script:
  - otool -L ucg
  - otool -l ucg
  - otool -l ucg | grep -A 3 LC_RPATH | grep path
+ - setenv LD_DEBUG=all && ldd -v ucg
  - make check TESTSUITEFLAGS='-v -d -x'
  - echo "build_info.cpp:" && cat build_info.cpp && echo "===="
  - find . -iname '*.log' -exec cat "{}" \; 
