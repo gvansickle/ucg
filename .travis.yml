@@ -7,7 +7,7 @@ os:
  - linux
 
 before_install:
- - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install argp-standalone; fi #pcre
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre argp-standalone; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev; fi
 
 before_script:
@@ -21,7 +21,8 @@ script:
  - #pkg-config libpcre --print-variables
  - #brew search /.*pcre.*/
  - #glibtool --version
- - ../configure #LIBS="-Xlinker -rpath -Xlinker /usr/local/Cellar/pcre/8.38/lib" LDFLAGS=-L/usr/local/Cellar/pcre/8.38/lib CPPFLAGS=-I/usr/local/Cellar/pcre/8.38/include
+ - cat /usr/local/Cellar/pcre/8.38/lib/pkgconfig/libpcre.pc
+ - ../configure PKG_CONFIG_DIR=/usr/local/Cellar/pcre/8.38/ #LIBS="-Xlinker -rpath -Xlinker /usr/local/Cellar/pcre/8.38/lib" LDFLAGS=-L/usr/local/Cellar/pcre/8.38/lib CPPFLAGS=-I/usr/local/Cellar/pcre/8.38/include
  - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr/local/Cellar -iname '*pcre*'; fi
  - make
  - otool -L ucg

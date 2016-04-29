@@ -18,7 +18,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-LT_PREREQ([2.4.2])
+#LT_PREREQ([2.4.2])
 AC_INIT([UniversalCodeGrep], [0.2.2], [https://github.com/gvansickle/ucg/issues],,[https://gvansickle.github.io/ucg/])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
@@ -85,10 +85,11 @@ AC_PROG_CXX
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+AC_PROG_RANLIB
 AC_PROG_SED
 # Initialize Libtool.  This looks like it doesn't belong here, but thing go awry if it's moved
 # up by AC_INIT.
-LT_INIT
+#LT_INIT
 # Create a variable for updating the libtool script if it gets out of date.
 AC_SUBST([LIBTOOL_DEPS])
 
@@ -110,15 +111,20 @@ AC_LANG_PUSH([C++])
 #	[AC_MSG_ERROR([compiling this program requires that libpcre is installed.])])
 #AX_CHECK_LIBRARY([PCRE], [pcre.h], [pcre], [],
 #                   [AC_MSG_ERROR([Unable to find libpcre])])
-AC_SEARCH_LIBS([pcre_compile], [pcre],
-					[AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])],
-					[AC_MSG_ERROR([Unable to find libpcre])])
-AC_CHECK_FUNCS([pcre_free_study],
-	[],
-	[])
+#AC_SEARCH_LIBS([pcre_compile], [pcre],
+#					[AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])],
+#					[AC_MSG_ERROR([Unable to find libpcre])])
+#AC_CHECK_FUNCS([pcre_free_study],
+#	[],
+#	[])
 #	[AC_MSG_ERROR([Unable to find pcre_free_study.])])
-#echo "PCRE_LDFLAGS=${PCRE_LDFLAGS}";
-#echo "PCRE_CPPFLAGS=${PCRE_CPPFLAGS}"; 
+PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
+	[AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])],
+	[AC_MSG_ERROR([Unable to find libpcre])])
+echo "PCRE_LIBS=${PCRE_LIBS}";
+echo "PCRE_CFLAGS=${PCRE_CFLAGS}";
+CPPFLAGS="$PCRE_CFLAGS $CPPFLAGS"
+LIBS="$PCRE_LIBS $LIBS"
 
 # Check the version of the PCRE library.  AX_PATH_LIB_PCRE() might find a version older than we need.
 #SAVE_CPPFLAGS="$CPPFLAGS";
@@ -190,9 +196,7 @@ AC_SEARCH_LIBS([argp_parse],[argp])
 
 AC_CHECK_FUNCS([sched_setaffinity])
 
-AC_LANG_PUSH([C++])
 AC_CHECK_FUNCS([get_current_dir_name])
-AC_LANG_POP([C++])
 
 AC_LANG_POP([C++])
 
