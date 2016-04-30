@@ -91,7 +91,7 @@ void Globber::Run()
 	}
 	dirs[m_start_paths.size()] = 0;
 
-	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR | FTS_NOSTAT, NULL);
+	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/, NULL);
 	while(FTSENT *ftsent = fts_read(fts))
 	{
 		std::clog << "Considering file: " << ftsent->fts_path << std::endl;
