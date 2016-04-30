@@ -24,8 +24,8 @@ before_script:
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then IS_LINUX=1; fi
- - test $IS_OSX && find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help 
- - test $IS_OSX && ls -l -R $(brew --prefix pcre)
+ - test ! $IS_OSX || find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help 
+ - test ! $IS_OSX || ls -l -R $(brew --prefix pcre)
  - pkg-config libpcre --print-variables
  - autoreconf -i
  - mkdir build
@@ -34,8 +34,8 @@ script:
  - make
  - make check #TESTSUITEFLAGS='-v -d -x'
  - ./ucg --cpp 'endif' ..
- - test $IS_OSX && otool -L ucg && otool -l ucg && otool -l ucg | grep -A 3 LC_RPATH | grep path
- - test $IS_LINUX && LD_DEBUG=all && ldd -v ucg
+ - test ! $IS_OSX || otool -L ucg && otool -l ucg && otool -l ucg | grep -A 3 LC_RPATH | grep path
+ - test ! $IS_LINUX || LD_DEBUG=all && ldd -v ucg
  - echo "====\nbuild_info.cpp:" && cat build_info.cpp && echo "===="
  - find . -iname '*.log' -exec cat "{}" \; 
 
