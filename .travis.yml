@@ -26,6 +26,7 @@ script:
  - ../configure #PKG_CONFIG_DIR=/usr/local/Cellar/pcre/8.38/ LDFLAGS="-Wl,-rpath,/usr/local/Cellar/pcre/8.38/lib" #LDFLAGS=-L/usr/local/Cellar/pcre/8.38/lib CPPFLAGS=-I/usr/local/Cellar/pcre/8.38/include
  - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr/local/Cellar -iname '*pcre*'; fi
  - make
+ - ./ucg --cpp 'endif' ../
  - otool -L ucg
  - otool -l ucg
  - otool -l ucg | grep -A 3 LC_RPATH | grep path
