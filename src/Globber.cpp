@@ -94,14 +94,14 @@ void Globber::Run()
 	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/, NULL);
 	while(FTSENT *ftsent = fts_read(fts))
 	{
-		std::clog << "Considering file: " << ftsent->fts_path << std::endl;
+		//std::clog << "Considering file: " << ftsent->fts_path << std::endl;
 		if(ftsent->fts_info == FTS_F)
 		{
-			std::clog << "... normal file." << std::endl;
+			//std::clog << "... normal file." << std::endl;
 			// It's a normal file.  Check for inclusion.
 			if(m_type_manager.FileShouldBeScanned(ftsent->fts_name))
 			{
-				std::clog << "... should be scanned." << std::endl;
+				//std::clog << "... should be scanned." << std::endl;
 				// Extension was in the hash table.
 				m_out_queue.wait_push(std::string(ftsent->fts_path));
 
@@ -111,7 +111,7 @@ void Globber::Run()
 		}
 		else if(ftsent->fts_info == FTS_D)
 		{
-			std::clog << "... directory." << std::endl;
+			//std::clog << "... directory." << std::endl;
 			// It's a directory.  Check if we should descend into it.
 			if(!m_recurse_subdirs && ftsent->fts_level > 0)
 			{
@@ -131,17 +131,17 @@ void Globber::Run()
 		}
 		else if(ftsent->fts_info == FTS_ERR)
 		{
-			std::clog << "... FTS_ERR." << std::endl;
+			//std::clog << "... FTS_ERR." << std::endl;
 			m_bad_path = ftsent->fts_path;
 			break;
 		}
 		else
 		{
-			std::clog << "... unknown file type:" << ftsent->fts_info << std::endl;
+			//std::clog << "... unknown file type:" << ftsent->fts_info << std::endl;
 		}
 	}
 	fts_close(fts);
 
-	std::clog << "NUM FILES INCLUDED: " << m_num_files_found << std::endl;
+	//std::clog << "NUM FILES INCLUDED: " << m_num_files_found << std::endl;
 }
 
