@@ -2,9 +2,17 @@ language: cpp
 sudo: required
 dist: trusty
 
+branches:
+  only:
+    - features/OSX  # Let's only test the OSX branch for now.
+
 os:
  - osx
  - linux
+ 
+compiler:
+  - clang
+  - gcc
 
 before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre argp-standalone; fi
@@ -14,24 +22,20 @@ before_script:
  - echo "g++ --version:" && g++ --version && echo "====" 
 
 script:
+ - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
+ - if [ $TRAVIS_OS_NAME == linux ]; then IS_LINUX=1; fi
+ - [ $IS_OSX ] && find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help 
+ - [ $IS_OSX ] && ls -l -R $(brew --prefix pcre)
+ - pkg-config libpcre --print-variables
  - autoreconf -i
  - mkdir build
  - cd build
- - if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help; fi 
- - ls -l -R $(brew --prefix pcre)
- - pkg-config libpcre --print-variables
- - #brew search /.*pcre.*/
- - #glibtool --version
- - cat /usr/local/Cellar/pcre/8.38/lib/pkgconfig/libpcre.pc
- - ../configure #PKG_CONFIG_DIR=/usr/local/Cellar/pcre/8.38/ LDFLAGS="-Wl,-rpath,/usr/local/Cellar/pcre/8.38/lib" #LDFLAGS=-L/usr/local/Cellar/pcre/8.38/lib CPPFLAGS=-I/usr/local/Cellar/pcre/8.38/include
- - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr/local/Cellar -iname '*pcre*'; fi
+ - ../configure
  - make
+ - make check #TESTSUITEFLAGS='-v -d -x'
  - ./ucg --cpp 'endif' ..
- - otool -L ucg
- - otool -l ucg
- - otool -l ucg | grep -A 3 LC_RPATH | grep path
- - LD_DEBUG=all && ldd -v ucg
- - make check TESTSUITEFLAGS='-v -d -x'
- - echo "build_info.cpp:" && cat build_info.cpp && echo "===="
+ - [ $IS_OSX ] && otool -L ucg && otool -l ucg && otool -l ucg | grep -A 3 LC_RPATH | grep path
+ - [ $IS_LINUX ] && LD_DEBUG=all && ldd -v ucg
+ - echo "====\nbuild_info.cpp:" && cat build_info.cpp && echo "===="
  - find . -iname '*.log' -exec cat "{}" \; 
 
