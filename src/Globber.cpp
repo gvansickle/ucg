@@ -54,6 +54,8 @@ void Globber::Run()
 {
 	char * dirs[m_start_paths.size()+1];
 
+	/// @note It looks like OSX needs any trailing slashes to be removed here, or its fts lib will double them up.
+
 	int i = 0;
 	for(const std::string& path : m_start_paths)
 	{
@@ -95,9 +97,11 @@ void Globber::Run()
 		std::clog << "Considering file: " << ftsent->fts_path << std::endl;
 		if(ftsent->fts_info == FTS_F)
 		{
+			std::clog << "... normal file." << std::endl;
 			// It's a normal file.  Check for inclusion.
 			if(m_type_manager.FileShouldBeScanned(ftsent->fts_name))
 			{
+				std::clog << "... should be scanned." << std::endl;
 				// Extension was in the hash table.
 				m_out_queue.wait_push(std::string(ftsent->fts_path));
 
@@ -107,6 +111,7 @@ void Globber::Run()
 		}
 		else if(ftsent->fts_info == FTS_D)
 		{
+			std::clog << "... directory." << std::endl;
 			// It's a directory.  Check if we should descend into it.
 			if(!m_recurse_subdirs && ftsent->fts_level > 0)
 			{
@@ -133,6 +138,6 @@ void Globber::Run()
 	}
 	fts_close(fts);
 
-	//std::clog << "NUM FILES INCLUDED: " << m_num_files_found << std::endl;
+	std::clog << "NUM FILES INCLUDED: " << m_num_files_found << std::endl;
 }
 
