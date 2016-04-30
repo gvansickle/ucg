@@ -92,6 +92,7 @@ void Globber::Run()
 	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR | FTS_NOSTAT, NULL);
 	while(FTSENT *ftsent = fts_read(fts))
 	{
+		std::clog << "Considering file: " << ftsent->fts_path << std::endl;
 		if(ftsent->fts_info == FTS_F)
 		{
 			// It's a normal file.  Check for inclusion.
