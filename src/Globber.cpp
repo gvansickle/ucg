@@ -130,10 +130,14 @@ void Globber::Run()
 			std::cerr << "ucg: ERROR: unable to read directory \"" << ftsent->fts_path << "\", skipping." << std::endl;
 		}
 		else if(ftsent->fts_info == FTS_ERR)
-
 		{
+			std::clog << "... FTS_ERR." << std::endl;
 			m_bad_path = ftsent->fts_path;
 			break;
+		}
+		else
+		{
+			std::clog << "... unknown file type:" << ftsent->fts_info << std::endl;
 		}
 	}
 	fts_close(fts);
