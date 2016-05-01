@@ -91,6 +91,8 @@ void Globber::Run()
 	}
 	dirs[m_start_paths.size()] = 0;
 
+	/// @note We can't use FS_NOSTAT here.  OSX at least isn't able to determine regular
+	/// files without the stat, so they get returned as FTS_NSOK / 11 /	no stat(2) requested.
 	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/, NULL);
 	while(FTSENT *ftsent = fts_read(fts))
 	{

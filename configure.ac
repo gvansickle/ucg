@@ -94,6 +94,23 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_RANLIB
 AC_PROG_SED
 
+# The testsuite needs a way to invoke "script", to fool ucg into thinking it's outputting to a tty.
+# Of course, Linux and *BSD (including OSX) "script"'s take different options and parameters, so we
+# try to sort it out here.
+AC_PATH_PROG([PROG_SCRIPT], [script], [:])
+AC_MSG_CHECKING([$PROG_SCRIPT's command line type])
+AS_IF([$PROG_SCRIPT -q -r /dev/null echo "hello" > /dev/null 2>&1],
+			[AC_SUBST([PROG_SCRIPT_TYPE], [bsd])
+				AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-q -r /dev/null'])
+				AC_SUBST([PROG_SCRIPT_POST_TEXT], [])
+				AC_MSG_RESULT([BSD style])],
+		[$PROG_SCRIPT -q -c "echo hello" /dev/null > /dev/null 2>&1],
+			[AC_SUBST([PROG_SCRIPT_TYPE], [linux])
+				AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-qfc'])
+				AC_SUBST([PROG_SCRIPT_POST_TEXT], ['/dev/null'])
+				AC_MSG_RESULT([Linux style])],
+		[AC_MSG_ERROR([could not determine how to invoke $PROG_SCRIPT])])
+
 ## Checks for maintainer tools.
 
 # Autotest needs autom4te, or 'missing's stub for it. 
