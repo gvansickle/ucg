@@ -99,17 +99,17 @@ AC_PROG_SED
 # try to sort it out here.
 AC_PATH_PROG([PROG_SCRIPT], [script], [:])
 AC_MSG_CHECKING([$PROG_SCRIPT's command line type])
-AS_IF([$PROG_SCRIPT -q /dev/null echo "hello" > /dev/null 2>&1],
-			[AC_SUBST([PROG_SCRIPT_TYPE], [bsd])
+AS_IF([$PROG_SCRIPT -qfc "echo hello" /dev/null > /dev/null 2>&1],
+		[AC_SUBST([PROG_SCRIPT_TYPE], [linux])
+				AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-qfc'])
+				AC_SUBST([PROG_SCRIPT_POST_TEXT], ['/dev/null']),
+				AC_MSG_RESULT([Linux style])],
+      [$PROG_SCRIPT -q /dev/null echo "hello" > /dev/null 2>&1],
+		[AC_SUBST([PROG_SCRIPT_TYPE], [bsd])
 				AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-q /dev/null'])
 				AC_SUBST([PROG_SCRIPT_POST_TEXT], [])
 				AC_MSG_RESULT([BSD style])],
-		[$PROG_SCRIPT -q -c "echo hello" /dev/null > /dev/null 2>&1],
-			[AC_SUBST([PROG_SCRIPT_TYPE], [linux])
-				AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-qfc'])
-				AC_SUBST([PROG_SCRIPT_POST_TEXT], ['/dev/null'])
-				AC_MSG_RESULT([Linux style])],
-		[AC_MSG_ERROR([could not determine how to invoke $PROG_SCRIPT])])
+      [AC_MSG_ERROR([could not determine how to invoke $PROG_SCRIPT])])
 
 ## Checks for maintainer tools.
 
