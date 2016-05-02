@@ -52,21 +52,18 @@ test_file.cpp:6:    do_something_else();
 ])
 
 # Check for column output to a TTY.
-## Note: sed in here because script outputs \r\n's, even on Linuxes.
 echo "PROG_SCRIPT = $PROG_SCRIPT"
 echo "PROG_SCRIPT_TYPE = $PROG_SCRIPT_TYPE"
 echo "PROG_SCRIPT_PRE_TEXT = $PROG_SCRIPT_PRE_TEXT"
 echo "PROG_SCRIPT_POST_TEXT = $PROG_SCRIPT_POST_TEXT"
-#echo ASX_SCRIPT([ucg --noenv --cpp --nocolor --column 'do_something'])
-AT_CHECK([ASX_SCRIPT "ucg --noenv --cpp --nocolor --column 'do_something'" | sed 's/\r$//'],[0],
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something'],[0],
 [test_file.cpp
 4:2:	do_something();
 6:5:    do_something_else();
 ])
 
 # Check for nocolumn output to a TTY.
-## Note: sed in here because script outputs \r\n's, even on Linuxes.
-AT_CHECK([ASX_SCRIPT "ucg --noenv --cpp --nocolor --nocolumn 'do_something'" | sed 's/\r$//'],[0],
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor --nocolumn 'do_something'],[0],
 [test_file.cpp
 4:	do_something();
 6:    do_something_else();
@@ -74,7 +71,7 @@ AT_CHECK([ASX_SCRIPT "ucg --noenv --cpp --nocolor --nocolumn 'do_something'" | s
 
 # Check for default (nocolumn) output to a TTY.
 ## Note: sed in here because script outputs \r\n's, even on Linuxes.
-AT_CHECK([ASX_SCRIPT "ucg --noenv --cpp --nocolor 'do_something'" | sed 's/\r$//'],[0],
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor 'do_something'],[0],
 [test_file.cpp
 4:	do_something();
 6:    do_something_else();
@@ -134,17 +131,16 @@ AT_DATA([expout],
 ])
 
 # Check for color output to a TTY.
-## Note: sed in here because script outputs \r\n's, even on Linuxes.
-AT_CHECK([ASX_SCRIPT "ucg --noenv --cpp --color 'bc'" | sed 's/\r$//'],[0],[expout])
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --color 'bc'],[0],[expout])
 
 # Check for nocolor to a TTY.
-AT_CHECK([ASX_SCRIPT "ucg --noenv --cpp --nocolor 'bc'" | sed 's/\r$//'],[0],
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor 'bc'],[0],
 [test_file.cpp
 1:abcd
 3:abcd
 ])
 
 # Check for default (should be color).
-AT_CHECK([ASX_SCRIPT "ucg --noenv --cpp 'bc'" | sed 's/\r$//'],[0],[expout])
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp 'bc'],[0],[expout])
 
 AT_CLEANUP

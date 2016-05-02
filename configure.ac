@@ -99,9 +99,9 @@ AC_PROG_SED
 # try to sort it out here.
 AC_PATH_PROG([PROG_SCRIPT], [script], [:])
 AC_MSG_CHECKING([$PROG_SCRIPT's command line type])
-AS_IF([$PROG_SCRIPT -q -r /dev/null echo "hello" > /dev/null 2>&1],
+AS_IF([$PROG_SCRIPT -q /dev/null echo "hello" > /dev/null 2>&1],
 			[AC_SUBST([PROG_SCRIPT_TYPE], [bsd])
-				AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-q -r /dev/null'])
+				AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-q /dev/null'])
 				AC_SUBST([PROG_SCRIPT_POST_TEXT], [])
 				AC_MSG_RESULT([BSD style])],
 		[$PROG_SCRIPT -q -c "echo hello" /dev/null > /dev/null 2>&1],
