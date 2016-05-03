@@ -27,9 +27,6 @@
 # Nothing. Is. Ever. Easy.
 m4_define([LCT], [wc -l | tr -d '\t \r\n'])
 
-
-##m4_define([ASX_SCRIPT], [$PROG_SCRIPT  ${PROG_SCRIPT_PRE_TEXT}  m4_if([1], ["$1"], [$1]) $PROG_SCRIPT_POST_TEXT])
-
 # A somewhat more explicit way of skipping tests.
 m4_define([AT_SKIP_TEST],[exit 77])
 

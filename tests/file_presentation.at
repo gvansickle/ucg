@@ -52,10 +52,6 @@ test_file.cpp:6:    do_something_else();
 ])
 
 # Check for column output to a TTY.
-echo "PROG_SCRIPT = $PROG_SCRIPT"
-echo "PROG_SCRIPT_TYPE = $PROG_SCRIPT_TYPE"
-echo "PROG_SCRIPT_PRE_TEXT = $PROG_SCRIPT_PRE_TEXT"
-echo "PROG_SCRIPT_POST_TEXT = $PROG_SCRIPT_POST_TEXT"
 AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something'],[0],
 [test_file.cpp
 4:2:	do_something();
@@ -70,7 +66,6 @@ AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor --nocolumn 'do_something'],[0],
 ])
 
 # Check for default (nocolumn) output to a TTY.
-## Note: sed in here because script outputs \r\n's, even on Linuxes.
 AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor 'do_something'],[0],
 [test_file.cpp
 4:	do_something();

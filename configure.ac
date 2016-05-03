@@ -66,8 +66,8 @@ AC_SUBST([CPU_COUNT])
 AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
 # By default, compile C and C++ with the maximum possible debugging info and maximum optimization.
 # For debugging, do a "make CXXFLAGS=-O0".
-AC_SUBST([AM_CFLAGS], ["-ggdb3 -O2"])
-AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O2"])
+AC_SUBST([AM_CFLAGS], ["-ggdb3 -O3"])
+AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 
 
 ###
@@ -126,44 +126,18 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 ###
 
 AC_LANG_PUSH([C++])
+
 # We need libpcre for regex matching.  As of this writing there are no C++11 implementations
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
-#AX_PATH_LIB_PCRE([],
-#	[AC_MSG_ERROR([compiling this program requires that libpcre is installed.])])
-#AX_CHECK_LIBRARY([PCRE], [pcre.h], [pcre], [],
-#                   [AC_MSG_ERROR([Unable to find libpcre])])
-#AC_SEARCH_LIBS([pcre_compile], [pcre],
-#					[AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])],
-#					[AC_MSG_ERROR([Unable to find libpcre])])
-#AC_CHECK_FUNCS([pcre_free_study],
-#	[],
-#	[])
-#	[AC_MSG_ERROR([Unable to find pcre_free_study.])])
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 	[AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])],
 	[AC_MSG_ERROR([Unable to find libpcre])])
-echo "PCRE_LIBS=${PCRE_LIBS}";
-echo "PCRE_CFLAGS=${PCRE_CFLAGS}";
+AC_MSG_NOTICE([PCRE_LIBS=${PCRE_LIBS}])
+AC_MSG_NOTICE([PCRE_CFLAGS=${PCRE_CFLAGS}])
 CPPFLAGS="$PCRE_CFLAGS $CPPFLAGS"
 LIBS="$PCRE_LIBS $LIBS"
 
-# Check the version of the PCRE library.  AX_PATH_LIB_PCRE() might find a version older than we need.
-#SAVE_CPPFLAGS="$CPPFLAGS";
-#CPPFLAGS="$CPPFLAGS -P" # -P to prevent #line annotations in gcc >~5.x, which break the sed mechanism below.
-#AC_MSG_CHECKING([whether libpcre is new enough])
-#AC_PREPROC_IFELSE(
-#	[AC_LANG_PROGRAM([[#include <pcre.h>]],[[
-#		libpcreversion=PCRE_MAJOR . PCRE_MINOR
-#		]])],
-#	[libpcreversion=$(cat conftest.i | $SED -n 's/libpcreversion=\(.*\)/\1/p' | tr -d '\t ')],
-#	[AC_MSG_ERROR([could not determine libpcre version])]
-#	)
-#AX_COMPARE_VERSION([$libpcreversion],[ge],[8.21],
-#	[AC_MSG_RESULT([yes, libpcre version = $libpcreversion])],
-#	[AC_MSG_ERROR([no, libpcre version = $libpcreversion.  Compiling this program requires a libpcre version >= 8.21])]
-#	)
-#CPPFLAGS="$SAVE_CPPFLAGS"
 AC_LANG_POP([C++])
 
 
@@ -171,9 +145,12 @@ AC_LANG_POP([C++])
 ### Checks for header files.
 ###
 
+AC_LANG_PUSH([C++])
+
 # We don't have this header on MinGW.
 AC_CHECK_HEADERS([pwd.h],[],[],[])
 
+AC_LANG_POP([C++])
 
 ###
 ### Checks for types
