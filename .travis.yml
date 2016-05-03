@@ -2,10 +2,6 @@ language: cpp
 sudo: required
 dist: trusty
 
-#branches:
-#  only:
-#    - features/OSX  # Let's only test the OSX branch for now.
-
 os:
  - osx
  - linux

@@ -54,7 +54,8 @@ void Globber::Run()
 {
 	char * dirs[m_start_paths.size()+1];
 
-	/// @note It looks like OSX needs any trailing slashes to be removed here, or its fts lib will double them up.
+	/// @todo It looks like OSX needs any trailing slashes to be removed here, or its fts lib will double them up.
+	/// Doesn't seem to affect results though.
 
 	int i = 0;
 	for(const std::string& path : m_start_paths)
@@ -91,8 +92,10 @@ void Globber::Run()
 	}
 	dirs[m_start_paths.size()] = 0;
 
-	/// @note We can't use FS_NOSTAT here.  OSX at least isn't able to determine regular
+	/// @todo We can't use FS_NOSTAT here.  OSX at least isn't able to determine regular
 	/// files without the stat, so they get returned as FTS_NSOK / 11 /	no stat(2) requested.
+	/// Does not seem to affect performance on Linux, but might be having an effect on Cygwin.
+	/// Look into workarounds.
 	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/, NULL);
 	while(FTSENT *ftsent = fts_read(fts))
 	{
