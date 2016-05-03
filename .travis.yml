@@ -34,6 +34,7 @@ script:
  - make
  - make check #TESTSUITEFLAGS='-v -d -x'
  - ./ucg --cpp 'endif' ..
+ - ./ucg --cpp 'endif' ../
  - if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then LD_DEBUG=all && ldd -v ucg; fi
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
