@@ -78,15 +78,42 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 AC_PROG_CC
 # This is required instead of AC_PROG_CC_C_O by automake's "subdir-objects" option.
 AM_PROG_CC_C_O
-AC_PROG_CXXCPP # Needed for the AC_PREPROC_IFELSE() check of pcre version below.
 AC_PROG_CXX
-AC_PROG_RANLIB
+## Make sure we get a C++ compiler which supports C++11.
+# Determine what switches we need to get at least some level of C++11 support.
+# We do this here because this macro will replace $CXX with "$CXX -c++11switch", so we'll use this
+# in the AC_LANG_PUSH([C++]) tests below.
+# NOTE: The odd-looking ordering here (this before AC_PROG_CXXCPP) is required until the next version
+# of this macro gets released.  See http://lists.gnu.org/archive/html/autoconf-archive-maintainers/2016-03/msg00034.html.
+AX_CXX_COMPILE_STDCXX_11([ext],[mandatory])
+AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+AC_PROG_RANLIB
 AC_PROG_SED
 
+# The testsuite needs a way to invoke "script", to fool ucg into thinking it's outputting to a tty.
+# Of course, Linux and *BSD (including OSX) "script"'s take different options and parameters, so we
+# try to sort it out here.
+AC_PATH_PROG([PROG_SCRIPT], [script], [:])
+AC_MSG_CHECKING([$PROG_SCRIPT's command line type])
+AS_IF([$PROG_SCRIPT -qfc "echo hello" /dev/null > /dev/null 2>&1],
+		[
+		AC_SUBST([PROG_SCRIPT_TYPE], [linux])
+		AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-qfc'])
+		AC_SUBST([PROG_SCRIPT_POST_TEXT], ['/dev/null'])
+		AC_MSG_RESULT([Linux style])
+		],
+      [$PROG_SCRIPT -q /dev/null echo "hello" > /dev/null 2>&1],
+		[
+		AC_SUBST([PROG_SCRIPT_TYPE], [bsd])
+		AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-q /dev/null'])
+		AC_SUBST([PROG_SCRIPT_POST_TEXT], [])
+		AC_MSG_RESULT([BSD style])
+		],
+      [AC_MSG_ERROR([could not determine how to invoke $PROG_SCRIPT])])
 
 ## Checks for maintainer tools.
 
@@ -99,28 +126,18 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 ###
 
 AC_LANG_PUSH([C++])
+
 # We need libpcre for regex matching.  As of this writing there are no C++11 implementations
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
-AX_PATH_LIB_PCRE([],
-	[AC_MSG_ERROR([compiling this program requires that libpcre is installed.])])
+PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
+	[AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])],
+	[AC_MSG_ERROR([Unable to find libpcre])])
+AC_MSG_NOTICE([PCRE_LIBS=${PCRE_LIBS}])
+AC_MSG_NOTICE([PCRE_CFLAGS=${PCRE_CFLAGS}])
+CPPFLAGS="$PCRE_CFLAGS $CPPFLAGS"
+LIBS="$PCRE_LIBS $LIBS"
 
-# Check the version of the PCRE library.  AX_PATH_LIB_PCRE() might find a version older than we need.
-SAVE_CPPFLAGS="$CPPFLAGS";
-CPPFLAGS="$CPPFLAGS -P" # -P to prevent #line annotations in gcc >~5.x, which break the sed mechanism below.
-AC_MSG_CHECKING([whether libpcre is new enough])
-AC_PREPROC_IFELSE(
-	[AC_LANG_PROGRAM([[#include <pcre.h>]],[[
-		libpcreversion=PCRE_MAJOR . PCRE_MINOR
-		]])],
-	[libpcreversion=$(cat conftest.i | $SED -n 's/libpcreversion=\(.*\)/\1/p' | tr -d '\t ')],
-	[AC_MSG_ERROR([could not determine libpcre version])]
-	)
-AX_COMPARE_VERSION([$libpcreversion],[ge],[8.21],
-	[AC_MSG_RESULT([yes, libpcre version = $libpcreversion])],
-	[AC_MSG_ERROR([no, libpcre version = $libpcreversion.  Compiling this program requires a libpcre version >= 8.21])]
-	)
-CPPFLAGS="$SAVE_CPPFLAGS"
 AC_LANG_POP([C++])
 
 
@@ -128,9 +145,12 @@ AC_LANG_POP([C++])
 ### Checks for header files.
 ###
 
+AC_LANG_PUSH([C++])
+
 # We don't have this header on MinGW.
 AC_CHECK_HEADERS([pwd.h],[],[],[])
 
+AC_LANG_POP([C++])
 
 ###
 ### Checks for types
@@ -149,10 +169,6 @@ AC_CHECK_HEADERS([pwd.h],[],[],[])
 ###
 ### Checks for compiler characteristics.
 ###
-
-# Determine what switches we need to get at least some level of C++11 support.
-# This macro will replace $CXX with "$CXX -c++11switch".
-AX_CXX_COMPILE_STDCXX_11([ext],[mandatory])
 
 AC_LANG_PUSH([C++])
 # Check if the C++ compiler supports some flags we'd like to set.

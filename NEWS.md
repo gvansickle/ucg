@@ -3,9 +3,14 @@
 ## [UNRELEASED]
 
 ### New Features
+- Experimental support for OSX and PC-BSD.
+
+### Changed
+- A number of portability improvements related to OSX and PC-BSD support.
 
 ### Fixed
 - Cygwin now requires AC_USE_SYSTEM_EXTENSIONS for access to get_current_dir_name().  Resolves #76.
+
 
 ## [0.2.2] - 2016-04-09
 

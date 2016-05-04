@@ -141,6 +141,7 @@ void FileScanner::Run()
 		try
 		{
 			// Try to open and read the file.  This could throw.
+			//std::clog << "Trying to scan file " << next_string << std::endl;
 			File f(next_string);
 
 			if(f.size() == 0)

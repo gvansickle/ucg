@@ -54,6 +54,9 @@ void Globber::Run()
 {
 	char * dirs[m_start_paths.size()+1];
 
+	/// @todo It looks like OSX needs any trailing slashes to be removed here, or its fts lib will double them up.
+	/// Doesn't seem to affect results though.
+
 	int i = 0;
 	for(const std::string& path : m_start_paths)
 	{
@@ -89,14 +92,21 @@ void Globber::Run()
 	}
 	dirs[m_start_paths.size()] = 0;
 
-	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR | FTS_NOSTAT, NULL);
+	/// @todo We can't use FS_NOSTAT here.  OSX at least isn't able to determine regular
+	/// files without the stat, so they get returned as FTS_NSOK / 11 /	no stat(2) requested.
+	/// Does not seem to affect performance on Linux, but might be having an effect on Cygwin.
+	/// Look into workarounds.
+	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/, NULL);
 	while(FTSENT *ftsent = fts_read(fts))
 	{
+		//std::clog << "Considering file: " << ftsent->fts_path << std::endl;
 		if(ftsent->fts_info == FTS_F)
 		{
+			//std::clog << "... normal file." << std::endl;
 			// It's a normal file.  Check for inclusion.
 			if(m_type_manager.FileShouldBeScanned(ftsent->fts_name))
 			{
+				//std::clog << "... should be scanned." << std::endl;
 				// Extension was in the hash table.
 				m_out_queue.wait_push(std::string(ftsent->fts_path));
 
@@ -106,6 +116,7 @@ void Globber::Run()
 		}
 		else if(ftsent->fts_info == FTS_D)
 		{
+			//std::clog << "... directory." << std::endl;
 			// It's a directory.  Check if we should descend into it.
 			if(!m_recurse_subdirs && ftsent->fts_level > 0)
 			{
@@ -124,10 +135,14 @@ void Globber::Run()
 			std::cerr << "ucg: ERROR: unable to read directory \"" << ftsent->fts_path << "\", skipping." << std::endl;
 		}
 		else if(ftsent->fts_info == FTS_ERR)
-
 		{
+			//std::clog << "... FTS_ERR." << std::endl;
 			m_bad_path = ftsent->fts_path;
 			break;
+		}
+		else
+		{
+			//std::clog << "... unknown file type:" << ftsent->fts_info << std::endl;
 		}
 	}
 	fts_close(fts);

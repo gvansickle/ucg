@@ -2,7 +2,7 @@
 # atlocal.in for UniversalCodeGrep's ./tests directory, used to collect configure-time
 # information about the build system.
 #
-# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -46,3 +46,17 @@ BOOST_PATH=${abs_top_srcdir}/../boost_1_58_0
 # This file will be created by testsuite.at.
 PERF_RESULTS_FILE=${abs_top_builddir}/tests/perf_test_results.txt
 
+PROG_SCRIPT="@PROG_SCRIPT@"
+PROG_SCRIPT_TYPE="@PROG_SCRIPT_TYPE@"
+PROG_SCRIPT_PRE_TEXT="@PROG_SCRIPT_PRE_TEXT@"
+PROG_SCRIPT_POST_TEXT="@PROG_SCRIPT_POST_TEXT@"
+
+ASX_SCRIPT ()
+{
+	# Note: '\r' removal in here because script outputs \r\n's, even on Linuxes.
+	case $PROG_SCRIPT_TYPE in
+		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "$*" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "${@}" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		*) exit 1;;
+	esac
+}
