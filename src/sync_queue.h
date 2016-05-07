@@ -120,13 +120,7 @@ public:
 		// Using a unique_lock<> here vs. a lock_guard<> because we'll be using a condition variable, which needs
 		// to unlock the mutex.
 		std::unique_lock<std::mutex> lock(m_mutex);
-#if 0
-		if(m_underlying_queue.empty() && m_closed)
-		{
-			// Queue is empty and has been closed, let the caller know.
-			return queue_op_status::closed;
-		}
-#endif
+
 		// Wait until the queue is not empty, or somebody closes the sync_queue<>.
 		m_cv.wait(lock, [this](){ return !m_underlying_queue.empty() || m_closed; });
 
@@ -149,13 +143,7 @@ public:
 		// Using a unique_lock<> here vs. a lock_guard<> because we'll be using a condition variable, which needs
 		// to unlock the mutex.
 		std::unique_lock<std::mutex> lock(m_mutex);
-#if 0
-		if(m_underlying_queue.empty() && m_closed)
-		{
-			// Queue is empty and has been closed, let the caller know.
-			return queue_op_status::closed;
-		}
-#endif
+
 		// Wait until the queue is not empty, or somebody closes the sync_queue<>.
 		m_cv.wait(lock, [this](){ return !m_underlying_queue.empty() || m_closed; });
 
