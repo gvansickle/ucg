@@ -7,6 +7,7 @@
 
 ### Changed
 - A number of portability improvements related to OSX and PC-BSD support.
+- Reduce unnecessary mutex contention, spurious thread wakes in sync_queue<>.
 
 ### Fixed
 - Cygwin now requires AC_USE_SYSTEM_EXTENSIONS for access to get_current_dir_name().  Resolves #76.

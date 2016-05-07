@@ -51,17 +51,21 @@ public:
 
 	void close()
 	{
-		std::lock_guard<std::mutex> lock(m_mutex);
+		std::unique_lock<std::mutex> lock(m_mutex);
 
 		m_closed = true;
 
-		// Notify any threads waiting on the queue's condition variable that it's just been closed.
+		// Unlock the mutex immediately prior to notify.  This prevents a waiting thread from being immediately woken up
+		// by the notify, and then blocking because we still hold the mutex.
+		lock.unlock();
+
+		// Notify all threads waiting on the queue's condition variable that it's just been closed.
 		m_cv.notify_all();
 	}
 
 	queue_op_status wait_push(const ValueType& x)
 	{
-		std::lock_guard<std::mutex> lock(m_mutex);
+		std::unique_lock<std::mutex> lock(m_mutex);
 
 		// Is the queue closed?
 		if(m_closed)
@@ -73,15 +77,21 @@ public:
 		// Push via copy.
 		m_underlying_queue.push(x);
 
-		// Notify any threads waiting on the queue's condition variable that it now has something to pull.
-		m_cv.notify_all();
+		// Unlock the mutex immediately prior to notify.  This prevents a waiting thread from being immediately woken up
+		// by the notify, and then blocking because we still hold the mutex.
+		lock.unlock();
+
+		// Notify one thread waiting on the queue's condition variable that it now has something to pull.
+		// Note that since we only pushed one item, we only need to notify one waiting thread.  This prevents waking up
+		// all waiting threads, all but one of which will end up immediately blocking again.
+		m_cv.notify_one();
 
 		return queue_op_status::success;
 	}
 
 	queue_op_status wait_push(ValueType&& x)
 	{
-		std::lock_guard<std::mutex> lock(m_mutex);
+		std::unique_lock<std::mutex> lock(m_mutex);
 
 		// Is the queue closed?
 		if(m_closed)
@@ -93,8 +103,14 @@ public:
 		// Push via move.
 		m_underlying_queue.push(std::move(x));
 
-		// Notify any threads waiting on the queue's condition variable that it now has something to pull.
-		m_cv.notify_all();
+		// Unlock the mutex immediately prior to notify.  This prevents a waiting thread from being immediately woken up
+		// by the notify, and then blocking because we still hold the mutex.
+		lock.unlock();
+
+		// Notify one thread waiting on the queue's condition variable that it now has something to pull.
+		// Note that since we only pushed one item, we only need to notify one waiting thread.  This prevents waking up
+		// all waiting threads, all but one of which will end up immediately blocking again.
+		m_cv.notify_one();
 
 		return queue_op_status::success;
 	}
@@ -104,12 +120,6 @@ public:
 		// Using a unique_lock<> here vs. a lock_guard<> because we'll be using a condition variable, which needs
 		// to unlock the mutex.
 		std::unique_lock<std::mutex> lock(m_mutex);
-
-		if(m_underlying_queue.empty() && m_closed)
-		{
-			// Queue is empty and has been closed, let the caller know.
-			return queue_op_status::closed;
-		}
 
 		// Wait until the queue is not empty, or somebody closes the sync_queue<>.
 		m_cv.wait(lock, [this](){ return !m_underlying_queue.empty() || m_closed; });
@@ -133,12 +143,6 @@ public:
 		// Using a unique_lock<> here vs. a lock_guard<> because we'll be using a condition variable, which needs
 		// to unlock the mutex.
 		std::unique_lock<std::mutex> lock(m_mutex);
-
-		if(m_underlying_queue.empty() && m_closed)
-		{
-			// Queue is empty and has been closed, let the caller know.
-			return queue_op_status::closed;
-		}
 
 		// Wait until the queue is not empty, or somebody closes the sync_queue<>.
 		m_cv.wait(lock, [this](){ return !m_underlying_queue.empty() || m_closed; });
