@@ -27,10 +27,12 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-File::File(const std::string &filename)
+File::File(const std::string &filename, std::vector<char> *storage)
 {
 	// Save the filename.
 	m_filename = filename;
+
+	m_storage = storage;
 
 	// open() the file.  We have to do this regardless of whether we'll subsequently mmap() or read().
 	m_file_descriptor = open(filename.c_str(), O_RDONLY);
@@ -112,7 +114,15 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 	}
 	else
 	{
-		file_data = new char [file_size];
+		if(m_storage == nullptr)
+		{
+			file_data = new char [file_size];
+		}
+		else
+		{
+			m_storage->reserve(file_size);
+			file_data = m_storage->data();
+		}
 
 		// Read in the whole file.
 		while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
@@ -132,6 +142,9 @@ void File::FreeFileData(const char* file_data, size_t file_size)
 	}
 	else
 	{
-		delete [] file_data;
+		if(m_storage == nullptr)
+		{
+			delete [] file_data;
+		}
 	}
 }

@@ -132,6 +132,9 @@ void FileScanner::Run()
 			m_ignore_case ? std::regex_constants::icase : static_cast<typeof(std::regex_constants::icase)>(0));
 #endif
 
+	// @todo temp
+	std::vector<char> file_data_storage;
+
 	// Pull new filenames off the input queue until it's closed.
 	std::string next_string;
 	while(m_in_queue.wait_pull(std::move(next_string)) != queue_op_status::closed)
@@ -142,7 +145,7 @@ void FileScanner::Run()
 		{
 			// Try to open and read the file.  This could throw.
 			//std::clog << "Trying to scan file " << next_string << std::endl;
-			File f(next_string);
+			File f(next_string, &file_data_storage);
 
 			if(f.size() == 0)
 			{
