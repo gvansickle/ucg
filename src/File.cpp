@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-File::File(const std::string &filename, std::vector<char> *storage)
+File::File(const std::string &filename, std::vector<char> **storage)
 {
 	// Save the filename.
 	m_filename = filename;
@@ -120,8 +120,15 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 		}
 		else
 		{
-			m_storage->reserve(file_size);
-			file_data = m_storage->data();
+			//m_storage->reserve(file_size);
+			if((*m_storage)->capacity() < file_size)
+			{
+				// Reallocate a new vector of the required size.  We don't use .reserve() here
+				// because that does a needless copy.
+				delete *m_storage;
+				*m_storage = new std::vector<char>(file_size);
+			}
+			file_data = (*m_storage)->data();
 		}
 
 		// Read in the whole file.

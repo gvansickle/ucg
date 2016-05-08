@@ -133,7 +133,7 @@ void FileScanner::Run()
 #endif
 
 	// @todo temp
-	std::vector<char> file_data_storage;
+	std::vector<char>* file_data_storage = new std::vector<char>();
 
 	// Pull new filenames off the input queue until it's closed.
 	std::string next_string;
@@ -185,6 +185,8 @@ void FileScanner::Run()
 			throw;
 		}
 	}
+
+	delete file_data_storage;
 }
 
 void FileScanner::AssignToNextCore()

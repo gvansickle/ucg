@@ -40,7 +40,7 @@ struct FileException : public std::runtime_error
 class File
 {
 public:
-	File(const std::string &filename, std::vector<char> *storage = nullptr);
+	File(const std::string &filename, std::vector<char> **storage = nullptr);
 	~File();
 
 	size_t size() const noexcept { return m_file_size; };
@@ -81,7 +81,7 @@ private:
 
 	size_t m_file_size { 0 };
 
-	std::vector<char> *m_storage { nullptr };
+	std::vector<char> **m_storage { nullptr };
 
 	const char *m_file_data { nullptr };
 
