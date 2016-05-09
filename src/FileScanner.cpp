@@ -38,6 +38,8 @@
 	#include <sched.h>
 #endif
 
+#include "ResizableArray.h"
+
 static std::mutex f_assign_affinity_mutex;
 
 FileScanner::FileScanner(sync_queue<std::string> &in_queue,
@@ -133,7 +135,7 @@ void FileScanner::Run()
 #endif
 
 	// @todo temp
-	std::vector<char>* file_data_storage = new std::vector<char>();
+	auto file_data_storage = std::make_shared<ResizableArray<char>>();
 
 	// Pull new filenames off the input queue until it's closed.
 	std::string next_string;
@@ -145,7 +147,7 @@ void FileScanner::Run()
 		{
 			// Try to open and read the file.  This could throw.
 			//std::clog << "Trying to scan file " << next_string << std::endl;
-			File f(next_string, &file_data_storage);
+			File f(next_string, file_data_storage);
 
 			if(f.size() == 0)
 			{
@@ -185,8 +187,6 @@ void FileScanner::Run()
 			throw;
 		}
 	}
-
-	delete file_data_storage;
 }
 
 void FileScanner::AssignToNextCore()
