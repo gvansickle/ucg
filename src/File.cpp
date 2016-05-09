@@ -27,12 +27,10 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-File::File(const std::string &filename, std::vector<char> **storage)
+File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
 {
 	// Save the filename.
 	m_filename = filename;
-
-	m_storage = storage;
 
 	// open() the file.  We have to do this regardless of whether we'll subsequently mmap() or read().
 	m_file_descriptor = open(filename.c_str(), O_RDONLY);
@@ -114,13 +112,15 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 	}
 	else
 	{
-		if(m_storage == nullptr)
+		if(0)//m_storage == nullptr)
 		{
 			file_data = new char [file_size];
 		}
 		else
 		{
 			//m_storage->reserve(file_size);
+			m_storage->reserve_no_copy(file_size);
+#if 0
 			if((*m_storage)->capacity() < file_size)
 			{
 				// Reallocate a new vector of the required size.  We don't use .reserve() here
@@ -128,7 +128,8 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 				delete *m_storage;
 				*m_storage = new std::vector<char>(file_size);
 			}
-			file_data = (*m_storage)->data();
+#endif
+			file_data = m_storage->data();
 		}
 
 		// Read in the whole file.
@@ -149,7 +150,7 @@ void File::FreeFileData(const char* file_data, size_t file_size)
 	}
 	else
 	{
-		if(m_storage == nullptr)
+		if(0)//m_storage == nullptr)
 		{
 			delete [] file_data;
 		}
