@@ -25,7 +25,7 @@ class ResizableArray
 {
 public:
 	ResizableArray() = default;
-	~ResizableArray()
+	~ResizableArray() noexcept
 	{
 		if(m_current_buffer!=nullptr)
 		{
