@@ -24,8 +24,8 @@ template<typename T>
 class ResizableArray
 {
 public:
-	ResizableArray() = default;
-	~ResizableArray()
+	ResizableArray() noexcept = default;
+	~ResizableArray() noexcept
 	{
 		if(m_current_buffer!=nullptr)
 		{
