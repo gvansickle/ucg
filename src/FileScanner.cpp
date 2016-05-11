@@ -360,6 +360,7 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 		}
 
 		// There was a match.  Package it up in the MatchList which was passed in.
+		/// @todo Optimize this count.
 		long long num_lines_since_last_match = std::count(prev_lineno_search_end, file_data+ovector[0], '\n');
 		line_no += num_lines_since_last_match;
 		prev_lineno_search_end = file_data+ovector[0];

@@ -172,17 +172,12 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 # Check if the C++ compiler supports some flags we'd like to set.
-# Append them to AM_CXXFLAGS if it does.
-
-# Capture the compile command line in the binary.
-AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS]) 
+# Append them to AM_CXXFLAGS if it does. 
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])
-
 # Put this back in to help with profiling.
 #AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
-
 AC_LANG_POP([C++])
 
 
