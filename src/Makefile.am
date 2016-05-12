@@ -25,7 +25,7 @@ libsrc_a_SOURCES = \
 	File.cpp File.h \
 	FileScanner.cpp FileScanner.h \
 	OutputTask.cpp OutputTask.h \
-	ResizableArray.cpp ResizableArray.h \
+	ResizableArray.h \
 	sync_queue.h \
 	sync_queue_impl_selector.h \
 	TypeManager.cpp TypeManager.h
