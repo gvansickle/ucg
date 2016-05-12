@@ -134,7 +134,7 @@ void FileScanner::Run()
 			m_ignore_case ? std::regex_constants::icase : static_cast<typeof(std::regex_constants::icase)>(0));
 #endif
 
-	// @todo temp
+	// Create a reusable, resizable buffer for the File() reads.
 	auto file_data_storage = std::make_shared<ResizableArray<char>>();
 
 	// Pull new filenames off the input queue until it's closed.

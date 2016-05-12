@@ -112,25 +112,8 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 	}
 	else
 	{
-		if(0)//m_storage == nullptr)
-		{
-			file_data = new char [file_size];
-		}
-		else
-		{
-			//m_storage->reserve(file_size);
-			m_storage->reserve_no_copy(file_size);
-#if 0
-			if((*m_storage)->capacity() < file_size)
-			{
-				// Reallocate a new vector of the required size.  We don't use .reserve() here
-				// because that does a needless copy.
-				delete *m_storage;
-				*m_storage = new std::vector<char>(file_size);
-			}
-#endif
-			file_data = m_storage->data();
-		}
+		m_storage->reserve_no_copy(file_size);
+		file_data = m_storage->data();
 
 		// Read in the whole file.
 		while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
@@ -147,12 +130,5 @@ void File::FreeFileData(const char* file_data, size_t file_size)
 	if(m_use_mmap)
 	{
 		munmap(const_cast<char*>(file_data), file_size);
-	}
-	else
-	{
-		if(0)//m_storage == nullptr)
-		{
-			delete [] file_data;
-		}
 	}
 }

@@ -22,7 +22,6 @@
 
 #include <string>
 #include <stdexcept>
-#include <vector>
 #include <memory>
 
 #include "ResizableArray.h"
