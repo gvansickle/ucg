@@ -38,6 +38,8 @@
 	#include <sched.h>
 #endif
 
+#include "ResizableArray.h"
+
 static std::mutex f_assign_affinity_mutex;
 
 FileScanner::FileScanner(sync_queue<std::string> &in_queue,
@@ -132,6 +134,9 @@ void FileScanner::Run()
 			m_ignore_case ? std::regex_constants::icase : static_cast<typeof(std::regex_constants::icase)>(0));
 #endif
 
+	// Create a reusable, resizable buffer for the File() reads.
+	auto file_data_storage = std::make_shared<ResizableArray<char>>();
+
 	// Pull new filenames off the input queue until it's closed.
 	std::string next_string;
 	while(m_in_queue.wait_pull(std::move(next_string)) != queue_op_status::closed)
@@ -142,7 +147,7 @@ void FileScanner::Run()
 		{
 			// Try to open and read the file.  This could throw.
 			//std::clog << "Trying to scan file " << next_string << std::endl;
-			File f(next_string);
+			File f(next_string, file_data_storage);
 
 			if(f.size() == 0)
 			{
@@ -355,6 +360,7 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 		}
 
 		// There was a match.  Package it up in the MatchList which was passed in.
+		/// @todo Optimize this count.
 		long long num_lines_since_last_match = std::count(prev_lineno_search_end, file_data+ovector[0], '\n');
 		line_no += num_lines_since_last_match;
 		prev_lineno_search_end = file_data+ovector[0];

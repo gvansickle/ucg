@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-File::File(const std::string &filename)
+File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
 {
 	// Save the filename.
 	m_filename = filename;
@@ -112,7 +112,8 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 	}
 	else
 	{
-		file_data = new char [file_size];
+		m_storage->reserve_no_copy(file_size);
+		file_data = m_storage->data();
 
 		// Read in the whole file.
 		while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
@@ -129,9 +130,5 @@ void File::FreeFileData(const char* file_data, size_t file_size)
 	if(m_use_mmap)
 	{
 		munmap(const_cast<char*>(file_data), file_size);
-	}
-	else
-	{
-		delete [] file_data;
 	}
 }

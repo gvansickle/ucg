@@ -22,6 +22,9 @@
 
 #include <string>
 #include <stdexcept>
+#include <memory>
+
+#include "ResizableArray.h"
 
 /**
  * File() may throw this if it runs into trouble opening the given filename.
@@ -39,18 +42,18 @@ struct FileException : public std::runtime_error
 class File
 {
 public:
-	File(const std::string &filename);
+	File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
 	~File();
 
-	size_t size() const { return m_file_size; };
+	size_t size() const noexcept { return m_file_size; };
 
-	const char * data() const { return m_file_data; };
+	const char * data() const noexcept { return m_file_data; };
 
 	/**
 	 * Returns the name of this File as passed to the constructor.
 	 * @return  The name of this File as passed to the constructor.
 	 */
-	std::string name() const { return m_filename; };
+	std::string name() const noexcept { return m_filename; };
 
 private:
 
@@ -79,6 +82,9 @@ private:
 	int m_file_descriptor { -1 };
 
 	size_t m_file_size { 0 };
+
+	/// The ResizableArray that we'll get storage from.
+	std::shared_ptr<ResizableArray<char>> m_storage;
 
 	const char *m_file_data { nullptr };
 
