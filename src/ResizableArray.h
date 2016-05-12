@@ -24,7 +24,7 @@
  * This is sort of a poor-man's std::allocator<>, without the std.  We use it in the File() constructor
  * to get a buffer to read the file data into.  By instantiating one of these objects prior to a loop of
  * File() constructions, we will simply recycle the same buffer unless we need a larger one, instead of
- * deleting/newing a brand-new buffer for every file we read in.  This can reduce allocation activity considerably.
+ * deleting/newing a brand-new buffer for every file we read in.  This can reduce allocation traffic considerably.
  * See FileScanner::Run() for this sort of usage.
  */
 template<typename T>
