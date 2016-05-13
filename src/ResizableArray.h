@@ -49,11 +49,12 @@ public:
 			// Need to allocate a new raw buffer.
 			if(m_current_buffer!=nullptr)
 			{
-				::operator delete(m_current_buffer);
+				//::operator delete(m_current_buffer);
 			}
 
 			m_current_buffer_size = needed_size;
-			m_current_buffer = static_cast<T*>(::operator new(m_current_buffer_size*sizeof(T)));
+			//m_current_buffer = static_cast<T*>(::operator new(m_current_buffer_size*sizeof(T)));
+			m_current_buffer = aligned_alloc(32, m_current_buffer_size*sizeof(T));
 		}
 	}
 
