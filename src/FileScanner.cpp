@@ -160,7 +160,7 @@ void FileScanner::Run()
 
 			// Scan the file data for the regex.
 #if HAVE_LIBPCRE
-			ScanFileLibPCRE(file_data, file_size, ml);
+			ScanFile(file_data, file_size, ml);
 #else
 			ScanFileCpp11(expression, file_data, file_size, ml);
 #endif
@@ -248,12 +248,12 @@ void FileScanner::ScanFileCpp11(const std::regex& /*expression*/, const char */*
 #endif
 }
 
-void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, MatchList& ml)
+void FileScanner::ScanFile(const char *file_data, size_t file_size, MatchList& ml)
 {
 	// Match output vector.  We won't support submatches, so we only need two entries, plus a third for pcre's own use.
 	int ovector[3] = {-1, 0, 0};
-	long long line_no = 1;
-	long long prev_lineno = 0;
+	size_t line_no = 1;
+	size_t prev_lineno = 0;
 	const char *prev_lineno_search_end = file_data;
 	// Up-cast file_size, which is a size_t (unsigned) to a ptrdiff_t (signed) which should be able to handle the
 	// same positive range, and not cause issues when compared with the ints of ovector[].

@@ -20,11 +20,11 @@
 #ifndef FILESCANNER_H_
 #define FILESCANNER_H_
 
+#include "config.h"
+
 #include <stdexcept>
 #include <string>
 #include <regex>
-
-#include "config.h"
 
 #ifdef HAVE_LIBPCRE
 #include <pcre.h>
@@ -87,7 +87,7 @@ private:
 	 * @param file_size
 	 * @param ml
 	 */
-	void ScanFileLibPCRE(const char *file_data, size_t file_size, MatchList &ml);
+	virtual void ScanFile(const char *file_data, size_t file_size, MatchList &ml);
 
 	sync_queue<std::string>& m_in_queue;
 
