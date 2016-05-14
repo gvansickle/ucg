@@ -312,9 +312,9 @@ void FileScanner::ScanFile(const char *file_data, size_t file_size, MatchList& m
 				 *       For now, we don't support this.
 				 */
 				if(/** @todo crlf_is_newline */ false &&
-						start_offset < file_size -1 &&
+						start_offset < file_size-1 &&
 						file_data[start_offset] == '\r' &&
-						file_data[start_offset] == '\n')
+						file_data[start_offset+1] == '\n')
 				{
 					// Increment the new start position by one more byte, we're at a \r\n line ending.
 					ovector[1]++;

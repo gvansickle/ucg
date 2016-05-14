@@ -51,6 +51,8 @@ private:
 	 */
 	void ScanFile(const char *file_data, size_t file_size, MatchList &ml) override final;
 
+	std::string PCRE2ErrorCodeToErrorString(int errorcode);
+
 #ifdef HAVE_LIBPCRE2
 	/// The compiled libpcre2 regex.
 	pcre2_code *m_pcre2_regex;

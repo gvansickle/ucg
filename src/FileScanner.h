@@ -59,6 +59,13 @@ public:
 
 	void Run();
 
+protected:
+	bool m_ignore_case;
+
+	bool m_word_regexp;
+
+	bool m_pattern_is_literal;
+
 private:
 
 	/**
@@ -102,12 +109,6 @@ private:
 	/// The results of pcre_study()ing m_pcre_regex.
 	pcre_extra *m_pcre_extra;
 #endif
-
-	bool m_ignore_case;
-
-	bool m_word_regexp;
-
-	bool m_pattern_is_literal;
 
 	int m_next_core;
 
