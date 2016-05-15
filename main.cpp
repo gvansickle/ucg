@@ -31,6 +31,7 @@
 #include "DirInclusionManager.h"
 #include "MatchList.h"
 #include "FileScanner.h"
+#include "FileScannerPCRE2.h"
 #include "OutputTask.h"
 
 

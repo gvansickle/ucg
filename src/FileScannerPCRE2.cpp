@@ -15,6 +15,8 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** @file */
+
 #include "FileScannerPCRE2.h"
 
 #include <iostream>
@@ -78,7 +80,6 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 		pcre2_code_free(m_pcre2_regex);
 		throw FileScannerException(std::string("PCRE2 JIT compilation error: ") + PCRE2ErrorCodeToErrorString(jit_retval));
 	}
-
 #endif
 }
 
@@ -105,12 +106,14 @@ void FileScannerPCRE2::ScanFile(const char* file_data, size_t file_size,
 
 	match_data.reset(pcre2_match_data_create_from_pattern(m_pcre2_regex, NULL));
 	ovector = pcre2_get_ovector_pointer(match_data.get());
+	// Fool the "previous match was zero-length" logic for the first iteration.
+	ovector[0] = -1;
 
 	// Loop while the start_offset is less than the file_size.
 	while(ovector[1] < file_size)
 	{
 		int options = 0;
-		int start_offset = ovector[1];
+		size_t start_offset = ovector[1];
 
 		// Was the previous match zero-length?
 		if (ovector[0] == ovector[1])
@@ -227,7 +230,6 @@ void FileScannerPCRE2::ScanFile(const char* file_data, size_t file_size,
 		Match m(file_data, file_size, ovector[0], ovector[1], line_no);
 
 		ml.AddMatch(std::move(m));
-
 	}
 }
 
