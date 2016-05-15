@@ -20,6 +20,7 @@
 #include "FileScannerPCRE.h"
 
 #include <iostream>
+#include <sstream>
 
 FileScannerPCRE::FileScannerPCRE(sync_queue<std::string> &in_queue,
 		sync_queue<MatchList> &output_queue,

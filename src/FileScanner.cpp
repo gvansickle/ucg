@@ -20,13 +20,15 @@
 #include "config.h"
 
 #include "FileScanner.h"
+#include "FileScannerCpp11.h"
+#include "FileScannerPCRE.h"
+#include "FileScannerPCRE2.h"
 #include "File.h"
 #include "Match.h"
 #include "MatchList.h"
 
 #include <iostream>
 #include <string>
-#include <regex>
 #include <sstream>
 #include <thread>
 #include <mutex>
@@ -38,6 +40,37 @@
 #include "ResizableArray.h"
 
 static std::mutex f_assign_affinity_mutex;
+
+
+std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::string> &in_queue,
+			sync_queue<MatchList> &output_queue,
+			std::string regex,
+			bool ignore_case,
+			bool word_regexp,
+			bool pattern_is_literal,
+			RegexEngine engine)
+{
+	std::unique_ptr<FileScanner> retval;
+
+	switch(engine)
+	{
+	case RegexEngine::CXX11:
+		retval.reset(new FileScannerCpp11(in_queue, output_queue, regex, ignore_case, word_regexp, pattern_is_literal));
+		break;
+	case RegexEngine::PCRE:
+		retval.reset(new FileScannerPCRE(in_queue, output_queue, regex, ignore_case, word_regexp, pattern_is_literal));
+		break;
+	case RegexEngine::PCRE2:
+		retval.reset(new FileScannerPCRE2(in_queue, output_queue, regex, ignore_case, word_regexp, pattern_is_literal));
+		break;
+	default:
+		// Should never get here.  Throw.
+		throw FileScannerException(std::string("invalid RegexEngine specified: ") + std::to_string(static_cast<int>(engine)));
+		break;
+	}
+
+	return retval;
+}
 
 FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 		sync_queue<MatchList> &output_queue,
@@ -135,42 +168,5 @@ void FileScanner::AssignToNextCore()
 	m_next_core %= std::thread::hardware_concurrency();
 #endif
 }
-
-void FileScanner::ScanFileCpp11(const std::regex& /*expression*/, const char */*file_data*/, size_t /*file_size*/, MatchList& /*ml*/)
-{
-#ifndef HAVE_LIBPCRE
-	// Scan the mmapped file for the regex.
-	std::regex_iterator<const char *> rit(file_data, file_data+file_size, expression);
-	std::regex_iterator<const char *> rend;
-	while(rit != rend)
-	{
-		//std::cout << "Match in file " << next_string << std::endl;
-
-		long long lineno = 1+std::count(file_data, file_data+rit->position(), '\n');
-		auto line_ending = "\n";
-		auto line_start = std::find_end(file_data, file_data+rit->position(),
-				line_ending, line_ending+1);
-		if(line_start == file_data+rit->position())
-		{
-			// The line has no starting '\n', so it must be the first line.
-			line_start = file_data;
-		}
-		else
-		{
-			// The line had a starting '\n', clip it off.
-			++line_start;
-		}
-		auto line_end = std::find(file_data+rit->position(), file_data+file_size, '\n');
-		auto pre_match = std::string(line_start, file_data+rit->position());
-		auto match = std::string(rit->begin()->str());
-		auto post_match = std::string(file_data+rit->position()+rit->length(), line_end);
-		Match m = { pre_match, match, post_match };
-		ml.AddMatch(lineno, m);
-
-		++rit;
-	}
-#endif
-}
-
 
 

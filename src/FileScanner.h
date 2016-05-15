@@ -24,10 +24,28 @@
 
 #include <stdexcept>
 #include <string>
-#include <regex>
 
 #include "sync_queue_impl_selector.h"
 #include "MatchList.h"
+
+
+/// The regular expression engines we support.
+/// @note Which of these is supported depends on which libraries were available at compile-time.
+enum class RegexEngine
+{
+	NONE,	//!< No engine available.
+	CXX11, 	//!< C++11's built-in <regex> support.
+	PCRE,	//!< The original libpcre.
+	PCRE2,	//!< libpcre2
+
+#if HAVE_LIBPCRE2
+	DEFAULT = PCRE2,
+#elif HAVE_LIBPCRE
+	DEFAULT = PCRE,
+#else
+	DEFAULT = NONE,
+#endif
+};
 
 
 /**
@@ -44,6 +62,28 @@ struct FileScannerException : public std::runtime_error
  */
 class FileScanner
 {
+public:
+
+	/**
+	 * Factory Method for creating a new FileScanner-derived class.
+	 *
+	 * @param in_queue
+	 * @param output_queue
+	 * @param regex
+	 * @param ignore_case
+	 * @param word_regexp
+	 * @param pattern_is_literal
+	 * @param engine
+	 * @return
+	 */
+	static std::unique_ptr<FileScanner> Create(sync_queue<std::string> &in_queue,
+			sync_queue<MatchList> &output_queue,
+			std::string regex,
+			bool ignore_case,
+			bool word_regexp,
+			bool pattern_is_literal,
+			RegexEngine engine = RegexEngine::DEFAULT);
+
 public:
 	FileScanner(sync_queue<std::string> &in_queue,
 			sync_queue<MatchList> &output_queue,
@@ -74,17 +114,7 @@ private:
 	void AssignToNextCore();
 
 	/**
-	 * Scan @a file_data for matches of @a regex using C++11's <regex> facilities.  Add hits to @a ml.
-	 *
-	 * @param regex
-	 * @param file_data
-	 * @param file_size
-	 * @param ml
-	 */
-	void ScanFileCpp11(const std::regex &regex, const char *file_data, size_t file_size, MatchList &ml);
-
-	/**
-	 * Scan @a file_data for matches of m_pcre_regex using libpcre.  Add hits to @a ml.
+	 * Scan @a file_data for matches of the regex.  Add hits to @a ml.
 	 *
 	 * @param file_data
 	 * @param file_size

@@ -22,6 +22,8 @@
 
 #include "FileScanner.h"
 
+#include <regex>
+
 /*
  *
  */
