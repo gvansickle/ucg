@@ -85,11 +85,14 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 
 FileScannerPCRE2::~FileScannerPCRE2()
 {
+#ifdef HAVE_LIBPCRE2
 	pcre2_code_free(m_pcre2_regex);
+#endif
 }
 
 void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
+#ifdef HAVE_LIBPCRE2
 	PCRE2_SIZE *ovector;
 
 	// Create a std::unique_ptr<> with a custom deleter to manage the lifetime of the match data.
@@ -232,6 +235,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 
 		ml.AddMatch(std::move(m));
 	}
+#endif
 }
 
 std::string FileScannerPCRE2::PCRE2ErrorCodeToErrorString(int errorcode)

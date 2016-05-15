@@ -62,20 +62,6 @@ void FileScanner::Run()
 		AssignToNextCore();
 	}
 
-#ifndef HAVE_LIBPCRE
-	// Create the std::regex we're looking for, possibly ignoring case, possibly with match-whole-word.
-	auto stack_regex = m_regex;
-	if(m_word_regexp)
-	{
-		// Surround the regex with \b (word boundary) assertions.
-		stack_regex = "\\b(?:" + m_regex + ")\\b";
-	}
-	std::regex expression(stack_regex,
-			std::regex_constants::ECMAScript |
-			std::regex_constants::optimize   |
-			m_ignore_case ? std::regex_constants::icase : static_cast<typeof(std::regex_constants::icase)>(0));
-#endif
-
 	// Create a reusable, resizable buffer for the File() reads.
 	auto file_data_storage = std::make_shared<ResizableArray<char>>();
 
@@ -100,12 +86,8 @@ void FileScanner::Run()
 			const char *file_data = f.data();
 			size_t file_size = f.size();
 
-			// Scan the file data for the regex.
-#if defined(HAVE_LIBPCRE) || defined(HAVE_LIBPCRE2)
+			// Scan the file data for occurrences of the regex, sending matches to the MatchList ml.
 			ScanFile(file_data, file_size, ml);
-#else
-			ScanFileCpp11(expression, file_data, file_size, ml);
-#endif
 
 			if(!ml.empty())
 			{
