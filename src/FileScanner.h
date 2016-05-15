@@ -24,6 +24,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <memory>
 
 #include "sync_queue_impl_selector.h"
 #include "MatchList.h"
