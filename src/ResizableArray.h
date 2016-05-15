@@ -18,7 +18,16 @@
 #ifndef SRC_RESIZABLEARRAY_H_
 #define SRC_RESIZABLEARRAY_H_
 
+#include "config.h"
+
 #include <cstdlib>
+#ifdef HAVE_ALIGNED_ALLOC
+// Nothing.
+#elif HAVE_MEMALIGN
+#define aligned_alloc(algn, size) memalign(algn, size)
+#else
+#error "Could not find aligned memory allocator."
+#endif
 
 /**
  * This is sort of a poor-man's std::allocator<>, without the std.  We use it in the File() constructor
