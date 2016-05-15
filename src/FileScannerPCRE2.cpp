@@ -103,17 +103,19 @@ void FileScannerPCRE2::ScanFile(const char* file_data, size_t file_size,
 	size_t line_no = 1;
 	size_t prev_lineno = 0;
 	const char *prev_lineno_search_end = file_data;
+	size_t start_offset = 0;
 
 	match_data.reset(pcre2_match_data_create_from_pattern(m_pcre2_regex, NULL));
 	ovector = pcre2_get_ovector_pointer(match_data.get());
 	// Fool the "previous match was zero-length" logic for the first iteration.
 	ovector[0] = -1;
+	ovector[1] = 0;
 
 	// Loop while the start_offset is less than the file_size.
-	while(ovector[1] < file_size)
+	while(start_offset < file_size)
 	{
 		int options = 0;
-		size_t start_offset = ovector[1];
+		start_offset = ovector[1];
 
 		// Was the previous match zero-length?
 		if (ovector[0] == ovector[1])

@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 		OutputTask output_task(ap.m_color, ap.m_nocolor, ap.m_column, out_q);
 
 		// Create the FileScanner object.
-		FileScanner *fs = new FileScannerPCRE(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp, ap.m_pattern_is_literal);
+		std::unique_ptr<FileScanner> fs(new FileScannerPCRE2(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp, ap.m_pattern_is_literal));
 
 		// Start the output task thread.
 		std::thread ot {&OutputTask::Run, &output_task};
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 		// Start the scanner threads.
 		for(int t=0; t<ap.m_jobs; ++t)
 		{
-			std::thread fst {&FileScanner::Run, fs};
+			std::thread fst {&FileScanner::Run, fs.get()};
 			scanner_threads.push_back(std::move(fst));
 		}
 
