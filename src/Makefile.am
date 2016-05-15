@@ -24,6 +24,7 @@ libsrc_a_SOURCES = \
 	MatchList.cpp MatchList.h \
 	File.cpp File.h \
 	FileScanner.cpp FileScanner.h \
+	FileScannerCpp11.cpp FileScannerCpp11.h \
 	FileScannerPCRE.cpp FileScannerPCRE.h \
 	FileScannerPCRE2.cpp FileScannerPCRE2.h \
 	OutputTask.cpp OutputTask.h \
