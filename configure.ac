@@ -138,6 +138,12 @@ AC_MSG_NOTICE([PCRE_CFLAGS=${PCRE_CFLAGS}])
 CPPFLAGS="$PCRE_CFLAGS $CPPFLAGS"
 LIBS="$PCRE_LIBS $LIBS"
 
+PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.0],
+	[AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])],
+	[AC_MSG_WARN([Unable to find libpcre2])])
+CPPFLAGS="$PCRE2_CFLAGS $CPPFLAGS"
+LIBS="$PCRE2_LIBS $LIBS"
+
 AC_LANG_POP([C++])
 
 
@@ -175,8 +181,10 @@ AC_LANG_PUSH([C++])
 # Append them to AM_CXXFLAGS if it does.
 
 # Capture the compile command line in the binary.
-AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS]) 
-AX_APPEND_COMPILE_FLAGS([-ftree-vectorize -fopt-info-vec-all -ftree-vectorizer-verbose=6 -msse2], [AM_CXXFLAGS])
+AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS])
+AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be.
+AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CXXFLAGS]) #  -fopt-info-vec-all
+#AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])

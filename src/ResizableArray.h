@@ -36,11 +36,12 @@ public:
 	{
 		if(m_current_buffer!=nullptr)
 		{
-			::operator delete(m_current_buffer);
+			//::operator delete(m_current_buffer);
+			free(m_current_buffer);
 		}
 	};
 
-	T * data() const noexcept { return m_current_buffer; };
+	T *__attribute__((aligned(32))) data() const noexcept __attribute__((malloc)) { return m_current_buffer; };
 
 	void reserve_no_copy(std::size_t needed_size)
 	{
@@ -50,18 +51,19 @@ public:
 			if(m_current_buffer!=nullptr)
 			{
 				//::operator delete(m_current_buffer);
+				free(m_current_buffer);
 			}
 
 			m_current_buffer_size = needed_size;
 			//m_current_buffer = static_cast<T*>(::operator new(m_current_buffer_size*sizeof(T)));
-			m_current_buffer = aligned_alloc(32, m_current_buffer_size*sizeof(T));
+			m_current_buffer = static_cast<T*>(aligned_alloc(32, ((m_current_buffer_size*sizeof(T)+31)/32)*32));
 		}
 	}
 
 private:
 
 	std::size_t m_current_buffer_size { 0 };
-	T *m_current_buffer { nullptr };
+	T *__attribute__((aligned(32))) m_current_buffer { nullptr };
 };
 
 #endif /* SRC_RESIZABLEARRAY_H_ */
