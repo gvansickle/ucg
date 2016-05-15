@@ -89,8 +89,7 @@ FileScannerPCRE::~FileScannerPCRE()
 #endif
 }
 
-void FileScannerPCRE::ScanFile(const char* file_data, size_t file_size,
-		MatchList& ml)
+void FileScannerPCRE::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
 	// Match output vector.  We won't support submatches, so we only need two entries, plus a third for pcre's own use.
 	int ovector[3] = {-1, 0, 0};

@@ -26,9 +26,6 @@
 
 #include <iostream>
 #include <string>
-#ifdef HAVE_LIBPCRE
-#include <pcre.h>
-#endif
 #include <regex>
 #include <sstream>
 #include <thread>
@@ -47,8 +44,8 @@ FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 		std::string regex,
 		bool ignore_case,
 		bool word_regexp,
-		bool pattern_is_literal) : m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex),
-				m_ignore_case(ignore_case), m_word_regexp(word_regexp), m_pattern_is_literal(pattern_is_literal),
+		bool pattern_is_literal) : m_ignore_case(ignore_case), m_word_regexp(word_regexp), m_pattern_is_literal(pattern_is_literal),
+				m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex),
 				m_next_core(0), m_use_mmap(false), m_manually_assign_cores(false)
 {
 }

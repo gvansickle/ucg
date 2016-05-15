@@ -88,8 +88,7 @@ FileScannerPCRE2::~FileScannerPCRE2()
 	pcre2_code_free(m_pcre2_regex);
 }
 
-void FileScannerPCRE2::ScanFile(const char* file_data, size_t file_size,
-		MatchList& ml)
+void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
 	PCRE2_SIZE *ovector;
 

@@ -40,7 +40,7 @@ struct FileScannerException : public std::runtime_error
 
 
 /**
- * Class which does the actual regex scanning of a file.
+ * Base class for the classes which do the actual regex scanning of the file contents.
  */
 class FileScanner
 {
@@ -90,7 +90,7 @@ private:
 	 * @param file_size
 	 * @param ml
 	 */
-	virtual void ScanFile(const char *file_data, size_t file_size, MatchList &ml) = 0;
+	virtual void ScanFile(const char * __restrict__ file_data, size_t file_size, MatchList &ml) = 0;
 
 	sync_queue<std::string>& m_in_queue;
 
