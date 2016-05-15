@@ -26,10 +26,6 @@
 #include <string>
 #include <regex>
 
-#ifdef HAVE_LIBPCRE
-#include <pcre.h>
-#endif
-
 #include "sync_queue_impl_selector.h"
 #include "MatchList.h"
 
@@ -94,21 +90,13 @@ private:
 	 * @param file_size
 	 * @param ml
 	 */
-	virtual void ScanFile(const char *file_data, size_t file_size, MatchList &ml);
+	virtual void ScanFile(const char *file_data, size_t file_size, MatchList &ml) = 0;
 
 	sync_queue<std::string>& m_in_queue;
 
 	sync_queue<MatchList> &m_output_queue;
 
 	std::string m_regex;
-
-#ifdef HAVE_LIBPCRE
-	/// The compiled libpcre regex.
-	pcre *m_pcre_regex;
-
-	/// The results of pcre_study()ing m_pcre_regex.
-	pcre_extra *m_pcre_extra;
-#endif
 
 	int m_next_core;
 

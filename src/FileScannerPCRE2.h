@@ -56,9 +56,6 @@ private:
 #ifdef HAVE_LIBPCRE2
 	/// The compiled libpcre2 regex.
 	pcre2_code *m_pcre2_regex;
-
-	/// The results of pcre_study()ing m_pcre_regex.
-	pcre_extra *m_pcre_extra;
 #endif
 };
 

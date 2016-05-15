@@ -51,7 +51,7 @@ FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 				m_ignore_case(ignore_case), m_word_regexp(word_regexp), m_pattern_is_literal(pattern_is_literal),
 				m_next_core(0), m_use_mmap(false), m_manually_assign_cores(false)
 {
-#ifdef HAVE_LIBPCRE
+#ifdef DELETEME
 	// Compile the regex.
 	const char *error;
 	int error_offset;
@@ -106,7 +106,7 @@ FileScanner::FileScanner(sync_queue<std::string> &in_queue,
 
 FileScanner::~FileScanner()
 {
-#ifdef HAVE_LIBPCRE
+#if DELETEME
 	pcre_free_study(m_pcre_extra);
 	pcre_free(m_pcre_regex);
 #endif
@@ -248,6 +248,7 @@ void FileScanner::ScanFileCpp11(const std::regex& /*expression*/, const char */*
 #endif
 }
 
+#if DELETEME
 void FileScanner::ScanFile(const char *file_data, size_t file_size, MatchList& ml)
 {
 	// Match output vector.  We won't support submatches, so we only need two entries, plus a third for pcre's own use.
@@ -382,3 +383,5 @@ void FileScanner::ScanFile(const char *file_data, size_t file_size, MatchList& m
 		ml.AddMatch(std::move(m));
 	}
 }
+#endif // DELETEME
+
