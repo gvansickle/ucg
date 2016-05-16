@@ -209,6 +209,9 @@ AC_CHECK_FUNCS([sched_setaffinity])
 AC_CHECK_FUNCS([get_current_dir_name])
 
 AC_CHECK_FUNCS([aligned_alloc posix_memalign])
+AS_IF([test "x$ac_cv_func_aligned_alloc" = xno -a "x$ac_cv_func_posix_memalign" = xno],
+	[AC_MSG_ERROR([cannot find an aligned memory allocator.])],
+	[AC_MSG_NOTICE([found a usable aligned memory allocator.])])
 
 AC_LANG_POP([C++])
 

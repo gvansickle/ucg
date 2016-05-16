@@ -22,9 +22,10 @@
 
 #include <cstdlib>
 #ifdef HAVE_ALIGNED_ALLOC
-// Nothing.
-#elif HAVE_MEMALIGN
-#define aligned_alloc(algn, size) memalign(algn, size)
+// Nothing to do.
+#elif HAVE_POSIX_MEMALIGN
+// Create a thin wrapper around posix_memalign().
+inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign(&p, algn, size); return p; };
 #else
 #error "Could not find aligned memory allocator."
 #endif
