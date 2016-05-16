@@ -452,41 +452,43 @@ void ArgParse::PrintVersionText(FILE* stream)
 	//
 	// libpcre info
 	//
-	std::fprintf(stream, "\nlibpcre info:\n");
+	{
+		std::fprintf(stream, "\nlibpcre info:\n");
 #ifndef HAVE_LIBPCRE
-	std::fprintf(stream, " Not linked against libpcre.\n");
+		std::fprintf(stream, " Not linked against libpcre.\n");
 #else
-	std::fprintf(stream, " Version: %s\n", pcre_version());
-	std::string s;
-	int is_jit;
-	s = "no";
-	if(pcre_config(PCRE_CONFIG_JIT, &is_jit) == 0)
-	{
-		s = is_jit ? "yes" : "no";
-	}
-	std::fprintf(stream, " JIT support built in?: %s\n", s.c_str());
-	const char *jittarget = "none";
-	if(pcre_config(PCRE_CONFIG_JITTARGET, &jittarget) == 0)
-	{
-		if(jittarget == NULL)
+		std::fprintf(stream, " Version: %s\n", pcre_version());
+		std::string s;
+		int is_jit;
+		s = "no";
+		if(pcre_config(PCRE_CONFIG_JIT, &is_jit) == 0)
 		{
-			jittarget = "none";
+			s = is_jit ? "yes" : "no";
 		}
-	}
-	std::fprintf(stream, " JIT target architecture: %s\n", jittarget);
-	int nl;
-	s = "unknown";
-	std::map<int, std::string> newline_desc { {10, "LF"}, {13, "CR"}, {3338, "CRLF"}, {-2, "ANYCRLF"}, {-1, "ANY"},
-											{21, "LF(EBCDIC)"}, {37, "LF(37)(EBCDIC)"}, {3349, "CRLF(EBCDIC)"}, {3365, "CRLF(37)(EBCDIC)"}};
-	if(pcre_config(PCRE_CONFIG_NEWLINE, &nl) == 0)
-	{
-		auto nl_type_name = newline_desc.find(nl);
-		if(nl_type_name != newline_desc.end())
+		std::fprintf(stream, " JIT support built in?: %s\n", s.c_str());
+		const char *jittarget = "none";
+		if(pcre_config(PCRE_CONFIG_JITTARGET, &jittarget) == 0)
 		{
-			s = nl_type_name->second;
+			if(jittarget == NULL)
+			{
+				jittarget = "none";
+			}
 		}
+		std::fprintf(stream, " JIT target architecture: %s\n", jittarget);
+		int nl;
+		s = "unknown";
+		std::map<int, std::string> newline_desc { {10, "LF"}, {13, "CR"}, {3338, "CRLF"}, {-2, "ANYCRLF"}, {-1, "ANY"},
+												{21, "LF(EBCDIC)"}, {37, "LF(37)(EBCDIC)"}, {3349, "CRLF(EBCDIC)"}, {3365, "CRLF(37)(EBCDIC)"}};
+		if(pcre_config(PCRE_CONFIG_NEWLINE, &nl) == 0)
+		{
+			auto nl_type_name = newline_desc.find(nl);
+			if(nl_type_name != newline_desc.end())
+			{
+				s = nl_type_name->second;
+			}
+		}
+		std::fprintf(stream, " Newline style: %s\n", s.c_str());
 	}
-	std::fprintf(stream, " Newline style: %s\n", s.c_str());
 #endif
 
 	//
