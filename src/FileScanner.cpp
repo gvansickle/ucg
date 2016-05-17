@@ -65,7 +65,14 @@ std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::string> &in_que
 		break;
 	default:
 		// Should never get here.  Throw.
-		throw FileScannerException(std::string("invalid RegexEngine specified: ") + std::to_string(static_cast<int>(engine)));
+		/// @todo GRVS - This should be as simple as putting a C++11 "std::to_string(error_offset)" into the string below.
+		///              However, there's an issue with at least Cygwin's std lib and/or gcc itself which makes to_string() unavailable
+		/// 			 (see e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580 (fixed on gcc trunk 2015-11-13),
+		/// 			 https://sourceware.org/ml/cygwin/2015-01/msg00251.html).  Since I don't want to wait for the fix to trickle
+		/// 			 out and I don't know how widespread the issue is, we'll do it the old-fashioned way.
+		std::ostringstream ss;
+		ss << static_cast<int>(engine);
+		throw FileScannerException(std::string("invalid RegexEngine specified: ") + ss.str());
 		break;
 	}
 

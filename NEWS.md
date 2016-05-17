@@ -4,6 +4,7 @@
 
 ### New Features
 - Experimental support for OSX and PC-BSD.
+- Now compiles and links with either or both of libpcre and libpcre2, if available.  Defaults to using libpcre2 for matching.
 
 ### Changed
 - A number of portability improvements related to OSX and PC-BSD support.

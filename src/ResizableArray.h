@@ -40,6 +40,10 @@ inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign
 template<typename T>
 class ResizableArray
 {
+	// Would pass this in as a defaulted template param, but gcc complains that "error: requested alignment is not an integer constant"
+	// no matter what I do (including initializing this var to the template param).
+	static constexpr int alignment  {32};
+
 public:
 	ResizableArray() noexcept = default;
 	~ResizableArray() noexcept
@@ -50,7 +54,7 @@ public:
 		}
 	};
 
-	T *__attribute__((aligned(32))) data() const noexcept __attribute__((malloc)) { return m_current_buffer; };
+	T *__attribute__((aligned(alignment))) data() const noexcept __attribute__((malloc)) { return m_current_buffer; };
 
 	void reserve_no_copy(std::size_t needed_size)
 	{
@@ -63,14 +67,13 @@ public:
 			}
 
 			m_current_buffer_size = needed_size;
-			m_current_buffer = static_cast<T*>(aligned_alloc(32, ((m_current_buffer_size*sizeof(T)+31)/32)*32));
+			m_current_buffer = static_cast<T*>(aligned_alloc(alignment, ((m_current_buffer_size*sizeof(T)+(alignment-1))/alignment)*alignment));
 		}
 	}
 
 private:
-
 	std::size_t m_current_buffer_size { 0 };
-	T *__attribute__((aligned(32))) m_current_buffer { nullptr };
+	T *__attribute__((aligned(alignment))) m_current_buffer { nullptr };
 };
 
 #endif /* SRC_RESIZABLEARRAY_H_ */
