@@ -22,6 +22,7 @@
 #include <vector>
 #include <thread>
 #include <utility>
+#include <cstdlib> // For abort().
 
 #include "sync_queue_impl_selector.h"
 
@@ -153,6 +154,6 @@ int main(int argc, char **argv)
 		// without an error code.  I ran into this when trying to instantiate std::locale with locale=="" in ArgParse,
 		// and before I had the std::runtime_error catch clause above.
 		std::cerr << "ucg: unknown exception occurred." << std::endl;
-		abort();
+		std::abort();
 	}
 }
