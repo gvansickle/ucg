@@ -42,7 +42,8 @@ class ResizableArray
 {
 	// Would pass this in as a defaulted template param, but gcc complains that "error: requested alignment is not an integer constant"
 	// no matter what I do (including initializing this var to the template param).
-	static constexpr int alignment  {32};
+	// Also can't make it a "static constexpr int alignment {32}", since that's broken on gcc ~4.8.4.
+#define alignment 32
 
 public:
 	ResizableArray() noexcept = default;
@@ -74,6 +75,7 @@ public:
 private:
 	std::size_t m_current_buffer_size { 0 };
 	T *__attribute__((aligned(alignment))) m_current_buffer { nullptr };
+#undef alignment
 };
 
 #endif /* SRC_RESIZABLEARRAY_H_ */
