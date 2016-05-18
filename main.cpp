@@ -22,6 +22,7 @@
 #include <vector>
 #include <thread>
 #include <utility>
+#include <cstdlib> // For abort().
 
 #include "sync_queue_impl_selector.h"
 
@@ -71,7 +72,7 @@ int main(int argc, char **argv)
 		OutputTask output_task(ap.m_color, ap.m_nocolor, ap.m_column, out_q);
 
 		// Create the FileScanner object.
-		FileScanner fs(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp, ap.m_pattern_is_literal);
+		std::unique_ptr<FileScanner> fs(FileScanner::Create(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp, ap.m_pattern_is_literal));
 
 		// Start the output task thread.
 		std::thread ot {&OutputTask::Run, &output_task};
@@ -79,7 +80,7 @@ int main(int argc, char **argv)
 		// Start the scanner threads.
 		for(int t=0; t<ap.m_jobs; ++t)
 		{
-			std::thread fst {&FileScanner::Run, &fs};
+			std::thread fst {&FileScanner::Run, fs.get()};
 			scanner_threads.push_back(std::move(fst));
 		}
 
@@ -153,6 +154,6 @@ int main(int argc, char **argv)
 		// without an error code.  I ran into this when trying to instantiate std::locale with locale=="" in ArgParse,
 		// and before I had the std::runtime_error catch clause above.
 		std::cerr << "ucg: unknown exception occurred." << std::endl;
-		abort();
+		std::abort();
 	}
 }

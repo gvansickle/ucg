@@ -131,12 +131,29 @@ AC_LANG_PUSH([C++])
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
-	[AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])],
-	[AC_MSG_ERROR([Unable to find libpcre])])
+	[
+		AC_SUBST([HAVE_LIBPCRE],[yes])
+		AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])
+	],
+	[AC_MSG_WARN([Unable to find libpcre: $PCRE_PKG_ERRORS])])
 AC_MSG_NOTICE([PCRE_LIBS=${PCRE_LIBS}])
 AC_MSG_NOTICE([PCRE_CFLAGS=${PCRE_CFLAGS}])
 CPPFLAGS="$PCRE_CFLAGS $CPPFLAGS"
 LIBS="$PCRE_LIBS $LIBS"
+
+PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.0],
+	[
+		AC_SUBST([HAVE_LIBPCRE2],[yes])
+		AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
+	],
+	[AC_MSG_WARN([Unable to find libpcre2: $PCRE2_PKG_ERRORS])])
+CPPFLAGS="$PCRE2_CFLAGS $CPPFLAGS"
+LIBS="$PCRE2_LIBS $LIBS"
+
+# Make sure we found at least one of them.
+AS_IF([test "x$HAVE_LIBPCRE" = x -a "x$HAVE_LIBPCRE2" = x],
+	[AC_MSG_ERROR([unable to find a suitable pcre library.])],
+	[AC_MSG_NOTICE([found at least one usable pcre library.])])
 
 AC_LANG_POP([C++])
 
@@ -175,12 +192,16 @@ AC_LANG_PUSH([C++])
 # Append them to AM_CXXFLAGS if it does.
 
 # Capture the compile command line in the binary.
-AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS]) 
+AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS])
+#AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS])
+#AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be.
+AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CXXFLAGS]) #  -fopt-info-vec-all
+#AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])
 
-# Put this back in to help with profiling.
+# Put this in to help with profiling.
 #AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 
 AC_LANG_POP([C++])
@@ -197,6 +218,11 @@ AC_SEARCH_LIBS([argp_parse],[argp])
 AC_CHECK_FUNCS([sched_setaffinity])
 
 AC_CHECK_FUNCS([get_current_dir_name])
+
+AC_CHECK_FUNCS([aligned_alloc posix_memalign])
+AS_IF([test "x$ac_cv_func_aligned_alloc" = xno -a "x$ac_cv_func_posix_memalign" = xno],
+	[AC_MSG_ERROR([cannot find an aligned memory allocator.])],
+	[AC_MSG_NOTICE([found a usable aligned memory allocator.])])
 
 AC_LANG_POP([C++])
 

@@ -20,18 +20,33 @@
 #ifndef FILESCANNER_H_
 #define FILESCANNER_H_
 
-#include <stdexcept>
-#include <string>
-#include <regex>
-
 #include "config.h"
 
-#ifdef HAVE_LIBPCRE
-#include <pcre.h>
-#endif
+#include <stdexcept>
+#include <string>
+#include <memory>
 
 #include "sync_queue_impl_selector.h"
 #include "MatchList.h"
+
+
+/// The regular expression engines we support.
+/// @note Which of these is supported depends on which libraries were available at compile-time.
+enum class RegexEngine
+{
+	NONE,	//!< No engine available.
+	CXX11, 	//!< C++11's built-in <regex> support.
+	PCRE,	//!< The original libpcre.
+	PCRE2,	//!< libpcre2
+
+#if HAVE_LIBPCRE2
+	DEFAULT = PCRE2,
+#elif HAVE_LIBPCRE
+	DEFAULT = PCRE,
+#else
+	DEFAULT = NONE,
+#endif
+};
 
 
 /**
@@ -44,10 +59,32 @@ struct FileScannerException : public std::runtime_error
 
 
 /**
- * Class which does the actual regex scanning of a file.
+ * Base class for the classes which do the actual regex scanning of the file contents.
  */
 class FileScanner
 {
+public:
+
+	/**
+	 * Factory Method for creating a new FileScanner-derived class.
+	 *
+	 * @param in_queue
+	 * @param output_queue
+	 * @param regex
+	 * @param ignore_case
+	 * @param word_regexp
+	 * @param pattern_is_literal
+	 * @param engine
+	 * @return
+	 */
+	static std::unique_ptr<FileScanner> Create(sync_queue<std::string> &in_queue,
+			sync_queue<MatchList> &output_queue,
+			std::string regex,
+			bool ignore_case,
+			bool word_regexp,
+			bool pattern_is_literal,
+			RegexEngine engine = RegexEngine::DEFAULT);
+
 public:
 	FileScanner(sync_queue<std::string> &in_queue,
 			sync_queue<MatchList> &output_queue,
@@ -58,6 +95,13 @@ public:
 	virtual ~FileScanner();
 
 	void Run();
+
+protected:
+	bool m_ignore_case;
+
+	bool m_word_regexp;
+
+	bool m_pattern_is_literal;
 
 private:
 
@@ -71,43 +115,19 @@ private:
 	void AssignToNextCore();
 
 	/**
-	 * Scan @a file_data for matches of @a regex using C++11's <regex> facilities.  Add hits to @a ml.
-	 *
-	 * @param regex
-	 * @param file_data
-	 * @param file_size
-	 * @param ml
-	 */
-	void ScanFileCpp11(const std::regex &regex, const char *file_data, size_t file_size, MatchList &ml);
-
-	/**
-	 * Scan @a file_data for matches of m_pcre_regex using libpcre.  Add hits to @a ml.
+	 * Scan @a file_data for matches of the regex.  Add hits to @a ml.
 	 *
 	 * @param file_data
 	 * @param file_size
 	 * @param ml
 	 */
-	void ScanFileLibPCRE(const char *file_data, size_t file_size, MatchList &ml);
+	virtual void ScanFile(const char * __restrict__ file_data, size_t file_size, MatchList &ml) = 0;
 
 	sync_queue<std::string>& m_in_queue;
 
 	sync_queue<MatchList> &m_output_queue;
 
 	std::string m_regex;
-
-#ifdef HAVE_LIBPCRE
-	/// The compiled libpcre regex.
-	pcre *m_pcre_regex;
-
-	/// The results of pcre_study()ing m_pcre_regex.
-	pcre_extra *m_pcre_extra;
-#endif
-
-	bool m_ignore_case;
-
-	bool m_word_regexp;
-
-	bool m_pattern_is_literal;
 
 	int m_next_core;
 

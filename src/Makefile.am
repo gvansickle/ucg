@@ -1,6 +1,6 @@
 # Second-level Makefile.am for UniversalCodeGrep, ./src directory.
 #
-# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -24,6 +24,9 @@ libsrc_a_SOURCES = \
 	MatchList.cpp MatchList.h \
 	File.cpp File.h \
 	FileScanner.cpp FileScanner.h \
+	FileScannerCpp11.cpp FileScannerCpp11.h \
+	FileScannerPCRE.cpp FileScannerPCRE.h \
+	FileScannerPCRE2.cpp FileScannerPCRE2.h \
 	OutputTask.cpp OutputTask.h \
 	ResizableArray.h \
 	sync_queue.h \

@@ -18,11 +18,21 @@
 #ifndef SRC_RESIZABLEARRAY_H_
 #define SRC_RESIZABLEARRAY_H_
 
-#include <new>
+#include "config.h"
+
+#include <cstdlib>
+#ifdef HAVE_ALIGNED_ALLOC
+// Nothing to do.
+#elif HAVE_POSIX_MEMALIGN
+// Create a thin wrapper around posix_memalign().
+inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign(&p, algn, size); return p; };
+#else
+#error "Could not find aligned memory allocator."
+#endif
 
 /**
  * This is sort of a poor-man's std::allocator<>, without the std.  We use it in the File() constructor
- * to get a buffer to read the file data into.  By instantiating one of these objects prior to a loop of
+ * to get an uninitialized buffer to read the file data into.  By instantiating one of these objects prior to a loop of
  * File() constructions, we will simply recycle the same buffer unless we need a larger one, instead of
  * deleting/newing a brand-new buffer for every file we read in.  This can reduce allocation traffic considerably.
  * See FileScanner::Run() for this sort of usage.
@@ -30,17 +40,22 @@
 template<typename T>
 class ResizableArray
 {
+	// Would pass this in as a defaulted template param, but gcc complains that "error: requested alignment is not an integer constant"
+	// no matter what I do (including initializing this var to the template param).
+	// Also can't make it a "static constexpr int alignment {32}", since that's broken on gcc ~4.8.4.
+#define alignment 32
+
 public:
 	ResizableArray() noexcept = default;
 	~ResizableArray() noexcept
 	{
 		if(m_current_buffer!=nullptr)
 		{
-			::operator delete(m_current_buffer);
+			std::free(m_current_buffer);
 		}
 	};
 
-	T * data() const noexcept { return m_current_buffer; };
+	T *__attribute__((aligned(alignment))) data() const noexcept __attribute__((malloc)) { return m_current_buffer; };
 
 	void reserve_no_copy(std::size_t needed_size)
 	{
@@ -49,18 +64,18 @@ public:
 			// Need to allocate a new raw buffer.
 			if(m_current_buffer!=nullptr)
 			{
-				::operator delete(m_current_buffer);
+				std::free(m_current_buffer);
 			}
 
 			m_current_buffer_size = needed_size;
-			m_current_buffer = static_cast<T*>(::operator new(m_current_buffer_size*sizeof(T)));
+			m_current_buffer = static_cast<T*>(aligned_alloc(alignment, ((m_current_buffer_size*sizeof(T)+(alignment-1))/alignment)*alignment));
 		}
 	}
 
 private:
-
 	std::size_t m_current_buffer_size { 0 };
-	T *m_current_buffer { nullptr };
+	T *__attribute__((aligned(alignment))) m_current_buffer { nullptr };
+#undef alignment
 };
 
 #endif /* SRC_RESIZABLEARRAY_H_ */
