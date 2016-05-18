@@ -10,6 +10,7 @@
 - A number of portability improvements related to OSX and PC-BSD support.
 - Reduce unnecessary mutex contention, spurious thread wakes in sync_queue<>.
 - Scanner threads now use a reuseable buffer when reading in files, reducing memory allocations by ~10% (and ~40% fewer bytes allocated) compared to version 0.2.2.
+- Refactored FileScanner to be a base class with derived classes handling the particulars of using libpcre or libpcre2 to do the scanning. 
 
 ### Fixed
 - Cygwin now requires AC_USE_SYSTEM_EXTENSIONS for access to get_current_dir_name().  Resolves #76.
