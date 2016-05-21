@@ -104,11 +104,11 @@ void Globber::Run()
 		{
 			//std::clog << "... normal file." << std::endl;
 			// It's a normal file.  Check for inclusion.
-			if(m_type_manager.FileShouldBeScanned(ftsent->fts_name))
+			if(m_type_manager.FileShouldBeScanned(std::string(ftsent->fts_name, ftsent->fts_namelen)))
 			{
 				//std::clog << "... should be scanned." << std::endl;
 				// Extension was in the hash table.
-				m_out_queue.wait_push(std::string(ftsent->fts_path));
+				m_out_queue.wait_push(std::string(ftsent->fts_path, ftsent->fts_pathlen));
 
 				// Count the number of files we found that were included in the search.
 				m_num_files_found++;

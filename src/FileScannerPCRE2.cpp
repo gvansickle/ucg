@@ -37,7 +37,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 	uint32_t options = 0;
 
 	// For now, we won't support capturing.  () will be treated as (?:).
-	options = PCRE2_NO_AUTO_CAPTURE;
+	options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE | PCRE2_NEVER_BACKSLASH_C | PCRE2_NEVER_UTF | PCRE2_NEVER_UCP;
 
 	if(ignore_case)
 	{
@@ -216,7 +216,8 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 
 		// There was a match.  Package it up in the MatchList which was passed in.
 		/// @todo Optimize this count.
-		long num_lines_since_last_match = 0; // = std::count(prev_lineno_search_end, file_data+ovector[0], '\n');
+#if 0
+		size_t num_lines_since_last_match = 0;
 		for(const char *i = prev_lineno_search_end; i<file_data+ovector[0]; ++i)
 		{
 			if(*i == '\n')
@@ -225,6 +226,8 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 			}
 		}
 		line_no += num_lines_since_last_match;
+#endif
+		line_no += CountLinesSinceLastMatch(prev_lineno_search_end, file_data+ovector[0]);
 		prev_lineno_search_end = file_data+ovector[0];
 		if(line_no == prev_lineno)
 		{

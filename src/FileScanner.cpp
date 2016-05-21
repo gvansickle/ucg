@@ -109,13 +109,14 @@ void FileScanner::Run()
 	std::string next_string;
 	while(m_in_queue.wait_pull(std::move(next_string)) != queue_op_status::closed)
 	{
-		MatchList ml(next_string);
-
 		try
 		{
 			// Try to open and read the file.  This could throw.
 			//std::clog << "Trying to scan file " << next_string << std::endl;
 			File f(next_string, file_data_storage);
+
+			MatchList ml(next_string);
+
 
 			if(f.size() == 0)
 			{
@@ -176,4 +177,34 @@ void FileScanner::AssignToNextCore()
 #endif
 }
 
+size_t FileScanner::CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
+		const char * __restrict__ start_of_current_match) noexcept
+{
+	size_t num_lines_since_last_match = 0;
 
+#if 0
+	for(const char *i = prev_lineno_search_end; i<start_of_current_match; ++i)
+	{
+		if(*i == '\n')
+		{
+			++num_lines_since_last_match;
+		}
+	}
+#else
+	const char * last_ptr = prev_lineno_search_end;
+	while(1)
+	{
+		last_ptr = (const char*)memchr((const void*)last_ptr, '\n', start_of_current_match-last_ptr);
+		if(last_ptr != NULL)
+		{
+			++num_lines_since_last_match;
+			++last_ptr;
+		}
+		else
+		{
+			break;
+		}
+	}
+#endif
+	return num_lines_since_last_match;
+}

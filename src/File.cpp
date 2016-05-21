@@ -97,7 +97,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 
 	if(m_use_mmap)
 	{
-		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE, file_descriptor, 0));
+		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE /*| MAP_POPULATE*/, file_descriptor, 0));
 
 		if(file_data == MAP_FAILED)
 		{
@@ -107,11 +107,26 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 		}
 
 		// Hint that we'll be sequentially reading the mmapped file soon.
-		posix_madvise(const_cast<char*>(file_data), file_size, POSIX_MADV_SEQUENTIAL | POSIX_MADV_WILLNEED);
+		if(0)
+		{
+			posix_madvise(const_cast<char*>(file_data), file_size, POSIX_MADV_SEQUENTIAL | POSIX_MADV_WILLNEED);
+		}
+		else
+		{
+			if(0 != madvise(const_cast<char*>(file_data), file_size, MADV_SEQUENTIAL | MADV_WILLNEED | MADV_DONTFORK))
+			{
+				std::cout << "madvise() failed." << std::endl;
+				exit(1);
+			}
+		}
 
 	}
 	else
 	{
+		// Not using mmap().
+
+		posix_fadvise(file_descriptor, 0, 0, POSIX_FADV_SEQUENTIAL | POSIX_FADV_WILLNEED);
+
 		m_storage->reserve_no_copy(file_size);
 		file_data = m_storage->data();
 
