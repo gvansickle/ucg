@@ -107,19 +107,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 		}
 
 		// Hint that we'll be sequentially reading the mmapped file soon.
-		if(0)
-		{
-			posix_madvise(const_cast<char*>(file_data), file_size, POSIX_MADV_SEQUENTIAL | POSIX_MADV_WILLNEED);
-		}
-		else
-		{
-			if(0 != madvise(const_cast<char*>(file_data), file_size, MADV_SEQUENTIAL | MADV_WILLNEED | MADV_DONTFORK))
-			{
-				std::cout << "madvise() failed." << std::endl;
-				exit(1);
-			}
-		}
-
+		posix_madvise(const_cast<char*>(file_data), file_size, POSIX_MADV_SEQUENTIAL | POSIX_MADV_WILLNEED);
 	}
 	else
 	{
@@ -131,6 +119,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 		file_data = m_storage->data();
 
 		// Read in the whole file.
+		/// @todo Handle read() errors better.
 		while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
 	}
 
