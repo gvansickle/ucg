@@ -96,7 +96,8 @@ void Globber::Run()
 	/// files without the stat, so they get returned as FTS_NSOK / 11 /	no stat(2) requested.
 	/// Does not seem to affect performance on Linux, but might be having an effect on Cygwin.
 	/// Look into workarounds.
-	FTS *fts = fts_open(dirs, FTS_LOGICAL /*| FTS_NOCHDIR*/ | FTS_NOSTAT, NULL);
+	/// @note Per looking at the fts_open() source, FTS_LOGICAL turns on FTS_NOCHDIR, so we'll specify it.
+	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/, NULL);
 	while(FTSENT *ftsent = fts_read(fts))
 	{
 		//std::clog << "Considering file: " << ftsent->fts_path << std::endl;
