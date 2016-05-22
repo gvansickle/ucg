@@ -105,15 +105,25 @@ void FileScanner::Run()
 	// Create a reusable, resizable buffer for the File() reads.
 	auto file_data_storage = std::make_shared<ResizableArray<char>>();
 
+	using namespace std::chrono;
+	steady_clock::duration accum_elapsed_time {0};
+	long long total_bytes_read {0};
+
 	// Pull new filenames off the input queue until it's closed.
 	std::string next_string;
 	while(m_in_queue.wait_pull(std::move(next_string)) != queue_op_status::closed)
 	{
+
 		try
 		{
 			// Try to open and read the file.  This could throw.
 			//std::clog << "Trying to scan file " << next_string << std::endl;
+			steady_clock::time_point start = steady_clock::now();
 			File f(next_string, file_data_storage);
+			steady_clock::time_point end = steady_clock::now();
+			accum_elapsed_time += (end - start);
+			total_bytes_read += f.size();
+
 
 			MatchList ml(next_string);
 
@@ -128,7 +138,7 @@ void FileScanner::Run()
 			size_t file_size = f.size();
 
 			// Scan the file data for occurrences of the regex, sending matches to the MatchList ml.
-			ScanFile(file_data, file_size, ml);
+			//ScanFile(file_data, file_size, ml);
 
 			if(!ml.empty())
 			{
@@ -152,6 +162,11 @@ void FileScanner::Run()
 			throw;
 		}
 	}
+
+	duration<double> elapsed = duration_cast<duration<double>>(accum_elapsed_time);
+	std::stringstream s;
+	s << "Total bytes read = " << total_bytes_read << ", elapsed time = " << elapsed.count() << ", Bytes/Sec=" << total_bytes_read/elapsed.count() << std::endl;
+	std::cout << s.str()  << std::endl;
 }
 
 void FileScanner::AssignToNextCore()

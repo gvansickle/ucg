@@ -37,6 +37,12 @@
 
 int main(int argc, char **argv)
 {
+	using per = std::chrono::steady_clock::period;
+	using per2 = std::chrono::high_resolution_clock::period;
+
+	std::cout << "steady_clock period=" << per::num << "/" << per::den << " seconds" << std::endl;
+	std::cout << "high_resolution_clock period=" << per2::num << "/" << per2::den << " seconds" << std::endl;
+
 	try
 	{
 		// We'll keep the scanner threads in this vector so we can join() them later.
