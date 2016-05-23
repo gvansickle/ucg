@@ -20,6 +20,7 @@
 #ifndef GLOBBER_H_
 #define GLOBBER_H_
 
+#include <config.h>
 
 #include <vector>
 #include <string>
@@ -43,9 +44,9 @@ public:
 
 	void Run();
 
-	bool Error() { return m_bad_path.size() != 0; };
+	bool Error() const noexcept { return m_bad_path.size() != 0; };
 
-	std::string ErrorPath() { return m_bad_path; };
+	std::string ErrorPath() const noexcept { return m_bad_path; };
 
 private:
 	std::vector<std::string> m_start_paths;

@@ -113,7 +113,6 @@ void FileScanner::Run()
 	std::string next_string;
 	while(m_in_queue.wait_pull(std::move(next_string)) != queue_op_status::closed)
 	{
-
 		try
 		{
 			// Try to open and read the file.  This could throw.
