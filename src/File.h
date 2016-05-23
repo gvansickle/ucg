@@ -20,6 +20,8 @@
 #ifndef FILE_H_
 #define FILE_H_
 
+#include <config.h>
+
 #include <string>
 #include <stdexcept>
 #include <memory>

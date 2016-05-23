@@ -17,6 +17,8 @@
 
 /** @file */
 
+#include <config.h>
+
 #include "File.h"
 
 #include <iostream>
@@ -68,7 +70,6 @@ File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> st
 		//std::cerr << "WARNING: Filesize of \"" << filename << "\" is 0" << std::endl;
 		close(m_file_descriptor);
 		m_file_descriptor = -1;
-		/// @todo Throw here?
 		return;
 	}
 
