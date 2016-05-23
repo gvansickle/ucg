@@ -32,6 +32,7 @@
 #include <sstream>
 #include <thread>
 #include <mutex>
+#include <cstring> // For memchr().
 #ifndef HAVE_SCHED_SETAFFINITY
 #else
 	#include <sched.h>
@@ -208,7 +209,7 @@ size_t FileScanner::CountLinesSinceLastMatch(const char * __restrict__ prev_line
 	const char * last_ptr = prev_lineno_search_end;
 	while(1)
 	{
-		last_ptr = (const char*)memchr((const void*)last_ptr, '\n', start_of_current_match-last_ptr);
+		last_ptr = (const char*)std::memchr((const void*)last_ptr, '\n', start_of_current_match-last_ptr);
 		if(last_ptr != NULL)
 		{
 			++num_lines_since_last_match;
