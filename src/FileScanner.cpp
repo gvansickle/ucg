@@ -163,10 +163,12 @@ void FileScanner::Run()
 		}
 	}
 
+#if TODO
 	duration<double> elapsed = duration_cast<duration<double>>(accum_elapsed_time);
 	std::stringstream s;
 	s << "Total bytes read = " << total_bytes_read << ", elapsed time = " << elapsed.count() << ", Bytes/Sec=" << total_bytes_read/elapsed.count() << std::endl;
 	std::cout << s.str()  << std::endl;
+#endif
 }
 
 void FileScanner::AssignToNextCore()
