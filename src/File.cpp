@@ -114,7 +114,9 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 	{
 		// Not using mmap().
 
+#ifdef HAVE_POSIX_FADVISE // OSX doesn't have it.
 		posix_fadvise(file_descriptor, 0, 0, POSIX_FADV_SEQUENTIAL | POSIX_FADV_WILLNEED);
+#endif
 
 		m_storage->reserve_no_copy(file_size);
 		file_data = m_storage->data();
