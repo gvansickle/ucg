@@ -17,9 +17,9 @@ before_install:
 before_script:
  - echo "g++ --version:" && g++ --version && echo "===="
  - # pwd ==> /home/travis/build/gvansickle/ucg
- - mkdir ../src && cd ../src && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
+ - cd ../ && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
  - tar xjf boost_1_58_0.tar.bz2
- - cd ../ucg
+ - cd ucg
 
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
