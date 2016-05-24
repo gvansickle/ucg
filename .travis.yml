@@ -33,6 +33,7 @@ script:
  - ../configure
  - make
  - make check #TESTSUITEFLAGS='-v -d -x'
+ - cat tests/perf_test_results.txt
  - ./ucg --cpp 'endif' ..
  - ./ucg --cpp 'endif' ../
  - if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
