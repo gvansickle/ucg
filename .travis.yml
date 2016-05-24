@@ -16,7 +16,9 @@ before_install:
 
 before_script:
  - echo "g++ --version:" && g++ --version && echo "===="
- - find /usr/local/include/boost -iname '*.hpp'
+ - pwd
+ - #mkdir src && cd src && wget http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.bz2
+ - #mv boost_1_61_0.tar.bz2 ~/src && tar xjf boost_1_61_0.tar.bz2
 
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
