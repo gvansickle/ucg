@@ -16,7 +16,7 @@ before_install:
 
 before_script:
  - echo "g++ --version:" && g++ --version && echo "===="
- - find /usr -iname '*boost*'
+ - find /usr/local/include/boost -iname '*.hpp'
 
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
