@@ -18,7 +18,7 @@
 m4_define([EXTRACT_AND_APPEND_TIME],[
 		# $1 == program name.
 		AS_ECHO_N(["| $1 | "]) >> $PERF_RESULTS_FILE;
-		cat stderr | egrep "real[[[:space:]]]+" | sed -r 's/real[[[:space:]]]+(.*)/\1/' | tr -d '\n' >> $PERF_RESULTS_FILE;
+		cat stderr | egrep "real[[[:space:]]]+" | sed -E 's/real[[[:space:]]]+(.*)/\1/' | tr -d '\n' >> $PERF_RESULTS_FILE;
 		AS_ECHO_N(" | ") >> $PERF_RESULTS_FILE;
 		cat stdout | LCT >> $PERF_RESULTS_FILE;
 		AS_ECHO([" |"]) >> $PERF_RESULTS_FILE;
