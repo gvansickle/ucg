@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
-
 m4_define([EXTRACT_AND_APPEND_TIME],[
 		# $1 == program name.
 		AS_ECHO_N(["| $1 | "]) >> $PERF_RESULTS_FILE;
@@ -28,7 +27,7 @@ m4_define([EXTRACT_AND_APPEND_TIME],[
 m4_define([PREP_ONE_PROG],[
 # $1 == program name.
 # $2 == search pattern.
-AT_CHECK([time $1 $2 ${BOOST_PATH}],
+AT_CHECK([time -p $1 $2 ${BOOST_PATH}],
 	0,
 	ignore,
 	ignore)
@@ -40,7 +39,7 @@ m4_define([TIME_ONE_PROG],[
 # $3 == params
 NOENV=$(if $(echo $1 | egrep -q 'ucg|ack'); then echo --noenv; else echo ""; fi)
 PREP_ONE_PROG([$1 ${NOENV}], [$2], [$3])
-AT_CHECK([time $1 ${NOENV} $2 ${BOOST_PATH} $3],
+AT_CHECK([time -p $1 ${NOENV} $2 ${BOOST_PATH} $3],
 	0,
 	stdout,
 	stderr,
