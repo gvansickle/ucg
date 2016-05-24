@@ -11,8 +11,8 @@ compiler:
   - gcc
 
 before_install:
- - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre argp-standalone; fi
- - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev; fi
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre argp-standalone the_silver_searcher; fi
+ - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev && sudo apt-get install -qq the_silver_searcher; fi
 
 before_script:
  - echo "g++ --version:" && g++ --version && echo "===="
@@ -20,6 +20,7 @@ before_script:
  - cd ../ && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
  - tar xjf boost_1_58_0.tar.bz2
  - cd ucg
+ - which time
 
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
