@@ -19,7 +19,6 @@ before_script:
  - time echo "hello"
  - time -p echo "hello"
  - /usr/bin/time -p echo "hello"
- - /usr/bin/time --version
  - echo "g++ --version:" && g++ --version && echo "===="
  - # pwd ==> /home/travis/build/gvansickle/ucg
  - cd ../ && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
