@@ -21,6 +21,8 @@ before_script:
  - tar xjf boost_1_58_0.tar.bz2
  - cd ucg
  - which time
+ - time echo "hello"
+ - time -p echo "hello"
 
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
