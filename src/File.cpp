@@ -132,7 +132,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 	return file_data;
 }
 
-void File::FreeFileData(const char* file_data, size_t file_size)
+void File::FreeFileData(const char* file_data, size_t file_size) noexcept
 {
 	if(m_use_mmap)
 	{

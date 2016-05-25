@@ -77,7 +77,7 @@ private:
 	 * @param file_data  Pointer to the file data, as returned by GetFile().
 	 * @param file_size  The same file_size used in the call to GetFile().
 	 */
-	void FreeFileData(const char * file_data, size_t file_size);
+	void FreeFileData(const char * file_data, size_t file_size) noexcept;
 
 	std::string m_filename;
 

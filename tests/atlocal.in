@@ -60,6 +60,3 @@ ASX_SCRIPT ()
 		*) exit 1;;
 	esac
 }
-
-PROG_TIME='time -p'
-
