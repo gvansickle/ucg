@@ -90,7 +90,8 @@ AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
 AS_ECHO(["| Command | Time | Matching Lines |"]) >> $PERF_RESULTS_FILE;
 AS_ECHO(["|---------|------|----------------|"]) >> $PERF_RESULTS_FILE;
 TIME_ONE_PROG([ucg --cpp], ['BOOST.*HPP'])
-TIME_ONE_PROG([grep -Prn --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx], ['BOOST.*HPP'])
+# BSD grep as used on OSX doesn't understand "-P" (== use Perl regexes). 
+TIME_ONE_PROG([grep -Ern --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx], ['BOOST.*HPP'])
 
 AT_CLEANUP
 
