@@ -55,7 +55,7 @@ public:
 		}
 	};
 
-	T *__attribute__((aligned(alignment))) data() const noexcept __attribute__((malloc)) { return m_current_buffer; };
+	T *__attribute__((aligned(alignment))) data() const noexcept __attribute__((malloc)) { return (T*)__builtin_assume_aligned(m_current_buffer, alignment); };
 
 	void reserve_no_copy(std::size_t needed_size)
 	{

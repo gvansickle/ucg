@@ -24,6 +24,7 @@
 #include "FileScannerPCRE.h"
 #include "FileScannerPCRE2.h"
 #include "File.h"
+#include "Logger.h"
 #include "Match.h"
 #include "MatchList.h"
 
@@ -134,7 +135,7 @@ void FileScanner::Run()
 				continue;
 			}
 
-			const char *file_data = f.data();
+			const char *file_data = (const char*)__builtin_assume_aligned(f.data(), 512);
 			size_t file_size = f.size();
 
 			// Scan the file data for occurrences of the regex, sending matches to the MatchList ml.
@@ -163,11 +164,9 @@ void FileScanner::Run()
 		}
 	}
 
-#if TODO
+#if 0
 	duration<double> elapsed = duration_cast<duration<double>>(accum_elapsed_time);
-	std::stringstream s;
-	s << "Total bytes read = " << total_bytes_read << ", elapsed time = " << elapsed.count() << ", Bytes/Sec=" << total_bytes_read/elapsed.count() << std::endl;
-	std::cout << s.str()  << std::endl;
+	LOG(INFO) << "Total bytes read = " << total_bytes_read << ", elapsed time = " << elapsed.count() << ", Bytes/Sec=" << total_bytes_read/elapsed.count() << std::endl;
 #endif
 }
 

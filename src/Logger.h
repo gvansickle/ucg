@@ -18,10 +18,38 @@
 #ifndef SRC_LOGGER_H_
 #define SRC_LOGGER_H_
 
-class Logger {
+#include <config.h>
+
+#include <iostream>
+#include <sstream>
+
+/// @todo Enabled/Disabled configuration, redirecting to streams/files, timestamp, thread ID, maybe sorting by timestamp....
+
+class Logger
+{
 public:
 	Logger();
-	virtual ~Logger();
+	virtual ~Logger()
+	{
+		std::cerr << m_tempstream.str();
+	}
+
+	/// We'll use this stringstream to buffer up whatever the caller wants to log, then send it
+	/// to the target stream (e.g. std::cerr) in one operation.  That way we don't have to worry about
+	/// concurrency issues.
+	std::stringstream m_tempstream;
 };
+
+class INFO : public Logger
+{
+public:
+	INFO() { m_tempstream << "INFO: "; };
+	~INFO() override = default;
+
+	static bool IsEnabled() noexcept { return true; };
+};
+
+
+#define LOG(logger) logger::IsEnabled() && logger().m_tempstream
 
 #endif /* SRC_LOGGER_H_ */
