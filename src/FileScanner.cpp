@@ -134,7 +134,7 @@ void FileScanner::Run()
 				continue;
 			}
 
-			const char *file_data = f.data();
+			const char *file_data = (const char *)__builtin_assume_aligned(f.data(), 16);
 			size_t file_size = f.size();
 
 			// Scan the file data for occurrences of the regex, sending matches to the MatchList ml.

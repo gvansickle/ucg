@@ -104,16 +104,25 @@ void Globber::Run()
 	FTS *fts = fts_open(dirs, FTS_LOGICAL  /*| FTS_NOSTAT*/, NULL);
 	while(FTSENT *ftsent = fts_read(fts))
 	{
+		std::string name;
+		std::string path;
+
+		if(ftsent->fts_info == FTS_F || ftsent->fts_info == FTS_D)
+		{
+			name.assign(ftsent->fts_name, ftsent->fts_namelen);
+			path.assign(ftsent->fts_path, ftsent->fts_pathlen);
+		}
+
 		//std::clog << "Considering file: " << ftsent->fts_path << std::endl;
 		if(ftsent->fts_info == FTS_F)
 		{
 			//std::clog << "... normal file." << std::endl;
 			// It's a normal file.  Check for inclusion.
-			if(m_type_manager.FileShouldBeScanned(std::string(ftsent->fts_name, ftsent->fts_namelen)))
+			if(m_type_manager.FileShouldBeScanned(name))
 			{
 				//std::clog << "... should be scanned." << std::endl;
 				// Extension was in the hash table.
-				m_out_queue.wait_push(std::string(ftsent->fts_path, ftsent->fts_pathlen));
+				m_out_queue.wait_push(std::move(path));
 
 				// Count the number of files we found that were included in the search.
 				m_num_files_found++;
@@ -128,7 +137,7 @@ void Globber::Run()
 				// We were told not to recurse into subdirectories.
 				fts_set(fts, ftsent, FTS_SKIP);
 			}
-			if(m_dir_inc_manager.DirShouldBeExcluded(ftsent->fts_path, ftsent->fts_name))
+			if(m_dir_inc_manager.DirShouldBeExcluded(path, name))
 			{
 				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 				fts_set(fts, ftsent, FTS_SKIP);
