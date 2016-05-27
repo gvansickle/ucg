@@ -32,8 +32,8 @@
 class TypeManager;
 class DirInclusionManager;
 
-/*
- *
+/**
+ * This class does the directory tree traversal.
  */
 class Globber
 {
