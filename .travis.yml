@@ -17,10 +17,6 @@ before_install:
 before_script:
  - echo "g++ --version:" && g++ --version && echo "===="
  - # pwd ==> /home/travis/build/gvansickle/ucg
- - cd ../ && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
- - tar xjf boost_1_58_0.tar.bz2
- - cd ucg
-
 
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
@@ -33,12 +29,16 @@ script:
  - cd build
  - ../configure
  - make
+ - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
+
+after_success:
+ - cd ../ && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
+ - tar xjf boost_1_58_0.tar.bz2
+ - cd ucg
  - make check #TESTSUITEFLAGS='-v -d -x'
  - cat tests/perf_test_results.txt
  - #./ucg --cpp 'endif' ..
  - #./ucg --cpp 'endif' ../
  - #if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
  - #if [ $TRAVIS_OS_NAME == linux ]; then LD_DEBUG=all && ldd -v ucg; fi
- - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
  - #find . -iname '*.log' -exec cat "{}" \; 
-
