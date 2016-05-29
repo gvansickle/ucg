@@ -210,7 +210,7 @@ size_t FileScanner::CountLinesSinceLastMatch(const char * __restrict__ prev_line
 		int substr_len = len-i < 16 ? len-i : 16;
 		__m128i substr = _mm_loadu_si128((const __m128i*)last_ptr);
 		__m128i match_mask = _mm_cmpestrm(substr, substr_len, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
-		num_lines_since_last_match += __popcntq(_mm_cvtsi128_si64(match_mask));
+		num_lines_since_last_match += __builtin_popcountll(_mm_cvtsi128_si64(match_mask));
 	}
 #elif 0
 	for(const char *i = prev_lineno_search_end; i<start_of_current_match; ++i)
