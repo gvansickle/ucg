@@ -63,7 +63,7 @@ void MatchList::Print(bool istty, bool enable_color, bool print_column) const
 	{
 		// Render to a TTY device.
 
-		std::cout << color_filename << no_dotslash_fn << color_default << std::endl;
+		std::cout << color_filename << no_dotslash_fn << color_default << "\n";
 		for(const Match& it : m_match_list)
 		{
 			std::cout << color_lineno << it.m_line_number << color_default << ":";
@@ -71,7 +71,7 @@ void MatchList::Print(bool istty, bool enable_color, bool print_column) const
 			{
 				std::cout << it.m_pre_match.length()+1 << ":";
 			}
-			std::cout << it.m_pre_match << color_match << it.m_match << color_default << it.m_post_match << std::endl;
+			std::cout << it.m_pre_match << color_match << it.m_match << color_default << it.m_post_match << "\n";
 		}
 	}
 	else
@@ -86,9 +86,11 @@ void MatchList::Print(bool istty, bool enable_color, bool print_column) const
 			{
 				std::cout << it.m_pre_match.length()+1 << ":";
 			}
-			std::cout << it.m_pre_match << color_match << it.m_match << color_default << it.m_post_match << std::endl;
+			std::cout << it.m_pre_match << color_match << it.m_match << color_default << it.m_post_match << "\n";
 		}
 	}
+
+	std::cout.flush();
 }
 
 std::vector<Match>::size_type MatchList::GetNumberOfMatchedLines() const noexcept
