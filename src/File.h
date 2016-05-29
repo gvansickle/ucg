@@ -49,7 +49,7 @@ public:
 
 	size_t size() const noexcept { return m_file_size; };
 
-	const char * data() const noexcept { return (const char *)__builtin_assume_aligned(m_file_data, 16); };
+	const char * data() const noexcept { return m_file_data; };
 
 	/**
 	 * Returns the name of this File as passed to the constructor.

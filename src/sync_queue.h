@@ -24,6 +24,7 @@
 #include <condition_variable>
 #include <queue>
 
+#include <ext/mt_allocator.h>
 
 enum class queue_op_status
 {
@@ -172,7 +173,9 @@ private:
 
 	bool m_closed;
 
-	std::queue<ValueType> m_underlying_queue;
+	using mt_deque = std::deque<ValueType, __gnu_cxx::__mt_alloc<ValueType>>;
+
+	std::queue<ValueType, mt_deque> m_underlying_queue;
 
 };
 
