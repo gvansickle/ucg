@@ -56,8 +56,7 @@ public:
 
 	using const_pointer = const element_type *;
 
-	static constexpr std::size_t aot = alignof(decltype(*std::declval<const_pointer>()));
-	static_assert(aot == alignment, "alignment isn't working"); //__attribute__((aligned(alignment)))
+	static_assert(alignof(decltype(*std::declval<const_pointer>())) == alignment, "alignment isn't working"); //__attribute__((aligned(alignment)))
 
 	ResizableArray() noexcept = default;
 	~ResizableArray() noexcept
