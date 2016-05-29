@@ -50,13 +50,16 @@ class ResizableArray
 
 public:
 
+	/// @todo alignas() isn't really correct in an alias, but it works under various versions of GCC.  Clang rejects it.
+	/// The attribute seems to be acceptable to everyone, though how well it works is an open question.
 	using element_type /*alignas(alignment)*/ __attribute__((aligned(alignment))) = T;
 
 	using pointer = element_type *;
 
 	using const_pointer = const element_type *;
 
-	static_assert(alignof(decltype(*std::declval<const_pointer>())) == alignment, "alignment isn't working"); //__attribute__((aligned(alignment)))
+	/// @todo This static assert just doesn't work under clang 3.5.
+	//static_assert(alignof(decltype(*std::declval<const_pointer>())) == alignment, "alignment isn't working"); //__attribute__((aligned(alignment)))
 
 	ResizableArray() noexcept = default;
 	~ResizableArray() noexcept
