@@ -32,6 +32,7 @@ inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign
 
 #include "Logger.h"
 
+
 /**
  * This is sort of a poor-man's std::allocator<>, without the std.  We use it in the File() constructor
  * to get an uninitialized buffer to read the file data into.  By instantiating one of these objects prior to a loop of
@@ -55,7 +56,8 @@ public:
 
 	using const_pointer = const element_type *;
 
-//static_assert(alignof(decltype(*std::declval<const_pointer>())) != alignment, "alignment isn't working");_attribute__((aligned(alignment)))
+	static constexpr std::size_t aot = alignof(decltype(*std::declval<const_pointer>()));
+	static_assert(aot == alignment, "alignment isn't working"); //_attribute__((aligned(alignment)))
 
 	ResizableArray() noexcept = default;
 	~ResizableArray() noexcept
