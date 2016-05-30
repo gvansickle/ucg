@@ -21,6 +21,7 @@
 #include <config.h>
 
 #include <cerrno>
+#include <system_error>
 #include <iostream>
 #include <string>
 #include <sstream>
