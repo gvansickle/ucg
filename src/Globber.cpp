@@ -148,7 +148,7 @@ void Globber::Run()
 		else if(ftsent->fts_info == FTS_DNR)
 		{
 			// A directory that couldn't be read.
-			NOTICE() << "unable to read directory \'" << ftsent->fts_path << "\': "
+			NOTICE() << "Unable to read directory \'" << ftsent->fts_path << "\': "
 					<< std::error_code(ftsent->fts_errno, std::generic_category()).message() << ". Skipping." << std::endl;
 		}
 		else if(ftsent->fts_info == FTS_ERR)
