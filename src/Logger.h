@@ -20,6 +20,7 @@
 
 #include <config.h>
 
+#include <cerrno>
 #include <iostream>
 #include <sstream>
 
@@ -49,7 +50,20 @@ public:
 	static bool IsEnabled() noexcept { return true; };
 };
 
+class STDERR : public Logger
+{
+public:
+	STDERR() { m_tempstream << program_invocation_short_name << ": "; };
+	~STDERR() override = default;
+
+	static bool IsEnabled() noexcept { return true; };
+};
+
 
 #define LOG(logger) logger::IsEnabled() && logger().m_tempstream
+
+#define NOTICE() LOG(STDERR)
+#define WARN()   LOG(STDERR) << "warning: "
+#define ERROR()  LOG(STDERR) << "error: "
 
 #endif /* SRC_LOGGER_H_ */

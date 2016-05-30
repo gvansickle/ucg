@@ -21,6 +21,7 @@
 
 #include "Globber.h"
 
+#include "Logger.h"
 #include "TypeManager.h"
 #include "DirInclusionManager.h"
 
@@ -31,6 +32,7 @@
 #include <cstring>
 #include <iostream>
 #include <utility>
+#include <system_error>
 
 
 Globber::Globber(std::vector<std::string> start_paths,
@@ -146,7 +148,8 @@ void Globber::Run()
 		else if(ftsent->fts_info == FTS_DNR)
 		{
 			// A directory that couldn't be read.
-			std::cerr << "ucg: ERROR: unable to read directory \"" << ftsent->fts_path << "\", skipping." << std::endl;
+			NOTICE() << "unable to read directory \'" << ftsent->fts_path << "\': "
+					<< std::error_code(ftsent->fts_errno, std::generic_category()).message() << ". Skipping." << std::endl;
 		}
 		else if(ftsent->fts_info == FTS_ERR)
 		{
