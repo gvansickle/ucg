@@ -37,7 +37,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 	uint32_t options = 0;
 
 	// For now, we won't support capturing.  () will be treated as (?:).
-	options = PCRE2_NO_AUTO_CAPTURE;
+	options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE | PCRE2_NEVER_BACKSLASH_C | PCRE2_NEVER_UTF | PCRE2_NEVER_UCP;
 
 	if(ignore_case)
 	{

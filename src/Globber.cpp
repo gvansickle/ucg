@@ -17,6 +17,8 @@
 
 /** @file */
 
+#include <config.h>
+
 #include "Globber.h"
 
 #include "Logger.h"
@@ -98,19 +100,31 @@ void Globber::Run()
 	/// files without the stat, so they get returned as FTS_NSOK / 11 /	no stat(2) requested.
 	/// Does not seem to affect performance on Linux, but might be having an effect on Cygwin.
 	/// Look into workarounds.
-	FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/, NULL);
+	/// @note Per looking at the fts_open() source, FTS_LOGICAL turns on FTS_NOCHDIR, so we won't bother to specify it.
+	/// @todo Current gnulib supports additional flags here: FTS_CWDFD | FTS_DEFER_STAT | FTS_NOATIME.  We should
+	/// check for these and use them if they exist.
+	FTS *fts = fts_open(dirs, FTS_LOGICAL  /*| FTS_NOSTAT*/, NULL);
 	while(FTSENT *ftsent = fts_read(fts))
 	{
+		std::string name;
+		std::string path;
+
+		if(ftsent->fts_info == FTS_F || ftsent->fts_info == FTS_D)
+		{
+			name.assign(ftsent->fts_name, ftsent->fts_namelen);
+			path.assign(ftsent->fts_path, ftsent->fts_pathlen);
+		}
+
 		//std::clog << "Considering file: " << ftsent->fts_path << std::endl;
 		if(ftsent->fts_info == FTS_F)
 		{
 			//std::clog << "... normal file." << std::endl;
 			// It's a normal file.  Check for inclusion.
-			if(m_type_manager.FileShouldBeScanned(ftsent->fts_name))
+			if(m_type_manager.FileShouldBeScanned(name))
 			{
 				//std::clog << "... should be scanned." << std::endl;
 				// Extension was in the hash table.
-				m_out_queue.wait_push(std::string(ftsent->fts_path));
+				m_out_queue.wait_push(std::move(path));
 
 				// Count the number of files we found that were included in the search.
 				m_num_files_found++;
@@ -125,7 +139,7 @@ void Globber::Run()
 				// We were told not to recurse into subdirectories.
 				fts_set(fts, ftsent, FTS_SKIP);
 			}
-			if(m_dir_inc_manager.DirShouldBeExcluded(ftsent->fts_path, ftsent->fts_name))
+			if(m_dir_inc_manager.DirShouldBeExcluded(path, name))
 			{
 				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 				fts_set(fts, ftsent, FTS_SKIP);
@@ -134,7 +148,7 @@ void Globber::Run()
 		else if(ftsent->fts_info == FTS_DNR)
 		{
 			// A directory that couldn't be read.
-			NOTICE() << "unable to read directory \'" << ftsent->fts_path << "\': "
+			NOTICE() << "Unable to read directory \'" << ftsent->fts_path << "\': "
 					<< std::error_code(ftsent->fts_errno, std::generic_category()).message() << ". Skipping." << std::endl;
 		}
 		else if(ftsent->fts_info == FTS_ERR)
