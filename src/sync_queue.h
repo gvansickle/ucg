@@ -24,8 +24,10 @@
 #include <condition_variable>
 #include <queue>
 
+#if TODO
 #include <scoped_allocator>
 #include <ext/mt_allocator.h>
+#endif
 
 enum class queue_op_status
 {
@@ -174,7 +176,11 @@ private:
 
 	bool m_closed;
 
+#ifdef TODO
 	using mt_deque = std::deque<ValueType, std::scoped_allocator_adaptor<__gnu_cxx::__mt_alloc<ValueType>>>;
+#else
+	using mt_deque = std::deque<ValueType>;
+#endif
 
 	std::queue<ValueType, mt_deque> m_underlying_queue;
 
