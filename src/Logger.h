@@ -52,7 +52,11 @@ public:
 		// We're not linked to the GNU C librray (probably clang's libc).  Figure these out from argv[0].
 		m_program_invocation_name = argv0;
 		m_program_invocation_short_name = argv0;
-		auto last_slash_pos = m_program_invocation_short_name.find_last_of("/\\", 0);
+		auto last_slash_pos = m_program_invocation_short_name.find_last_of("/\\");
+		if(last_slash_pos == std::string::npos)
+		{
+			last_slash_pos = 0;
+		}
 		m_program_invocation_short_name = m_program_invocation_short_name.substr(last_slash_pos);
 #endif
 	}
