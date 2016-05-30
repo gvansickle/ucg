@@ -20,6 +20,7 @@ libsrc_a_SOURCES = \
 	ArgParse.cpp ArgParse.h \
 	DirInclusionManager.cpp DirInclusionManager.h \
 	Globber.cpp Globber.h \
+	Logger.cpp Logger.h \
 	Match.cpp Match.h \
 	MatchList.cpp MatchList.h \
 	File.cpp File.h \
