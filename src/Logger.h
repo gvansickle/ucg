@@ -43,7 +43,7 @@ public:
 
 	static void Init(const char * argv0)
 	{
-#if !defined(HAVE_GNU_C_LIB_PROGRAM_INVOCATION_NAMES)
+#if defined(HAVE_GNU_C_LIB_PROGRAM_INVOCATION_NAMES)
 		// The GNU C Library runtime has done this work for us.
 		(void)argv0;
 		m_program_invocation_name = program_invocation_name;
