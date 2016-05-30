@@ -25,7 +25,7 @@
 #include <cstdlib> // For abort().
 
 #include "sync_queue_impl_selector.h"
-
+#include "Logger.h"
 #include "ArgParse.h"
 #include "Globber.h"
 #include "TypeManager.h"
@@ -39,6 +39,9 @@ int main(int argc, char **argv)
 {
 	try
 	{
+		// First thing, set up logging.
+		Logger::Init(argv[0]);
+
 		// We'll keep the scanner threads in this vector so we can join() them later.
 		std::vector<std::thread> scanner_threads;
 

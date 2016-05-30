@@ -22,9 +22,11 @@
 
 #include <cerrno>
 #include <iostream>
+#include <string>
 #include <sstream>
 
 /// @todo Enabled/Disabled configuration, redirecting to streams/files, timestamp, thread ID, maybe sorting by timestamp....
+/// Log severity levels: trace, debug, info, warning, error, fatal.
 
 class Logger
 {
@@ -32,14 +34,46 @@ public:
 	Logger();
 	virtual ~Logger()
 	{
+		// Add a newline to the stringstream and flush it.
+		m_tempstream << std::endl;
+
+		// Send it to the actual output stream.
 		std::cerr << m_tempstream.str();
+	}
+
+	static void Init(const char * argv0)
+	{
+#if !defined(HAVE_GNU_C_LIB_PROGRAM_INVOCATION_NAMES)
+		// The GNU C Library runtime has done this work for us.
+		(void)argv0;
+		m_program_invocation_name = program_invocation_name;
+		m_program_invocation_short_name = program_invocation_short_name;
+#else
+		// We're not linked to the GNU C librray (probably clang's libc).  Figure these out from argv[0].
+		m_program_invocation_name = argv0;
+		m_program_invocation_short_name = argv0;
+		auto last_slash_pos = m_program_invocation_short_name.find_last_of("/\\", 0);
+		m_program_invocation_short_name = m_program_invocation_short_name.substr(last_slash_pos);
+#endif
+	}
+
+	/// Helper function for converting a C errno into
+	static std::string strerror(int c_errno = errno) noexcept
+	{
+		// Convert the errno to a string and return it.
+		return std::error_code(c_errno, std::system_category()).message();
 	}
 
 	/// We'll use this stringstream to buffer up whatever the caller wants to log, then send it
 	/// to the target stream (e.g. std::cerr) in one operation.  That way we don't have to worry about
 	/// concurrency issues.
 	std::stringstream m_tempstream;
+
+protected:
+	static std::string m_program_invocation_name;
+	static std::string m_program_invocation_short_name;
 };
+
 
 class INFO : public Logger
 {
@@ -53,15 +87,19 @@ public:
 class STDERR : public Logger
 {
 public:
-	STDERR() { m_tempstream << program_invocation_short_name << ": "; };
+	STDERR() { m_tempstream << m_program_invocation_short_name << ": "; };
 	~STDERR() override = default;
 
 	static bool IsEnabled() noexcept { return true; };
 };
 
+/// Helper macro for converting errno to a string, ala strerror().
+#define LOG_STRERROR(...) Logger::strerror(__VA_ARGS__)
 
+/// @name Macros for logging messages which are not intended for end-user consumption.
 #define LOG(logger) logger::IsEnabled() && logger().m_tempstream
 
+/// @name Macros for output intended for the end user.
 #define NOTICE() LOG(STDERR)
 #define WARN()   LOG(STDERR) << "warning: "
 #define ERROR()  LOG(STDERR) << "error: "

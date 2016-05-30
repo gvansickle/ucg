@@ -17,6 +17,9 @@
 
 #include "Logger.h"
 
+std::string Logger::m_program_invocation_name;
+std::string Logger::m_program_invocation_short_name;
+
 Logger::Logger()
 {
 	// TODO Auto-generated constructor stub

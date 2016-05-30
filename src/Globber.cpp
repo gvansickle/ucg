@@ -145,17 +145,25 @@ void Globber::Run()
 				fts_set(fts, ftsent, FTS_SKIP);
 			}
 		}
+		/// @note Only FTS_DNR, FTS_ERR, and FTS_NS have valid fts_errno information.
 		else if(ftsent->fts_info == FTS_DNR)
 		{
 			// A directory that couldn't be read.
 			NOTICE() << "Unable to read directory \'" << ftsent->fts_path << "\': "
-					<< std::error_code(ftsent->fts_errno, std::generic_category()).message() << ". Skipping." << std::endl;
+					<< LOG_STRERROR(ftsent->fts_errno) << ". Skipping.";
 		}
 		else if(ftsent->fts_info == FTS_ERR)
 		{
-			//std::clog << "... FTS_ERR." << std::endl;
+			NOTICE() << "Directory traversal error at path \'" << ftsent->fts_path << "\': "
+					<< LOG_STRERROR(ftsent->fts_errno) << ".";
 			m_bad_path = ftsent->fts_path;
 			break;
+		}
+		else if(ftsent->fts_info == FTS_NS)
+		{
+			// No stat info.
+			NOTICE() << "Could not get stat info at path \'" << ftsent->fts_path << "\': "
+								<< LOG_STRERROR(ftsent->fts_errno) << ". Skipping.";
 		}
 		else
 		{

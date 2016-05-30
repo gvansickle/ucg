@@ -165,7 +165,7 @@ AC_LANG_POP([C++])
 AC_LANG_PUSH([C++])
 
 # We don't have this header on MinGW.
-AC_CHECK_HEADERS([pwd.h],[],[],[])
+AC_CHECK_HEADERS([pwd.h])
 
 AC_LANG_POP([C++])
 
@@ -223,6 +223,19 @@ AC_CHECK_FUNCS([aligned_alloc posix_memalign])
 AS_IF([test "x$ac_cv_func_aligned_alloc" = xno -a "x$ac_cv_func_posix_memalign" = xno],
 	[AC_MSG_ERROR([cannot find an aligned memory allocator.])],
 	[AC_MSG_NOTICE([found a usable aligned memory allocator.])])
+
+AC_MSG_CHECKING([if the GNU C library program_invocation{_short}_name strings are defined])
+AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([#include <errno.h>],
+                         [program_invocation_short_name = "test";])],
+        [
+        	AC_DEFINE(HAVE_GNU_C_LIB_PROGRAM_INVOCATION_NAMES, 1,
+				[Define if the GNU C library program_invocation{_short}_name strings are defined])
+        	AC_MSG_RESULT([yes])
+        ],
+        [
+        	AC_MSG_RESULT([no])
+        ])
 
 AC_LANG_POP([C++])
 
