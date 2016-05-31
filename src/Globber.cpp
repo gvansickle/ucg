@@ -56,6 +56,8 @@ Globber::~Globber()
 
 void Globber::Run()
 {
+	set_thread_name("Globber");
+
 	char * dirs[m_start_paths.size()+1];
 
 	/// @todo It looks like OSX needs any trailing slashes to be removed here, or its fts lib will double them up.

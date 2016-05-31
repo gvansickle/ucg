@@ -95,8 +95,13 @@ FileScanner::~FileScanner()
 {
 }
 
-void FileScanner::Run()
+void FileScanner::Run(int thread_index)
 {
+	std::stringstream temp_ss;
+	temp_ss << "FILESCAN_";
+	temp_ss << thread_index;
+	set_thread_name(temp_ss.str());
+
 	if(m_manually_assign_cores)
 	{
 		// Spread the scanner threads across cores.  Linux at least doesn't seem to want to do that by default.
