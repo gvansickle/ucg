@@ -102,11 +102,15 @@ public:
 #define LOG_STRERROR(...) Logger::strerror(__VA_ARGS__)
 
 /// @name Macros for logging messages which are not intended for end-user consumption.
+///@{
 #define LOG(logger) logger::IsEnabled() && logger().m_tempstream
+///@}
 
 /// @name Macros for output intended for the end user.
+///@{
 #define NOTICE() LOG(STDERR)
 #define WARN()   LOG(STDERR) << "warning: "
 #define ERROR()  LOG(STDERR) << "error: "
+///@}
 
 #endif /* SRC_LOGGER_H_ */
