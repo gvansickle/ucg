@@ -86,7 +86,12 @@ public:
 	INFO() { m_tempstream << "INFO: "; };
 	~INFO() override = default;
 
-	static bool IsEnabled() noexcept { return true; };
+	static void Enable(bool enable) { m_enabled = enable; };
+
+	static bool IsEnabled() noexcept { return m_enabled; };
+
+private:
+	static bool m_enabled;
 };
 
 class STDERR : public Logger

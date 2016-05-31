@@ -20,6 +20,8 @@
 std::string Logger::m_program_invocation_name;
 std::string Logger::m_program_invocation_short_name;
 
+bool INFO::m_enabled { false };
+
 Logger::Logger()
 {
 	// TODO Auto-generated constructor stub

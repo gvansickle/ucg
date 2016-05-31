@@ -115,14 +115,14 @@ void Globber::Run()
 			path.assign(ftsent->fts_path, ftsent->fts_pathlen);
 		}
 
-		//std::clog << "Considering file: " << ftsent->fts_path << std::endl;
+		LOG(INFO) << "Considering file: " << ftsent->fts_path;
 		if(ftsent->fts_info == FTS_F)
 		{
-			//std::clog << "... normal file." << std::endl;
+			LOG(INFO) << "... normal file.";
 			// It's a normal file.  Check for inclusion.
 			if(m_type_manager.FileShouldBeScanned(name))
 			{
-				//std::clog << "... should be scanned." << std::endl;
+				LOG(INFO) << "... should be scanned.";
 				// Extension was in the hash table.
 				m_out_queue.wait_push(std::move(path));
 
@@ -132,7 +132,7 @@ void Globber::Run()
 		}
 		else if(ftsent->fts_info == FTS_D)
 		{
-			//std::clog << "... directory." << std::endl;
+			LOG(INFO) << "... directory.";
 			// It's a directory.  Check if we should descend into it.
 			if(!m_recurse_subdirs && ftsent->fts_level > 0)
 			{
@@ -142,6 +142,7 @@ void Globber::Run()
 			if(m_dir_inc_manager.DirShouldBeExcluded(path, name))
 			{
 				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
+				LOG(INFO) << "... should be ignored.";
 				fts_set(fts, ftsent, FTS_SKIP);
 			}
 		}
@@ -167,11 +168,11 @@ void Globber::Run()
 		}
 		else
 		{
-			//std::clog << "... unknown file type:" << ftsent->fts_info << std::endl;
+			LOG(INFO) << "... unknown file type:" << ftsent->fts_info << std::endl;
 		}
 	}
 	fts_close(fts);
 
-	//std::clog << "NUM FILES INCLUDED: " << m_num_files_found << std::endl;
+	LOG(INFO) << "Number of regular files found: " << m_num_files_found;
 }
 
