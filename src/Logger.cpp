@@ -17,6 +17,12 @@
 
 #include "Logger.h"
 
+#if defined(CXX11_THREADS_ARE_PTHREADS)
+#if defined(HAVE_PTHREAD)
+#include <pthread.h>
+#endif
+#endif // CXX11_THREADS_ARE_PTHREADS
+
 std::string Logger::m_program_invocation_name;
 std::string Logger::m_program_invocation_short_name;
 
@@ -29,5 +35,8 @@ Logger::Logger()
 
 void set_thread_name(const std::thread &thread, const std::string &name)
 {
+#if defined(CXX11_THREADS_ARE_PTHREADS) && HAVE_DECL_PTHREAD_SETNAME_NP
+	// Set the name of the pthread so we can see it in the debugger.
 
+#endif
 }
