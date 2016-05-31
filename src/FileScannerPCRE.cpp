@@ -92,6 +92,7 @@ FileScannerPCRE::~FileScannerPCRE()
 
 void FileScannerPCRE::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
+#ifdef HAVE_PCRE
 	// Match output vector.  We won't support submatches, so we only need two entries, plus a third for pcre's own use.
 	int ovector[3] = {-1, 0, 0};
 	size_t line_no = 1;
@@ -223,4 +224,5 @@ void FileScannerPCRE::ScanFile(const char* __restrict__ file_data, size_t file_s
 
 		ml.AddMatch(std::move(m));
 	}
+#endif // HAVE_PCRE
 }
