@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 		// Start the scanner threads.
 		for(int t=0; t<ap.m_jobs; ++t)
 		{
-			std::thread fst {&FileScanner::Run, fs.get()};
+			std::thread fst {&FileScanner::Run, fs.get(), t};
 			scanner_threads.push_back(std::move(fst));
 		}
 

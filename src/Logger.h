@@ -83,14 +83,15 @@ protected:
 /**
  * Call this from inside the thread's callable object to set its name.
  */
-void set_thread_name(const std::thread &thread, const std::string &name);
+void set_thread_name(const std::string &name);
 
+std::string get_thread_name();
 
 template <typename T>
 class EnableableLogger : public Logger
 {
 public:
-	EnableableLogger(const char *reporting_name) { m_tempstream << reporting_name << ": "; };
+	EnableableLogger(const char *reporting_name) { m_tempstream << reporting_name << ": " << get_thread_name() << ": "; };
 	~EnableableLogger() noexcept override  = default;
 
 	static void Enable(bool enable) noexcept { m_enabled = enable; };
@@ -127,7 +128,7 @@ public:
 
 /**
  * The Logger where regular warning/error messages should normally go to, via the NOTICE(), WARN(), and ERROR() macros.
-  */
+ */
 class STDERR : public Logger
 {
 public:
