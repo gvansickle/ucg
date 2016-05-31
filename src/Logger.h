@@ -79,14 +79,14 @@ protected:
 	static std::string m_program_invocation_short_name;
 };
 
-
-class INFO : public Logger
+template <typename T>
+class EnableableLogger : public Logger
 {
 public:
-	INFO() { m_tempstream << "INFO: "; };
-	~INFO() override = default;
+	EnableableLogger(const char *reporting_name) { m_tempstream << reporting_name << ": "; };
+	~EnableableLogger() noexcept override  = default;
 
-	static void Enable(bool enable) { m_enabled = enable; };
+	static void Enable(bool enable) noexcept { m_enabled = enable; };
 
 	static bool IsEnabled() noexcept { return m_enabled; };
 
@@ -94,6 +94,33 @@ private:
 	static bool m_enabled;
 };
 
+template <typename T>
+bool EnableableLogger<T>::m_enabled { false };
+
+
+/**
+ * The LOG(INFO) logger.
+ */
+class INFO : public EnableableLogger<INFO>
+{
+public:
+	INFO() : EnableableLogger<INFO>(__func__) { };
+};
+
+
+/**
+ * The LOG(DEBUG) logger.
+ */
+class DEBUG : public EnableableLogger<DEBUG>
+{
+public:
+	DEBUG() : EnableableLogger<DEBUG>(__func__) {};
+};
+
+
+/**
+ * The Logger where regular warning/error messages should normally go to, via the NOTICE(), WARN(), and ERROR() macros.
+  */
 class STDERR : public Logger
 {
 public:
