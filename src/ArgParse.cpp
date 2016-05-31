@@ -719,7 +719,7 @@ std::string ArgParse::GetProjectRCFilename() const
 	char *original_cwd = getcwd(NULL, 0);
 #endif
 
-	//std::clog << "INFO: cwd = \"" << original_cwd << "\"" << std::endl;
+	LOG(INFO) << "cwd = \'" << original_cwd << "\'";
 
 	char *current_cwd = original_cwd;
 	while((current_cwd != nullptr) && (current_cwd[0] != '.'))
@@ -750,12 +750,12 @@ std::string ArgParse::GetProjectRCFilename() const
 			test_rc_filename += "/";
 		}
 		test_rc_filename += ".ucgrc";
-		//std::clog << "INFO: checking for rc file \"" << test_rc_filename << "\"" << std::endl;
+		LOG(INFO) << "Checking for rc file \'" << test_rc_filename << "\'";
 		int rc_file = open(test_rc_filename.c_str(), O_RDONLY);
 		if(rc_file != -1)
 		{
 			// Found it.  Return its name.
-			//std::clog << "INFO: found rc file \"" << test_rc_filename << "\"" << std::endl;
+			LOG(INFO) << "Found rc file \'" << test_rc_filename << "\'";
 			retval = test_rc_filename;
 			close(rc_file);
 			break;
@@ -764,7 +764,7 @@ std::string ArgParse::GetProjectRCFilename() const
 		/// @note GRVS - get_current_dir_name() under Cygwin will currently return a DOS path if this is started
 		///              under the Eclipse gdb.  This mostly doesn't cause problems, except for terminating the loop.
 		///              The clause below after the || handles this.
-		if((strlen(current_cwd) == 1) || (strlen(current_cwd) <= 4 && current_cwd[1] == ':'))
+		if((std::strlen(current_cwd) == 1) || (std::strlen(current_cwd) <= 4 && current_cwd[1] == ':'))
 		{
 			// We've hit the root and didn't find a config file.
 			break;

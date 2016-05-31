@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include "Logger.h"
 #include "FileScanner.h"
 #include "FileScannerCpp11.h"
 #include "FileScannerPCRE.h"
@@ -114,12 +115,12 @@ void FileScanner::Run()
 		try
 		{
 			// Try to open and read the file.  This could throw.
-			//std::clog << "Trying to scan file " << next_string << std::endl;
+			LOG(INFO) << "Attempting to scan file \'" << next_string << "\'";
 			File f(next_string, file_data_storage);
 
 			if(f.size() == 0)
 			{
-				//std::clog << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
+				LOG(INFO) << "WARNING: Filesize of \'" << next_string << "\' is 0, skipping.";
 				continue;
 			}
 
@@ -138,12 +139,12 @@ void FileScanner::Run()
 		catch(const FileException &error)
 		{
 			// The File constructor threw an exception.
-			std::cerr << "ucg: ERROR: " << error.what() << std::endl;
+			ERROR() << error.what();
 		}
 		catch(const std::system_error& error)
 		{
 			// A system error.  Currently should only be errors from File.
-			std::cerr << "ucg: ERROR: " << error.code() << " - " << error.code().message() << std::endl;
+			ERROR() << error.code() << " - " << error.code().message();
 		}
 		catch(...)
 		{

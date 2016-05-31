@@ -168,7 +168,7 @@ void Globber::Run()
 		}
 		else
 		{
-			LOG(INFO) << "... unknown file type:" << ftsent->fts_info << std::endl;
+			LOG(INFO) << "... unknown file type:" << ftsent->fts_info;
 		}
 	}
 	fts_close(fts);
