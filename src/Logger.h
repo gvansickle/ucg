@@ -25,6 +25,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <thread>
 
 /// @todo Enabled/Disabled configuration, redirecting to streams/files, timestamp, thread ID, maybe sorting by timestamp....
 /// Log severity levels: trace, debug, info, warning, error, fatal.
@@ -78,6 +79,12 @@ protected:
 	static std::string m_program_invocation_name;
 	static std::string m_program_invocation_short_name;
 };
+
+/**
+ * Call this from inside the thread's callable object to set its name.
+ */
+void set_thread_name(const std::thread &thread, const std::string &name);
+
 
 template <typename T>
 class EnableableLogger : public Logger

@@ -27,3 +27,7 @@ Logger::Logger()
 }
 
 
+void set_thread_name(const std::thread &thread, const std::string &name)
+{
+
+}

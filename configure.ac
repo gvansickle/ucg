@@ -201,6 +201,40 @@ AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])
 
+# Check for pthreads.  Note that we don't necessarily require pthreads; we require and use C++11 std::thread<>,
+# which whatever it uses under-the-hood we don't really care about.  If in fact C++11 is using pthreads, we can
+# optionally use some of its functionality, e.g. naming threads, for diagnostic, logging, and other purposes.
+# Macro docs: http://www.gnu.org/software/autoconf-archive/ax_pthread.html#ax_pthread
+AX_PTHREAD
+AS_IF([test "x$ax_pthread_ok" == xyes],
+	[
+		AC_MSG_NOTICE([found pthreads])
+		AC_MSG_CHECKING([if the C++11 underlying thread implementation is pthreads])
+		AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([
+        					#include <type_traits>
+        					#include <thread>
+        					#include <pthread.h>
+        					
+        				],
+                         [
+                         	static_assert(std::is_same<std::thread::native_handle_type, pthread_t>::value, "C++11 underlying thread implementation is not pthreads");
+                         ])],
+        [
+        	AC_DEFINE(CXX11_THREADS_ARE_PTHREADS, 1,
+				[Define if the C++11 underlying thread implementation is pthreads])
+        	AC_MSG_RESULT([yes])
+        ],
+        [
+        	AC_MSG_RESULT([no])
+        ])
+		
+	],
+	[
+		AC_MSG_NOTICE([no pthreads found])
+	])
+
+
 # Put this in to help with profiling.
 #AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 
@@ -236,6 +270,8 @@ AC_COMPILE_IFELSE(
         [
         	AC_MSG_RESULT([no])
         ])
+
+AC_CHECK_DECLS([pthread_setname_np, pthread_getname_np], [], [], [#include <pthread.h>])
 
 AC_LANG_POP([C++])
 

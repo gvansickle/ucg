@@ -29,6 +29,7 @@ script:
  - cd build
  - ../configure
  - make
+ - make check
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
 
 after_success:
