@@ -23,9 +23,12 @@
 #include <thread>
 
 #if defined(CXX11_THREADS_ARE_PTHREADS)
-#if defined(HAVE_PTHREAD)
-#include <pthread.h>
-#endif // HAVE_PTHREADS
+#	if defined(HAVE_PTHREAD)
+#		include <pthread.h>
+#		if defined(INCLUDE_PTHREAD_NP)
+#			include <pthread_np.h>
+#		endif // INCLUDE_PTHREAD_NP
+#	endif // HAVE_PTHREADS
 #endif // CXX11_THREADS_ARE_PTHREADS
 
 std::string Logger::m_program_invocation_name;
@@ -45,9 +48,9 @@ void set_thread_name(const std::string &name)
 	// pthreads can only handle thread names of 15 chars + \0.  We'll use the same limit for logging.
 	std::string name_15plusnull {(name.length() < 15) ? name : name.substr(0, 15)};
 
-#if defined(CXX11_THREADS_ARE_PTHREADS) && HAVE_DECL_PTHREAD_SETNAME_NP
+#if defined(CXX11_THREADS_ARE_PTHREADS) && HAVE_PTHREAD_SETNAME_SUPPORT
 	// Set the name of the pthread so we can see it in the debugger.
-	pthread_setname_np(pthread_self(), name_15plusnull.data());
+	M_pthread_setname_np(name_15plusnull.data());
 #endif
 
 	thread_name = name_15plusnull;
