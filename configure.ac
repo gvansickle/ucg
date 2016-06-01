@@ -271,7 +271,28 @@ AC_COMPILE_IFELSE(
         	AC_MSG_RESULT([no])
         ])
 
-AC_CHECK_DECLS([pthread_setname_np, pthread_getname_np], [], [], [#include <pthread.h>])
+### Find a pthread_setname_np() we can use, and #define a macro M_pthread_setname_np() which will call it.
+# For Linux.
+AC_CHECK_DECLS([pthread_setname_np(pthread_t, const char *)],
+				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
+				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_setname_np(pthread_self(), (name))],
+					[Macro for Linux to map to the lowest-common-denominator for this functionality, OSX])
+				],
+				[], [#include <pthread.h>])
+# For FreeBSD.
+AC_CHECK_DECLS([pthread_set_name_np(pthread_t, const char *)],
+				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
+				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_set_name_np(pthread_self(), (name))],
+					[Macro for FreeBSD to map to the lowest-common-denominator for this functionality, OSX])
+				 AC_DEFINE([INCLUDE_PTHREAD_NP], [1], [If defined, include the header <pthread_np.h> because we're on BSD])
+				],
+				[], [#include <pthread_np.h>])
+# For Mac OSX.
+AC_CHECK_DECLS([pthread_setname_np(const char *)],
+				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
+				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_setname_np(name)],
+					[Macro for OSX to map to itself])
+				], [], [#include <pthread.h>])
 
 AC_LANG_POP([C++])
 

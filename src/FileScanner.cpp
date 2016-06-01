@@ -97,6 +97,7 @@ FileScanner::~FileScanner()
 
 void FileScanner::Run(int thread_index)
 {
+	// Set the name of the thread.
 	std::stringstream temp_ss;
 	temp_ss << "FILESCAN_";
 	temp_ss << thread_index;
