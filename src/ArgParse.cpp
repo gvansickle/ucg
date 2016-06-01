@@ -493,8 +493,8 @@ void ArgParse::PrintVersionText(FILE* stream)
 			}
 		}
 		std::fprintf(stream, " Newline style: %s\n", s.c_str());
-	}
 #endif
+	}
 
 	//
 	// libpcre2 info
