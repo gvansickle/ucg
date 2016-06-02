@@ -30,10 +30,13 @@
 /// @todo Enabled/Disabled configuration, redirecting to streams/files, timestamp, thread ID, maybe sorting by timestamp....
 /// Log severity levels: trace, debug, info, warning, error, fatal.
 
+/**
+ * Base class for all the loggers.
+ */
 class Logger
 {
 public:
-	Logger();
+	Logger() = default;
 	virtual ~Logger()
 	{
 		// Add a newline to the stringstream and flush it.
@@ -137,6 +140,7 @@ public:
 
 	static bool IsEnabled() noexcept { return true; };
 };
+
 
 /// Helper macro for converting errno to a string, ala strerror().
 #define LOG_STRERROR(...) Logger::strerror(__VA_ARGS__)

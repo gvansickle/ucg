@@ -38,12 +38,6 @@ std::string Logger::m_program_invocation_short_name;
 thread_local std::string thread_name {"UNKNOWN"};
 #endif
 
-Logger::Logger()
-{
-	// TODO Auto-generated constructor stub
-
-}
-
 
 void set_thread_name(const std::string &name)
 {
