@@ -40,6 +40,6 @@ after_success:
  - cat tests/perf_test_results.txt
  - #./ucg --cpp 'endif' ..
  - #./ucg --cpp 'endif' ../
- - #if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
- - #if [ $TRAVIS_OS_NAME == linux ]; then LD_DEBUG=all && ldd -v ucg; fi
+ - if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
+ - if [ $TRAVIS_OS_NAME == linux ]; then LD_DEBUG=all && ldd -v ucg; fi
  - #find . -iname '*.log' -exec cat "{}" \; 

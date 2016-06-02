@@ -290,6 +290,7 @@ AC_CHECK_DECLS([pthread_set_name_np(pthread_t, const char *)],
 # For Mac OSX.
 AC_CHECK_DECLS([pthread_setname_np(const char *)],
 				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
+				 AC_DEFINE([HAVE_NO_THREAD_LOCAL_SUPPORT], [1], [If defined, we have no C++11 thread_local support (clang on OSX)])
 				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_setname_np(name)],
 					[Macro for OSX to map to itself])
 				], [], [#include <pthread.h>])

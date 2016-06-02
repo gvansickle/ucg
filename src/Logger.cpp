@@ -34,7 +34,9 @@
 std::string Logger::m_program_invocation_name;
 std::string Logger::m_program_invocation_short_name;
 
+#if !defined(HAVE_NO_THREAD_LOCAL_SUPPORT)
 thread_local std::string thread_name {"UNKNOWN"};
+#endif
 
 Logger::Logger()
 {
@@ -53,10 +55,19 @@ void set_thread_name(const std::string &name)
 	M_pthread_setname_np(name_15plusnull.data());
 #endif
 
+#if !defined(HAVE_NO_THREAD_LOCAL_SUPPORT)
 	thread_name = name_15plusnull;
+#endif
 }
 
 std::string get_thread_name()
 {
+#if !defined(HAVE_NO_THREAD_LOCAL_SUPPORT)
 	return thread_name;
+#else
+	// This is OSX.  Pull the name out of pthreads.
+	char buffer[16];
+	pthread_getname_np(pthread_self(), buffer, 16);
+	return std::string(buffer, 16);
+#endif
 }
