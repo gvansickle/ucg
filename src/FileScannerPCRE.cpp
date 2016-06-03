@@ -17,10 +17,14 @@
 
 /** @file */
 
+#include <config.h>
+
 #include "FileScannerPCRE.h"
 
 #include <iostream>
 #include <sstream>
+
+#include "Logger.h"
 
 FileScannerPCRE::FileScannerPCRE(sync_queue<std::string> &in_queue,
 		sync_queue<MatchList> &output_queue,
@@ -92,6 +96,7 @@ FileScannerPCRE::~FileScannerPCRE()
 
 void FileScannerPCRE::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
+#ifdef HAVE_LIBPCRE
 	// Match output vector.  We won't support submatches, so we only need two entries, plus a third for pcre's own use.
 	int ovector[3] = {-1, 0, 0};
 	size_t line_no = 1;
@@ -192,12 +197,12 @@ void FileScannerPCRE::ScanFile(const char* __restrict__ file_data, size_t file_s
 		// Check for non-PCRE_ERROR_NOMATCH error codes.
 		if(rc < 0)
 		{
-			std::cerr << "ERROR: Match error " << rc << "." << std::endl;
+			ERROR() << "Match error " << rc << "." << std::endl;
 			return;
 		}
 		if (rc == 0)
 		{
-			std::cerr << "ERROR: ovector only has room for 1 captured substring" << std::endl;
+			ERROR() << "ovector only has room for 1 captured substring" << std::endl;
 			return;
 		}
 
@@ -223,4 +228,5 @@ void FileScannerPCRE::ScanFile(const char* __restrict__ file_data, size_t file_s
 
 		ml.AddMatch(std::move(m));
 	}
+#endif // HAVE_LIBPCRE
 }

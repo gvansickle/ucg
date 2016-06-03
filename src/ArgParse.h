@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <cstdio>
 #include <argp.h>
 
 class TypeManager;
@@ -59,7 +60,7 @@ public:
 	 *
 	 * @param stream  Output stream from argp where we are to send the version info.
 	 */
-	static void PrintVersionText(FILE *stream);
+	static void PrintVersionText(std::FILE *stream);
 
 private:
 

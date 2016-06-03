@@ -17,11 +17,15 @@
 
 /** @file */
 
+#include <config.h>
+
 #include "OutputTask.h"
 
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>
+
+#include "Logger.h"
 
 OutputTask::OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, sync_queue<MatchList> &input_queue)
 	: m_input_queue(input_queue)
@@ -51,6 +55,8 @@ OutputTask::~OutputTask()
 
 void OutputTask::Run()
 {
+	set_thread_name("OutputTask");
+
 	MatchList ml;
 	bool first_matchlist_printed = false;
 
@@ -59,7 +65,7 @@ void OutputTask::Run()
 		if(first_matchlist_printed && m_output_is_tty)
 		{
 			// Print a blank line between the match lists (i.e. the groups of matches in one file).
-			std::cout << std::endl;
+			std::cout << "\n";
 		}
 		ml.Print(m_output_is_tty, m_enable_color, m_print_column);
 		first_matchlist_printed = true;

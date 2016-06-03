@@ -11,28 +11,37 @@ compiler:
   - gcc
 
 before_install:
- - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre argp-standalone; fi
- - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev; fi
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre argp-standalone the_silver_searcher; fi
+ - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev && sudo apt-get install -qq silversearcher-ag; fi
 
 before_script:
- - echo "g++ --version:" && g++ --version && echo "====" 
+ - echo "g++ --version:" && g++ --version && echo "===="
+ - # pwd ==> /home/travis/build/gvansickle/ucg
 
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then IS_LINUX=1; fi
- - if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help; fi 
- - if [ $TRAVIS_OS_NAME == osx ]; then ls -l -R $(brew --prefix pcre); fi
+ - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help; fi 
+ - #if [ $TRAVIS_OS_NAME == osx ]; then ls -l -R $(brew --prefix pcre); fi
+ - pkg-config --list-all | grep pcre
  - pkg-config libpcre --print-variables
+ - pkg-config libpcre --print-provides
  - autoreconf -i
  - mkdir build
  - cd build
  - ../configure
  - make
+ - make check
+ - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
+
+after_success:
+ - cd ../../ && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
+ - tar xjf boost_1_58_0.tar.bz2
+ - cd ucg/build
  - make check #TESTSUITEFLAGS='-v -d -x'
- - ./ucg --cpp 'endif' ..
- - ./ucg --cpp 'endif' ../
+ - cat tests/perf_test_results.txt
+ - #./ucg --cpp 'endif' ..
+ - #./ucg --cpp 'endif' ../
  - if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then LD_DEBUG=all && ldd -v ucg; fi
- - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
- - find . -iname '*.log' -exec cat "{}" \; 
-
+ - #find . -iname '*.log' -exec cat "{}" \; 
