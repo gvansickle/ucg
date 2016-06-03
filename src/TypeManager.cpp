@@ -123,24 +123,18 @@ TypeManager::TypeManager()
 	}
 }
 
-TypeManager::~TypeManager()
-{
-	// TODO Auto-generated destructor stub
-}
-
-bool TypeManager::FileShouldBeScanned(const std::string& name) const
+bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 {
 	// Find the name's extension.
-	const char period[] = ".";
-	auto last_period = std::find_end(name.begin(), name.end(),
-			period, period+1);
-	if(last_period != name.end())
+	auto last_period_offset = name.find_last_of('.');
+	auto last_period = last_period_offset == std::string::npos ? name.cend() : name.cbegin() + last_period_offset;
+	if(last_period != name.cend())
 	{
 		// There was a period, might be an extension.
-		if(last_period != name.begin())
+		if(last_period != name.cbegin())
 		{
 			// Name doesn't start with a period, it still could be an extension.
-			auto ext = std::string(last_period, name.end());
+			auto ext = std::string(last_period, name.cend());
 
 			if(m_include_extensions.find(ext) != m_include_extensions.end())
 			{
