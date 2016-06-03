@@ -15,6 +15,10 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file A basic multithreaded logging facility.
+ */
+
 #include <config.h>
 
 #include "Logger.h"
@@ -35,6 +39,9 @@ std::string Logger::m_program_invocation_name;
 std::string Logger::m_program_invocation_short_name;
 
 #if !defined(HAVE_NO_THREAD_LOCAL_SUPPORT)
+// Apple specifically disables C++11 thread_local support in the clang they ship:
+// http://stackoverflow.com/questions/28094794/why-does-apple-clang-disallow-c11-thread-local-when-official-clang-supports?lq=1
+/// A thread-local copy of the thread's name, so we don't have to call into the non-standardized pthread_getname_np() API to get it.
 thread_local std::string thread_name {"UNKNOWN"};
 #endif
 

@@ -15,6 +15,10 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file A basic multithreaded logging facility.
+ */
+
 #ifndef SRC_LOGGER_H_
 #define SRC_LOGGER_H_
 
@@ -27,8 +31,14 @@
 #include <sstream>
 #include <thread>
 
-/// @todo Enabled/Disabled configuration, redirecting to streams/files, timestamp, thread ID, maybe sorting by timestamp....
-/// Log severity levels: trace, debug, info, warning, error, fatal.
+/// @todo Redirecting to streams/files, timestamp, maybe sorting by timestamp, more log severity levels: trace, debug, info, warning, error, fatal.
+
+/**
+ * Call this from inside the thread's callable object to set its name.
+ */
+void set_thread_name(const std::string &name);
+
+std::string get_thread_name();
 
 /**
  * Base class for all the loggers.
@@ -64,6 +74,8 @@ public:
 		}
 		m_program_invocation_short_name = m_program_invocation_short_name.substr(last_slash_pos);
 #endif
+		// Set the name of the main thread.
+		set_thread_name(m_program_invocation_short_name);
 	}
 
 	/// Helper function for converting a C errno into
@@ -83,12 +95,6 @@ protected:
 	static std::string m_program_invocation_short_name;
 };
 
-/**
- * Call this from inside the thread's callable object to set its name.
- */
-void set_thread_name(const std::string &name);
-
-std::string get_thread_name();
 
 template <typename T>
 class EnableableLogger : public Logger
