@@ -94,7 +94,7 @@ public:
 			bool pattern_is_literal);
 	virtual ~FileScanner();
 
-	void Run();
+	void Run(int thread_index);
 
 protected:
 

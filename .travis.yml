@@ -23,12 +23,15 @@ script:
  - if [ $TRAVIS_OS_NAME == linux ]; then IS_LINUX=1; fi
  - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help; fi 
  - #if [ $TRAVIS_OS_NAME == osx ]; then ls -l -R $(brew --prefix pcre); fi
+ - pkg-config --list-all | grep pcre
  - pkg-config libpcre --print-variables
+ - pkg-config libpcre --print-provides
  - autoreconf -i
  - mkdir build
  - cd build
  - ../configure
  - make
+ - make check
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
 
 after_success:
@@ -39,6 +42,6 @@ after_success:
  - cat tests/perf_test_results.txt
  - #./ucg --cpp 'endif' ..
  - #./ucg --cpp 'endif' ../
- - #if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
- - #if [ $TRAVIS_OS_NAME == linux ]; then LD_DEBUG=all && ldd -v ucg; fi
+ - if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
+ - if [ $TRAVIS_OS_NAME == linux ]; then LD_DEBUG=all && ldd -v ucg; fi
  - #find . -iname '*.log' -exec cat "{}" \; 

@@ -17,11 +17,15 @@
 
 /** @file */
 
+#include <config.h>
+
 #include "FileScannerPCRE2.h"
 
 #include <iostream>
 #include <sstream>
 #include <memory>
+
+#include "Logger.h"
 
 FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 		sync_queue<MatchList> &output_queue,
@@ -205,12 +209,12 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		// Check for non-PCRE2_ERROR_NOMATCH error codes.
 		if(rc < 0)
 		{
-			std::cerr << "ERROR: Match error " << rc << "." << std::endl;
+			ERROR() << "Match error " << rc << "." << std::endl;
 			return;
 		}
 		if (rc == 0)
 		{
-			std::cerr << "ERROR: ovector only has room for 1 captured substring" << std::endl;
+			ERROR() << "ovector only has room for 1 captured substring" << std::endl;
 			return;
 		}
 

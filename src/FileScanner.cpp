@@ -21,6 +21,7 @@
 
 #include <immintrin.h>
 
+#include "Logger.h"
 #include "FileScanner.h"
 #include "FileScannerCpp11.h"
 #include "FileScannerPCRE.h"
@@ -98,8 +99,14 @@ FileScanner::~FileScanner()
 {
 }
 
-void FileScanner::Run()
+void FileScanner::Run(int thread_index)
 {
+	// Set the name of the thread.
+	std::stringstream temp_ss;
+	temp_ss << "FILESCAN_";
+	temp_ss << thread_index;
+	set_thread_name(temp_ss.str());
+
 	if(m_manually_assign_cores)
 	{
 		// Spread the scanner threads across cores.  Linux at least doesn't seem to want to do that by default.
@@ -120,7 +127,7 @@ void FileScanner::Run()
 		try
 		{
 			// Try to open and read the file.  This could throw.
-			//std::clog << "Trying to scan file " << next_string << std::endl;
+			LOG(INFO) << "Attempting to scan file \'" << next_string << "\'";
 			steady_clock::time_point start = steady_clock::now();
 			File f(next_string, file_data_storage);
 			steady_clock::time_point end = steady_clock::now();
@@ -133,7 +140,7 @@ void FileScanner::Run()
 
 			if(f.size() == 0)
 			{
-				//std::clog << "WARNING: Filesize of \"" << next_string << "\" is 0" << std::endl;
+				LOG(INFO) << "WARNING: Filesize of \'" << next_string << "\' is 0, skipping.";
 				continue;
 			}
 
@@ -153,12 +160,12 @@ void FileScanner::Run()
 		catch(const FileException &error)
 		{
 			// The File constructor threw an exception.
-			std::cerr << "ucg: ERROR: " << error.what() << std::endl;
+			ERROR() << error.what();
 		}
 		catch(const std::system_error& error)
 		{
 			// A system error.  Currently should only be errors from File.
-			std::cerr << "ucg: ERROR: " << error.code() << " - " << error.code().message() << std::endl;
+			ERROR() << error.code() << " - " << error.code().message();
 		}
 		catch(...)
 		{

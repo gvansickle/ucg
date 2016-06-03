@@ -25,7 +25,7 @@
 #include <cstdlib> // For abort().
 
 #include "sync_queue_impl_selector.h"
-
+#include "Logger.h"
 #include "ArgParse.h"
 #include "Globber.h"
 #include "TypeManager.h"
@@ -39,6 +39,9 @@ int main(int argc, char **argv)
 {
 	try
 	{
+		// First thing, set up logging.
+		Logger::Init(argv[0]);
+
 		// We'll keep the scanner threads in this vector so we can join() them later.
 		std::vector<std::thread> scanner_threads;
 
@@ -57,7 +60,7 @@ int main(int argc, char **argv)
 		tm.CompileTypeTables();
 		dim.CompileExclusionTables();
 
-		//std::clog << "Num jobs: " << ap.m_jobs << std::endl;
+		LOG(INFO) << "Num jobs: " << ap.m_jobs;
 
 		// Create the Globber->FileScanner queue.
 		sync_queue<std::string> q;
@@ -80,7 +83,7 @@ int main(int argc, char **argv)
 		// Start the scanner threads.
 		for(int t=0; t<ap.m_jobs; ++t)
 		{
-			std::thread fst {&FileScanner::Run, fs.get()};
+			std::thread fst {&FileScanner::Run, fs.get(), t};
 			scanner_threads.push_back(std::move(fst));
 		}
 
@@ -134,17 +137,17 @@ int main(int argc, char **argv)
 	}
 	catch(const FileScannerException &e)
 	{
-		std::cerr << "ucg: Error during regex parsing: " << e.what() << std::endl;
+		ERROR() << "Error during regex parsing: " << e.what();
 		return 255;
 	}
 	catch(const ArgParseException &e)
 	{
-		std::cerr << "ucg: Error during arg parsing: " << e.what() << std::endl;
+		ERROR() << "Error during arg parsing: " << e.what();
 		return 255;
 	}
 	catch(const std::runtime_error &e)
 	{
-		std::cerr << "ucg: std::runtime_error exception: " << e.what() << std::endl;
+		ERROR() << "std::runtime_error exception: " << e.what();
 		return 255;
 	}
 	catch(...)
@@ -153,7 +156,7 @@ int main(int argc, char **argv)
 		// terminate handler (which should be abort()) if we let an exception escape main(), but will simply return
 		// without an error code.  I ran into this when trying to instantiate std::locale with locale=="" in ArgParse,
 		// and before I had the std::runtime_error catch clause above.
-		std::cerr << "ucg: unknown exception occurred." << std::endl;
+		ERROR() << "Unknown exception occurred.";
 		std::abort();
 	}
 }

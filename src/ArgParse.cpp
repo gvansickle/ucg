@@ -59,7 +59,7 @@
 
 #include "TypeManager.h"
 #include "File.h"
-
+#include "Logger.h"
 
 // Our --version output isn't just a static string, so we'll register with argp for a version callback.
 static void PrintVersionTextRedirector(FILE *stream, struct argp_state *state)
@@ -111,6 +111,7 @@ enum OPT
 	OPT_HELP_TYPES,
 	OPT_COLUMN,
 	OPT_NOCOLUMN,
+	OPT_TEST_LOG_ALL,
 	OPT_TEST_NOENV_USER,
 	OPT_BRACKET_NO_STANDIN
 };
@@ -165,6 +166,7 @@ static struct argp_option options[] = {
 		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
 		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
 		// Hidden options for debug, test, etc.
+		{"test-log-all", OPT_TEST_LOG_ALL, 0, OPTION_HIDDEN, "Enable all logging output."},
 		{"test-noenv-user", OPT_TEST_NOENV_USER, 0, OPTION_HIDDEN, "Don't search for or use $HOME/.ucgrc."},
 		{ 0 }
 	};
@@ -276,6 +278,9 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	case OPT_NOCOLOR:
 		arguments->m_color = false;
 		arguments->m_nocolor = true;
+		break;
+	case OPT_TEST_LOG_ALL:
+		INFO::Enable(true);
 		break;
 	case OPT_TEST_NOENV_USER:
 		// The --test-noenv-user option is handled specially outside of the argp parser.
@@ -488,8 +493,8 @@ void ArgParse::PrintVersionText(FILE* stream)
 			}
 		}
 		std::fprintf(stream, " Newline style: %s\n", s.c_str());
-	}
 #endif
+	}
 
 	//
 	// libpcre2 info
@@ -567,7 +572,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 
 				if(home_file.size() == 0)
 				{
-					//std::clog << "INFO: config file \"" << homedir << "\" is zero-length." << std::endl;
+					LOG(INFO) << "Config file \"" << homedir << "\" is zero-length.";
 				}
 				else
 				{
@@ -578,13 +583,13 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 			}
 			catch(const FileException &e)
 			{
-				std::clog << "ucg: WARNING: " << e.what() << std::endl;
+				WARN() << "During search for ~/.ucgrc: " << e.what();
 			}
 			catch(const std::system_error &e)
 			{
 				if(e.code() != std::errc::no_such_file_or_directory)
 				{
-					std::clog << "ucg: WARNING: Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+					WARN() << "Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message();
 				}
 				// Otherwise, the file just doesn't exist.
 			}
@@ -602,11 +607,11 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 
 			if(proj_rc_file.size() == 0)
 			{
-				//std::clog << "INFO: config file \"" << proj_rc_filename << "\" is zero-length." << std::endl;
+				LOG(INFO) << "Config file \"" << proj_rc_filename << "\" is zero-length.";
 			}
 			else
 			{
-				//std::clog << "INFO: parsing config file \"" << proj_rc_filename << "\"." << std::endl;
+				LOG(INFO) << "Parsing config file \"" << proj_rc_filename << "\".";
 
 				auto vec_argv = ConvertRCFileToArgv(proj_rc_file);
 
@@ -615,13 +620,13 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 		}
 		catch(const FileException &e)
 		{
-			std::clog << "ucg: WARNING: " << e.what() << std::endl;
+			WARN() << "During search for project .ucgrc file: " << e.what();
 		}
 		catch(const std::system_error &e)
 		{
 			if(e.code() != std::errc::no_such_file_or_directory)
 			{
-				std::clog << "ucg: WARNING: Couldn't open config file \"" << proj_rc_filename << "\", error " << e.code() << " - " << e.code().message() << std::endl;
+				WARN() << "Couldn't open config file \"" << proj_rc_filename << "\", error " << e.code() << " - " << e.code().message();
 			}
 			// Otherwise, the file just doesn't exist.
 		}
@@ -714,7 +719,7 @@ std::string ArgParse::GetProjectRCFilename() const
 	char *original_cwd = getcwd(NULL, 0);
 #endif
 
-	//std::clog << "INFO: cwd = \"" << original_cwd << "\"" << std::endl;
+	LOG(INFO) << "cwd = \'" << original_cwd << "\'";
 
 	char *current_cwd = original_cwd;
 	while((current_cwd != nullptr) && (current_cwd[0] != '.'))
@@ -745,12 +750,12 @@ std::string ArgParse::GetProjectRCFilename() const
 			test_rc_filename += "/";
 		}
 		test_rc_filename += ".ucgrc";
-		//std::clog << "INFO: checking for rc file \"" << test_rc_filename << "\"" << std::endl;
+		LOG(INFO) << "Checking for rc file \'" << test_rc_filename << "\'";
 		int rc_file = open(test_rc_filename.c_str(), O_RDONLY);
 		if(rc_file != -1)
 		{
 			// Found it.  Return its name.
-			//std::clog << "INFO: found rc file \"" << test_rc_filename << "\"" << std::endl;
+			LOG(INFO) << "Found rc file \'" << test_rc_filename << "\'";
 			retval = test_rc_filename;
 			close(rc_file);
 			break;
@@ -759,7 +764,7 @@ std::string ArgParse::GetProjectRCFilename() const
 		/// @note GRVS - get_current_dir_name() under Cygwin will currently return a DOS path if this is started
 		///              under the Eclipse gdb.  This mostly doesn't cause problems, except for terminating the loop.
 		///              The clause below after the || handles this.
-		if((strlen(current_cwd) == 1) || (strlen(current_cwd) <= 4 && current_cwd[1] == ':'))
+		if((std::strlen(current_cwd) == 1) || (std::strlen(current_cwd) <= 4 && current_cwd[1] == ':'))
 		{
 			// We've hit the root and didn't find a config file.
 			break;

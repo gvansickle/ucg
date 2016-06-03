@@ -29,6 +29,8 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
+#include "Logger.h"
+
 File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
 {
 	// Save the filename.
@@ -67,7 +69,6 @@ File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> st
 	// If filesize is 0, skip.
 	if(m_file_size == 0)
 	{
-		//std::cerr << "WARNING: Filesize of \"" << filename << "\" is 0" << std::endl;
 		close(m_file_descriptor);
 		m_file_descriptor = -1;
 		return;
@@ -81,7 +82,7 @@ File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> st
 	if(m_file_data == MAP_FAILED)
 	{
 		// Mapping failed.
-		std::cerr << "ERROR: Couldn't map file \"" << filename << "\"" << std::endl;
+		ERROR() << "Couldn't map file \"" << filename << "\"" << std::endl;
 		throw std::system_error(errno, std::system_category());
 	}
 }

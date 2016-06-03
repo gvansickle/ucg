@@ -165,7 +165,7 @@ AC_LANG_POP([C++])
 AC_LANG_PUSH([C++])
 
 # We don't have this header on MinGW.
-AC_CHECK_HEADERS([pwd.h],[],[],[])
+AC_CHECK_HEADERS([pwd.h])
 
 AC_LANG_POP([C++])
 
@@ -202,6 +202,40 @@ AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])
 
+# Check for pthreads.  Note that we don't necessarily require pthreads; we require and use C++11 std::thread<>,
+# which whatever it uses under-the-hood we don't really care about.  If in fact C++11 is using pthreads, we can
+# optionally use some of its functionality, e.g. naming threads, for diagnostic, logging, and other purposes.
+# Macro docs: http://www.gnu.org/software/autoconf-archive/ax_pthread.html#ax_pthread
+AX_PTHREAD
+AS_IF([test "x$ax_pthread_ok" == xyes],
+	[
+		AC_MSG_NOTICE([found pthreads])
+		AC_MSG_CHECKING([if the C++11 underlying thread implementation is pthreads])
+		AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([
+        					#include <type_traits>
+        					#include <thread>
+        					#include <pthread.h>
+        					
+        				],
+                         [
+                         	static_assert(std::is_same<std::thread::native_handle_type, pthread_t>::value, "C++11 underlying thread implementation is not pthreads");
+                         ])],
+        [
+        	AC_DEFINE(CXX11_THREADS_ARE_PTHREADS, 1,
+				[Define if the C++11 underlying thread implementation is pthreads])
+        	AC_MSG_RESULT([yes])
+        ],
+        [
+        	AC_MSG_RESULT([no])
+        ])
+		
+	],
+	[
+		AC_MSG_NOTICE([no pthreads found])
+	])
+
+
 # Put this in to help with profiling.
 #AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 
@@ -226,6 +260,43 @@ AS_IF([test "x$ac_cv_func_aligned_alloc" = xno -a "x$ac_cv_func_posix_memalign" 
 	[AC_MSG_NOTICE([found a usable aligned memory allocator.])])
 	
 AC_CHECK_FUNCS([posix_fadvise])
+
+AC_MSG_CHECKING([if the GNU C library program_invocation{_short}_name strings are defined])
+AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([#include <errno.h>],
+                         [program_invocation_short_name = "test";])],
+        [
+        	AC_DEFINE(HAVE_GNU_C_LIB_PROGRAM_INVOCATION_NAMES, 1,
+				[Define if the GNU C library program_invocation{_short}_name strings are defined])
+        	AC_MSG_RESULT([yes])
+        ],
+        [
+        	AC_MSG_RESULT([no])
+        ])
+
+### Find a pthread_setname_np() we can use, and #define a macro M_pthread_setname_np() which will call it.
+# For Linux.
+AC_CHECK_DECLS([pthread_setname_np(pthread_t, const char *)],
+				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
+				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_setname_np(pthread_self(), (name))],
+					[Macro for Linux to map to the lowest-common-denominator for this functionality, OSX])
+				],
+				[], [#include <pthread.h>])
+# For FreeBSD.
+AC_CHECK_DECLS([pthread_set_name_np(pthread_t, const char *)],
+				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
+				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_set_name_np(pthread_self(), (name))],
+					[Macro for FreeBSD to map to the lowest-common-denominator for this functionality, OSX])
+				 AC_DEFINE([INCLUDE_PTHREAD_NP], [1], [If defined, include the header <pthread_np.h> because we're on BSD])
+				],
+				[], [#include <pthread_np.h>])
+# For Mac OSX.
+AC_CHECK_DECLS([pthread_setname_np(const char *)],
+				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
+				 AC_DEFINE([HAVE_NO_THREAD_LOCAL_SUPPORT], [1], [If defined, we have no C++11 thread_local support (clang on OSX)])
+				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_setname_np(name)],
+					[Macro for OSX to map to itself])
+				], [], [#include <pthread.h>])
 
 AC_LANG_POP([C++])
 
