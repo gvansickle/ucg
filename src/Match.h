@@ -32,7 +32,7 @@
 class Match
 {
 public:
-	Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset, long long line_number);
+	Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset, size_t line_number);
 	Match() = default;
 
 	/// Delete the copy constructor and the move assignment operator.  With the std::strings in here, this is a relatively expensive
@@ -49,7 +49,7 @@ public:
 
 
 	/// @note Data members not private, this is more of a struct than a class.
-	long long m_line_number { 0 };
+	size_t m_line_number { 0 };
 	std::string m_pre_match;
 	std::string m_match;
 	std::string m_post_match;
@@ -61,7 +61,7 @@ public:
 static_assert(std::is_nothrow_move_constructible<Match>::value == true, "Match must be nothrow move constructible");
 
 // Require Match to be nothrow move assignable for similar reasons.
-// @note I can't get MatchList to be nothrow move assignable because std::string isn't in gcc up to at least 5.1, per this bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58265#c7.
+// @note I can't get Match to be nothrow move assignable because std::string isn't in gcc up to at least 5.1, per this bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58265#c7.
 // This issue, combined with std::vector<>::push_back()'s specification, is what motivates the deletion of the copy ctor/assignment
 // operator in this class in the first place.
 // Per http://stackoverflow.com/a/18858875, the only way to get the "void push_back( T&& value );" overload of push_back() is to

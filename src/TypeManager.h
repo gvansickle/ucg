@@ -33,7 +33,7 @@ class TypeManager
 {
 public:
 	TypeManager();
-	virtual ~TypeManager();
+	~TypeManager() = default;
 
 	/**
 	 * Determine if the file with the given path and name should be scanned based on the
@@ -43,7 +43,7 @@ public:
 	 * @param name
 	 * @return
 	 */
-	bool FileShouldBeScanned(const std::string &name) const;
+	bool FileShouldBeScanned(const std::string &name) const noexcept;
 
 	/**
 	 * Add the given file type to the types which will be scanned.  For handling the
