@@ -128,10 +128,10 @@ void FileScanner::Run(int thread_index)
 		{
 			// Try to open and read the file.  This could throw.
 			LOG(INFO) << "Attempting to scan file \'" << next_string << "\'";
-			steady_clock::time_point start = steady_clock::now();
+			//steady_clock::time_point start = steady_clock::now();
 			File f(next_string, file_data_storage);
-			steady_clock::time_point end = steady_clock::now();
-			accum_elapsed_time += (end - start);
+			//steady_clock::time_point end = steady_clock::now();
+			//accum_elapsed_time += (end - start);
 			total_bytes_read += f.size();
 
 
