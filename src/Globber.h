@@ -25,6 +25,7 @@
 #include <vector>
 #include <string>
 #include <thread>
+#include <future>
 
 #include "sync_queue_impl_selector.h"
 
@@ -49,6 +50,11 @@ public:
 	std::string ErrorPath() const noexcept { return m_bad_path; };
 
 private:
+
+	std::vector<std::future<void>> m_futures;
+
+	void RunSubdirScan(const std::string &dir);
+
 	std::vector<std::string> m_start_paths;
 
 	sync_queue<std::string>& m_out_queue;

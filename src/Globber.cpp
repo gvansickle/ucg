@@ -147,6 +147,10 @@ void Globber::Run()
 				LOG(INFO) << "... should be ignored.";
 				fts_set(fts, ftsent, FTS_SKIP);
 			}
+
+			// Scan this directory.
+			m_futures.push_back(std::async(std::launch::async, &Globber::RunSubdirScan, this, path));
+			fts_set(fts, ftsent, FTS_SKIP);
 		}
 		/// @note Only FTS_DNR, FTS_ERR, and FTS_NS have valid fts_errno information.
 		else if(ftsent->fts_info == FTS_DNR)
@@ -175,6 +179,89 @@ void Globber::Run()
 	}
 	fts_close(fts);
 
+	for(auto &i : m_futures)
+	{
+		i.get();
+	}
+
 	LOG(INFO) << "Number of regular files found: " << m_num_files_found;
 }
 
+
+void Globber::RunSubdirScan(const std::string &dir)
+{
+	char * dirs[2];
+
+	dirs[0] = const_cast<char*>(dir.c_str());
+	dirs[1] = 0;
+
+	FTS *fts = fts_open(dirs, FTS_LOGICAL  /*| FTS_NOSTAT*/, NULL);
+	while(FTSENT *ftsent = fts_read(fts))
+	{
+		std::string name;
+		std::string path;
+
+		if(ftsent->fts_info == FTS_F || ftsent->fts_info == FTS_D)
+		{
+			name.assign(ftsent->fts_name, ftsent->fts_namelen);
+			path.assign(ftsent->fts_path, ftsent->fts_pathlen);
+		}
+
+		LOG(INFO) << "Considering file: " << ftsent->fts_path;
+		if(ftsent->fts_info == FTS_F)
+		{
+			LOG(INFO) << "... normal file.";
+			// It's a normal file.  Check for inclusion.
+			if(m_type_manager.FileShouldBeScanned(name))
+			{
+				LOG(INFO) << "... should be scanned.";
+				// Extension was in the hash table.
+				m_out_queue.wait_push(std::move(path));
+
+				// Count the number of files we found that were included in the search.
+				m_num_files_found++;
+			}
+		}
+		else if(ftsent->fts_info == FTS_D)
+		{
+			LOG(INFO) << "... directory.";
+			// It's a directory.  Check if we should descend into it.
+			if(!m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
+			{
+				// We were told not to recurse into subdirectories.
+				fts_set(fts, ftsent, FTS_SKIP);
+			}
+			if(m_dir_inc_manager.DirShouldBeExcluded(path, name))
+			{
+				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
+				LOG(INFO) << "... should be ignored.";
+				fts_set(fts, ftsent, FTS_SKIP);
+			}
+		}
+		/// @note Only FTS_DNR, FTS_ERR, and FTS_NS have valid fts_errno information.
+		else if(ftsent->fts_info == FTS_DNR)
+		{
+			// A directory that couldn't be read.
+			NOTICE() << "Unable to read directory \'" << ftsent->fts_path << "\': "
+					<< LOG_STRERROR(ftsent->fts_errno) << ". Skipping.";
+		}
+		else if(ftsent->fts_info == FTS_ERR)
+		{
+			NOTICE() << "Directory traversal error at path \'" << ftsent->fts_path << "\': "
+					<< LOG_STRERROR(ftsent->fts_errno) << ".";
+			m_bad_path = ftsent->fts_path;
+			break;
+		}
+		else if(ftsent->fts_info == FTS_NS)
+		{
+			// No stat info.
+			NOTICE() << "Could not get stat info at path \'" << ftsent->fts_path << "\': "
+								<< LOG_STRERROR(ftsent->fts_errno) << ". Skipping.";
+		}
+		else
+		{
+			LOG(INFO) << "... unknown file type:" << ftsent->fts_info;
+		}
+	}
+	fts_close(fts);
+}
