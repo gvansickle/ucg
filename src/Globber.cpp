@@ -148,9 +148,12 @@ void Globber::Run()
 				fts_set(fts, ftsent, FTS_SKIP);
 			}
 
-			// Scan this directory.
-			m_futures.push_back(std::async(std::launch::async, &Globber::RunSubdirScan, this, path));
-			fts_set(fts, ftsent, FTS_SKIP);
+			if(m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
+			{
+				// Scan this directory.
+				m_futures.push_back(std::async(std::launch::async, &Globber::RunSubdirScan, this, path));
+				fts_set(fts, ftsent, FTS_SKIP);
+			}
 		}
 		/// @note Only FTS_DNR, FTS_ERR, and FTS_NS have valid fts_errno information.
 		else if(ftsent->fts_info == FTS_DNR)
@@ -179,6 +182,7 @@ void Globber::Run()
 	}
 	fts_close(fts);
 
+	NOTICE() << "Futures = " << m_futures.size();
 	for(auto &i : m_futures)
 	{
 		i.get();
