@@ -182,7 +182,7 @@ void Globber::Run()
 	}
 	fts_close(fts);
 
-	NOTICE() << "Futures = " << m_futures.size();
+	LOG(INFO) << "Futures = " << m_futures.size();
 	for(auto &i : m_futures)
 	{
 		i.get();
