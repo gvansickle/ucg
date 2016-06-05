@@ -146,6 +146,8 @@ public:
 	/// Whether to recurse into subdirectories or not.
 	bool m_recurse { true };
 
+	bool m_use_mmap { false };
+
 	///@}
 };
 
