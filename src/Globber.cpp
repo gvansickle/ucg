@@ -40,7 +40,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 		DirInclusionManager &dir_inc_manager,
 		bool recurse_subdirs,
 		sync_queue<std::string>& out_queue)
-		: m_start_paths(start_paths),
+		: m_start_paths(start_paths.cbegin(), start_paths.cend()),
 		  m_out_queue(out_queue),
 		  m_type_manager(type_manager),
 		  m_dir_inc_manager(dir_inc_manager),
@@ -97,6 +97,8 @@ void Globber::Run()
 		++i;
 	}
 	dirs[m_start_paths.size()] = 0;
+
+#if 0
 
 	/// @todo We can't use FS_NOSTAT here.  OSX at least isn't able to determine regular
 	/// files without the stat, so they get returned as FTS_NSOK / 11 /	no stat(2) requested.
@@ -181,20 +183,45 @@ void Globber::Run()
 		}
 	}
 	fts_close(fts);
+#endif
 
-	LOG(INFO) << "Futures = " << m_futures.size();
-	for(auto &i : m_futures)
+
+	int active_tasks {0};
+
+	while(m_start_paths.size() > 0)
 	{
-		i.get();
+		std::vector<std::future<std::vector<std::string>>> futures;
+
+		while(m_start_paths.size() > 0 && active_tasks < 2)
+		{
+			// Pull the next directory path off the front of the queue.
+			auto path = m_start_paths.front();
+			m_start_paths.pop_front();
+
+			// Start a new std::async() task to scan the given directory.
+			futures.push_back(std::async(std::launch::async, &Globber::RunSubdirScan, this, path));
+			active_tasks++;
+		}
+
+		LOG(INFO) << "Futures = " << futures.size();
+
+		// Wait for all the std::asyncs that we've just kicked off to finish.
+		for(auto &i : futures)
+		{
+			auto dirvec = i.get();
+			m_start_paths.insert(m_start_paths.cend(), dirvec.begin(), dirvec.end());
+			active_tasks--;
+		}
 	}
 
 	LOG(INFO) << "Number of regular files found: " << m_num_files_found;
 }
 
 
-void Globber::RunSubdirScan(const std::string &dir)
+std::vector<std::string> Globber::RunSubdirScan(const std::string &dir)
 {
 	char * dirs[2];
+	std::vector<std::string> retval_directory_queue;
 
 	dirs[0] = const_cast<char*>(dir.c_str());
 	dirs[1] = 0;
@@ -241,6 +268,13 @@ void Globber::RunSubdirScan(const std::string &dir)
 				LOG(INFO) << "... should be ignored.";
 				fts_set(fts, ftsent, FTS_SKIP);
 			}
+
+			if(m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
+			{
+				// Queue it up for scanning.
+				retval_directory_queue.push_back(path);
+				fts_set(fts, ftsent, FTS_SKIP);
+			}
 		}
 		/// @note Only FTS_DNR, FTS_ERR, and FTS_NS have valid fts_errno information.
 		else if(ftsent->fts_info == FTS_DNR)
@@ -268,4 +302,6 @@ void Globber::RunSubdirScan(const std::string &dir)
 		}
 	}
 	fts_close(fts);
+
+	return retval_directory_queue;
 }

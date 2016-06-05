@@ -23,6 +23,7 @@
 #include <config.h>
 
 #include <vector>
+#include <deque>
 #include <string>
 #include <thread>
 #include <future>
@@ -51,11 +52,9 @@ public:
 
 private:
 
-	std::vector<std::future<void>> m_futures;
+	std::vector<std::string> RunSubdirScan(const std::string &dir);
 
-	void RunSubdirScan(const std::string &dir);
-
-	std::vector<std::string> m_start_paths;
+	std::deque<std::string> m_start_paths;
 
 	sync_queue<std::string>& m_out_queue;
 
