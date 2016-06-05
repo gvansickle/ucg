@@ -43,6 +43,7 @@ AC_CONFIG_MACRO_DIR([m4])
 : ${CXXFLAGS=""}	# Don't default to "-g -O2".
 
 AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([
 	foreign
 	subdir-objects
@@ -75,6 +76,7 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 ###
 
 ## Checks for the programs needed to do a build.
+AC_PROG_INSTALL
 AC_PROG_CC
 # This is required instead of AC_PROG_CC_C_O by automake's "subdir-objects" option.
 AM_PROG_CC_C_O
@@ -92,6 +94,7 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # Probably remove this when/if that is fixed. 
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_RANLIB
+PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED
 
 # The testsuite needs a way to invoke "script", to fool ucg into thinking it's outputting to a tty.
