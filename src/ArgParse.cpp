@@ -113,6 +113,7 @@ enum OPT
 	OPT_NOCOLUMN,
 	OPT_TEST_LOG_ALL,
 	OPT_TEST_NOENV_USER,
+	OPT_TEST_USE_MMAP,
 	OPT_BRACKET_NO_STANDIN
 };
 
@@ -168,6 +169,7 @@ static struct argp_option options[] = {
 		// Hidden options for debug, test, etc.
 		{"test-log-all", OPT_TEST_LOG_ALL, 0, OPTION_HIDDEN, "Enable all logging output."},
 		{"test-noenv-user", OPT_TEST_NOENV_USER, 0, OPTION_HIDDEN, "Don't search for or use $HOME/.ucgrc."},
+		{"test-use-mmap", OPT_TEST_USE_MMAP, 0, OPTION_HIDDEN, "Use mmap() to access files being searched."},
 		{ 0 }
 	};
 
@@ -284,6 +286,9 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case OPT_TEST_NOENV_USER:
 		// The --test-noenv-user option is handled specially outside of the argp parser.
+		break;
+	case OPT_TEST_USE_MMAP:
+		arguments->m_use_mmap = true;
 		break;
 	case ARGP_KEY_ARG:
 		if(state->arg_num == 0)

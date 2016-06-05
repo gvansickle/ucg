@@ -136,7 +136,7 @@ void Globber::Run()
 		{
 			LOG(INFO) << "... directory.";
 			// It's a directory.  Check if we should descend into it.
-			if(!m_recurse_subdirs && ftsent->fts_level > 0)
+			if(!m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
 			{
 				// We were told not to recurse into subdirectories.
 				fts_set(fts, ftsent, FTS_SKIP);
