@@ -20,6 +20,8 @@
 #ifndef TYPEMANAGER_H_
 #define TYPEMANAGER_H_
 
+#include <config.h>
+
 #include <iostream>
 #include <string>
 #include <vector>

@@ -19,6 +19,8 @@
 
 #include "TypeManager.h"
 
+#include <config.h>
+
 #include <algorithm>
 #include <set>
 #include <iomanip>
