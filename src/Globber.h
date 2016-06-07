@@ -52,7 +52,7 @@ public:
 
 private:
 
-	std::vector<std::string> RunSubdirScan(const std::string &dir);
+	void RunSubdirScan(sync_queue<std::string> &dir_queue);
 
 	std::deque<std::string> m_start_paths;
 

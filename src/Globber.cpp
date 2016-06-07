@@ -186,122 +186,128 @@ void Globber::Run()
 #endif
 
 
-	int active_tasks {0};
+	sync_queue<std::string> dir_queue;
+	std::vector<std::thread> threads;
 
-	while(m_start_paths.size() > 0)
+
+	// Start the directory traversal threads.  They will all initially block on dir_queue, since it's empty.
+	for(int i=0; i<4; i++)
 	{
-		std::vector<std::future<std::vector<std::string>>> futures;
+		threads.push_back(std::thread(&Globber::RunSubdirScan, this, std::ref(dir_queue)));
+	}
 
-		while(m_start_paths.size() > 0 && active_tasks < 2)
-		{
-			// Pull the next directory path off the front of the queue.
-			auto path = m_start_paths.front();
-			m_start_paths.pop_front();
+	LOG(INFO) << "Globber threads = " << threads.size();
 
-			// Start a new std::async() task to scan the given directory.
-			futures.push_back(std::async(std::launch::async, &Globber::RunSubdirScan, this, path));
-			active_tasks++;
-		}
+	// Push the initial paths to the queue to start the threads off.
+	for(auto path : m_start_paths)
+	{
+		dir_queue.wait_push(path);
+	}
 
-		LOG(INFO) << "Futures = " << futures.size();
+	// Wait for the producer+consumer threads to finish.
+	dir_queue.wait_for_worker_completion(4);
 
-		// Wait for all the std::asyncs that we've just kicked off to finish.
-		for(auto &i : futures)
-		{
-			auto dirvec = i.get();
-			m_start_paths.insert(m_start_paths.cend(), dirvec.begin(), dirvec.end());
-			active_tasks--;
-		}
+	dir_queue.close();
+
+	// Wait for all the threads that we've just kicked off to finish.
+	for(auto &thr : threads)
+	{
+		thr.join();
 	}
 
 	LOG(INFO) << "Number of regular files found: " << m_num_files_found;
 }
 
 
-std::vector<std::string> Globber::RunSubdirScan(const std::string &dir)
+void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue)
 {
 	char * dirs[2];
-	std::vector<std::string> retval_directory_queue;
+	std::string dir;
 
-	dirs[0] = const_cast<char*>(dir.c_str());
-	dirs[1] = 0;
-
-	FTS *fts = fts_open(dirs, FTS_LOGICAL  /*| FTS_NOSTAT*/, NULL);
-	while(FTSENT *ftsent = fts_read(fts))
+	while(dir_queue.wait_pull(std::move(dir)) != queue_op_status::closed)
 	{
-		std::string name;
-		std::string path;
+		/// The number of directories pushed onto the work queue by this thread during this iteration.
+		size_t num_dirs_pushed {0};
 
-		if(ftsent->fts_info == FTS_F || ftsent->fts_info == FTS_D)
-		{
-			name.assign(ftsent->fts_name, ftsent->fts_namelen);
-			path.assign(ftsent->fts_path, ftsent->fts_pathlen);
-		}
+		dirs[0] = const_cast<char*>(dir.c_str());
+		dirs[1] = 0;
 
-		LOG(INFO) << "Considering file: " << ftsent->fts_path;
-		if(ftsent->fts_info == FTS_F)
+		FTS *fts = fts_open(dirs, FTS_LOGICAL  /*| FTS_NOSTAT*/, NULL);
+		while(FTSENT *ftsent = fts_read(fts))
 		{
-			LOG(INFO) << "... normal file.";
-			// It's a normal file.  Check for inclusion.
-			if(m_type_manager.FileShouldBeScanned(name))
-			{
-				LOG(INFO) << "... should be scanned.";
-				// Extension was in the hash table.
-				m_out_queue.wait_push(std::move(path));
+			std::string name;
+			std::string path;
 
-				// Count the number of files we found that were included in the search.
-				m_num_files_found++;
-			}
-		}
-		else if(ftsent->fts_info == FTS_D)
-		{
-			LOG(INFO) << "... directory.";
-			// It's a directory.  Check if we should descend into it.
-			if(!m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
+			if(ftsent->fts_info == FTS_F || ftsent->fts_info == FTS_D)
 			{
-				// We were told not to recurse into subdirectories.
-				fts_set(fts, ftsent, FTS_SKIP);
-			}
-			if(m_dir_inc_manager.DirShouldBeExcluded(path, name))
-			{
-				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
-				LOG(INFO) << "... should be ignored.";
-				fts_set(fts, ftsent, FTS_SKIP);
+				name.assign(ftsent->fts_name, ftsent->fts_namelen);
+				path.assign(ftsent->fts_path, ftsent->fts_pathlen);
 			}
 
-			if(m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
+			LOG(INFO) << "Considering file: " << ftsent->fts_path;
+			if(ftsent->fts_info == FTS_F)
 			{
-				// Queue it up for scanning.
-				retval_directory_queue.push_back(path);
-				fts_set(fts, ftsent, FTS_SKIP);
+				LOG(INFO) << "... normal file.";
+				// It's a normal file.  Check for inclusion.
+				if(m_type_manager.FileShouldBeScanned(name))
+				{
+					LOG(INFO) << "... should be scanned.";
+					// Extension was in the hash table.
+					m_out_queue.wait_push(std::move(path));
+
+					// Count the number of files we found that were included in the search.
+					m_num_files_found++;
+				}
+			}
+			else if(ftsent->fts_info == FTS_D)
+			{
+				LOG(INFO) << "... directory.";
+				// It's a directory.  Check if we should descend into it.
+				if(!m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
+				{
+					// We were told not to recurse into subdirectories.
+					fts_set(fts, ftsent, FTS_SKIP);
+				}
+				if(m_dir_inc_manager.DirShouldBeExcluded(path, name))
+				{
+					// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
+					LOG(INFO) << "... should be ignored.";
+					fts_set(fts, ftsent, FTS_SKIP);
+				}
+
+				if(m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
+				{
+					// Queue it up for scanning.
+					dir_queue.wait_push(std::move(path));
+					num_dirs_pushed++;
+					fts_set(fts, ftsent, FTS_SKIP);
+				}
+			}
+			/// @note Only FTS_DNR, FTS_ERR, and FTS_NS have valid fts_errno information.
+			else if(ftsent->fts_info == FTS_DNR)
+			{
+				// A directory that couldn't be read.
+				NOTICE() << "Unable to read directory \'" << ftsent->fts_path << "\': "
+						<< LOG_STRERROR(ftsent->fts_errno) << ". Skipping.";
+			}
+			else if(ftsent->fts_info == FTS_ERR)
+			{
+				ERROR() << "Directory traversal error at path \'" << ftsent->fts_path << "\': "
+						<< LOG_STRERROR(ftsent->fts_errno) << ".";
+				m_bad_path = ftsent->fts_path;
+				break;
+			}
+			else if(ftsent->fts_info == FTS_NS)
+			{
+				// No stat info.
+				NOTICE() << "Could not get stat info at path \'" << ftsent->fts_path << "\': "
+									<< LOG_STRERROR(ftsent->fts_errno) << ". Skipping.";
+			}
+			else
+			{
+				LOG(INFO) << "... unknown file type:" << ftsent->fts_info;
 			}
 		}
-		/// @note Only FTS_DNR, FTS_ERR, and FTS_NS have valid fts_errno information.
-		else if(ftsent->fts_info == FTS_DNR)
-		{
-			// A directory that couldn't be read.
-			NOTICE() << "Unable to read directory \'" << ftsent->fts_path << "\': "
-					<< LOG_STRERROR(ftsent->fts_errno) << ". Skipping.";
-		}
-		else if(ftsent->fts_info == FTS_ERR)
-		{
-			NOTICE() << "Directory traversal error at path \'" << ftsent->fts_path << "\': "
-					<< LOG_STRERROR(ftsent->fts_errno) << ".";
-			m_bad_path = ftsent->fts_path;
-			break;
-		}
-		else if(ftsent->fts_info == FTS_NS)
-		{
-			// No stat info.
-			NOTICE() << "Could not get stat info at path \'" << ftsent->fts_path << "\': "
-								<< LOG_STRERROR(ftsent->fts_errno) << ". Skipping.";
-		}
-		else
-		{
-			LOG(INFO) << "... unknown file type:" << ftsent->fts_info;
-		}
+		fts_close(fts);
 	}
-	fts_close(fts);
-
-	return retval_directory_queue;
 }

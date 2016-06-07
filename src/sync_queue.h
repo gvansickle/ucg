@@ -50,7 +50,7 @@ template <typename ValueType>
 class sync_queue
 {
 public:
-	sync_queue() : m_closed(false) {};
+	sync_queue() {};
 	~sync_queue() {};
 
 	void close()
@@ -125,8 +125,14 @@ public:
 		// to unlock the mutex.
 		std::unique_lock<std::mutex> lock(m_mutex);
 
+		m_num_waiting_threads++;
+
+		m_cv_complete.notify_all();
+
 		// Wait until the queue is not empty, or somebody closes the sync_queue<>.
 		m_cv.wait(lock, [this](){ return !m_underlying_queue.empty() || m_closed; });
+
+		m_num_waiting_threads--;
 
 		// Check if we've be awoken to a closed and empty queue.
 		if(m_underlying_queue.empty() && m_closed)
@@ -148,8 +154,14 @@ public:
 		// to unlock the mutex.
 		std::unique_lock<std::mutex> lock(m_mutex);
 
+		m_num_waiting_threads++;
+
+		m_cv_complete.notify_all();
+
 		// Wait until the queue is not empty, or somebody closes the sync_queue<>.
 		m_cv.wait(lock, [this](){ return !m_underlying_queue.empty() || m_closed; });
+
+		m_num_waiting_threads--;
 
 		// Check if we've be awoken to a closed and empty queue.
 		if(m_underlying_queue.empty() && m_closed)
@@ -168,13 +180,42 @@ public:
 		return queue_op_status::success;
 	}
 
+	/**
+	 *  This is definitely not a Boost API.
+	 *  Waits until:
+	 *	 - The queue is empty, and
+	 *	 - There are #num_workers threads waiting to be notified of new work arriving in the queue.
+	 *	 - Or, the queue is closed.
+	 */
+	queue_op_status wait_for_worker_completion(size_t num_workers)
+	{
+		std::unique_lock<std::mutex> lock(m_mutex);
+
+		m_cv_complete.wait(lock, [this, num_workers](){
+			return ((m_num_waiting_threads == num_workers) && m_underlying_queue.empty()) || m_closed;
+		});
+
+		if(m_closed)
+		{
+			return queue_op_status::closed;
+		}
+		else
+		{
+			return queue_op_status::success;
+		}
+	}
+
 private:
 
 	std::mutex m_mutex;
 
 	std::condition_variable m_cv;
 
-	bool m_closed;
+	std::condition_variable m_cv_complete;
+
+	size_t m_num_waiting_threads { 0 };
+
+	bool m_closed { false };
 
 #ifdef TODO
 	using mt_deque = std::deque<ValueType, std::scoped_allocator_adaptor<__gnu_cxx::__mt_alloc<ValueType>>>;
