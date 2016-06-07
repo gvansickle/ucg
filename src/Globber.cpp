@@ -192,7 +192,7 @@ void Globber::Run()
 	{
 		std::vector<std::future<std::vector<std::string>>> futures;
 
-		while(m_start_paths.size() > 0 && active_tasks < 2)
+		while(m_start_paths.size() > 0 && active_tasks < 4)
 		{
 			// Pull the next directory path off the front of the queue.
 			auto path = m_start_paths.front();
