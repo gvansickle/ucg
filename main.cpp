@@ -95,7 +95,9 @@ int main(int argc, char **argv)
 		std::thread globber_thread {&Globber::Run, &globber};
 
 		// Wait for the Globber thread (the source) to finish.
-		globber_thread.join();
+		if(globber_thread.joinable())
+			globber_thread.join();
+
 		// Close the Globber->FileScanner queue.
 		files_to_scan_queue.close();
 
