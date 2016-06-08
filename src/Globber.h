@@ -35,6 +35,21 @@ class TypeManager;
 class DirInclusionManager;
 
 /**
+ * Helper struct to collect up and communicate traversal stats.
+ */
+struct DirectoryTraversalStats
+{
+	size_t m_num_files_found { 0 };
+
+	size_t m_num_files_rejected { 0 };
+
+	size_t m_num_files_scanned { 0 };
+
+	size_t m_num_directories_found { 0 };
+};
+
+
+/**
  * This class does the directory tree traversal.
  */
 class Globber
@@ -56,7 +71,7 @@ public:
 
 private:
 
-	void RunSubdirScan(sync_queue<std::string> &dir_queue);
+	void RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index);
 
 	std::vector<std::string> m_start_paths;
 
@@ -70,9 +85,10 @@ private:
 
 	sync_queue<std::string>& m_out_queue;
 
-	long m_num_files_found = {0};
+	DirectoryTraversalStats m_traversal_stats;
 
 	std::string m_bad_path;
 };
+
 
 #endif /* GLOBBER_H_ */

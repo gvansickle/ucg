@@ -135,7 +135,10 @@ public:
 
 		m_num_waiting_threads++;
 
-		m_cv_complete.notify_all();
+		if(m_num_waiting_threads == m_num_waiting_threads_notification_level)
+		{
+			m_cv_complete.notify_all();
+		}
 
 		// Wait until the queue is not empty, or somebody closes the sync_queue<>.
 		m_cv.wait(lock, [this](){ return !m_underlying_queue.empty() || m_closed; });
@@ -164,7 +167,10 @@ public:
 
 		m_num_waiting_threads++;
 
-		m_cv_complete.notify_all();
+		if(m_num_waiting_threads == m_num_waiting_threads_notification_level)
+		{
+			m_cv_complete.notify_all();
+		}
 
 		// Wait until the queue is not empty, or somebody closes the sync_queue<>.
 		m_cv.wait(lock, [this](){ return !m_underlying_queue.empty() || m_closed; });
@@ -199,6 +205,8 @@ public:
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 
+		m_num_waiting_threads_notification_level = num_workers;
+
 		m_cv_complete.wait(lock, [this, num_workers](){
 			return ((m_num_waiting_threads == num_workers) && m_underlying_queue.empty()) || m_closed;
 		});
@@ -220,6 +228,8 @@ private:
 	std::condition_variable m_cv;
 
 	std::condition_variable m_cv_complete;
+
+	size_t m_num_waiting_threads_notification_level { 500 };
 
 	size_t m_num_waiting_threads { 0 };
 

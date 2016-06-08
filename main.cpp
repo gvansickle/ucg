@@ -87,16 +87,19 @@ int main(int argc, char **argv)
 			scanner_threads.push_back(std::move(fst));
 		}
 
-		// Start the globber thread last.
-		// We do this last because the globber thread is the source; all other threads will be
+		// Start the globber threads last.
+		// We do this last because the globber is the ultimate source for the work queue; all other threads will be
 		// waiting for it to start sending data to the Globber->FileScanner queue.  If we started it
 		// first, the globbing would start immediately, and it would take longer to get the scanner and output
 		// threads created and started, and ultimately slow down startup.
+#if 0
 		std::thread globber_thread {&Globber::Run, &globber};
 
 		// Wait for the Globber thread (the source) to finish.
 		if(globber_thread.joinable())
 			globber_thread.join();
+#endif
+		globber.Run();
 
 		// Close the Globber->FileScanner queue.
 		files_to_scan_queue.close();

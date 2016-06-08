@@ -58,8 +58,6 @@ Globber::~Globber()
 
 void Globber::Run()
 {
-	set_thread_name("Globber");
-
 	char * dirs[m_start_paths.size()+1];
 
 	/// @todo It looks like OSX needs any trailing slashes to be removed here, or its fts lib will double them up.
@@ -107,7 +105,7 @@ void Globber::Run()
 	// Start the directory traversal threads.  They will all initially block on dir_queue, since it's empty.
 	for(int i=0; i<m_dirjobs; i++)
 	{
-		threads.push_back(std::thread(&Globber::RunSubdirScan, this, std::ref(dir_queue)));
+		threads.push_back(std::thread(&Globber::RunSubdirScan, this, std::ref(dir_queue), i));
 	}
 
 	LOG(INFO) << "Globber threads = " << threads.size();
@@ -129,14 +127,22 @@ void Globber::Run()
 		thr.join();
 	}
 
-	LOG(INFO) << "Number of regular files found: " << m_num_files_found;
+	///LOG(INFO) << "Number of regular files found: " << m_num_files_found;
 }
 
 
-void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue)
+void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index)
 {
 	char * dirs[2];
 	std::string dir;
+	// Local copy of a stats struct that we'll use to collect up stats just for this thread.
+	DirectoryTraversalStats stats;
+
+	// Set the name of the thread.
+	std::stringstream temp_ss;
+	temp_ss << "GLOBBER_";
+	temp_ss << thread_index;
+	set_thread_name(temp_ss.str());
 
 	while(dir_queue.wait_pull(std::move(dir)) != queue_op_status::closed)
 	{
@@ -169,8 +175,11 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue)
 			LOG(INFO) << "Considering file: " << ftsent->fts_path;
 			if(ftsent->fts_info == FTS_F)
 			{
+				// It's a normal file.
 				LOG(INFO) << "... normal file.";
-				// It's a normal file.  Check for inclusion.
+				stats.m_num_files_found++;
+
+				// Check for inclusion.
 				if(m_type_manager.FileShouldBeScanned(name))
 				{
 					LOG(INFO) << "... should be scanned.";
@@ -178,12 +187,17 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue)
 					m_out_queue.wait_push(std::move(path));
 
 					// Count the number of files we found that were included in the search.
-					m_num_files_found++;
+					stats.m_num_files_scanned++;
+				}
+				else
+				{
+					stats.m_num_files_rejected++;
 				}
 			}
 			else if(ftsent->fts_info == FTS_D)
 			{
 				LOG(INFO) << "... directory.";
+				stats.m_num_directories_found++;
 				// It's a directory.  Check if we should descend into it.
 				if(!m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
 				{
@@ -232,4 +246,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue)
 		}
 		fts_close(fts);
 	}
+
+	/// @todo Add the local stats to the class's stats.
 }
