@@ -92,13 +92,8 @@ int main(int argc, char **argv)
 		// waiting for it to start sending data to the Globber->FileScanner queue.  If we started it
 		// first, the globbing would start immediately, and it would take longer to get the scanner and output
 		// threads created and started, and ultimately slow down startup.
-#if 0
-		std::thread globber_thread {&Globber::Run, &globber};
-
-		// Wait for the Globber thread (the source) to finish.
-		if(globber_thread.joinable())
-			globber_thread.join();
-#endif
+		// Note that we just call globber.Run() here.  It blocks, spawning and managing its own threads until the directory
+		// tree traversal is complete.
 		globber.Run();
 
 		// Close the Globber->FileScanner queue.
