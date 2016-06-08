@@ -108,11 +108,13 @@ enum OPT
 	OPT_TYPE_SET,
 	OPT_TYPE_ADD,
 	OPT_TYPE_DEL,
+	OPT_PERF_DIRJOBS,
 	OPT_HELP_TYPES,
 	OPT_COLUMN,
 	OPT_NOCOLUMN,
 	OPT_TEST_LOG_ALL,
 	OPT_TEST_NOENV_USER,
+	OPT_TEST_USE_MMAP,
 	OPT_BRACKET_NO_STANDIN
 };
 
@@ -159,15 +161,18 @@ static struct argp_option options[] = {
 		{"type-set", OPT_TYPE_SET, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
 		{"type-add", OPT_TYPE_ADD, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is appended to."},
 		{"type-del", OPT_TYPE_DEL, "TYPE", 0, "Remove any existing definition of type TYPE."},
+		{0,0,0,0, "Performance tuning:"},
+		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
+		{"dirjobs",  OPT_PERF_DIRJOBS, "NUM_JOBS",      0,  "Number of directory traversal jobs (std::thread<>s) to use." },
 		{0,0,0,0, "Miscellaneous:" },
 		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc files."},
-		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
 		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
 		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
 		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
 		// Hidden options for debug, test, etc.
 		{"test-log-all", OPT_TEST_LOG_ALL, 0, OPTION_HIDDEN, "Enable all logging output."},
 		{"test-noenv-user", OPT_TEST_NOENV_USER, 0, OPTION_HIDDEN, "Don't search for or use $HOME/.ucgrc."},
+		{"test-use-mmap", OPT_TEST_USE_MMAP, 0, OPTION_HIDDEN, "Use mmap() to access files being searched."},
 		{ 0 }
 	};
 
@@ -271,6 +276,17 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 			arguments->m_jobs = atoi(arg);
 		}
 		break;
+	case OPT_PERF_DIRJOBS:
+		if(atoi(arg) < 1)
+		{
+			// Specified 0 or negative jobs.
+			argp_failure(state, STATUS_EX_USAGE, 0, "jobs must be >= 1");
+		}
+		else
+		{
+			arguments->m_dirjobs = atoi(arg);
+		}
+		break;
 	case OPT_COLOR:
 		arguments->m_color = true;
 		arguments->m_nocolor = false;
@@ -284,6 +300,9 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case OPT_TEST_NOENV_USER:
 		// The --test-noenv-user option is handled specially outside of the argp parser.
+		break;
+	case OPT_TEST_USE_MMAP:
+		arguments->m_use_mmap = true;
 		break;
 	case ARGP_KEY_ARG:
 		if(state->arg_num == 0)
@@ -398,6 +417,14 @@ void ArgParse::Parse(int argc, char **argv)
 			// std::thread::hardware_concurrency() is broken.  Default to one thread.
 			m_jobs = 1;
 		}
+	}
+
+	// Number of directory scanning jobs.
+	if(m_dirjobs == 0)
+	{
+		// Wasn't specified on command line.  Default to 2.
+		/// @todo Magic number.
+		m_dirjobs = 2;
 	}
 
 	// Search files/directories.
