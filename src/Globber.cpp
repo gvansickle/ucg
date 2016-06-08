@@ -41,7 +41,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 		bool recurse_subdirs,
 		int dirjobs,
 		sync_queue<std::string>& out_queue)
-		: m_start_paths(start_paths.cbegin(), start_paths.cend()),
+		: m_start_paths(start_paths),
 		  m_type_manager(type_manager),
 		  m_dir_inc_manager(dir_inc_manager),
 		  m_recurse_subdirs(recurse_subdirs),
@@ -146,7 +146,15 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue)
 		dirs[0] = const_cast<char*>(dir.c_str());
 		dirs[1] = 0;
 
-		FTS *fts = fts_open(dirs, FTS_LOGICAL  /*| FTS_NOSTAT*/, NULL);
+		/// @todo We can't use FS_NOSTAT here.  OSX at least isn't able to determine regular
+		/// files without the stat, so they get returned as FTS_NSOK / 11 /	no stat(2) requested.
+		/// Does not seem to affect performance on Linux, but might be having an effect on Cygwin.
+		/// Look into workarounds.
+		/// @note Per looking at the fts_open() source, FTS_LOGICAL turns on FTS_NOCHDIR, but since we're traversing
+		/// in multiple threads, and there's only a process-wide cwd, we'll specify it anyway.
+		/// @todo Current gnulib supports additional flags here: FTS_CWDFD | FTS_DEFER_STAT | FTS_NOATIME.  We should
+		/// check for these and use them if they exist.
+		FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/, NULL);
 		while(FTSENT *ftsent = fts_read(fts))
 		{
 			std::string name;

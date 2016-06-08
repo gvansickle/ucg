@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -58,7 +58,7 @@ private:
 
 	void RunSubdirScan(sync_queue<std::string> &dir_queue);
 
-	std::deque<std::string> m_start_paths;
+	std::vector<std::string> m_start_paths;
 
 	TypeManager &m_type_manager;
 
