@@ -39,12 +39,14 @@ Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
 		DirInclusionManager &dir_inc_manager,
 		bool recurse_subdirs,
+		int dirjobs,
 		sync_queue<std::string>& out_queue)
 		: m_start_paths(start_paths.cbegin(), start_paths.cend()),
-		  m_out_queue(out_queue),
 		  m_type_manager(type_manager),
 		  m_dir_inc_manager(dir_inc_manager),
-		  m_recurse_subdirs(recurse_subdirs)
+		  m_recurse_subdirs(recurse_subdirs),
+		  m_dirjobs(dirjobs),
+		  m_out_queue(out_queue)
 {
 
 }
@@ -191,7 +193,7 @@ void Globber::Run()
 
 
 	// Start the directory traversal threads.  They will all initially block on dir_queue, since it's empty.
-	for(int i=0; i<4; i++)
+	for(int i=0; i<m_dirjobs; i++)
 	{
 		threads.push_back(std::thread(&Globber::RunSubdirScan, this, std::ref(dir_queue)));
 	}
@@ -205,11 +207,11 @@ void Globber::Run()
 	}
 
 	// Wait for the producer+consumer threads to finish.
-	dir_queue.wait_for_worker_completion(4);
+	dir_queue.wait_for_worker_completion(m_dirjobs);
 
 	dir_queue.close();
 
-	// Wait for all the threads that we've just kicked off to finish.
+	// Wait for all the threads to finish.
 	for(auto &thr : threads)
 	{
 		thr.join();

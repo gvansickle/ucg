@@ -138,6 +138,9 @@ public:
 	/// Number of FileScanner threads to use.
 	int m_jobs { 0 };
 
+	/// Number of Globber threads to use.
+	int m_dirjobs { 0 };
+
 	/// Whether to use color output or not.
 	/// both false == not specified on command line.
 	bool m_color { false };

@@ -40,13 +40,21 @@ enum class queue_op_status
 	not_ready
 };
 
+struct default_close_policy_t {};
+
+template <int num_waiters>
+struct close_on_n_waiters
+{
+
+};
+
 /**
  * Simple unbounded synchronized queue class.
  *
  * The interface implemented here is compatible with Boost's sync_queue<> implementation
  * documented here: http://www.boost.org/doc/libs/1_59_0/doc/html/thread/sds.html#thread.sds.synchronized_queues.
  */
-template <typename ValueType>
+template <typename ValueType, typename ClosePolicy = default_close_policy_t>
 class sync_queue
 {
 public:
