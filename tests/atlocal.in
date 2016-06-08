@@ -32,10 +32,10 @@ if PROG_AG="$(which ag)";
 then
 	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_AG;
 fi
-if PROG_ACK="$(which ack)";
-then
-	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_ACK;
-fi
+#if PROG_ACK="$(which ack)";
+#then
+#	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_ACK;
+#fi
 
 # Paths to source that we'll test against.
 # @todo Maybe take this in as a parameter?  The only issue is that this doesn't work during a "make distcheck",

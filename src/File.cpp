@@ -17,6 +17,8 @@
 
 /** @file */
 
+#include <config.h>
+
 #include "File.h"
 
 #include <iostream>
@@ -97,7 +99,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 
 	if(m_use_mmap)
 	{
-		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE, file_descriptor, 0));
+		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE /*| MAP_POPULATE*/, file_descriptor, 0));
 
 		if(file_data == MAP_FAILED)
 		{
@@ -108,14 +110,20 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 
 		// Hint that we'll be sequentially reading the mmapped file soon.
 		posix_madvise(const_cast<char*>(file_data), file_size, POSIX_MADV_SEQUENTIAL | POSIX_MADV_WILLNEED);
-
 	}
 	else
 	{
+		// Not using mmap().
+
+#ifdef HAVE_POSIX_FADVISE // OSX doesn't have it.
+		posix_fadvise(file_descriptor, 0, 0, POSIX_FADV_SEQUENTIAL | POSIX_FADV_WILLNEED);
+#endif
+
 		m_storage->reserve_no_copy(file_size);
 		file_data = m_storage->data();
 
 		// Read in the whole file.
+		/// @todo Handle read() errors better.
 		while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
 	}
 
@@ -125,7 +133,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 	return file_data;
 }
 
-void File::FreeFileData(const char* file_data, size_t file_size)
+void File::FreeFileData(const char* file_data, size_t file_size) noexcept
 {
 	if(m_use_mmap)
 	{

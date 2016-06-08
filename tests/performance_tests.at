@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
-
 m4_define([EXTRACT_AND_APPEND_TIME],[
 		# $1 == program name.
 		AS_ECHO_N(["| $1 | "]) >> $PERF_RESULTS_FILE;

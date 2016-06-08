@@ -43,6 +43,7 @@ AC_CONFIG_MACRO_DIR([m4])
 : ${CXXFLAGS=""}	# Don't default to "-g -O2".
 
 AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([
 	foreign
 	subdir-objects
@@ -75,6 +76,7 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 ###
 
 ## Checks for the programs needed to do a build.
+AC_PROG_INSTALL
 AC_PROG_CC
 # This is required instead of AC_PROG_CC_C_O by automake's "subdir-objects" option.
 AM_PROG_CC_C_O
@@ -92,6 +94,7 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # Probably remove this when/if that is fixed. 
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_RANLIB
+PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED
 
 # The testsuite needs a way to invoke "script", to fool ucg into thinking it's outputting to a tty.
@@ -195,9 +198,10 @@ AC_LANG_PUSH([C++])
 AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be.
-AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CXXFLAGS]) #  -fopt-info-vec-all
+#AX_APPEND_COMPILE_FLAGS([-ftree-vectorize -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
+#AX_APPEND_COMPILE_FLAGS([-fopenmp], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])
 
@@ -257,6 +261,8 @@ AC_CHECK_FUNCS([aligned_alloc posix_memalign])
 AS_IF([test "x$ac_cv_func_aligned_alloc" = xno -a "x$ac_cv_func_posix_memalign" = xno],
 	[AC_MSG_ERROR([cannot find an aligned memory allocator.])],
 	[AC_MSG_NOTICE([found a usable aligned memory allocator.])])
+	
+AC_CHECK_FUNCS([posix_fadvise])
 
 AC_MSG_CHECKING([if the GNU C library program_invocation{_short}_name strings are defined])
 AC_COMPILE_IFELSE(

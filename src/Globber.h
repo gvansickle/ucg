@@ -23,8 +23,10 @@
 #include <config.h>
 
 #include <vector>
+#include <deque>
 #include <string>
 #include <thread>
+#include <future>
 
 #include "sync_queue_impl_selector.h"
 
@@ -38,8 +40,12 @@ class DirInclusionManager;
 class Globber
 {
 public:
-	Globber(std::vector<std::string> start_paths, TypeManager &type_manager,
-			DirInclusionManager &dir_inc_manager, bool recurse_subdirs, sync_queue<std::string> &out_queue);
+	Globber(std::vector<std::string> start_paths,
+			TypeManager &type_manager,
+			DirInclusionManager &dir_inc_manager,
+			bool recurse_subdirs,
+			int dirjobs,
+			sync_queue<std::string> &out_queue);
 	virtual ~Globber();
 
 	void Run();
@@ -49,15 +55,20 @@ public:
 	std::string ErrorPath() const noexcept { return m_bad_path; };
 
 private:
-	std::vector<std::string> m_start_paths;
 
-	sync_queue<std::string>& m_out_queue;
+	void RunSubdirScan(sync_queue<std::string> &dir_queue);
+
+	std::deque<std::string> m_start_paths;
 
 	TypeManager &m_type_manager;
 
 	DirInclusionManager &m_dir_inc_manager;
 
 	bool m_recurse_subdirs;
+
+	int m_dirjobs;
+
+	sync_queue<std::string>& m_out_queue;
 
 	long m_num_files_found = {0};
 
