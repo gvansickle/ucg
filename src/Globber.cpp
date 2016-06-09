@@ -242,7 +242,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 			else if(ftsent->fts_info == FTS_DC)
 			{
 				// Directory that causes cycles.
-				WARN() << "Directory causes cycles: \'" << ftsent->fts_path << "\'";
+				WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
 			}
 			else if(ftsent->fts_info == FTS_SLNONE)
 			{
