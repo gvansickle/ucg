@@ -38,7 +38,7 @@ line 6
 /bin/tree
 find . -ls
 
-AT_CHECK([ucg --noenv --test-log-all 'line'])
+AT_CHECK([ucg --noenv --dirjobs=1 'line'])
 
 AT_FAIL_IF(true)
 

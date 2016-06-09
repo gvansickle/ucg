@@ -211,7 +211,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 					fts_set(fts, ftsent, FTS_SKIP);
 				}
 
-				if(m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
+				if(m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL && m_dirjobs > 1)
 				{
 					// Queue it up for scanning.
 					dir_queue.wait_push(std::move(path));
@@ -238,6 +238,16 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				// No stat info.
 				NOTICE() << "Could not get stat info at path \'" << ftsent->fts_path << "\': "
 									<< LOG_STRERROR(ftsent->fts_errno) << ". Skipping.";
+			}
+			else if(ftsent->fts_info == FTS_DC)
+			{
+				// Directory that causes cycles.
+				WARN() << "Directory causes cycles: \'" << ftsent->fts_path << "\'";
+			}
+			else if(ftsent->fts_info == FTS_SLNONE)
+			{
+				// Broken symlink.
+				WARN() << "Broken symlink: \'" << ftsent->fts_path << "\'";
 			}
 			else
 			{
