@@ -15,3 +15,32 @@
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
+AT_BANNER([UniversalCodeGrep directory traversal checks])
+
+###
+### Tree with cross-linked symlinks.
+###
+AT_SETUP([Tree with cross-linked symlinks])
+
+# Create the directory tree.
+$MKDIR_P dir1/dir2
+$MKDIR_P dir1/dir3
+AT_DATA([dir1/dir2/file1.py],[line 1
+line2
+line3
+])
+AT_DATA([dir1/dir3/file1.s],[line 4
+line 5
+line 6
+])
+(cd dir1/dir2 && $TEST_LN_S ../dir3 link_to_dir3)
+(cd dir1/dir3 && $TEST_LN_S ../dir2 link_to_dir2) 
+/bin/tree
+find . -ls
+
+AT_CHECK([ucg --noenv --test-log-all 'line'])
+
+AT_FAIL_IF(true)
+
+AT_CLEANUP
+

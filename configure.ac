@@ -76,6 +76,7 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 ###
 
 ## Checks for the programs needed to do a build.
+
 AC_PROG_INSTALL
 AC_PROG_CC
 # This is required instead of AC_PROG_CC_C_O by automake's "subdir-objects" option.
@@ -97,6 +98,8 @@ AC_PROG_RANLIB
 PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED
 
+## Checks for programs needed to run the testsuite.
+
 # The testsuite needs a way to invoke "script", to fool ucg into thinking it's outputting to a tty.
 # Of course, Linux and *BSD (including OSX) "script"'s take different options and parameters, so we
 # try to sort it out here.
@@ -117,6 +120,12 @@ AS_IF([$PROG_SCRIPT -qfc "echo hello" /dev/null > /dev/null 2>&1],
 		AC_MSG_RESULT([BSD style])
 		],
       [AC_MSG_ERROR([could not determine how to invoke $PROG_SCRIPT])])
+
+AC_PROG_MKDIR_P
+AC_PROG_LN_S
+AS_IF([test "$LN_S" == 'ln -s'],
+	[AC_SUBST([TEST_LN_S], [$LN_S])],
+	[AC_MSG_WARN([couldn't find a real 'ln -s', will not be able to run all tests])])
 
 ## Checks for maintainer tools.
 
