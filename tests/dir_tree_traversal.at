@@ -17,12 +17,8 @@
 
 AT_BANNER([UniversalCodeGrep directory traversal checks])
 
-###
-### Tree with cross-linked symlinks.
-###
-AT_SETUP([Tree with cross-linked symlinks])
-
-# Create the directory tree.
+# Create a cross-linked directory tree.
+m4_define([UCG_CREATE_CROSSLINKED_DIR], [
 $MKDIR_P dir1/dir2
 $MKDIR_P dir1/dir3
 AT_DATA([dir1/dir2/file1.py],[line 1
@@ -35,12 +31,43 @@ line 6
 ])
 (cd dir1/dir2 && $TEST_LN_S ../dir3 link_to_dir3)
 (cd dir1/dir3 && $TEST_LN_S ../dir2 link_to_dir2) 
-/bin/tree
-find . -ls
+])
 
-AT_CHECK([ucg --noenv --dirjobs=1 'line'])
+###
+### Tree with cross-linked symlinks, single-threaded.
+###
+AT_SETUP([Tree with cross-linked symlinks, single-threaded])
 
-AT_FAIL_IF(true)
+# Create the directory tree.
+UCG_CREATE_CROSSLINKED_DIR
+
+# Single-threaded.
+AT_CHECK([ucg --noenv --dirjobs=1 'line'], [0], [stdout], [stderr])
+
+# Check the results.
+AT_CHECK([cat stdout | LCT], [0], [12])
+AT_CHECK([cat stderr | LCT], [0], [2])
+AT_CHECK([cat stdout | grep -E '.*file1.py:2:line2'], [0], [ignore], [ignore])
+AT_CHECK([cat stderr | grep -E 'ucg: warning: .*/link_to_dir2.*recursive directory loop'], [0], [ignore], [ignore])
+
+AT_CLEANUP
+
+###
+### Tree with cross-linked symlinks, multithreaded.
+###
+AT_SETUP([Tree with cross-linked symlinks, multithreaded])
+
+# Create the directory tree.
+UCG_CREATE_CROSSLINKED_DIR
+
+# Multi-threaded.
+AT_CHECK([ucg --noenv --dirjobs=2 'line'], [0], [stdout], [stderr])
+
+# Check the results.
+AT_CHECK([cat stdout | LCT], [0], [6])
+AT_CHECK([cat stderr | LCT], [0], [2])
+AT_CHECK([cat stdout | grep -E '.*file1.py:2:line2'], [0], [ignore], [ignore])
+AT_CHECK([cat stderr | grep -E 'ucg: warning: .*/link_to_dir2.*recursive directory loop'], [0], [ignore], [ignore])
 
 AT_CLEANUP
 
