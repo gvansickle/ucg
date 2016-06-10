@@ -146,9 +146,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 
 	while(dir_queue.wait_pull(std::move(dir)) != queue_op_status::closed)
 	{
-		/// The number of directories pushed onto the work queue by this thread during this iteration.
-		size_t num_dirs_pushed {0};
-
 		dirs[0] = const_cast<char*>(dir.c_str());
 		dirs[1] = 0;
 
@@ -202,6 +199,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				if(!m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
 				{
 					// We were told not to recurse into subdirectories.
+					LOG(INFO) << "... --no-recurse specified, skipping.";
 					fts_set(fts, ftsent, FTS_SKIP);
 				}
 				if(m_dir_inc_manager.DirShouldBeExcluded(path, name))
@@ -211,11 +209,23 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 					fts_set(fts, ftsent, FTS_SKIP);
 				}
 
+				if((m_dirjobs > 1) && (ftsent->fts_level == FTS_ROOTLEVEL))
+				{
+					// We're doing things multithreaded, so we have to detect cycles ourselves.
+					if(HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino).m_val))
+					{
+						// Found cycle.
+						WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
+						fts_set(fts, ftsent, FTS_SKIP);
+						continue;
+					}
+				}
+
 				if(m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL && m_dirjobs > 1)
 				{
 					// Queue it up for scanning.
+					LOG(INFO) << "... subdir, queuing it up for multithreaded scanning.";
 					dir_queue.wait_push(std::move(path));
-					num_dirs_pushed++;
 					fts_set(fts, ftsent, FTS_SKIP);
 				}
 			}
