@@ -27,6 +27,7 @@
 #include <string>
 #include <thread>
 #include <cstdint>
+#include <sys/types.h> // for dev_t, ino_t
 
 #include "sync_queue_impl_selector.h"
 
