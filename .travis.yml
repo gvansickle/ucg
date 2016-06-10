@@ -32,6 +32,7 @@ script:
  - ../configure
  - make
  - make check
+ - find . -iname '*.log' -exec cat "{}" \; 
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
 
 after_success:
