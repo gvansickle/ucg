@@ -53,7 +53,7 @@ public:
 		m_tempstream << std::endl;
 
 		// Send it to the actual output stream.
-		std::cerr << m_tempstream.str();
+		std::clog << m_tempstream.str();
 	}
 
 	static void Init(const char * argv0)
@@ -143,6 +143,18 @@ class STDERR : public Logger
 public:
 	STDERR() { m_tempstream << m_program_invocation_short_name << ": "; };
 	~STDERR() override = default;
+
+	static bool IsEnabled() noexcept { return true; };
+};
+
+/**
+ *
+ */
+class STDLOG : public Logger
+{
+public:
+	STDLOG() { m_tempstream << m_program_invocation_short_name << ": "; };
+	~STDLOG() override = default;
 
 	static bool IsEnabled() noexcept { return true; };
 };
