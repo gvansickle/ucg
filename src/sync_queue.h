@@ -15,7 +15,7 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file */
+/** @file Simple unbounded synchronized queue class. */
 
 #ifndef SYNC_QUEUE_H_
 #define SYNC_QUEUE_H_
