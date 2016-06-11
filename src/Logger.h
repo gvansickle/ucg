@@ -55,7 +55,7 @@ public:
 
 		// Send it to the actual output stream.
 		{
-		std::unique_lock<std::mutex> lock(m_mutex);
+		std::unique_lock<std::mutex> lock(m_cerr_mutex);
 		std::cerr << m_tempstream.str();
 		}
 	}
@@ -99,7 +99,11 @@ protected:
 	static std::string m_program_invocation_short_name;
 
 private:
-	static std::mutex m_mutex;
+	/// Mutex for serializing writes to cerr.
+	/// @note Portability: This is only needed on OSX.  Without it, individual characters written to either std::cerr or std::clog
+	/// by different threads will get intermixed.  I believe this is contrary to the C++11 spec, and that each "<< whatever" (which is
+	/// what we're otherwise doing here) should be atomic wrt the characters that actually get output (i.e. one flush per "<<").
+	static std::mutex m_cerr_mutex;
 };
 
 
