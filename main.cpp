@@ -46,76 +46,76 @@ int main(int argc, char **argv)
 		std::vector<std::thread> scanner_threads;
 
 		// Instantiate classes for file and directory inclusion/exclusion management.
-		TypeManager tm;
-		DirInclusionManager dim;
+		TypeManager type_manager;
+		DirInclusionManager dir_inclusion_manager;
 
 		// Instantiate the argument parser.
-		ArgParse ap(tm);
+		ArgParse arg_parser(type_manager);
 
 		// Parse command-line options and args.
-		ap.Parse(argc, argv);
+		arg_parser.Parse(argc, argv);
 
-		dim.AddExclusions(ap.m_excludes);
+		dir_inclusion_manager.AddExclusions(arg_parser.m_excludes);
 
-		tm.CompileTypeTables();
-		dim.CompileExclusionTables();
+		type_manager.CompileTypeTables();
+		dir_inclusion_manager.CompileExclusionTables();
 
-		LOG(INFO) << "Num jobs: " << ap.m_jobs;
+		LOG(INFO) << "Num jobs: " << arg_parser.m_jobs;
 
 		// Create the Globber->FileScanner queue.
-		sync_queue<std::string> q;
+		sync_queue<std::string> files_to_scan_queue;
 
 		// Create the FileScanner->OutputTask queue.
-		sync_queue<MatchList> out_q;
+		sync_queue<MatchList> match_queue;
 
 		// Set up the globber.
-		Globber g(ap.m_paths, tm, dim, ap.m_recurse, q);
+		Globber globber(arg_parser.m_paths, type_manager, dir_inclusion_manager, arg_parser.m_recurse, arg_parser.m_dirjobs, files_to_scan_queue);
 
 		// Set up the output task object.
-		OutputTask output_task(ap.m_color, ap.m_nocolor, ap.m_column, out_q);
+		OutputTask output_task(arg_parser.m_color, arg_parser.m_nocolor, arg_parser.m_column, match_queue);
 
 		// Create the FileScanner object.
-		std::unique_ptr<FileScanner> fs(FileScanner::Create(q, out_q, ap.m_pattern, ap.m_ignore_case, ap.m_word_regexp, ap.m_pattern_is_literal));
+		std::unique_ptr<FileScanner> file_scanner(FileScanner::Create(files_to_scan_queue, match_queue, arg_parser.m_pattern, arg_parser.m_ignore_case, arg_parser.m_word_regexp, arg_parser.m_pattern_is_literal));
 
 		// Start the output task thread.
-		std::thread ot {&OutputTask::Run, &output_task};
+		std::thread output_task_thread {&OutputTask::Run, &output_task};
 
 		// Start the scanner threads.
-		for(int t=0; t<ap.m_jobs; ++t)
+		for(int t=0; t<arg_parser.m_jobs; ++t)
 		{
-			std::thread fst {&FileScanner::Run, fs.get(), t};
+			std::thread fst {&FileScanner::Run, file_scanner.get(), t};
 			scanner_threads.push_back(std::move(fst));
 		}
 
-		// Start the globber thread last.
-		// We do this last because the globber thread is the source; all other threads will be
+		// Start the globber threads last.
+		// We do this last because the globber is the ultimate source for the work queue; all other threads will be
 		// waiting for it to start sending data to the Globber->FileScanner queue.  If we started it
 		// first, the globbing would start immediately, and it would take longer to get the scanner and output
 		// threads created and started, and ultimately slow down startup.
-		std::thread gt {&Globber::Run, &g};
+		// Note that we just call globber.Run() here.  It blocks, spawning and managing its own threads until the directory
+		// tree traversal is complete.
+		globber.Run();
 
-		// Wait for the Globber thread (the source) to finish.
-		gt.join();
 		// Close the Globber->FileScanner queue.
-		q.close();
+		files_to_scan_queue.close();
 
 		// Wait for all scanner threads to complete.
-		for (auto& th : scanner_threads)
+		for (auto& scanner_thread_ref : scanner_threads)
 		{
-			th.join();
+			scanner_thread_ref.join();
 		}
 		// All scanner threads completed.
 
 		// Close the FileScanner->OutputTask queue.
-		out_q.close();
+		match_queue.close();
 
 		// Wait for the output thread to complete.
-		ot.join();
+		output_task_thread.join();
 
 		// Check for errors.
-		if(g.Error())
+		if(globber.Error())
 		{
-			std::cout << "ucg: \"" << g.ErrorPath() << "\": No such file or directory" << std::endl;
+			std::cout << "ucg: \"" << globber.ErrorPath() << "\": No such file or directory" << std::endl;
 			// Both ack and ag return 1 in this situation, which indicates that "no matches were found".
 			// We'll follow their lead; this is really sort of an error, and grep would return 2 here,
 			// but I suppose it could be argued that there is no match here.

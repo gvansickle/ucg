@@ -21,7 +21,7 @@
 
 #include <algorithm>
 
-Match::Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset, long long line_number)
+Match::Match(const char *start_of_array, size_t array_size, size_t match_start_offset, size_t match_end_offset, size_t line_number)
 {
 	auto line_ending = "\n";
 	// Find the start of the line.

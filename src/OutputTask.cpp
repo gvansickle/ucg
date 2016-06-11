@@ -59,6 +59,7 @@ void OutputTask::Run()
 
 	MatchList ml;
 	bool first_matchlist_printed = false;
+	std::stringstream sstrm;
 
 	while(m_input_queue.wait_pull(std::move(ml)) != queue_op_status::closed)
 	{
@@ -67,7 +68,11 @@ void OutputTask::Run()
 			// Print a blank line between the match lists (i.e. the groups of matches in one file).
 			std::cout << "\n";
 		}
-		ml.Print(m_output_is_tty, m_enable_color, m_print_column);
+		ml.Print(sstrm, m_output_is_tty, m_enable_color, m_print_column);
+		std::cout << sstrm.str();
+		std::cout.flush();
+		sstrm.str(std::string());
+		sstrm.clear();
 		first_matchlist_printed = true;
 
 		// Count up the total number of matches.

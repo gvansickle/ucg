@@ -24,6 +24,10 @@
 #include <condition_variable>
 #include <queue>
 
+#if TODO
+#include <scoped_allocator>
+#include <ext/mt_allocator.h>
+#endif
 
 enum class queue_op_status
 {
@@ -36,17 +40,19 @@ enum class queue_op_status
 	not_ready
 };
 
+
 /**
  * Simple unbounded synchronized queue class.
  *
  * The interface implemented here is compatible with Boost's sync_queue<> implementation
- * documented here: http://www.boost.org/doc/libs/1_59_0/doc/html/thread/sds.html#thread.sds.synchronized_queues.
+ * documented here: http://www.boost.org/doc/libs/1_59_0/doc/html/thread/sds.html#thread.sds.synchronized_queues,
+ * with the exception of the wait_for_worker_completion() interface, which is my own addition.
  */
 template <typename ValueType>
 class sync_queue
 {
 public:
-	sync_queue() : m_closed(false) {};
+	sync_queue() {};
 	~sync_queue() {};
 
 	void close()
@@ -121,8 +127,17 @@ public:
 		// to unlock the mutex.
 		std::unique_lock<std::mutex> lock(m_mutex);
 
+		m_num_waiting_threads++;
+
+		if(m_num_waiting_threads == m_num_waiting_threads_notification_level)
+		{
+			m_cv_complete.notify_all();
+		}
+
 		// Wait until the queue is not empty, or somebody closes the sync_queue<>.
 		m_cv.wait(lock, [this](){ return !m_underlying_queue.empty() || m_closed; });
+
+		m_num_waiting_threads--;
 
 		// Check if we've be awoken to a closed and empty queue.
 		if(m_underlying_queue.empty() && m_closed)
@@ -144,8 +159,17 @@ public:
 		// to unlock the mutex.
 		std::unique_lock<std::mutex> lock(m_mutex);
 
+		m_num_waiting_threads++;
+
+		if(m_num_waiting_threads == m_num_waiting_threads_notification_level)
+		{
+			m_cv_complete.notify_all();
+		}
+
 		// Wait until the queue is not empty, or somebody closes the sync_queue<>.
 		m_cv.wait(lock, [this](){ return !m_underlying_queue.empty() || m_closed; });
+
+		m_num_waiting_threads--;
 
 		// Check if we've be awoken to a closed and empty queue.
 		if(m_underlying_queue.empty() && m_closed)
@@ -164,15 +188,61 @@ public:
 		return queue_op_status::success;
 	}
 
+	/**
+	 *  Blocks the calling thread until:
+	 *	 - The queue is empty, and
+	 *	 - There are #num_workers threads waiting to be notified of new work arriving in the queue.
+	 *	 - Or, the queue is closed.
+	 *
+	 *  The use case here is a situation where you have one "master" thread spawning one or more worker threads which then
+	 *  feed their own work queue until they're done.  The problem is, the workers won't know when they're done; they'll all
+	 *  pend on wait_pull() for more work, which will never come.  To solve this, the master thread waits via this API,
+	 *  and when all the workers are waiting and there's no work in the queue, the master closes the queue, which causes the
+	 *  worker threads to exit, which are then joined by the master thread.
+	 *
+	 *	 @note This is definitely not a Boost API.
+	 */
+	queue_op_status wait_for_worker_completion(size_t num_workers)
+	{
+		std::unique_lock<std::mutex> lock(m_mutex);
+
+		m_num_waiting_threads_notification_level = num_workers;
+
+		m_cv_complete.wait(lock, [this, num_workers](){
+			return ((m_num_waiting_threads == num_workers) && m_underlying_queue.empty()) || m_closed;
+		});
+
+		if(m_closed)
+		{
+			return queue_op_status::closed;
+		}
+		else
+		{
+			return queue_op_status::success;
+		}
+	}
+
 private:
 
 	std::mutex m_mutex;
 
 	std::condition_variable m_cv;
 
-	bool m_closed;
+	std::condition_variable m_cv_complete;
 
-	std::queue<ValueType> m_underlying_queue;
+	size_t m_num_waiting_threads_notification_level { 500 };
+
+	size_t m_num_waiting_threads { 0 };
+
+	bool m_closed { false };
+
+#ifdef TODO
+	using mt_deque = std::deque<ValueType, std::scoped_allocator_adaptor<__gnu_cxx::__mt_alloc<ValueType>>>;
+#else
+	using mt_deque = std::deque<ValueType>;
+#endif
+
+	std::queue<ValueType, mt_deque> m_underlying_queue;
 
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -23,8 +23,11 @@
 #include <config.h>
 
 #include <vector>
+#include <set>
 #include <string>
 #include <thread>
+#include <cstdint>
+#include <sys/types.h> // for dev_t, ino_t
 
 #include "sync_queue_impl_selector.h"
 
@@ -33,13 +36,42 @@ class TypeManager;
 class DirInclusionManager;
 
 /**
+ * Helper struct to collect up and communicate traversal stats.
+ */
+struct DirectoryTraversalStats
+{
+	size_t m_num_files_found { 0 };
+
+	size_t m_num_files_rejected { 0 };
+
+	size_t m_num_files_scanned { 0 };
+
+	size_t m_num_directories_found { 0 };
+};
+
+// Boost has a template of this nature, but of course more complete.
+template <unsigned char NumBits>
+struct uint_t
+{
+	static_assert(NumBits <= 128, "NumBits > 128 not supported");
+	using fast = typename uint_t<NumBits+1>::fast;
+};
+template<> struct uint_t<128> { using fast = unsigned __int128; };
+template<> struct uint_t<64> { using fast = uint_fast64_t; };
+template<> struct uint_t<32> { using fast = uint_fast32_t; };
+
+/**
  * This class does the directory tree traversal.
  */
 class Globber
 {
 public:
-	Globber(std::vector<std::string> start_paths, TypeManager &type_manager,
-			DirInclusionManager &dir_inc_manager, bool recurse_subdirs, sync_queue<std::string> &out_queue);
+	Globber(std::vector<std::string> start_paths,
+			TypeManager &type_manager,
+			DirInclusionManager &dir_inc_manager,
+			bool recurse_subdirs,
+			int dirjobs,
+			sync_queue<std::string> &out_queue);
 	virtual ~Globber();
 
 	void Run();
@@ -49,9 +81,10 @@ public:
 	std::string ErrorPath() const noexcept { return m_bad_path; };
 
 private:
-	std::vector<std::string> m_start_paths;
 
-	sync_queue<std::string>& m_out_queue;
+	void RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index);
+
+	std::vector<std::string> m_start_paths;
 
 	TypeManager &m_type_manager;
 
@@ -59,9 +92,26 @@ private:
 
 	bool m_recurse_subdirs;
 
-	long m_num_files_found = {0};
+	int m_dirjobs;
+
+	sync_queue<std::string>& m_out_queue;
+
+	using dev_ino_pair_type = uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast;
+	struct dev_ino_pair
+	{
+		dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
+
+		dev_ino_pair_type m_val;
+	};
+
+	std::mutex m_dir_mutex;
+	std::set<dev_ino_pair_type> m_dir_has_been_visited;
+	bool HasDirBeenVisited(dev_ino_pair_type di) { std::unique_lock<std::mutex> lock(m_dir_mutex); return !m_dir_has_been_visited.insert(di).second; };
+
+	DirectoryTraversalStats m_traversal_stats;
 
 	std::string m_bad_path;
 };
+
 
 #endif /* GLOBBER_H_ */

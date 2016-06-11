@@ -60,6 +60,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 TESTSUITE_AT = \
 	testsuite.at \
 	arg_and_rc_handling.at \
+	dir_tree_traversal.at \
 	file_presentation.at \
 	type_inclusion.at \
 	version.at \

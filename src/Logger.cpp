@@ -38,6 +38,9 @@
 std::string Logger::m_program_invocation_name;
 std::string Logger::m_program_invocation_short_name;
 
+/// Mutex for serializing writes to cerr.
+std::mutex Logger::m_cerr_mutex;
+
 #if !defined(HAVE_NO_THREAD_LOCAL_SUPPORT)
 // Apple specifically disables C++11 thread_local support in the clang they ship:
 // http://stackoverflow.com/questions/28094794/why-does-apple-clang-disallow-c11-thread-local-when-official-clang-supports?lq=1
