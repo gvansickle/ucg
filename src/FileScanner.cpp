@@ -19,15 +19,12 @@
 
 #include "config.h"
 
-#include <immintrin.h>
-
 #include "Logger.h"
 #include "FileScanner.h"
 #include "FileScannerCpp11.h"
 #include "FileScannerPCRE.h"
 #include "FileScannerPCRE2.h"
 #include "File.h"
-#include "Logger.h"
 #include "Match.h"
 #include "MatchList.h"
 
@@ -36,7 +33,6 @@
 #include <sstream>
 #include <thread>
 #include <mutex>
-#include <cstring> // For memchr().
 #ifndef HAVE_SCHED_SETAFFINITY
 #else
 	#include <sched.h>
@@ -116,27 +112,17 @@ void FileScanner::Run(int thread_index)
 	// Create a reusable, resizable buffer for the File() reads.
 	auto file_data_storage = std::make_shared<ResizableArray<char>>();
 
-	using namespace std::chrono;
-	steady_clock::duration accum_elapsed_time {0};
-	long long total_bytes_read {0};
-
 	// Pull new filenames off the input queue until it's closed.
 	std::string next_string;
 	while(m_in_queue.wait_pull(std::move(next_string)) != queue_op_status::closed)
 	{
+		MatchList ml(next_string);
+
 		try
 		{
 			// Try to open and read the file.  This could throw.
 			LOG(INFO) << "Attempting to scan file \'" << next_string << "\'";
-			//steady_clock::time_point start = steady_clock::now();
 			File f(next_string, file_data_storage);
-			//steady_clock::time_point end = steady_clock::now();
-			//accum_elapsed_time += (end - start);
-			total_bytes_read += f.size();
-
-
-			MatchList ml(next_string);
-
 
 			if(f.size() == 0)
 			{
@@ -145,7 +131,6 @@ void FileScanner::Run(int thread_index)
 			}
 
 			const char *file_data = f.data();
-
 			size_t file_size = f.size();
 
 			// Scan the file data for occurrences of the regex, sending matches to the MatchList ml.
@@ -173,11 +158,6 @@ void FileScanner::Run(int thread_index)
 			throw;
 		}
 	}
-
-#if 0
-	duration<double> elapsed = duration_cast<duration<double>>(accum_elapsed_time);
-	LOG(INFO) << "Total bytes read = " << total_bytes_read << ", elapsed time = " << elapsed.count() << ", Bytes/Sec=" << total_bytes_read/elapsed.count() << std::endl;
-#endif
 }
 
 void FileScanner::AssignToNextCore()
@@ -203,48 +183,4 @@ void FileScanner::AssignToNextCore()
 #endif
 }
 
-size_t FileScanner::CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
-		const char * __restrict__ start_of_current_match) noexcept
-{
-	size_t num_lines_since_last_match = 0;
 
-#if defined(__SSE4_2__)
-	const char * last_ptr = prev_lineno_search_end;
-	size_t len = start_of_current_match-prev_lineno_search_end;
-	__m128i looking_for = _mm_set1_epi8('\n');
-	for(size_t i = 0; i<len; last_ptr+=16, i += 16)
-	{
-		int substr_len = len-i < 16 ? len-i : 16;
-		__m128i substr = _mm_loadu_si128((const __m128i*)last_ptr);
-		__m128i match_mask = _mm_cmpestrm(substr, substr_len, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
-		num_lines_since_last_match += __builtin_popcountll(_mm_cvtsi128_si64(match_mask));
-	}
-#elif 0
-	for(const char *i = prev_lineno_search_end; i<start_of_current_match; ++i)
-	{
-		if(*i == '\n')
-		{
-			++num_lines_since_last_match;
-		}
-	}
-#elif 1
-	const char * last_ptr = prev_lineno_search_end;
-	while(1)
-	{
-		last_ptr = (const char*)std::memchr((const void*)last_ptr, '\n', start_of_current_match-last_ptr);
-		if(last_ptr != NULL)
-		{
-			++num_lines_since_last_match;
-			++last_ptr;
-		}
-		else
-		{
-			break;
-		}
-	}
-#else
-#error Cannot find a suitable memchr().
-#endif
-
-	return num_lines_since_last_match;
-}

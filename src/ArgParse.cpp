@@ -61,6 +61,11 @@
 #include "File.h"
 #include "Logger.h"
 
+// The sweet spot for the number of directory tree traversal threads seems to be 2 on Linux, independent of the
+// number of scanner threads.  Cygwin does better with 3 or 4 here (and more dirjobs with more scanner threads) since it
+// spends so much more time in the Windows<->POSIX path resolution logic.
+static constexpr size_t f_default_dirjobs = 2;
+
 // Our --version output isn't just a static string, so we'll register with argp for a version callback.
 static void PrintVersionTextRedirector(FILE *stream, struct argp_state *state)
 {
@@ -170,6 +175,7 @@ static struct argp_option options[] = {
 		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
 		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
 		// Hidden options for debug, test, etc.
+		// DO NOT USE THESE.  They're going to change and go away without notice.
 		{"test-log-all", OPT_TEST_LOG_ALL, 0, OPTION_HIDDEN, "Enable all logging output."},
 		{"test-noenv-user", OPT_TEST_NOENV_USER, 0, OPTION_HIDDEN, "Don't search for or use $HOME/.ucgrc."},
 		{"test-use-mmap", OPT_TEST_USE_MMAP, 0, OPTION_HIDDEN, "Use mmap() to access files being searched."},
@@ -422,9 +428,8 @@ void ArgParse::Parse(int argc, char **argv)
 	// Number of directory scanning jobs.
 	if(m_dirjobs == 0)
 	{
-		// Wasn't specified on command line.  Default to 2.
-		/// @todo Magic number.
-		m_dirjobs = 2;
+		// Wasn't specified on command line.  Use the default.
+		m_dirjobs = f_default_dirjobs;
 	}
 
 	// Search files/directories.

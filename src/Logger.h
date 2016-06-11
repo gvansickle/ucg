@@ -30,6 +30,7 @@
 #include <string>
 #include <sstream>
 #include <thread>
+#include <mutex>
 
 /// @todo Redirecting to streams/files, timestamp, maybe sorting by timestamp, more log severity levels: trace, debug, info, warning, error, fatal.
 
@@ -53,7 +54,10 @@ public:
 		m_tempstream << std::endl;
 
 		// Send it to the actual output stream.
+		{
+		std::unique_lock<std::mutex> lock(m_cerr_mutex);
 		std::cerr << m_tempstream.str();
+		}
 	}
 
 	static void Init(const char * argv0)
@@ -93,6 +97,13 @@ public:
 protected:
 	static std::string m_program_invocation_name;
 	static std::string m_program_invocation_short_name;
+
+private:
+	/// Mutex for serializing writes to cerr.
+	/// @note Portability: This is only needed on OSX.  Without it, individual characters written to either std::cerr or std::clog
+	/// by different threads will get intermixed.  I believe this is contrary to the C++11 spec, and that each "<< whatever" (which is
+	/// what we're otherwise doing here) should be atomic wrt the characters that actually get output (i.e. one flush per "<<").
+	static std::mutex m_cerr_mutex;
 };
 
 
@@ -143,6 +154,18 @@ class STDERR : public Logger
 public:
 	STDERR() { m_tempstream << m_program_invocation_short_name << ": "; };
 	~STDERR() override = default;
+
+	static bool IsEnabled() noexcept { return true; };
+};
+
+/**
+ *
+ */
+class STDLOG : public Logger
+{
+public:
+	STDLOG() { m_tempstream << m_program_invocation_short_name << ": "; };
+	~STDLOG() override = default;
 
 	static bool IsEnabled() noexcept { return true; };
 };

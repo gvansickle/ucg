@@ -73,6 +73,11 @@ m4_include([file_presentation.at])
 m4_include([type_inclusion.at])
 
 ###
+### Check directory tree traversal.
+###
+m4_include([dir_tree_traversal.at])
+
+###
 ### Run some performance tests.
 ###
 # Create the common perf test results file.
