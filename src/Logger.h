@@ -30,6 +30,7 @@
 #include <string>
 #include <sstream>
 #include <thread>
+#include <mutex>
 
 /// @todo Redirecting to streams/files, timestamp, maybe sorting by timestamp, more log severity levels: trace, debug, info, warning, error, fatal.
 
@@ -53,7 +54,10 @@ public:
 		m_tempstream << std::endl;
 
 		// Send it to the actual output stream.
-		std::clog << m_tempstream.str();
+		{
+		std::unique_lock<std::mutex> lock(m_mutex);
+		std::cerr << m_tempstream.str();
+		}
 	}
 
 	static void Init(const char * argv0)
@@ -93,6 +97,9 @@ public:
 protected:
 	static std::string m_program_invocation_name;
 	static std::string m_program_invocation_short_name;
+
+private:
+	static std::mutex m_mutex;
 };
 
 
