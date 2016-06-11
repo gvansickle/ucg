@@ -125,7 +125,8 @@ AC_PROG_MKDIR_P
 AC_PROG_LN_S
 AS_IF([test "$LN_S" == 'ln -s'],
 	[AC_SUBST([TEST_LN_S], [$LN_S])],
-	[AC_MSG_WARN([couldn't find a real 'ln -s', will not be able to run all tests])])
+	[AC_SUBST([TEST_LN_S], [:])
+	AC_MSG_WARN([couldn't find a real 'ln -s', will not be able to run all tests])])
 
 ## Checks for maintainer tools.
 

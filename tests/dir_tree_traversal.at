@@ -19,8 +19,8 @@ AT_BANNER([UniversalCodeGrep directory traversal checks])
 
 # Create a cross-linked directory tree.
 m4_define([UCG_CREATE_CROSSLINKED_DIR], [
-$MKDIR_P dir1/dir2
-$MKDIR_P dir1/dir3
+AS_MKDIR_P([dir1/dir2])
+AS_MKDIR_P([dir1/dir3])
 AT_DATA([dir1/dir2/file1.py],[line 1
 line2
 line3
