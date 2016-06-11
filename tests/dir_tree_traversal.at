@@ -33,6 +33,20 @@ line 6
 (cd dir1/dir3 && $TEST_LN_S ../dir2 link_to_dir2) 
 ])
 
+# Create a normal directory tree.
+m4_define([UCG_CREATE_NORMAL_DIRTREE], [
+AS_MKDIR_P([dir1/dir2])
+AS_MKDIR_P([dir1/dir3])
+AT_DATA([dir1/dir2/file1.py],[line 1
+line2
+line3
+])
+AT_DATA([dir1/dir3/file1.s],[line 4
+line 5
+line 6
+])
+])
+
 ###
 ### Tree with cross-linked symlinks, single-threaded.
 ###
@@ -51,6 +65,7 @@ AT_CHECK([cat stdout | grep -E '.*file1.py:2:line2'], [0], [ignore], [ignore])
 AT_CHECK([cat stderr | grep -E 'ucg: warning: .*/link_to_dir2.*recursive directory loop'], [0], [ignore], [ignore])
 
 AT_CLEANUP
+
 
 ###
 ### Tree with cross-linked symlinks, multithreaded.
@@ -71,3 +86,46 @@ AT_CHECK([cat stderr | grep -E 'ucg: warning: .*/link_to_dir2.*recursive directo
 
 AT_CLEANUP
 
+
+###
+### Normal directory tree, single-threaded.
+###
+AT_SETUP([Normal directory tree, single-threaded])
+
+# Create the directory tree.
+UCG_CREATE_NORMAL_DIRTREE
+
+# Use grep's matches as the standard to compare against.
+# Sort, because we don't guarantee we'll visit the directories in the same order.
+grep -ERn 'line' dir1 | sort > expout
+
+# Single-threaded.
+AT_CHECK([ucg --noenv --dirjobs=1 'line' dir1 | sort], [0], [expout], [stderr])
+
+# Check the results for six matching lines, no warnings.
+AT_CHECK([cat expout | LCT], [0], [6], [ignore])
+AT_CHECK([cat stderr | LCT], [0], [0])
+
+AT_CLEANUP
+
+
+###
+### Normal directory tree, multithreaded.
+###
+AT_SETUP([Normal directory tree, multithreaded])
+
+# Create the directory tree.
+UCG_CREATE_NORMAL_DIRTREE
+
+# Use grep's matches as the standard to compare against.
+# Sort, because with multithreading we almost certainly won't visit the directories in the same order.
+grep -ERn 'line' dir1 | sort > expout
+
+# Multi-threaded.
+AT_CHECK([ucg --noenv --dirjobs=2 'line' dir1 | sort], [0], [expout], [stderr])
+
+# Check the results for six matching lines, no warnings.
+AT_CHECK([cat expout | LCT], [0], [6], [ignore])
+AT_CHECK([cat stderr | LCT], [0], [0])
+
+AT_CLEANUP
