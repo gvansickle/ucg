@@ -57,6 +57,8 @@
 #include <sys/stat.h>
 #include <libgen.h>   // Don't know where "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
 
+#include <libext/string.hpp>
+
 #include "TypeManager.h"
 #include "File.h"
 #include "Logger.h"
@@ -108,6 +110,7 @@ enum OPT
 	OPT_NOCOLOR,
 	OPT_IGNORE_DIR,
 	OPT_NOIGNORE_DIR,
+	OPT_IGNORE_FILE,
 	OPT_TYPE,
 	OPT_NOENV,
 	OPT_TYPE_SET,
@@ -141,7 +144,7 @@ static struct argp_option options[] = {
 		{"[no]smart-case", OPT_BRACKET_NO_STANDIN, 0, 0, "Ignore case if PATTERN is all lowercase (default: enabled)."},
 		{"smart-case", OPT_SMART_CASE, 0, OPTION_HIDDEN, ""},
 		{"nosmart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN, ""},
-		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS, ""},
+		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS },
 		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
 		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
 		{0,0,0,0, "Search Output:"},
@@ -153,10 +156,14 @@ static struct argp_option options[] = {
 		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
 		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
 		{0,0,0,0, "File inclusion/exclusion:"},
-		{"ignore-dir",  OPT_IGNORE_DIR, "name", 0,  "Exclude directories with this name."},
-		{"ignore-directory", OPT_IGNORE_DIR, "name", OPTION_ALIAS },
-		{"noignore-dir",  OPT_NOIGNORE_DIR, "name", 0,  "Do not exclude directories with this name."},
-		{"noignore-directory", OPT_NOIGNORE_DIR, "name", OPTION_ALIAS },
+		{"[no]ignore-dir", OPT_BRACKET_NO_STANDIN, "name", 0, "[Do not] exclude directories with this name."},
+		{"[no]ignore-directory", OPT_BRACKET_NO_STANDIN, "name", OPTION_ALIAS },
+		{"ignore-dir",  OPT_IGNORE_DIR, "name", OPTION_HIDDEN,  ""},
+		{"ignore-directory", OPT_IGNORE_DIR, "name", OPTION_HIDDEN | OPTION_ALIAS },
+		{"noignore-dir",  OPT_NOIGNORE_DIR, "name", OPTION_HIDDEN,  ""},
+		{"noignore-directory", OPT_NOIGNORE_DIR, "name", OPTION_HIDDEN | OPTION_ALIAS },
+		// ack-style --ignore-file=FILTER:FILTERARGS
+		{"ignore-file", OPT_IGNORE_FILE, "FILTER:FILTERARGS", 0, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored."},
 		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
@@ -229,6 +236,10 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		 * directory, it gets put back into the set of paths that will be searched.  Feature for another day.
 		 */
 		arguments->m_excludes.erase(arg);
+		break;
+	case OPT_IGNORE_FILE:
+		// ack-style --ignore-file=FILTER:FILTERARGS option.
+		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
 		break;
 	case 'r':
 	case 'R':
@@ -875,7 +886,7 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 {
 	for(auto arg = v->begin(); arg != v->end(); ++arg)
 	{
-		auto arglen = strlen(*arg);
+		auto arglen = std::strlen(*arg);
 		if((arglen < 3) || (std::strncmp("--", *arg, 2) != 0))
 		{
 			// We only care about double-dash options here.
@@ -927,27 +938,17 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 			// Tell the TypeManager to delete the type.
 			m_type_manager.TypeDel(argtxt.substr(9));
 		}
-	}
-}
 
-static std::vector<std::string> split(const std::string &s, char delimiter)
-{
-	std::vector<std::string> retval;
-	std::stringstream ss(s);
-	std::string element;
-
-	while(std::getline(ss, element, delimiter))
-	{
-		if(!element.empty())
+		// Is this an ignore-file?
+		else if(argtxt.compare(0, 12, "ignore-file=") == 0)
 		{
-			retval.push_back(element);
+			// It's an ack-style "--ignore-file=FILTER:FILTERARGS".
+			// Behaviorally, this is as if an unnamed type was set on the command line, and then
+			// immediately --notype='ed.  So that's how we'll handle it.
+			m_type_manager.TypeAddFromFilterSpecString("","");
 		}
 	}
-
-	// This should allow for return value optimization.
-	return retval;
 }
-
 
 void ArgParse::HandleTypeAddOrSet(const std::string& argtxt)
 {

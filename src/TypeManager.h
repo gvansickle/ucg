@@ -22,7 +22,7 @@
 
 #include <config.h>
 
-#include <iostream>
+#include <iosfwd>
 #include <string>
 #include <vector>
 #include <map>
@@ -53,11 +53,19 @@ public:
 	 * active types are removed, and only the given type (and types given subsequently)
 	 * will be searched.
 	 *
-	 * @param type_name  Name of the type.
+	 * @param type_name  Name of the type to enable.
 	 * @return true on success, false if no such type.
 	 */
 	bool type(const std::string &type_name);
 
+	/**
+	 * Remove the given file type from the types which will be scanned.  For handling the
+	 * --notype= command line param.  Adds the type to the m_removed_type_filters map, and
+	 * removes it from the m_active_type_map map.
+	 *
+	 * @param type_name  Name of the type to disable.
+	 * @return true on success, false if no such type.
+	 */
 	bool notype(const std::string &type_name);
 
 	/**
@@ -67,6 +75,8 @@ public:
 	 * @return true if #type names a type, false otherwise.
 	 */
 	bool IsType(const std::string &type) const;
+
+	void TypeAddFromFilterSpecString(const std::string &type, const std::string &filter_spec_string);
 
 	void TypeAddIs(const std::string &type, const std::string &name);
 
@@ -103,6 +113,12 @@ private:
 	/// Maps to the type(s) which were specified in the notype() call(s).
 	std::unordered_multimap<std::string, std::string> m_removed_type_filters;
 
+	/// @name Compiled Type Tables
+	/// These are the data structures used at directory tree traversal time to quickly
+	/// determine whether a file should be scanned or not.  They are "compiled" by a call to
+	/// CompileTypeTables() after all config file and command-line processing is complete.
+	/// @{
+
 	/// File extensions which will be examined.  Maps to file type.
 	std::unordered_multimap<std::string, std::string> m_include_extensions;
 
@@ -112,6 +128,8 @@ private:
 	/// Map of the regexes to try to match to the first line of the file (key) to
 	/// the file type (value).
 	std::unordered_multimap<std::string, std::string> m_included_first_line_regexes;
+
+	///@}
 };
 
 #endif /* TYPEMANAGER_H_ */

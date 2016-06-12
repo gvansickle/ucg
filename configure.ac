@@ -351,6 +351,7 @@ AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 ###
 AC_CONFIG_FILES([Makefile
 	src/Makefile
+	src/libext/Makefile
 	third_party/Makefile])
 AC_OUTPUT
 

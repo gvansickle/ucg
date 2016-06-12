@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
+SUBDIRS = libext
+
 noinst_LIBRARIES = libsrc.a 
 libsrc_a_SOURCES = \
 	ArgParse.cpp ArgParse.h \

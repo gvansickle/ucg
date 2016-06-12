@@ -17,12 +17,13 @@
 
 /** @file */
 
-#include "TypeManager.h"
-
 #include <config.h>
+
+#include "TypeManager.h"
 
 #include <algorithm>
 #include <set>
+#include <iostream>
 #include <iomanip>
 
 struct Type
@@ -223,6 +224,10 @@ bool TypeManager::IsType(const std::string& type) const
 	return m_builtin_and_user_type_map.count(type) != 0;
 }
 
+void TypeManager::TypeAddFromFilterSpecString(const std::string& type, const std::string& filter_spec_string)
+{
+}
+
 void TypeManager::TypeAddIs(const std::string& type, const std::string& name)
 {
 	m_builtin_and_user_type_map[type].push_back(name);
@@ -324,3 +329,4 @@ void TypeManager::PrintTypesForHelp(std::ostream& s) const
 		s << std::endl;
 	}
 }
+
