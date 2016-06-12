@@ -25,6 +25,8 @@
 #include <set>
 #include <iostream>
 #include <iomanip>
+#include <string>
+#include <libext/string.hpp>
 
 struct Type
 {
@@ -224,8 +226,63 @@ bool TypeManager::IsType(const std::string& type) const
 	return m_builtin_and_user_type_map.count(type) != 0;
 }
 
-void TypeManager::TypeAddFromFilterSpecString(const std::string& type, const std::string& filter_spec_string)
+void TypeManager::TypeAddFromFilterSpecString(bool delete_type_first, const std::string& filter_spec_string)
 {
+	std::string file_type;
+	std::string filter_type;
+	std::string filter_args;
+
+	auto filter_spec = split(filter_spec_string, ':');
+
+	if(filter_spec.size() != 3)
+	{
+		// We didn't get the full 3-part spec.  Fail.
+		throw TypeManagerException("Invalid filter specification \"" + filter_spec_string + "\"");
+	}
+
+	file_type = filter_spec[0];
+	filter_type = filter_spec[1];
+	filter_args = filter_spec[2];
+
+	if(delete_type_first)
+	{
+		// This is a --type-set, so delete any existing file type first.
+		TypeDel(file_type);
+	}
+
+	// Figure out which filter type was specified and do the appropriate TypeAddXxx.
+	if(filter_type == "is")
+	{
+		// filter_args is a literal filename.
+		TypeAddIs(file_type, filter_args);
+	}
+	else if(filter_type == "ext")
+	{
+		// filter_args is a list of one or more comma-separated filename extensions.
+		auto exts = split(filter_args, ',');
+		for(auto ext : exts)
+		{
+			TypeAddExt(file_type, ext);
+		}
+	}
+	else
+	{
+		// Unsupported or unknown filter type.
+		throw TypeManagerException("Unknown filter type \"" + filter_type + "\" in type spec \"" + filter_spec_string + "\"");
+	}
+}
+
+
+void TypeManager::TypeAddIgnoreFileFromFilterSpecString(const std::string& filter_spec_string)
+{
+	// Use this special file type for all --ignore-file= file type specs.
+	std::string file_type_name {"IGNORE_FILE_TYPE"};
+
+	// Add the filter spec to the special file type.
+	TypeAddFromFilterSpecString(false, file_type_name + ":" + filter_spec_string);
+
+	// --notype= the filter spec.
+	notype(file_type_name);
 }
 
 void TypeManager::TypeAddIs(const std::string& type, const std::string& name)

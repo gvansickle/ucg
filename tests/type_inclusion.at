@@ -17,16 +17,7 @@
 
 AT_BANNER([UniversalCodeGrep type inclusion checks])
 
-###
-### --noenv and --type=
-###
-AT_SETUP(['--noenv' and '--type='])
-
-# The project .ucgrc file.
-AT_DATA([.ucgrc],[# Generated test project rc file.
---type=cpp
-])
-
+m4_define([UCG_CREATE_CPP_HTML_FILES], [
 # The "cpp" data file.
 AT_DATA([test_file.cpp], [Generated test file
 ptr
@@ -41,6 +32,19 @@ ptr
 ptr
 another something
 ])
+])
+
+###
+### --noenv and --type=
+###
+AT_SETUP(['--noenv' and '--type='])
+
+# The project .ucgrc file.
+AT_DATA([.ucgrc],[# Generated test project rc file.
+--type=cpp
+])
+
+UCG_CREATE_CPP_HTML_FILES
 
 # --noenv should give us 2+3=5 hits.
 AT_CHECK([ucg '--noenv' 'ptr' | LCT],[0],[5],[stderr])
@@ -53,6 +57,28 @@ AT_CHECK([ucg --test-noenv-user '--type=html' 'ptr' | LCT],[0],[5],[stderr])
 
 # And adding --type=nocpp to that should give us the 3 hits in the html file.
 AT_CHECK([ucg --test-noenv-user '--type=html' '--type=nocpp' ptr | LCT],[0],[3],[stderr])
+
+AT_CLEANUP
+
+###
+###
+###
+
+AT_SETUP([--ignore-file tests])
+
+UCG_CREATE_CPP_HTML_FILES
+
+# Ignoring html should give us 2 hits.
+AT_CHECK([ucg --noenv --ignore-file=ext:html 'ptr' | LCT],[0],[2],[stderr])
+
+# Ignoring cpp should give us 3 hits.
+AT_CHECK([ucg --noenv --ignore-file=ext:cpp 'ptr' | LCT],[0],[3],[stderr])
+
+# Ignoring cpp and html should give us 0 hits.
+AT_CHECK([ucg --noenv --ignore-file=ext:cpp --ignore-file=ext:html 'ptr' | LCT],[0],[0],[stderr])
+
+# Ignoring cpp and html, then enabling --cpp and --html should give us 5 hits.
+AT_CHECK([ucg --noenv --ignore-file=ext:cpp --ignore-file=ext:html --cpp --html 'ptr' | LCT],[0],[5],[stderr])
 
 AT_CLEANUP
 
@@ -94,12 +120,7 @@ AT_CHECK([ucg --noenv 'include' | LCT],[0],[3],[stderr])
 
 AT_CLEANUP
 
-
-###
-### User-defined file type specs.
-###
-AT_SETUP([User-defined file type specs])
-
+m4_define([UCG_CREATE_FILES],[
 AT_DATA([test_file.xqz],[#include
 ])
 
@@ -111,20 +132,81 @@ AT_DATA([test_file.7],[#include
 
 AT_DATA([test_file.h],[#include
 ])
+])
+
+###
+### User-defined file type specs.
+###
+AT_BANNER([UniversalCodeGrep user-defined file types checks])
+
+#
+AT_SETUP([No user specs])
+
+UCG_CREATE_FILES
 
 # No params should give us 1 hit in the .h file.
 AT_CHECK([ucg --noenv 'include' | LCT],[0],[1],[stderr])
 
+AT_CLEANUP
+
+#
+AT_SETUP([Two --type-sets, no --type])
+
+UCG_CREATE_FILES
+
 # Defining two new types, and not specifying a --type=TYPE, should give us 4 hits.
 AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName 'include' | LCT],[0],[4],[stderr])
+
+AT_CLEANUP
+
+#
+AT_SETUP([Two --type-sets, short-form enabling])
+
+UCG_CREATE_FILES
 
 # The short form "--TYPE" should work on the user defined types.
 AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName --type1 'include' | LCT],[0],[2],[stderr])
 
+AT_CLEANUP
+
+#
+AT_SETUP([Two --type-sets, short-form disabling])
+
+UCG_CREATE_FILES
+
 # The short form "--noTYPE" should work on the user defined types.  This should give us 2 hits, in the .h file and the UserDefinedName file.
 AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-set=type2:is:UserDefinedName --notype1 'include' | LCT],[0],[2],[stderr])
 
+AT_CLEANUP
+
+#
+AT_SETUP([--type-set followed by --type-add, short-form enabling])
+
+UCG_CREATE_FILES
+
 # "--type-add" should work on the user defined types.
 AT_CHECK([ucg --noenv --type-set=type1:ext:xqz,7 --type-add=type1:is:UserDefinedName --type1 'include' | LCT],[0],[3],[stderr])
+
+AT_CLEANUP
+
+## Malformed file type specs
+AT_SETUP([Invalid filter spec error handling])
+AT_KEYWORDS([error_handling])
+
+UCG_CREATE_FILES
+
+AT_CHECK([ucg --noenv --type-add=fhqz 'include'],[255],[stdout],[stderr])
+AT_CHECK([cat stderr | grep -E 'ucg: error: [[^I]]*Invalid filter specification .fhqz. while parsing option .--type-add=fhqz.'], [0], [ignore], [ignore])
+
+AT_CLEANUP
+
+#
+AT_SETUP([Unknown filter type error handling])
+AT_KEYWORDS([error_handling])
+
+UCG_CREATE_FILES
+
+AT_CHECK([ucg --noenv --type-add=fgh:lll:abc 'include'],[255],[stdout],[stderr])
+AT_CHECK([cat stderr | grep -E 'ucg: error: [[^U]]*Unknown filter type .lll. [[^w]]*while parsing option .--type-add=fgh:lll:abc.'], [0], [ignore], [ignore])
 
 AT_CLEANUP

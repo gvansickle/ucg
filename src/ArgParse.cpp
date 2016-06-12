@@ -886,111 +886,89 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 {
 	for(auto arg = v->begin(); arg != v->end(); ++arg)
 	{
-		auto arglen = std::strlen(*arg);
-		if((arglen < 3) || (std::strncmp("--", *arg, 2) != 0))
+		try // TypeManager might throw on malformed file type filter strings.
 		{
-			// We only care about double-dash options here.
-			continue;
-		}
+			auto arglen = std::strlen(*arg);
+			if((arglen < 3) || (std::strncmp("--", *arg, 2) != 0))
+			{
+				// We only care about double-dash options here.
+				continue;
+			}
 
-		if(std::strcmp("--", *arg) == 0)
+			if(std::strcmp("--", *arg) == 0)
+			{
+				// This is a "--", ignore all further command-line params.
+				break;
+			}
+
+			std::string argtxt(*arg+2);
+
+			// Is this a type specification of the form "--TYPE"?
+			if(m_type_manager.IsType(argtxt))
+			{
+				// Yes, replace it with something digestible by argp: --type=TYPE.
+				std::string new_param("--type=" + argtxt);
+				delete [] *arg;
+				*arg = cpp_strdup(new_param.c_str());
+			}
+
+			// Is this a type specification of the form '--noTYPE'?
+			else if(argtxt.compare(0, 2, "no") == 0 && m_type_manager.IsType(argtxt.substr(2)))
+			{
+				// Yes, replace it with something digestible by argp: --type=noTYPE.
+				std::string new_param("--type=" + argtxt);
+				delete [] *arg;
+				*arg = cpp_strdup(new_param.c_str());
+			}
+
+			// Otherwise, check if it's one of the file type definition parameters.
+			else
+			{
+				// All file type params take the form "--CMD=CMDPARAMS", so split on the '='.
+				auto on_equals_split = split(argtxt, '=');
+
+				if(on_equals_split.size() != 2)
+				{
+					// No '=', not something we care about here.
+					continue;
+				}
+
+				// Is this a type-add?
+				if(on_equals_split[0] == "type-add")
+				{
+					// Yes, have type manager add the params.
+					m_type_manager.TypeAddFromFilterSpecString(false, on_equals_split[1]);
+				}
+
+				// Is this a type-set?
+				else if(on_equals_split[0] == "type-set")
+				{
+					// Yes, delete any existing file type by the given name and do a type-add.
+					m_type_manager.TypeAddFromFilterSpecString(true, on_equals_split[1]);
+				}
+
+				// Is this a type-del?
+				else if(on_equals_split[0] == "type-del")
+				{
+					// Tell the TypeManager to delete the type.
+					/// @note ack reports no error if the file type to be deleted doesn't exist.
+					/// We'll match that behavior here.
+					m_type_manager.TypeDel(on_equals_split[1]);
+				}
+
+				// Is this an ignore-file?
+				else if(on_equals_split[0] == "ignore-file")
+				{
+					// It's an ack-style "--ignore-file=FILTER:FILTERARGS".
+					// Behaviorally, this is as if an unnamed type was set on the command line, and then
+					// immediately --notype='ed.  So that's how we'll handle it.
+					m_type_manager.TypeAddIgnoreFileFromFilterSpecString(on_equals_split[1]);
+				}
+			}
+		}
+		catch(const TypeManagerException &e)
 		{
-			// This is a "--", ignore all further command-line params.
-			break;
+			throw ArgParseException(std::string(e.what()) + " while parsing option \'" + *arg + "\'");
 		}
-
-		std::string argtxt(*arg+2);
-
-		// Is this a type specification of the form "--TYPE"?
-		if(m_type_manager.IsType(argtxt))
-		{
-			// Yes, replace it with something digestible by argp: --type=TYPE.
-			std::string new_param("--type=" + argtxt);
-			delete [] *arg;
-			*arg = cpp_strdup(new_param.c_str());
-		}
-
-		// Is this a type specification of the form '--noTYPE'?
-		else if(argtxt.compare(0, 2, "no") == 0 && m_type_manager.IsType(argtxt.substr(2)))
-		{
-			// Yes, replace it with something digestible by argp: --type=noTYPE.
-			std::string new_param("--type=" + argtxt);
-			delete [] *arg;
-			*arg = cpp_strdup(new_param.c_str());
-		}
-
-		// Is this a type-add?
-		else if(argtxt.compare(0, 9, "type-add=") == 0)
-		{
-			HandleTypeAddOrSet(argtxt);
-		}
-
-		// Is this a type-set?
-		else if(argtxt.compare(0, 9, "type-set=") == 0)
-		{
-			m_type_manager.TypeDel(argtxt.substr(9));
-			HandleTypeAddOrSet(argtxt);
-		}
-
-		// Is this a type-del?
-		else if(argtxt.compare(0, 9, "type-del=") == 0)
-		{
-			// Tell the TypeManager to delete the type.
-			m_type_manager.TypeDel(argtxt.substr(9));
-		}
-
-		// Is this an ignore-file?
-		else if(argtxt.compare(0, 12, "ignore-file=") == 0)
-		{
-			// It's an ack-style "--ignore-file=FILTER:FILTERARGS".
-			// Behaviorally, this is as if an unnamed type was set on the command line, and then
-			// immediately --notype='ed.  So that's how we'll handle it.
-			m_type_manager.TypeAddFromFilterSpecString("","");
-		}
-	}
-}
-
-void ArgParse::HandleTypeAddOrSet(const std::string& argtxt)
-{
-	std::string::size_type first_colon, second_colon;
-	first_colon = argtxt.find_first_of(":");
-	if(first_colon == std::string::npos)
-	{
-		// Malformed type spec.
-		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Can't find first colon.");
-	}
-	second_colon = argtxt.find_first_of(":", first_colon+1);
-	if(second_colon == std::string::npos)
-	{
-		// Malformed type spec.
-		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Can't find second colon.");
-	}
-	if(second_colon <= first_colon+1)
-	{
-		// Malformed type spec, filter field is blank.
-		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Filter field is empty.");
-	}
-	std::string type = argtxt.substr(9, first_colon-9);
-	std::string filter = argtxt.substr(first_colon+1, second_colon-first_colon-1);
-	std::string filter_args = argtxt.substr(second_colon+1);
-
-	if(filter == "is")
-	{
-		// filter_args is a literal filename.
-		m_type_manager.TypeAddIs(type, filter_args);
-	}
-	else if(filter == "ext")
-	{
-		// filter_args is a list of one or more comma-separated filename extensions.
-		auto exts = split(filter_args,',');
-		for(auto ext : exts)
-		{
-			m_type_manager.TypeAddExt(type, ext);
-		}
-	}
-	else
-	{
-		// Unsupported filter type.
-		throw ArgParseException("Unsupported filter type \"" + filter + "\" in type spec \"--" + argtxt + "\".");
 	}
 }

@@ -28,6 +28,15 @@
 #include <map>
 #include <unordered_map>
 
+
+/**
+ * TypeManager will throw this in certain circumstances.
+ */
+struct TypeManagerException : public std::runtime_error
+{
+	TypeManagerException(const std::string &message) : std::runtime_error(message) {};
+};
+
 /**
  * Class which manages the file types which are to be scanned.
  */
@@ -76,11 +85,23 @@ public:
 	 */
 	bool IsType(const std::string &type) const;
 
-	void TypeAddFromFilterSpecString(const std::string &type, const std::string &filter_spec_string);
+	/**
+	 * Adds a new filter spec to a (possibly new) #type, based on #filter_spec_string.
+	 *
+	 * @param delete_type_first   If true, treat as a "--type-set=", and delete any existing file type spec first.
+	 * @param filter_spec_string
+	 * @exception TypeManagerException  filter_spec_string cannot be parsed.
+	 */
+	void TypeAddFromFilterSpecString(bool delete_type_first, const std::string &filter_spec_string);
 
-	void TypeAddIs(const std::string &type, const std::string &name);
-
-	void TypeAddExt(const std::string &type, const std::string &ext);
+	/**
+	 * Adds and then notype()s a new filter spec to the anonymous type used for '--ignore-file=', based on #filter_spec_string.
+	 * This is for use by the --ignore-file=FILTER:FILTERARGS command-line option.
+	 *
+	 * @param filter_spec_string
+	 * @exception TypeManagerException  filter_spec_string cannot be parsed.
+	 */
+	void TypeAddIgnoreFileFromFilterSpecString(const std::string &filter_spec_string);
 
 	/**
 	 * Deletes #type from the m_active_type_map.
@@ -95,6 +116,10 @@ public:
 	void PrintTypesForHelp(std::ostream &s) const;
 
 private:
+
+	void TypeAddIs(const std::string &type, const std::string &name);
+
+	void TypeAddExt(const std::string &type, const std::string &ext);
 
 	/// Flag to keep track of the first call to type().
 	bool m_first_type_has_been_seen = { false };
