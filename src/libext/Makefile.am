@@ -17,7 +17,8 @@
 
 noinst_LIBRARIES = libext.a 
 libext_a_SOURCES = \
-	string.hpp
+	string.hpp \
+	dummy.cpp
 
 libext_a_CPPFLAGS = $(AM_CPPFLAGS)
 libext_a_CFLAGS = $(AM_CFLAGS)
