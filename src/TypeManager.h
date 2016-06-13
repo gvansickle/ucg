@@ -144,6 +144,8 @@ private:
 	/// CompileTypeTables() after all config file and command-line processing is complete.
 	/// @{
 
+	std::vector<uint32_t> m_fast_include_extensions;
+
 	/// File extensions which will be examined.  Maps to file type.
 	std::unordered_multimap<std::string, std::string> m_include_extensions;
 

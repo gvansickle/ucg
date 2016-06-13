@@ -21,6 +21,8 @@
 
 #include "TypeManager.h"
 
+#include "Logger.h"
+
 #include <algorithm>
 #include <set>
 #include <iostream>
@@ -141,7 +143,18 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 			// Name doesn't start with a period, it still could be an extension.
 			auto ext = std::string(last_period, name.cend());
 
-			if(m_include_extensions.find(ext) != m_include_extensions.end())
+			if(ext.size() == 4)
+			{
+				// Use the 4-byte fast map.
+				uint32_t fast_ext = static_cast<uint32_t>(ext[1])
+						+ (static_cast<uint32_t>(ext[2]) << 8)
+						+ (static_cast<uint32_t>(ext[3]) << 16);
+				if(std::binary_search(m_fast_include_extensions.cbegin(), m_fast_include_extensions.cend(), fast_ext))
+				{
+					return true;
+				}
+			}
+			else if(m_include_extensions.find(ext) != m_include_extensions.end())
 			{
 				// Found the extension in the hash of extensions to include.
 				return true;
@@ -307,6 +320,8 @@ bool TypeManager::TypeDel(const std::string& type)
 
 void TypeManager::CompileTypeTables()
 {
+	std::set<std::string> unique_3char_extensions;
+
 	for(auto i : m_active_type_map)
 	{
 		for(auto j : i.second)
@@ -324,6 +339,11 @@ void TypeManager::CompileTypeTables()
 			{
 				// First char is a '.', this is an extension specification.
 				m_include_extensions.emplace(j, i.first);
+
+				if(j.length() == 4)
+				{
+					unique_3char_extensions.emplace(j.begin()+1, j.end());
+				}
 			}
 			else if(j[0] == '/')
 			{
@@ -337,6 +357,23 @@ void TypeManager::CompileTypeTables()
 			}
 		}
 	}
+
+	m_fast_include_extensions.resize(unique_3char_extensions.size());
+	LOG(INFO) << "Found " << unique_3char_extensions.size() << " unique 3-char extensions.";
+	decltype(m_fast_include_extensions)::size_type j = 0;
+	for(auto &i : unique_3char_extensions)
+	{
+		uint32_t temp = static_cast<uint32_t>(i[0])
+				+ (static_cast<uint32_t>(i[1]) << 8)
+				+ (static_cast<uint32_t>(i[2]) << 16);
+		m_fast_include_extensions[j] = temp;
+		++j;
+
+		LOG(INFO) << "Added " << i << "(" << std::hex << temp << ") to m_fast_include_extensions";
+	}
+
+	/// @todo shouldn't need this.
+	std::sort(m_fast_include_extensions.begin(), m_fast_include_extensions.end());
 }
 
 void TypeManager::PrintTypesForHelp(std::ostream& s) const
