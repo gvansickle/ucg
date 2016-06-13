@@ -17,6 +17,7 @@
 
 noinst_LIBRARIES = libext.a 
 libext_a_SOURCES = \
+	integer.hpp \
 	string.hpp \
 	dummy.cpp
 

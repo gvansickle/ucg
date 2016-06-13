@@ -363,6 +363,7 @@ void TypeManager::CompileTypeTables()
 	decltype(m_fast_include_extensions)::size_type j = 0;
 	for(auto &i : unique_3char_extensions)
 	{
+		auto strsize = i.size();
 		uint32_t temp = static_cast<uint32_t>(i[0])
 				+ (static_cast<uint32_t>(i[1]) << 8)
 				+ (static_cast<uint32_t>(i[2]) << 16);

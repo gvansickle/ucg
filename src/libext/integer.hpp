@@ -17,37 +17,11 @@
 
 /** @file */
 
-#ifndef SRC_LIBEXT_STRING_HPP_
-#define SRC_LIBEXT_STRING_HPP_
-
-#include <string>
-#include <sstream>
-#include <vector>
-
-/**
- * Splits the given string #s on the given #delimiter character.  Returns the resulting strings in a std::vector.
- *
- * @param s
- * @param delimiter
- * @return
- */
-inline std::vector<std::string> split(const std::string &s, char delimiter)
-{
-	std::vector<std::string> retval;
-	std::stringstream ss(s);
-	std::string element;
-
-	while(std::getline(ss, element, delimiter))
-	{
-		if(!element.empty())
-		{
-			retval.push_back(element);
-		}
-	}
-
-	// This should allow for return value optimization.
-	return retval;
-}
+#ifndef SRC_LIBEXT_INTEGER_HPP_
+#define SRC_LIBEXT_INTEGER_HPP_
 
 
-#endif /* SRC_LIBEXT_STRING_HPP_ */
+
+
+
+#endif /* SRC_LIBEXT_INTEGER_HPP_ */
