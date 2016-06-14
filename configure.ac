@@ -206,7 +206,7 @@ AC_LANG_PUSH([C++])
 
 # Capture the compile command line in the binary.
 AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS])
-#AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS])
+AX_APPEND_COMPILE_FLAGS([-fverbose-asm -save-temps], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be.
 #AX_APPEND_COMPILE_FLAGS([-ftree-vectorize -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])

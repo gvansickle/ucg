@@ -141,18 +141,18 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 		if(last_period != name.cbegin())
 		{
 			// Name doesn't start with a period, it still could be an extension.
-			auto ext = std::string(last_period, name.cend());
+			auto ext_plus_period_size = name.cend() - last_period;
 
-			if(ext.size() <= 5)
+			if(ext_plus_period_size <= 5)
 			{
 				// Use the 4-byte fast map.
-				microstring mext(ext.cbegin()+1, ext.cend());
+				microstring mext(last_period+1, name.cend());
 				if(std::binary_search(m_fast_include_extensions.cbegin(), m_fast_include_extensions.cend(), mext))
 				{
 					return true;
 				}
 			}
-			else if(m_include_extensions.find(ext) != m_include_extensions.end())
+			else if(m_include_extensions.find(std::string(last_period, name.cend())) != m_include_extensions.end())
 			{
 				// Found the extension in the hash of extensions to include.
 				return true;
