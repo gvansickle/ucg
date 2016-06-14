@@ -20,6 +20,9 @@
 #ifndef SRC_LIBEXT_STRING_HPP_
 #define SRC_LIBEXT_STRING_HPP_
 
+#include <config.h>
+
+#include <cstring>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -49,5 +52,63 @@ inline std::vector<std::string> split(const std::string &s, char delimiter)
 	return retval;
 }
 
+
+class microstring
+{
+public:
+
+	using underlying_storage_type = uint32_t;
+
+	microstring() = default;
+	microstring(const std::string &other) : microstring(other.cbegin(), other.cend()) {};
+	microstring(std::string::const_iterator b, std::string::const_iterator e) : microstring(&*b, &*e) {};
+
+	microstring(const char *start, const char *end)
+	{
+		auto num_chars = end - start;
+		if(num_chars > sizeof(underlying_storage_type))
+		{
+			throw std::length_error("Length too long for a microstring");
+		}
+
+		// Put the first character in the MSB, so that microstrings sort the same as a regular string.
+		m_storage = 0;
+		while(num_chars > 0)
+		{
+			m_storage |= (static_cast<underlying_storage_type>(*start) << (8*num_chars));
+			++start;
+			--num_chars;
+		}
+	}
+
+	~microstring() = default;
+
+	size_t length() const noexcept
+	{
+		auto tmp = m_storage;
+		auto ptr = reinterpret_cast<const char *>(tmp);
+
+		// If we're little-endian, swap the bytes of the tmp var.
+		/// @todo Check for little endianness.
+		tmp = __builtin_bswap32(tmp);
+
+		return strnlen(ptr, 4);
+	};
+
+	bool operator <(const microstring other) const { return m_storage < other.m_storage; };
+
+	// Implicitly convert to a std::string.
+	operator std::string() const
+	{
+		underlying_storage_type tmp = __builtin_bswap32(m_storage);
+		return std::string(reinterpret_cast<const char *>(&tmp), length());
+	};
+
+private:
+	underlying_storage_type m_storage;
+};
+
+static_assert(std::is_trivial<microstring>::value, "microstring is not trivial");
+static_assert(std::is_trivially_copyable<microstring>::value, "microstring is not trivially copyable");
 
 #endif /* SRC_LIBEXT_STRING_HPP_ */

@@ -143,13 +143,11 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 			// Name doesn't start with a period, it still could be an extension.
 			auto ext = std::string(last_period, name.cend());
 
-			if(ext.size() == 4)
+			if(ext.size() <= 5)
 			{
 				// Use the 4-byte fast map.
-				uint32_t fast_ext = static_cast<uint32_t>(ext[1])
-						+ (static_cast<uint32_t>(ext[2]) << 8)
-						+ (static_cast<uint32_t>(ext[3]) << 16);
-				if(std::binary_search(m_fast_include_extensions.cbegin(), m_fast_include_extensions.cend(), fast_ext))
+				microstring mext(ext.cbegin()+1, ext.cend());
+				if(std::binary_search(m_fast_include_extensions.cbegin(), m_fast_include_extensions.cend(), mext))
 				{
 					return true;
 				}
@@ -320,7 +318,7 @@ bool TypeManager::TypeDel(const std::string& type)
 
 void TypeManager::CompileTypeTables()
 {
-	std::set<std::string> unique_3char_extensions;
+	std::set<microstring> unique_4char_extensions;
 
 	for(auto i : m_active_type_map)
 	{
@@ -338,11 +336,15 @@ void TypeManager::CompileTypeTables()
 			if(j[0] == '.')
 			{
 				// First char is a '.', this is an extension specification.
-				m_include_extensions.emplace(j, i.first);
-
-				if(j.length() == 4)
+				if(j.length() <= 5)
 				{
-					unique_3char_extensions.emplace(j.begin()+1, j.end());
+					// It's 4 chars or less, minus the '.'.
+					microstring m(j.begin()+1, j.end());
+					unique_4char_extensions.insert(m);
+				}
+				else
+				{
+					m_include_extensions.emplace(j, i.first);
 				}
 			}
 			else if(j[0] == '/')
@@ -358,19 +360,15 @@ void TypeManager::CompileTypeTables()
 		}
 	}
 
-	m_fast_include_extensions.resize(unique_3char_extensions.size());
-	LOG(INFO) << "Found " << unique_3char_extensions.size() << " unique 3-char extensions.";
+	m_fast_include_extensions.resize(unique_4char_extensions.size());
+	LOG(INFO) << "Found " << unique_4char_extensions.size() << " unique 4-char or less extensions.";
 	decltype(m_fast_include_extensions)::size_type j = 0;
-	for(auto &i : unique_3char_extensions)
+	for(auto i : unique_4char_extensions)
 	{
-		auto strsize = i.size();
-		uint32_t temp = static_cast<uint32_t>(i[0])
-				+ (static_cast<uint32_t>(i[1]) << 8)
-				+ (static_cast<uint32_t>(i[2]) << 16);
-		m_fast_include_extensions[j] = temp;
+		m_fast_include_extensions[j] = i;
 		++j;
 
-		LOG(INFO) << "Added " << i << "(" << std::hex << temp << ") to m_fast_include_extensions";
+		LOG(INFO) << "Added " << static_cast<std::string>(i) << "(" << std::hex << static_cast<std::string>(i) << ") to m_fast_include_extensions";
 	}
 
 	/// @todo shouldn't need this.
