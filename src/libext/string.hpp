@@ -22,6 +22,7 @@
 
 #include <config.h>
 
+#include <type_traits>
 #include <cstring>
 #include <string>
 #include <sstream>
