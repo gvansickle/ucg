@@ -65,7 +65,7 @@ public:
 	microstring(const std::string &other) : microstring(other.cbegin(), other.cend()) {};
 	microstring(std::string::const_iterator b, std::string::const_iterator e) : microstring(&*b, &*e) {};
 
-	microstring(const char *start, const char *end)
+	microstring(const char * __restrict__ start, const char * __restrict__ end)
 	{
 		auto num_chars = end - start;
 		if(num_chars > sizeof(underlying_storage_type))
@@ -83,7 +83,7 @@ public:
 		}
 	}
 
-	~microstring() = default;
+	~microstring() noexcept = default;
 
 	size_t length() const noexcept
 	{
@@ -99,12 +99,14 @@ public:
 
 	bool operator <(const microstring other) const { return m_storage < other.m_storage; };
 
-	// Implicitly convert to a std::string.
+	/// Implicitly convert to a std::string.
 	operator std::string() const
 	{
 		underlying_storage_type tmp = __builtin_bswap32(m_storage);
 		return std::string(reinterpret_cast<const char *>(&tmp), length());
 	};
+
+	underlying_storage_type urep() const noexcept { return m_storage; };
 
 private:
 	underlying_storage_type m_storage;
