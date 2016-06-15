@@ -111,6 +111,8 @@ enum OPT
 	OPT_IGNORE_DIR,
 	OPT_NOIGNORE_DIR,
 	OPT_IGNORE_FILE,
+	OPT_INCLUDE,
+	OPT_EXCLUDE,
 	OPT_TYPE,
 	OPT_NOENV,
 	OPT_TYPE_SET,
@@ -164,6 +166,9 @@ static struct argp_option options[] = {
 		{"noignore-directory", OPT_NOIGNORE_DIR, "name", OPTION_HIDDEN | OPTION_ALIAS },
 		// ack-style --ignore-file=FILTER:FILTERARGS
 		{"ignore-file", OPT_IGNORE_FILE, "FILTER:FILTERARGS", 0, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored."},
+		// grep-style --include=glob and --exclude=glob
+		{"include", OPT_INCLUDE, "GLOB", 0, "Only files matching GLOB will be searched."},
+		{"exclude", OPT_EXCLUDE, "GLOB", 0, "Files matching GLOB will be ignored."},
 		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
