@@ -112,7 +112,7 @@ private:
 	underlying_storage_type m_storage;
 };
 
-#ifdef HAVE_IS_TRIVIAL // gcc/libstdc++ 4.8.4 don't.
+#if defined(HAVE_IS_TRIVIAL) && HAVE_IS_TRIVIAL == 1 // gcc/libstdc++ 4.8.4 don't.
 static_assert(std::is_trivial<microstring>::value, "microstring is not trivial");
 static_assert(std::is_trivially_copyable<microstring>::value, "microstring is not trivially copyable");
 #endif
