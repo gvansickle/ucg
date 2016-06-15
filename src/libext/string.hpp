@@ -67,7 +67,7 @@ public:
 
 	microstring(const char * __restrict__ start, const char * __restrict__ end)
 	{
-		auto num_chars = end - start;
+		size_t num_chars = end - start;
 		if(num_chars > sizeof(underlying_storage_type))
 		{
 			throw std::length_error("Length too long for a microstring");
