@@ -114,6 +114,8 @@ private:
 
 #if defined(HAVE_IS_TRIVIAL) && HAVE_IS_TRIVIAL == 1 // gcc/libstdc++ 4.8.4 don't.
 static_assert(std::is_trivial<microstring>::value, "microstring is not trivial");
+#endif
+#ifdef HAVE_IS_TRIVIALLY_COPYABLE // gcc/libstdc++ 4.8.4 don't.
 static_assert(std::is_trivially_copyable<microstring>::value, "microstring is not trivially copyable");
 #endif
 static_assert(sizeof(microstring) == sizeof(uint32_t), "microstring has a different size than its underlying storage");

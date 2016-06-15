@@ -188,7 +188,8 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
-AC_CHECK_TYPES([std::is_trivial<int>], [AC_DEFINE([HAVE_IS_TRIVIAL], [1], [Define if the std::is_trival<> templates exist.])], [], [#include <type_traits>])
+AC_CHECK_TYPES([std::is_trivial<int>], [AC_DEFINE([HAVE_IS_TRIVIAL], [1], [Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
+AC_CHECK_TYPES([std::is_trivially_copyable<int>], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1], [Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
 
 AC_LANG_POP([C++])
 
