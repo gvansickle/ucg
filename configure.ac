@@ -186,8 +186,11 @@ AC_LANG_POP([C++])
 ### Checks for types
 ###
 
-# N/A
+AC_LANG_PUSH([C++])
 
+AC_CHECK_TYPES([std::is_trivial<int>], [AC_DEFINE([HAVE_IS_TRIVIAL], [1], [Define if the std::is_trival<> templates exist.])], [], [#include <type_traits>])
+
+AC_LANG_POP([C++])
 
 ###
 ### Checks for structures
@@ -206,7 +209,7 @@ AC_LANG_PUSH([C++])
 
 # Capture the compile command line in the binary.
 AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS])
-AX_APPEND_COMPILE_FLAGS([-Wa,-ahlsn=\$@.ss -save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
+#AX_APPEND_COMPILE_FLAGS([-Wa,-ahlsn=\$@.ss -save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
 #AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be.
 #AX_APPEND_COMPILE_FLAGS([-ftree-vectorize -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
@@ -235,7 +238,7 @@ AS_IF([test "x$ax_pthread_ok" == xyes],
                          	static_assert(std::is_same<std::thread::native_handle_type, pthread_t>::value, "C++11 underlying thread implementation is not pthreads");
                          ])],
         [
-        	AC_DEFINE(CXX11_THREADS_ARE_PTHREADS, 1,
+        	AC_DEFINE([CXX11_THREADS_ARE_PTHREADS], [1],
 				[Define if the C++11 underlying thread implementation is pthreads])
         	AC_MSG_RESULT([yes])
         ],
@@ -279,7 +282,7 @@ AC_COMPILE_IFELSE(
         [AC_LANG_PROGRAM([#include <errno.h>],
                          [program_invocation_short_name = "test";])],
         [
-        	AC_DEFINE(HAVE_GNU_C_LIB_PROGRAM_INVOCATION_NAMES, 1,
+        	AC_DEFINE([HAVE_GNU_C_LIB_PROGRAM_INVOCATION_NAMES], [1],
 				[Define if the GNU C library program_invocation{_short}_name strings are defined])
         	AC_MSG_RESULT([yes])
         ],

@@ -97,7 +97,7 @@ public:
 		return strnlen(ptr, 4);
 	};
 
-	bool operator <(const microstring other) const { return m_storage < other.m_storage; };
+	bool operator <(const microstring other) const noexcept { return m_storage < other.m_storage; };
 
 	/// Implicitly convert to a std::string.
 	operator std::string() const
@@ -112,7 +112,10 @@ private:
 	underlying_storage_type m_storage;
 };
 
+#ifdef HAVE_IS_TRIVIAL // gcc/libstdc++ 4.8.4 don't.
 static_assert(std::is_trivial<microstring>::value, "microstring is not trivial");
 static_assert(std::is_trivially_copyable<microstring>::value, "microstring is not trivially copyable");
+#endif
+static_assert(sizeof(microstring) == sizeof(uint32_t), "microstring has a different size than its underlying storage");
 
 #endif /* SRC_LIBEXT_STRING_HPP_ */
