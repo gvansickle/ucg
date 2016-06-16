@@ -122,6 +122,8 @@ private:
 
 	void TypeAddExt(const std::string &type, const std::string &ext);
 
+	void TypeAddGlob(const std::string &type, const std::string &glob);
+
 	/// Flag to keep track of the first call to type().
 	bool m_first_type_has_been_seen = { false };
 
@@ -152,6 +154,10 @@ private:
 
 	/// Literal filenames which will be examined.  Maps to file type.
 	std::unordered_multimap<std::string, std::string> m_included_literal_filenames;
+
+	/// Vector of glob patterns to check.  If the filename matches and the bool == true, the file
+	/// is to be included.  Otherwise, excluded.
+	std::vector<std::pair<std::string, bool>> m_include_exclude_globs;
 
 	/// Map of the regexes to try to match to the first line of the file (key) to
 	/// the file type (value).

@@ -29,6 +29,7 @@
 #include <iomanip>
 #include <string>
 #include <libext/string.hpp>
+#include <fnmatch.h>
 
 struct Type
 {
@@ -166,6 +167,18 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 		return true;
 	}
 
+	// Now the checks start to get expensive.  Check if the filename matches any of the globbing patterns
+	// we're including or excluding.
+	for(auto glob : m_include_exclude_globs)
+	{
+		int result = fnmatch(glob.first.c_str(), name.c_str(), 0);
+		if(result == 0)
+		{
+			// Glob matched, return whether we include or exclude.
+			return glob.second;
+		}
+	}
+
 	/// @todo Support first-line regexes.
 
 	return false;
@@ -276,6 +289,10 @@ void TypeManager::TypeAddFromFilterSpecString(bool delete_type_first, const std:
 			TypeAddExt(file_type, ext);
 		}
 	}
+	else if(filter_type == "glob")
+	{
+		TypeAddGlob(file_type, filter_args);
+	}
 	else
 	{
 		// Unsupported or unknown filter type.
@@ -306,6 +323,13 @@ void TypeManager::TypeAddExt(const std::string& type, const std::string& ext)
 {
 	m_builtin_and_user_type_map[type].push_back("."+ext);
 	m_active_type_map[type].push_back("."+ext);
+}
+
+
+void TypeManager::TypeAddGlob(const std::string& type, const std::string& glob)
+{
+	m_builtin_and_user_type_map[type].push_back("?"+glob);
+	m_active_type_map[type].push_back("?"+glob);
 }
 
 bool TypeManager::TypeDel(const std::string& type)
@@ -351,6 +375,11 @@ void TypeManager::CompileTypeTables()
 			{
 				// First char is a '/', it's a first-line regex.
 				m_included_first_line_regexes.emplace(j, i.first);
+			}
+			else if(j[0] == '?')
+			{
+				// First char is a '?', it's a glob-exclude pattern.
+				m_include_exclude_globs.emplace_back(std::make_pair(j.substr(1), false));
 			}
 			else
 			{

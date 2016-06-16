@@ -246,6 +246,11 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		// ack-style --ignore-file=FILTER:FILTERARGS option.
 		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
 		break;
+	case OPT_INCLUDE:
+	case OPT_EXCLUDE:
+		// grep-style --include/exclude=GLOB.
+		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
+		break;
 	case 'r':
 	case 'R':
 		arguments->m_recurse = true;
@@ -968,6 +973,13 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 					// Behaviorally, this is as if an unnamed type was set on the command line, and then
 					// immediately --notype='ed.  So that's how we'll handle it.
 					m_type_manager.TypeAddIgnoreFileFromFilterSpecString(on_equals_split[1]);
+				}
+
+				// Is this an include or exclude?
+				else if(on_equals_split[0] == "exclude")
+				{
+					// This is a grep-style "--exclude=GLOB".
+					m_type_manager.TypeAddIgnoreFileFromFilterSpecString("glob:" + on_equals_split[1]);
 				}
 			}
 		}
