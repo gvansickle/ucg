@@ -141,6 +141,8 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 		// There was a period, might be an extension.
 		if(last_period != name.cbegin())
 		{
+			bool include_it = false;
+
 			// Name doesn't start with a period, it still could be an extension.
 			auto ext_plus_period_size = name.cend() - last_period;
 
@@ -148,23 +150,36 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 			{
 				// Use the 4-byte fast map.
 				microstring mext(last_period+1, name.cend());
-				if(std::binary_search(m_fast_include_extensions.cbegin(), m_fast_include_extensions.cend(), mext))
-				{
-					return true;
-				}
+				include_it = std::binary_search(m_fast_include_extensions.cbegin(), m_fast_include_extensions.cend(), mext);
 			}
 			else if(m_include_extensions.find(std::string(last_period, name.cend())) != m_include_extensions.end())
 			{
 				// Found the extension in the hash of extensions to include.
-				return true;
+				include_it = true;
 			}
+
+			// Now check that a glob pattern doesn't subsequently exclude it.
+			if(include_it && IsExcludedByAnyGlob(name))
+			{
+				return false;
+			}
+
+			return include_it;
 		}
 	}
 
 	// Check if the filename is one of the literal filenames we're supposed to look at.
 	if(m_included_literal_filenames.find(name) != m_included_literal_filenames.end())
 	{
-		return true;
+		// It matches a literal filename, but now check that a glob pattern doesn't subsequently exclude it.
+		if(IsExcludedByAnyGlob(name))
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
 	}
 
 	// Now the checks start to get expensive.  Check if the filename matches any of the globbing patterns
@@ -338,6 +353,24 @@ bool TypeManager::TypeDel(const std::string& type)
 	auto num_erased = m_builtin_and_user_type_map.erase(type);
 
 	return num_erased > 0;
+}
+
+bool TypeManager::IsExcludedByAnyGlob(const std::string &name) const noexcept
+{
+	for(auto glob : m_include_exclude_globs)
+	{
+		int result = fnmatch(glob.first.c_str(), name.c_str(), 0);
+		if(result == 0)
+		{
+			// Glob matched, check if we should exclude.
+			if(glob.second == false)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void TypeManager::CompileTypeTables()
