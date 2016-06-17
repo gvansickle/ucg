@@ -124,6 +124,8 @@ private:
 
 	void TypeAddGlob(const std::string &type, const std::string &glob);
 
+	bool IsExcludedByAnyGlob(const std::string &name) const noexcept;
+
 	/// Flag to keep track of the first call to type().
 	bool m_first_type_has_been_seen = { false };
 
