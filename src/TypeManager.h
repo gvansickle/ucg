@@ -168,10 +168,16 @@ private:
 	std::unordered_multimap<std::string, std::string> m_included_literal_filenames;
 
 	/// Vector of glob patterns to check for exclusion.
+	/// This is separate from m_include_exclude_globs because only the exclude globs need to be
+	/// checked if a previous file type check has determined that a file is to be included.
 	std::vector<std::string> m_exclude_globs;
 
-	/// Vector of glob patterns to check for inclusion.
-	std::vector<std::string> m_include_globs;
+	/// Vector of glob patterns to check for inclusion/exclusion.
+	/// These are in command-line order so that a sequence of them such as the following can be
+	/// processed correctly:
+	/// ... --include='*.cpp' --exclude='*.c*' --include='*.cpp' ...
+	/// The bool is true if include, false if exclude.
+	std::vector<std::pair<std::string, bool>> m_include_exclude_globs;
 
 	/// Map of the regexes to try to match to the first line of the file (key) to
 	/// the file type (value).

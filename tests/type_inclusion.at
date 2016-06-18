@@ -131,7 +131,7 @@ UCG_CREATE_CPP_HTML_FILES
 # Including xyz should give us 0 hits.
 AT_CHECK([ucg --noenv --include='*.xyz' 'ptr' | LCT], [0], [0], [stderr])
 
-# Including cpp should give us 3 hits.
+# Including cpp should give us 2 hits.
 AT_CHECK([ucg --noenv --include='*.cpp' 'ptr' | LCT], [0], [2], [stderr])
 
 # Including cpp and html should give us 5 hits.
@@ -155,6 +155,25 @@ UCG_CREATE_CPP_HTML_FILES
 # due to the difficulty in merging arbitrary globs in with the file type mechanism, the glob enables take
 # precedence, and we'll get 5 hits.
 AT_CHECK([ucg --noenv --include='*.cpp' --include='*.html' --nocpp --nohtml 'ptr' | LCT], [0], [0], [stderr])
+
+AT_CLEANUP
+
+
+###
+### --include=GLOB/--exclude=GLOB tests
+###
+AT_SETUP([--include=GLOB/--exclude=GLOB tests])
+
+UCG_CREATE_CPP_HTML_FILES
+
+# Including and then excluding cpp should give us 0 hits.
+AT_CHECK([ucg --noenv --include='*.cpp' --exclude='*.cpp' 'ptr' | LCT], [0], [0], [stderr])
+
+# Including, excluding, and then including cpp again should give us 2 hits.
+AT_CHECK([ucg --noenv --include='*.cpp' --exclude='*.cpp' --include='*.cpp' 'ptr' | LCT], [0], [2], [stderr])
+
+# Including and then excluding cpp, then including html  should give us 3 hits.
+AT_CHECK([ucg --noenv --include='wrong*.cpp' --include='different*.html' 'ptr' | LCT], [0], [0], [stderr])
 
 AT_CLEANUP
 

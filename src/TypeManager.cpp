@@ -187,16 +187,30 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 		}
 	}
 
-	// Now the checks start to get expensive.  Check if the filename matches any of the globbing patterns
-	// we're including.
-	for(auto glob : m_include_globs)
+	// Now the checks start to get expensive.  So far we haven't ruled the file in or out by its extension or literal filename.
+	// Check if the filename matches the collection of the globbing patterns we're including and excluding.
+	// We have to match each filename against each glob pattern to deal with include/exclude sequences which match the overlapping filenames.
+	enum { nomatch, include, exclude } glob_verdict = nomatch;
+	for(auto glob : m_include_exclude_globs)
 	{
-		int result = fnmatch(glob.c_str(), name.c_str(), 0);
+		int result = fnmatch(glob.first.c_str(), name.c_str(), 0);
 		if(result == 0)
 		{
-			// Glob matched, return that we should include this file.
-			return true;
+			// Glob matched, return whether we should include this file or not.
+			if(glob.second)
+			{
+				glob_verdict = include;
+			}
+			else
+			{
+				glob_verdict = exclude;
+			}
 		}
+	}
+
+	if(glob_verdict == include)
+	{
+		return true;
 	}
 
 	/// @todo Support first-line regexes.
@@ -217,9 +231,12 @@ bool TypeManager::type(const std::string& type_name)
 	if(!m_first_type_has_been_seen)
 	{
 		// This is the first call to type(), clear the active Type map.
+		// This is to handle the case where this is the first of any type of file include option,
+		// so the desired behavior is to wipe the slate clean and only match those file types.
 		m_active_type_map.clear();
+		m_include_exclude_globs.clear();
+		m_first_type_has_been_seen = true;
 	}
-	m_first_type_has_been_seen = true;
 
 	// Remove the filters from the removed-filters map, if they have been added.
 	/// @note Ack doesn't appear to do this.  If you give it a command line such as:
@@ -338,13 +355,14 @@ void TypeManager::TypeAddIgnoreFileFromFilterSpecString(const std::string& filte
 
 void TypeManager::TypeAddIncludeGlobFromFilterSpecString(const std::string &filter_spec_string)
 {
-	// Use this special file type for all --ignore-file= file type specs.
-	std::string file_type_name {"INCLUDE_GLOB_FILE_TYPE"};
+	// Use this special file type for all --include=glob file type specs.
+	std::string file_type_name {"INCLUDE_GLOB_FILE_TYPE:"};
 
 	// Add the filter spec to the special file type.
-	TypeAddFromFilterSpecString(false, file_type_name + ":" + filter_spec_string);
+	TypeAddFromFilterSpecString(false, file_type_name + filter_spec_string);
 
-	// --notype= the filter spec.
+	// --type= the filter spec.  This both enables the include, and if this is the first of any type of file include
+	// option, removes all other file include options.
 	type(file_type_name);
 }
 
@@ -362,17 +380,20 @@ void TypeManager::TypeAddExt(const std::string& type, const std::string& ext)
 
 void TypeManager::TypeAddGlobExclude(const std::string& type, const std::string& glob)
 {
-#if 0
+#if 0 /// @todo Does it make any sense at this point to add globs to these maps?
 	m_builtin_and_user_type_map[type].push_back("?"+glob);
 	m_active_type_map[type].push_back("?"+glob);
 #endif
 	m_exclude_globs.emplace_back(glob);
+	m_include_exclude_globs.emplace_back(std::make_pair(glob, false));
 }
 
 void TypeManager::TypeAddGlobInclude(const std::string& type, const std::string& glob)
 {
 	m_builtin_and_user_type_map[type].push_back("?"+glob);
 	m_active_type_map[type].push_back("?"+glob);
+
+	m_include_exclude_globs.emplace_back(std::make_pair(glob, true));
 
 	this->type(type);
 }
@@ -442,9 +463,9 @@ void TypeManager::CompileTypeTables()
 			}
 			else if(j[0] == '?')
 			{
-				// First char is a '?', it's a glob-include pattern.
-				LOG(INFO) << "Compiling glob-include pattern \'" << j << "\'";
-				m_include_globs.emplace_back(j.substr(1));
+				// First char is a '?', it's a glob pattern.
+				// These get handled in the TypeAddGlob*() functions.
+				LOG(INFO) << "Found glob pattern \'" << j << "\', ignoring.";
 			}
 			else
 			{
