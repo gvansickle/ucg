@@ -176,6 +176,7 @@ AT_CHECK([ucg --noenv 'include' | LCT],[0],[3],[stderr])
 
 AT_CLEANUP
 
+
 m4_define([UCG_CREATE_FILES],[
 AT_DATA([test_file.xqz],[#include
 ])
