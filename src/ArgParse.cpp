@@ -979,7 +979,12 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 				else if(on_equals_split[0] == "exclude")
 				{
 					// This is a grep-style "--exclude=GLOB".
-					m_type_manager.TypeAddIgnoreFileFromFilterSpecString("glob:" + on_equals_split[1]);
+					m_type_manager.TypeAddIgnoreFileFromFilterSpecString("globx:" + on_equals_split[1]);
+				}
+				else if(on_equals_split[0] == "include")
+				{
+					// This is a grep-style "--include=GLOB".
+					m_type_manager.TypeAddIncludeGlobFromFilterSpecString("glob:" + on_equals_split[1]);
 				}
 			}
 		}

@@ -112,6 +112,34 @@ AT_CLEANUP
 
 
 ###
+### --include=GLOB tests
+###
+
+AT_SETUP([--include=GLOB tests])
+
+UCG_CREATE_CPP_HTML_FILES
+
+# Including xyz should give us 0 hits.
+AT_CHECK([ucg --noenv --include='*.xyz' 'ptr' | LCT], [0], [0], [stderr])
+
+# Including cpp should give us 3 hits.
+AT_CHECK([ucg --noenv --include='*.cpp' 'ptr' | LCT], [0], [2], [stderr])
+
+# Including cpp and html should give us 5 hits.
+AT_CHECK([ucg --noenv --include='*.cpp' --include='*.html' 'ptr' | LCT], [0], [5], [stderr])
+
+# Including non-matching cpp and html globs should give us 0 hits.
+AT_CHECK([ucg --noenv --include='wrong*.cpp' --include='different*.html' 'ptr' | LCT], [0], [0], [stderr])
+
+# Including cpp and html, then disabling --nocpp and --nohtml should ideally give us 0 hits.  However,
+# due to the difficulty in merging arbitrary globs in with the file type mechanism, the glob enables take
+# precedence, and we'll get 5 hits.
+AT_CHECK([ucg --noenv --include='*.cpp' --include='*.html' --nocpp --nohtml 'ptr' | LCT], [0], [5], [stderr])
+
+AT_CLEANUP
+
+
+###
 ### Overlapping file type specs.
 ###
 AT_SETUP([Overlapping file type specs])

@@ -105,6 +105,14 @@ public:
 	void TypeAddIgnoreFileFromFilterSpecString(const std::string &filter_spec_string);
 
 	/**
+	 * Adds and then type()s a new filter spec to the anonymous type used for '--include=glob', based on #filter_spec_string.
+	 *
+	 * @param filter_spec_string
+	 * @exception TypeManagerException  filter_spec_string cannot be parsed.
+	 */
+	void TypeAddIncludeGlobFromFilterSpecString(const std::string &filter_spec_string);
+
+	/**
 	 * Deletes #type from the m_active_type_map.
 	 *
 	 * @param type  Name of the type to delete.
@@ -123,6 +131,8 @@ private:
 	void TypeAddExt(const std::string &type, const std::string &ext);
 
 	void TypeAddGlobExclude(const std::string &type, const std::string &glob);
+
+	void TypeAddGlobInclude(const std::string &type, const std::string &glob);
 
 	bool IsExcludedByAnyGlob(const std::string &name) const noexcept;
 
@@ -159,6 +169,9 @@ private:
 
 	/// Vector of glob patterns to check for exclusion.
 	std::vector<std::string> m_exclude_globs;
+
+	/// Vector of glob patterns to check for inclusion.
+	std::vector<std::string> m_include_globs;
 
 	/// Map of the regexes to try to match to the first line of the file (key) to
 	/// the file type (value).

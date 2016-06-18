@@ -188,18 +188,16 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 	}
 
 	// Now the checks start to get expensive.  Check if the filename matches any of the globbing patterns
-	// we're including or excluding.
-#ifdef TODO
-	for(auto glob : m_exclude_globs)
+	// we're including.
+	for(auto glob : m_include_globs)
 	{
-		int result = fnmatch(glob.first.c_str(), name.c_str(), 0);
+		int result = fnmatch(glob.c_str(), name.c_str(), 0);
 		if(result == 0)
 		{
-			// Glob matched, return whether we include or exclude.
-			return glob.second;
+			// Glob matched, return that we should include this file.
+			return true;
 		}
 	}
-#endif
 
 	/// @todo Support first-line regexes.
 
@@ -311,9 +309,13 @@ void TypeManager::TypeAddFromFilterSpecString(bool delete_type_first, const std:
 			TypeAddExt(file_type, ext);
 		}
 	}
-	else if(filter_type == "glob")
+	else if(filter_type == "globx")
 	{
 		TypeAddGlobExclude(file_type, filter_args);
+	}
+	else if(filter_type == "glob")
+	{
+		TypeAddGlobInclude(file_type, filter_args);
 	}
 	else
 	{
@@ -321,7 +323,6 @@ void TypeManager::TypeAddFromFilterSpecString(bool delete_type_first, const std:
 		throw TypeManagerException("Unknown filter type \"" + filter_type + "\" in type spec \"" + filter_spec_string + "\"");
 	}
 }
-
 
 void TypeManager::TypeAddIgnoreFileFromFilterSpecString(const std::string& filter_spec_string)
 {
@@ -333,6 +334,18 @@ void TypeManager::TypeAddIgnoreFileFromFilterSpecString(const std::string& filte
 
 	// --notype= the filter spec.
 	notype(file_type_name);
+}
+
+void TypeManager::TypeAddIncludeGlobFromFilterSpecString(const std::string &filter_spec_string)
+{
+	// Use this special file type for all --ignore-file= file type specs.
+	std::string file_type_name {"INCLUDE_GLOB_FILE_TYPE"};
+
+	// Add the filter spec to the special file type.
+	TypeAddFromFilterSpecString(false, file_type_name + ":" + filter_spec_string);
+
+	// --notype= the filter spec.
+	type(file_type_name);
 }
 
 void TypeManager::TypeAddIs(const std::string& type, const std::string& name)
@@ -347,7 +360,6 @@ void TypeManager::TypeAddExt(const std::string& type, const std::string& ext)
 	m_active_type_map[type].push_back("."+ext);
 }
 
-
 void TypeManager::TypeAddGlobExclude(const std::string& type, const std::string& glob)
 {
 #if 0
@@ -356,6 +368,15 @@ void TypeManager::TypeAddGlobExclude(const std::string& type, const std::string&
 #endif
 	m_exclude_globs.emplace_back(glob);
 }
+
+void TypeManager::TypeAddGlobInclude(const std::string& type, const std::string& glob)
+{
+	m_builtin_and_user_type_map[type].push_back("?"+glob);
+	m_active_type_map[type].push_back("?"+glob);
+
+	this->type(type);
+}
+
 
 bool TypeManager::TypeDel(const std::string& type)
 {
@@ -403,29 +424,32 @@ void TypeManager::CompileTypeTables()
 				if(j.length() <= 5)
 				{
 					// It's 4 chars or less, minus the '.'.
+					LOG(INFO) << "Compiling ext spec \'" << j << "\' as microstring";
 					microstring m(j.begin()+1, j.end());
 					unique_4char_extensions.insert(m);
 				}
 				else
 				{
+					LOG(INFO) << "Compiling ext spec \'" << j << "\' as non-microstring";
 					m_include_extensions.emplace(j, i.first);
 				}
 			}
 			else if(j[0] == '/')
 			{
 				// First char is a '/', it's a first-line regex.
+				LOG(INFO) << "Compiling first-line regex spec \'" << j << "\'";
 				m_included_first_line_regexes.emplace(j, i.first);
 			}
-#if 0
 			else if(j[0] == '?')
 			{
-				// First char is a '?', it's a glob-exclude pattern.
-				m_exclude_globs.emplace_back(j.substr(1));
+				// First char is a '?', it's a glob-include pattern.
+				LOG(INFO) << "Compiling glob-include pattern \'" << j << "\'";
+				m_include_globs.emplace_back(j.substr(1));
 			}
-#endif
 			else
 			{
 				// It's a literal filename (e.g. "Makefile").
+				LOG(INFO) << "Compiling literal filename \'" << j << "\'";
 				m_included_literal_filenames.emplace(j, i.first);
 			}
 		}
@@ -442,7 +466,7 @@ void TypeManager::CompileTypeTables()
 		LOG(INFO) << "Added " << static_cast<std::string>(i) << "(" << std::hex << static_cast<std::string>(i) << ") to m_fast_include_extensions";
 	}
 
-	/// @todo shouldn't need this.
+	/// Sort the fast_include_extensions list so we can binary search it.
 	std::sort(m_fast_include_extensions.begin(), m_fast_include_extensions.end());
 }
 
