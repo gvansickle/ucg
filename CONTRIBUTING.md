@@ -1,6 +1,7 @@
 If you would like to contribute to the UniversalCodeGrep project,
 please certify your agreement to the following DCO:
-***
+
+---
 UniversalCodeGrep Developer's Certificate of Origin
 Version 1.0
 
@@ -31,20 +32,19 @@ By making a contribution to this project, I certify that:
     Foundation, either version 3 of the License, or (at the option of
     the project) any later version.
 
-    http://www.gnu.org/licenses/gpl-3.0.html
-***
-***
+The text of the GPL version 3 can be found at this link: [http://www.gnu.org/licenses/gpl-3.0.html](http://www.gnu.org/licenses/gpl-3.0.html)
+
+---
+
 Please confirm your certification to the above by adding the following
 sign-off line to every git commit message of your submisions to the
 UniversalCodeGrep project:
 
     Signed-off-by: Random J Developer <random@developer.example.org>
-        
+
 Use your real name (no pseudonyms or anonymous contributions can be
 accepted).
 
 This line can be automatically added by git if you run the git
 `commit` command with the -s option. Signing can be done afterword
 with --amend -s.
-
-
