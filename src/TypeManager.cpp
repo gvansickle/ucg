@@ -158,13 +158,18 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 				include_it = true;
 			}
 
-			// Now check that a glob pattern doesn't subsequently exclude it.
-			if(include_it && IsExcludedByAnyGlob(name))
+			if(include_it)
 			{
-				return false;
+				// Now check that a glob pattern doesn't subsequently exclude it.
+				if(IsExcludedByAnyGlob(name))
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
 			}
-
-			return include_it;
 		}
 	}
 
@@ -184,7 +189,8 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 
 	// Now the checks start to get expensive.  Check if the filename matches any of the globbing patterns
 	// we're including or excluding.
-	for(auto glob : m_include_exclude_globs)
+#ifdef TODO
+	for(auto glob : m_exclude_globs)
 	{
 		int result = fnmatch(glob.first.c_str(), name.c_str(), 0);
 		if(result == 0)
@@ -193,6 +199,7 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 			return glob.second;
 		}
 	}
+#endif
 
 	/// @todo Support first-line regexes.
 
@@ -306,7 +313,7 @@ void TypeManager::TypeAddFromFilterSpecString(bool delete_type_first, const std:
 	}
 	else if(filter_type == "glob")
 	{
-		TypeAddGlob(file_type, filter_args);
+		TypeAddGlobExclude(file_type, filter_args);
 	}
 	else
 	{
@@ -341,10 +348,13 @@ void TypeManager::TypeAddExt(const std::string& type, const std::string& ext)
 }
 
 
-void TypeManager::TypeAddGlob(const std::string& type, const std::string& glob)
+void TypeManager::TypeAddGlobExclude(const std::string& type, const std::string& glob)
 {
+#if 0
 	m_builtin_and_user_type_map[type].push_back("?"+glob);
 	m_active_type_map[type].push_back("?"+glob);
+#endif
+	m_exclude_globs.emplace_back(glob);
 }
 
 bool TypeManager::TypeDel(const std::string& type)
@@ -357,16 +367,13 @@ bool TypeManager::TypeDel(const std::string& type)
 
 bool TypeManager::IsExcludedByAnyGlob(const std::string &name) const noexcept
 {
-	for(auto glob : m_include_exclude_globs)
+	for(auto glob : m_exclude_globs)
 	{
-		int result = fnmatch(glob.first.c_str(), name.c_str(), 0);
+		int result = fnmatch(glob.c_str(), name.c_str(), 0);
 		if(result == 0)
 		{
-			// Glob matched, check if we should exclude.
-			if(glob.second == false)
-			{
-				return true;
-			}
+			// Glob matched, we should exclude.
+			return true;
 		}
 	}
 
@@ -409,11 +416,13 @@ void TypeManager::CompileTypeTables()
 				// First char is a '/', it's a first-line regex.
 				m_included_first_line_regexes.emplace(j, i.first);
 			}
+#if 0
 			else if(j[0] == '?')
 			{
 				// First char is a '?', it's a glob-exclude pattern.
-				m_include_exclude_globs.emplace_back(std::make_pair(j.substr(1), false));
+				m_exclude_globs.emplace_back(j.substr(1));
 			}
+#endif
 			else
 			{
 				// It's a literal filename (e.g. "Makefile").
