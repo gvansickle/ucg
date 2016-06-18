@@ -234,7 +234,6 @@ bool TypeManager::type(const std::string& type_name)
 		// This is to handle the case where this is the first of any type of file include option,
 		// so the desired behavior is to wipe the slate clean and only match those file types.
 		m_active_type_map.clear();
-		m_include_exclude_globs.clear();
 		m_first_type_has_been_seen = true;
 	}
 
