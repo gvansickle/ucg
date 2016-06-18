@@ -61,7 +61,7 @@ AT_CHECK([ucg --test-noenv-user '--type=html' '--type=nocpp' ptr | LCT],[0],[3],
 AT_CLEANUP
 
 ###
-###
+### --ignore-file tests
 ###
 
 AT_SETUP([--ignore-file tests])
@@ -79,6 +79,34 @@ AT_CHECK([ucg --noenv --ignore-file=ext:cpp --ignore-file=ext:html 'ptr' | LCT],
 
 # Ignoring cpp and html, then enabling --cpp and --html should give us 5 hits.
 AT_CHECK([ucg --noenv --ignore-file=ext:cpp --ignore-file=ext:html --cpp --html 'ptr' | LCT],[0],[5],[stderr])
+
+AT_CLEANUP
+
+
+###
+### --exclude=GLOB tests
+###
+
+AT_SETUP([--exclude=GLOB tests])
+
+UCG_CREATE_CPP_HTML_FILES
+
+# Excluding xyz should give us 5 hits.
+AT_CHECK([ucg --noenv --exclude='*.xyz' 'ptr' | LCT], [0], [5], [stderr])
+
+# Excluding cpp should give us 3 hits.
+AT_CHECK([ucg --noenv --exclude='*.cpp' 'ptr' | LCT], [0], [3], [stderr])
+
+# Excluding cpp and html should give us 0 hits.
+AT_CHECK([ucg --noenv --exclude='*.cpp' --exclude='*.html' 'ptr' | LCT], [0], [0], [stderr])
+
+# Excluding non-matching cpp and html globs should give us 5 hits.
+AT_CHECK([ucg --noenv --exclude='wrong*.cpp' --exclude='different*.html' 'ptr' | LCT], [0], [5], [stderr])
+
+# Excluding cpp and html, then enabling --cpp and --html should ideally give us 5 hits.  However,
+# due to the difficulty in merging arbitrary globs in with the file type mechanism, the glob disables take
+# precedence, and we'll get no hits.
+AT_CHECK([ucg --noenv --exclude='*.cpp' --exclude='*.html' --cpp --html 'ptr' | LCT], [0], [0], [stderr])
 
 AT_CLEANUP
 
