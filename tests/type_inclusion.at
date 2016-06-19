@@ -172,8 +172,8 @@ AT_CHECK([ucg --noenv --include='*.cpp' --exclude='*.cpp' 'ptr' | LCT], [0], [0]
 # Including, excluding, and then including cpp again should give us 2 hits.
 AT_CHECK([ucg --noenv --include='*.cpp' --exclude='*.cpp' --include='*.cpp' 'ptr' | LCT], [0], [2], [stderr])
 
-# Including and then excluding cpp, then including html  should give us 3 hits.
-AT_CHECK([ucg --noenv --include='wrong*.cpp' --include='different*.html' 'ptr' | LCT], [0], [0], [stderr])
+# Including and then excluding cpp, then including html should give us 3 hits.
+AT_CHECK([ucg --noenv --include='*.cpp' --exclude='*.cpp' --include='*.html' 'ptr' | LCT], [0], [3], [stderr])
 
 AT_CLEANUP
 
