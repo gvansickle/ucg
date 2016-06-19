@@ -84,6 +84,30 @@ AT_CLEANUP
 
 
 ###
+### ag-style --ignore=GLOB tests
+### At the moment, ucg's --ignore only applies to files, while ag's applies to both files and directories.
+### --ignore is an alias of --exclude, so we repeat the same tests with the different name.
+###
+AT_SETUP([--ignore=GLOB tests])
+
+UCG_CREATE_CPP_HTML_FILES
+
+# Ignoring xyz should give us 5 hits.
+AT_CHECK([ucg --noenv --ignore='*.xyz' 'ptr' | LCT], [0], [5], [stderr])
+
+# Ignoring cpp should give us 3 hits.
+AT_CHECK([ucg --noenv --ignore='*.cpp' 'ptr' | LCT], [0], [3], [stderr])
+
+# Ignoring cpp and html should give us 0 hits.
+AT_CHECK([ucg --noenv --ignore='*.cpp' --exclude='*.html' 'ptr' | LCT], [0], [0], [stderr])
+
+# Ignoring non-matching cpp and html globs should give us 5 hits.
+AT_CHECK([ucg --noenv --ignore='wrong*.cpp' --ignore='different*.html' 'ptr' | LCT], [0], [5], [stderr])
+
+AT_CLEANUP
+
+
+###
 ### --exclude=GLOB tests
 ###
 AT_SETUP([--exclude=GLOB tests])

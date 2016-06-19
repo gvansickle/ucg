@@ -55,7 +55,7 @@
 #include <fcntl.h>
 #include <unistd.h> // for GetUserHomeDir()-->getuid().
 #include <sys/stat.h>
-#include <libgen.h>   // Don't know where "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
+#include <libgen.h>   // Don't know where the name "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
 
 #include <libext/string.hpp>
 
@@ -157,7 +157,7 @@ static struct argp_option options[] = {
 		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
 		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
 		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
-		{0,0,0,0, "File inclusion/exclusion:"},
+		{0,0,0,0, "File/directory inclusion/exclusion:"},
 		{"[no]ignore-dir", OPT_BRACKET_NO_STANDIN, "name", 0, "[Do not] exclude directories with this name."},
 		{"[no]ignore-directory", OPT_BRACKET_NO_STANDIN, "name", OPTION_ALIAS },
 		{"ignore-dir",  OPT_IGNORE_DIR, "name", OPTION_HIDDEN,  ""},
@@ -169,6 +169,9 @@ static struct argp_option options[] = {
 		// grep-style --include=glob and --exclude=glob
 		{"include", OPT_INCLUDE, "GLOB", 0, "Only files matching GLOB will be searched."},
 		{"exclude", OPT_EXCLUDE, "GLOB", 0, "Files matching GLOB will be ignored."},
+		// ag-style --ignore=GLOB
+		// In ag, this option applies to both files and directories.  For the present, ucg will only apply this to files.
+		{"ignore", OPT_EXCLUDE, "GLOB", OPTION_ALIAS },
 		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
@@ -976,9 +979,9 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 				}
 
 				// Is this an include or exclude?
-				else if(on_equals_split[0] == "exclude")
+				else if(on_equals_split[0] == "exclude" || on_equals_split[0] == "ignore")
 				{
-					// This is a grep-style "--exclude=GLOB".
+					// This is a grep-style "--exclude=GLOB" or an ag-style "--ignore=GLOB".
 					m_type_manager.TypeAddIgnoreFileFromFilterSpecString("globx:" + on_equals_split[1]);
 				}
 				else if(on_equals_split[0] == "include")
