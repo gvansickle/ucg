@@ -26,8 +26,9 @@
 #include <set>
 #include <string>
 #include <thread>
-#include <cstdint>
 #include <sys/types.h> // for dev_t, ino_t
+
+#include <libext/integer.hpp>
 
 #include "sync_queue_impl_selector.h"
 
@@ -49,16 +50,6 @@ struct DirectoryTraversalStats
 	size_t m_num_directories_found { 0 };
 };
 
-// Boost has a template of this nature, but of course more complete.
-template <unsigned char NumBits>
-struct uint_t
-{
-	static_assert(NumBits <= 128, "NumBits > 128 not supported");
-	using fast = typename uint_t<NumBits+1>::fast;
-};
-template<> struct uint_t<128> { using fast = unsigned __int128; };
-template<> struct uint_t<64> { using fast = uint_fast64_t; };
-template<> struct uint_t<32> { using fast = uint_fast32_t; };
 
 /**
  * This class does the directory tree traversal.

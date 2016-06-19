@@ -55,7 +55,9 @@
 #include <fcntl.h>
 #include <unistd.h> // for GetUserHomeDir()-->getuid().
 #include <sys/stat.h>
-#include <libgen.h>   // Don't know where "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
+#include <libgen.h>   // Don't know where the name "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
+
+#include <libext/string.hpp>
 
 #include "TypeManager.h"
 #include "File.h"
@@ -108,6 +110,9 @@ enum OPT
 	OPT_NOCOLOR,
 	OPT_IGNORE_DIR,
 	OPT_NOIGNORE_DIR,
+	OPT_IGNORE_FILE,
+	OPT_INCLUDE,
+	OPT_EXCLUDE,
 	OPT_TYPE,
 	OPT_NOENV,
 	OPT_TYPE_SET,
@@ -141,7 +146,7 @@ static struct argp_option options[] = {
 		{"[no]smart-case", OPT_BRACKET_NO_STANDIN, 0, 0, "Ignore case if PATTERN is all lowercase (default: enabled)."},
 		{"smart-case", OPT_SMART_CASE, 0, OPTION_HIDDEN, ""},
 		{"nosmart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN, ""},
-		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS, ""},
+		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS },
 		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
 		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
 		{0,0,0,0, "Search Output:"},
@@ -152,11 +157,21 @@ static struct argp_option options[] = {
 		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
 		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
 		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
-		{0,0,0,0, "File inclusion/exclusion:"},
-		{"ignore-dir",  OPT_IGNORE_DIR, "name", 0,  "Exclude directories with this name."},
-		{"ignore-directory", OPT_IGNORE_DIR, "name", OPTION_ALIAS },
-		{"noignore-dir",  OPT_NOIGNORE_DIR, "name", 0,  "Do not exclude directories with this name."},
-		{"noignore-directory", OPT_NOIGNORE_DIR, "name", OPTION_ALIAS },
+		{0,0,0,0, "File/directory inclusion/exclusion:"},
+		{"[no]ignore-dir", OPT_BRACKET_NO_STANDIN, "name", 0, "[Do not] exclude directories with this name."},
+		{"[no]ignore-directory", OPT_BRACKET_NO_STANDIN, "name", OPTION_ALIAS },
+		{"ignore-dir",  OPT_IGNORE_DIR, "name", OPTION_HIDDEN,  ""},
+		{"ignore-directory", OPT_IGNORE_DIR, "name", OPTION_HIDDEN | OPTION_ALIAS },
+		{"noignore-dir",  OPT_NOIGNORE_DIR, "name", OPTION_HIDDEN,  ""},
+		{"noignore-directory", OPT_NOIGNORE_DIR, "name", OPTION_HIDDEN | OPTION_ALIAS },
+		// ack-style --ignore-file=FILTER:FILTERARGS
+		{"ignore-file", OPT_IGNORE_FILE, "FILTER:FILTERARGS", 0, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored."},
+		// grep-style --include=glob and --exclude=glob
+		{"include", OPT_INCLUDE, "GLOB", 0, "Only files matching GLOB will be searched."},
+		{"exclude", OPT_EXCLUDE, "GLOB", 0, "Files matching GLOB will be ignored."},
+		// ag-style --ignore=GLOB
+		// In ag, this option applies to both files and directories.  For the present, ucg will only apply this to files.
+		{"ignore", OPT_EXCLUDE, "GLOB", OPTION_ALIAS },
 		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
@@ -229,6 +244,15 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		 * directory, it gets put back into the set of paths that will be searched.  Feature for another day.
 		 */
 		arguments->m_excludes.erase(arg);
+		break;
+	case OPT_IGNORE_FILE:
+		// ack-style --ignore-file=FILTER:FILTERARGS option.
+		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
+		break;
+	case OPT_INCLUDE:
+	case OPT_EXCLUDE:
+		// grep-style --include/exclude=GLOB.
+		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
 		break;
 	case 'r':
 	case 'R':
@@ -875,121 +899,101 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 {
 	for(auto arg = v->begin(); arg != v->end(); ++arg)
 	{
-		auto arglen = strlen(*arg);
-		if((arglen < 3) || (std::strncmp("--", *arg, 2) != 0))
+		try // TypeManager might throw on malformed file type filter strings.
 		{
-			// We only care about double-dash options here.
-			continue;
-		}
+			auto arglen = std::strlen(*arg);
+			if((arglen < 3) || (std::strncmp("--", *arg, 2) != 0))
+			{
+				// We only care about double-dash options here.
+				continue;
+			}
 
-		if(std::strcmp("--", *arg) == 0)
+			if(std::strcmp("--", *arg) == 0)
+			{
+				// This is a "--", ignore all further command-line params.
+				break;
+			}
+
+			std::string argtxt(*arg+2);
+
+			// Is this a type specification of the form "--TYPE"?
+			if(m_type_manager.IsType(argtxt))
+			{
+				// Yes, replace it with something digestible by argp: --type=TYPE.
+				std::string new_param("--type=" + argtxt);
+				delete [] *arg;
+				*arg = cpp_strdup(new_param.c_str());
+			}
+
+			// Is this a type specification of the form '--noTYPE'?
+			else if(argtxt.compare(0, 2, "no") == 0 && m_type_manager.IsType(argtxt.substr(2)))
+			{
+				// Yes, replace it with something digestible by argp: --type=noTYPE.
+				std::string new_param("--type=" + argtxt);
+				delete [] *arg;
+				*arg = cpp_strdup(new_param.c_str());
+			}
+
+			// Otherwise, check if it's one of the file type definition parameters.
+			else
+			{
+				// All file type params take the form "--CMD=CMDPARAMS", so split on the '='.
+				auto on_equals_split = split(argtxt, '=');
+
+				if(on_equals_split.size() != 2)
+				{
+					// No '=', not something we care about here.
+					continue;
+				}
+
+				// Is this a type-add?
+				if(on_equals_split[0] == "type-add")
+				{
+					// Yes, have type manager add the params.
+					m_type_manager.TypeAddFromFilterSpecString(false, on_equals_split[1]);
+				}
+
+				// Is this a type-set?
+				else if(on_equals_split[0] == "type-set")
+				{
+					// Yes, delete any existing file type by the given name and do a type-add.
+					m_type_manager.TypeAddFromFilterSpecString(true, on_equals_split[1]);
+				}
+
+				// Is this a type-del?
+				else if(on_equals_split[0] == "type-del")
+				{
+					// Tell the TypeManager to delete the type.
+					/// @note ack reports no error if the file type to be deleted doesn't exist.
+					/// We'll match that behavior here.
+					m_type_manager.TypeDel(on_equals_split[1]);
+				}
+
+				// Is this an ignore-file?
+				else if(on_equals_split[0] == "ignore-file")
+				{
+					// It's an ack-style "--ignore-file=FILTER:FILTERARGS".
+					// Behaviorally, this is as if an unnamed type was set on the command line, and then
+					// immediately --notype='ed.  So that's how we'll handle it.
+					m_type_manager.TypeAddIgnoreFileFromFilterSpecString(on_equals_split[1]);
+				}
+
+				// Is this an include or exclude?
+				else if(on_equals_split[0] == "exclude" || on_equals_split[0] == "ignore")
+				{
+					// This is a grep-style "--exclude=GLOB" or an ag-style "--ignore=GLOB".
+					m_type_manager.TypeAddIgnoreFileFromFilterSpecString("globx:" + on_equals_split[1]);
+				}
+				else if(on_equals_split[0] == "include")
+				{
+					// This is a grep-style "--include=GLOB".
+					m_type_manager.TypeAddIncludeGlobFromFilterSpecString("glob:" + on_equals_split[1]);
+				}
+			}
+		}
+		catch(const TypeManagerException &e)
 		{
-			// This is a "--", ignore all further command-line params.
-			break;
+			throw ArgParseException(std::string(e.what()) + " while parsing option \'" + *arg + "\'");
 		}
-
-		std::string argtxt(*arg+2);
-
-		// Is this a type specification of the form "--TYPE"?
-		if(m_type_manager.IsType(argtxt))
-		{
-			// Yes, replace it with something digestible by argp: --type=TYPE.
-			std::string new_param("--type=" + argtxt);
-			delete [] *arg;
-			*arg = cpp_strdup(new_param.c_str());
-		}
-
-		// Is this a type specification of the form '--noTYPE'?
-		else if(argtxt.compare(0, 2, "no") == 0 && m_type_manager.IsType(argtxt.substr(2)))
-		{
-			// Yes, replace it with something digestible by argp: --type=noTYPE.
-			std::string new_param("--type=" + argtxt);
-			delete [] *arg;
-			*arg = cpp_strdup(new_param.c_str());
-		}
-
-		// Is this a type-add?
-		else if(argtxt.compare(0, 9, "type-add=") == 0)
-		{
-			HandleTypeAddOrSet(argtxt);
-		}
-
-		// Is this a type-set?
-		else if(argtxt.compare(0, 9, "type-set=") == 0)
-		{
-			m_type_manager.TypeDel(argtxt.substr(9));
-			HandleTypeAddOrSet(argtxt);
-		}
-
-		// Is this a type-del?
-		else if(argtxt.compare(0, 9, "type-del=") == 0)
-		{
-			// Tell the TypeManager to delete the type.
-			m_type_manager.TypeDel(argtxt.substr(9));
-		}
-	}
-}
-
-static std::vector<std::string> split(const std::string &s, char delimiter)
-{
-	std::vector<std::string> retval;
-	std::stringstream ss(s);
-	std::string element;
-
-	while(std::getline(ss, element, delimiter))
-	{
-		if(!element.empty())
-		{
-			retval.push_back(element);
-		}
-	}
-
-	// This should allow for return value optimization.
-	return retval;
-}
-
-
-void ArgParse::HandleTypeAddOrSet(const std::string& argtxt)
-{
-	std::string::size_type first_colon, second_colon;
-	first_colon = argtxt.find_first_of(":");
-	if(first_colon == std::string::npos)
-	{
-		// Malformed type spec.
-		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Can't find first colon.");
-	}
-	second_colon = argtxt.find_first_of(":", first_colon+1);
-	if(second_colon == std::string::npos)
-	{
-		// Malformed type spec.
-		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Can't find second colon.");
-	}
-	if(second_colon <= first_colon+1)
-	{
-		// Malformed type spec, filter field is blank.
-		throw ArgParseException("Malformed type spec \"--" + argtxt + "\": Filter field is empty.");
-	}
-	std::string type = argtxt.substr(9, first_colon-9);
-	std::string filter = argtxt.substr(first_colon+1, second_colon-first_colon-1);
-	std::string filter_args = argtxt.substr(second_colon+1);
-
-	if(filter == "is")
-	{
-		// filter_args is a literal filename.
-		m_type_manager.TypeAddIs(type, filter_args);
-	}
-	else if(filter == "ext")
-	{
-		// filter_args is a list of one or more comma-separated filename extensions.
-		auto exts = split(filter_args,',');
-		for(auto ext : exts)
-		{
-			m_type_manager.TypeAddExt(type, ext);
-		}
-	}
-	else
-	{
-		// Unsupported filter type.
-		throw ArgParseException("Unsupported filter type \"" + filter + "\" in type spec \"--" + argtxt + "\".");
 	}
 }

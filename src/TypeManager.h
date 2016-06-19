@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -22,11 +22,21 @@
 
 #include <config.h>
 
-#include <iostream>
+#include <iosfwd>
 #include <string>
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <libext/string.hpp>
+
+
+/**
+ * TypeManager will throw this in certain circumstances.
+ */
+struct TypeManagerException : public std::runtime_error
+{
+	TypeManagerException(const std::string &message) : std::runtime_error(message) {};
+};
 
 /**
  * Class which manages the file types which are to be scanned.
@@ -53,11 +63,19 @@ public:
 	 * active types are removed, and only the given type (and types given subsequently)
 	 * will be searched.
 	 *
-	 * @param type_name  Name of the type.
+	 * @param type_name  Name of the type to enable.
 	 * @return true on success, false if no such type.
 	 */
 	bool type(const std::string &type_name);
 
+	/**
+	 * Remove the given file type from the types which will be scanned.  For handling the
+	 * --notype= command line param.  Adds the type to the m_removed_type_filters map, and
+	 * removes it from the m_active_type_map map.
+	 *
+	 * @param type_name  Name of the type to disable.
+	 * @return true on success, false if no such type.
+	 */
 	bool notype(const std::string &type_name);
 
 	/**
@@ -68,9 +86,31 @@ public:
 	 */
 	bool IsType(const std::string &type) const;
 
-	void TypeAddIs(const std::string &type, const std::string &name);
+	/**
+	 * Adds a new filter spec to a (possibly new) #type, based on #filter_spec_string.
+	 *
+	 * @param delete_type_first   If true, treat as a "--type-set=", and delete any existing file type spec first.
+	 * @param filter_spec_string
+	 * @exception TypeManagerException  filter_spec_string cannot be parsed.
+	 */
+	void TypeAddFromFilterSpecString(bool delete_type_first, const std::string &filter_spec_string);
 
-	void TypeAddExt(const std::string &type, const std::string &ext);
+	/**
+	 * Adds and then notype()s a new filter spec to the anonymous type used for '--ignore-file=', based on #filter_spec_string.
+	 * This is for use by the --ignore-file=FILTER:FILTERARGS command-line option.
+	 *
+	 * @param filter_spec_string
+	 * @exception TypeManagerException  filter_spec_string cannot be parsed.
+	 */
+	void TypeAddIgnoreFileFromFilterSpecString(const std::string &filter_spec_string);
+
+	/**
+	 * Adds and then type()s a new filter spec to the anonymous type used for '--include=glob', based on #filter_spec_string.
+	 *
+	 * @param filter_spec_string
+	 * @exception TypeManagerException  filter_spec_string cannot be parsed.
+	 */
+	void TypeAddIncludeGlobFromFilterSpecString(const std::string &filter_spec_string);
 
 	/**
 	 * Deletes #type from the m_active_type_map.
@@ -85,6 +125,16 @@ public:
 	void PrintTypesForHelp(std::ostream &s) const;
 
 private:
+
+	void TypeAddIs(const std::string &type, const std::string &name);
+
+	void TypeAddExt(const std::string &type, const std::string &ext);
+
+	void TypeAddGlobExclude(const std::string &type, const std::string &glob);
+
+	void TypeAddGlobInclude(const std::string &type, const std::string &glob);
+
+	bool IsExcludedByAnyGlob(const std::string &name) const noexcept;
 
 	/// Flag to keep track of the first call to type().
 	bool m_first_type_has_been_seen = { false };
@@ -103,15 +153,37 @@ private:
 	/// Maps to the type(s) which were specified in the notype() call(s).
 	std::unordered_multimap<std::string, std::string> m_removed_type_filters;
 
+	/// @name Compiled Type Tables
+	/// These are the data structures used at directory tree traversal time to quickly
+	/// determine whether a file should be scanned or not.  They are "compiled" by a call to
+	/// CompileTypeTables() after all config file and command-line processing is complete.
+	/// @{
+
+	std::vector<microstring> m_fast_include_extensions;
+
 	/// File extensions which will be examined.  Maps to file type.
 	std::unordered_multimap<std::string, std::string> m_include_extensions;
 
 	/// Literal filenames which will be examined.  Maps to file type.
 	std::unordered_multimap<std::string, std::string> m_included_literal_filenames;
 
+	/// Vector of glob patterns to check for exclusion.
+	/// This is separate from m_include_exclude_globs because only the exclude globs need to be
+	/// checked if a previous file type check has determined that a file is to be included.
+	std::vector<std::string> m_exclude_globs;
+
+	/// Vector of glob patterns to check for inclusion/exclusion.
+	/// These are in command-line order so that a sequence of them such as the following can be
+	/// processed correctly:
+	/// ... --include='*.cpp' --exclude='*.c*' --include='*.cpp' ...
+	/// The bool is true if include, false if exclude.
+	std::vector<std::pair<std::string, bool>> m_include_exclude_globs;
+
 	/// Map of the regexes to try to match to the first line of the file (key) to
 	/// the file type (value).
 	std::unordered_multimap<std::string, std::string> m_included_first_line_regexes;
+
+	///@}
 };
 
 #endif /* TYPEMANAGER_H_ */
