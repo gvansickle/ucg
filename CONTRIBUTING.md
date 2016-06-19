@@ -48,5 +48,3 @@ accepted).
 This line can be automatically added by git if you run the git
 `commit` command with the -s option. Signing can be done afterword
 with --amend -s.
-
-
