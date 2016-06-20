@@ -32,9 +32,9 @@
 /**
  * Splits the given string #s on the given #delimiter character.  Returns the resulting strings in a std::vector.
  *
- * @param s
- * @param delimiter
- * @return
+ * @param s          String to split into substrings.
+ * @param delimiter  Single delimiter char on which to split.
+ * @return           The resulting strings.
  */
 inline std::vector<std::string> split(const std::string &s, char delimiter)
 {
@@ -55,6 +55,9 @@ inline std::vector<std::string> split(const std::string &s, char delimiter)
 }
 
 
+/**
+ * Class for very short strings.  Basically a thin facade over a built-in type which allows very fast comparisons, copies, and moves.
+ */
 class microstring
 {
 public:
@@ -119,5 +122,13 @@ static_assert(std::is_trivial<microstring>::value, "microstring is not trivial")
 static_assert(std::is_trivially_copyable<microstring>::value, "microstring is not trivially copyable");
 #endif
 static_assert(sizeof(microstring) == sizeof(uint32_t), "microstring has a different size than its underlying storage");
+
+static_assert(std::is_constructible<microstring, std::string>::value, "microstring is not constructible from std::string");
+static_assert(std::is_trivially_copy_constructible<microstring>::value, "microstring is not trivially copy-constructible");
+static_assert(std::is_trivially_move_constructible<microstring>::value, "microstring is not trivially move-constructible");
+static_assert(std::is_trivially_destructible<microstring>::value, "microstring is not trivially destructible");
+static_assert(std::is_trivially_assignable<microstring, microstring>::value, "microstring is not trivially assignable to itself");
+static_assert(std::is_trivially_copy_assignable<microstring>::value, "microstring is not trivially copy-assignable");
+static_assert(std::is_trivially_move_assignable<microstring>::value, "microstring is not trivially move-assignable");
 
 #endif /* SRC_LIBEXT_STRING_HPP_ */
