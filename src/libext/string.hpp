@@ -118,17 +118,17 @@ private:
 #ifdef HAVE_IS_TRIVIAL
 static_assert(std::is_trivial<microstring>::value, "microstring is not trivial");
 #endif
-#ifdef HAVE_IS_TRIVIALLY_COPYABLE // gcc/libstdc++ 4.8.4 don't.
+#ifdef HAVE_IS_TRIVIALLY_COPYABLE // gcc/libstdc++ 4.8.4 doesn't have these for some reason.
 static_assert(std::is_trivially_copyable<microstring>::value, "microstring is not trivially copyable");
+static_assert(std::is_trivially_copy_constructible<microstring>::value, "microstring is not trivially copy-constructible");
+static_assert(std::is_trivially_move_constructible<microstring>::value, "microstring is not trivially move-constructible");
+static_assert(std::is_trivially_assignable<microstring, microstring>::value, "microstring is not trivially assignable to itself");
+static_assert(std::is_trivially_copy_assignable<microstring>::value, "microstring is not trivially copy-assignable");
+static_assert(std::is_trivially_move_assignable<microstring>::value, "microstring is not trivially move-assignable");
 #endif
 static_assert(sizeof(microstring) == sizeof(uint32_t), "microstring has a different size than its underlying storage");
 
 static_assert(std::is_constructible<microstring, std::string>::value, "microstring is not constructible from std::string");
-static_assert(std::is_trivially_copy_constructible<microstring>::value, "microstring is not trivially copy-constructible");
-static_assert(std::is_trivially_move_constructible<microstring>::value, "microstring is not trivially move-constructible");
 static_assert(std::is_trivially_destructible<microstring>::value, "microstring is not trivially destructible");
-static_assert(std::is_trivially_assignable<microstring, microstring>::value, "microstring is not trivially assignable to itself");
-static_assert(std::is_trivially_copy_assignable<microstring>::value, "microstring is not trivially copy-assignable");
-static_assert(std::is_trivially_move_assignable<microstring>::value, "microstring is not trivially move-assignable");
 
 #endif /* SRC_LIBEXT_STRING_HPP_ */
