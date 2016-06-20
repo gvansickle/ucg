@@ -56,7 +56,7 @@ inline std::vector<std::string> split(const std::string &s, char delimiter)
 
 
 /**
- * Class for very short strings.  Basically a thin facade over a built-in type which allows very fast comparisons, copies, and moves.
+ * Class for very short strings.  Basically a thin facade over a built-in integral type which allows very fast comparisons, copies, and moves.
  */
 class microstring
 {
@@ -71,7 +71,7 @@ public:
 	microstring(const char * __restrict__ start, const char * __restrict__ end)
 	{
 		size_t num_chars = end - start;
-		if(num_chars > sizeof(underlying_storage_type))
+		if(__builtin_expect(num_chars > sizeof(underlying_storage_type), 0))
 		{
 			throw std::length_error("Length too long for a microstring");
 		}
