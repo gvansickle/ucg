@@ -131,4 +131,14 @@ static_assert(sizeof(microstring) == sizeof(uint32_t), "microstring has a differ
 static_assert(std::is_constructible<microstring, std::string>::value, "microstring is not constructible from std::string");
 static_assert(std::is_trivially_destructible<microstring>::value, "microstring is not trivially destructible");
 
+
+#if !defined(HAVE_DECL_STD__TO_STRING)
+
+// We have to backfill for broken C++11 std libs.  See e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580 (fixed on gcc trunk 2015-11-13),
+// https://sourceware.org/ml/cygwin/2015-01/msg00251.html.
+
+/// @todo
+
+#endif
+
 #endif /* SRC_LIBEXT_STRING_HPP_ */

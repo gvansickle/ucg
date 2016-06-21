@@ -138,6 +138,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 	temp_ss << "GLOBBER_";
 	temp_ss << thread_index;
 	set_thread_name(temp_ss.str());
+	set_thread_name("GLOBBER_" + std::to_string(thread_index));
 
 	while(dir_queue.wait_pull(std::move(dir)) != queue_op_status::closed)
 	{
