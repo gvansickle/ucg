@@ -51,11 +51,6 @@ Globber::Globber(std::vector<std::string> start_paths,
 
 }
 
-Globber::~Globber()
-{
-
-}
-
 void Globber::Run()
 {
 	char * dirs[m_start_paths.size()+1];
