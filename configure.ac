@@ -207,7 +207,7 @@ AC_LANG_POP([C++])
 AC_LANG_PUSH([C++])
 
 # Check if the C++ compiler supports a "restrict" variant.
-### @todo Despite the claims of the manual, this seems to not detect gcc's __restrict__ support. 
+### @todo Despite the claims of the manual, this does not detect g++'s __restrict__ support. 
 AC_C_RESTRICT
 
 # Check if the C++ compiler supports some flags we'd like to set.
