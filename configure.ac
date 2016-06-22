@@ -188,8 +188,8 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
-AC_CHECK_TYPES([std::is_trivial<int>], [AC_DEFINE([HAVE_IS_TRIVIAL], [1], [Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
-AC_CHECK_TYPES([std::is_trivially_copyable<int>], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1], [Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
+AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL], [1], [Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
+AC_CHECK_TYPES([std::is_trivially_copyable<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1], [Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
 
 AC_LANG_POP([C++])
 
@@ -207,8 +207,8 @@ AC_LANG_POP([C++])
 AC_LANG_PUSH([C++])
 
 # Check if the C++ compiler supports a "restrict" variant.
-### @todo Despite the claims of the manual, this does not detect g++'s __restrict__ support. 
-AC_C_RESTRICT
+### @todo Works on Fedora 23/g++5.3.1 20160406 (Red Hat 5.3.1-6), doesn't work on Cygwin/g++ (GCC) 5.4.0.
+#AC_C_RESTRICT
 
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does.
@@ -216,7 +216,7 @@ AC_C_RESTRICT
 # Capture the compile command line in the binary.
 AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-Wa,-ahlsn=\$@.ss -save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
-#AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be.
+AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be.
 #AX_APPEND_COMPILE_FLAGS([-ftree-vectorize -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])

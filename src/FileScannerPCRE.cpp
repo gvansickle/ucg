@@ -22,7 +22,7 @@
 #include "FileScannerPCRE.h"
 
 #include <iostream>
-#include <sstream>
+#include <libext/string.hpp>
 
 #include "Logger.h"
 
@@ -65,14 +65,7 @@ FileScannerPCRE::FileScannerPCRE(sync_queue<std::string> &in_queue,
 	if (m_pcre_regex == NULL)
 	{
 		// Regex compile failed, we can't continue.
-		/// @todo GRVS - This should be as simple as putting a C++11 "std::to_string(error_offset)" into the string below.
-		///              However, there's an issue with at least Cygwin's std lib and/or gcc itself which makes to_string() unavailable
-		/// 			 (see e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580 (fixed on gcc trunk 2015-11-13),
-		/// 			 https://sourceware.org/ml/cygwin/2015-01/msg00251.html).  Since I don't want to wait for the fix to trickle
-		/// 			 out and I don't know how widespread the issue is, we'll do it the old-fashioned way.
-		std::ostringstream ss;
-		ss << error_offset;
-		throw FileScannerException(std::string("Compilation of regex \"") + regex + "\" failed at offset " + ss.str() + ": " + error);
+		throw FileScannerException(std::string("Compilation of regex \"") + regex + "\" failed at offset " + std::to_string(error_offset) + ": " + error);
 	}
 
 	m_pcre_extra = pcre_study(m_pcre_regex, PCRE_STUDY_JIT_COMPILE, &error);

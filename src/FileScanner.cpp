@@ -30,7 +30,7 @@
 
 #include <iostream>
 #include <string>
-#include <sstream>
+#include <libext/string.hpp>
 #include <thread>
 #include <mutex>
 #ifndef HAVE_SCHED_SETAFFINITY
@@ -66,14 +66,7 @@ std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::string> &in_que
 		break;
 	default:
 		// Should never get here.  Throw.
-		/// @todo GRVS - This should be as simple as putting a C++11 "std::to_string(error_offset)" into the string below.
-		///              However, there's an issue with at least Cygwin's std lib and/or gcc itself which makes to_string() unavailable
-		/// 			 (see e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580 (fixed on gcc trunk 2015-11-13),
-		/// 			 https://sourceware.org/ml/cygwin/2015-01/msg00251.html).  Since I don't want to wait for the fix to trickle
-		/// 			 out and I don't know how widespread the issue is, we'll do it the old-fashioned way.
-		std::ostringstream ss;
-		ss << static_cast<int>(engine);
-		throw FileScannerException(std::string("invalid RegexEngine specified: ") + ss.str());
+		throw FileScannerException(std::string("invalid RegexEngine specified: ") + std::to_string(static_cast<int>(engine)));
 		break;
 	}
 
@@ -98,10 +91,7 @@ FileScanner::~FileScanner()
 void FileScanner::Run(int thread_index)
 {
 	// Set the name of the thread.
-	std::stringstream temp_ss;
-	temp_ss << "FILESCAN_";
-	temp_ss << thread_index;
-	set_thread_name(temp_ss.str());
+	set_thread_name("FILESCAN_" + std::to_string(thread_index));
 
 	if(m_manually_assign_cores)
 	{
