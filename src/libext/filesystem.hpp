@@ -22,6 +22,7 @@
 
 #include <config.h>
 
+#include <sys/stat.h>
 #include <sys/types.h> // for dev_t, ino_t
 
 #include "integer.hpp"
@@ -36,5 +37,37 @@ struct dev_ino_pair
 };
 
 
+/**
+ * Checks two file descriptors (file, dir, whatever) and checks if they are referring to the same entity.
+ *
+ * @param fd1
+ * @param fd2
+ * @return  true if fd1 and fd2 are fstat()able and refer to the same entity, false otherwise.
+ */
+inline bool is_same_file(int fd1, int fd2)
+{
+	struct stat s1, s2;
+
+	if(fstat(fd1, &s1) < 0)
+	{
+		return false;
+	}
+	if(fstat(fd2, &s2) < 0)
+	{
+		return false;
+	}
+
+	if(
+		(s1.st_dev == s2.st_dev) // Same device
+		&& (s1.st_ino == s2.st_ino) // Same inode
+		)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 
 #endif /* SRC_LIBEXT_FILESYSTEM_HPP_ */
