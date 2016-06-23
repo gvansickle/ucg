@@ -26,8 +26,7 @@
 #include <set>
 #include <string>
 #include <thread>
-#include <cstdint>
-#include <sys/types.h> // for dev_t, ino_t
+#include <libext/filesystem.hpp>
 
 #include "sync_queue_impl_selector.h"
 
@@ -49,16 +48,6 @@ struct DirectoryTraversalStats
 	size_t m_num_directories_found { 0 };
 };
 
-// Boost has a template of this nature, but of course more complete.
-template <unsigned char NumBits>
-struct uint_t
-{
-	static_assert(NumBits <= 128, "NumBits > 128 not supported");
-	using fast = typename uint_t<NumBits+1>::fast;
-};
-template<> struct uint_t<128> { using fast = unsigned __int128; };
-template<> struct uint_t<64> { using fast = uint_fast64_t; };
-template<> struct uint_t<32> { using fast = uint_fast32_t; };
 
 /**
  * This class does the directory tree traversal.
@@ -72,7 +61,7 @@ public:
 			bool recurse_subdirs,
 			int dirjobs,
 			sync_queue<std::string> &out_queue);
-	virtual ~Globber();
+	~Globber() = default;
 
 	void Run();
 
@@ -95,14 +84,6 @@ private:
 	int m_dirjobs;
 
 	sync_queue<std::string>& m_out_queue;
-
-	using dev_ino_pair_type = uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast;
-	struct dev_ino_pair
-	{
-		dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
-
-		dev_ino_pair_type m_val;
-	};
 
 	std::mutex m_dir_mutex;
 	std::set<dev_ino_pair_type> m_dir_has_been_visited;

@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 		type_manager.CompileTypeTables();
 		dir_inclusion_manager.CompileExclusionTables();
 
-		LOG(INFO) << "Num jobs: " << arg_parser.m_jobs;
+		LOG(INFO) << "Num scanner jobs: " << arg_parser.m_jobs;
 
 		// Create the Globber->FileScanner queue.
 		sync_queue<std::string> files_to_scan_queue;
