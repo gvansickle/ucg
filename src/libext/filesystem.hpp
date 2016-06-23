@@ -42,7 +42,7 @@ struct dev_ino_pair
  *
  * @param fd1
  * @param fd2
- * @return  true if fd1 and fd2 are fstat()able and refer to the same entity, false otherwise.
+ * @return true if fd1 and fd2 are fstat()able and refer to the same entity, false otherwise.
  */
 inline bool is_same_file(int fd1, int fd2)
 {
