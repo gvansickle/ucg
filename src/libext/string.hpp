@@ -132,7 +132,7 @@ static_assert(std::is_constructible<microstring, std::string>::value, "microstri
 static_assert(std::is_trivially_destructible<microstring>::value, "microstring is not trivially destructible");
 
 
-#if !defined(HAVE_DECL_STD__TO_STRING)
+#if !defined(HAVE_DECL_STD__TO_STRING) || (HAVE_DECL_STD__TO_STRING == 0)
 
 // We have to backfill std::to_string() for broken C++11 std libs.  See e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580
 // (fixed on gcc trunk 2015-11-13), https://sourceware.org/ml/cygwin/2015-01/msg00251.html.
