@@ -26,9 +26,7 @@
 #include <set>
 #include <string>
 #include <thread>
-#include <sys/types.h> // for dev_t, ino_t
-
-#include <libext/integer.hpp>
+#include <libext/filesystem.hpp>
 
 #include "sync_queue_impl_selector.h"
 
@@ -63,7 +61,7 @@ public:
 			bool recurse_subdirs,
 			int dirjobs,
 			sync_queue<std::string> &out_queue);
-	virtual ~Globber();
+	~Globber() = default;
 
 	void Run();
 
@@ -86,14 +84,6 @@ private:
 	int m_dirjobs;
 
 	sync_queue<std::string>& m_out_queue;
-
-	using dev_ino_pair_type = uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast;
-	struct dev_ino_pair
-	{
-		dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
-
-		dev_ino_pair_type m_val;
-	};
 
 	std::mutex m_dir_mutex;
 	std::set<dev_ino_pair_type> m_dir_has_been_visited;

@@ -51,10 +51,17 @@ void MatchList::Print(std::ostream &sstrm, bool istty, bool enable_color, bool p
 
 	// ANSI SGR parameter setting sequences for setting the color and boldness of the output text.
 	// SGR = Select Graphic Rendition.
-	std::string color_filename("\x1B[32;1m"); // 32=green, 1=bold
-	std::string color_match("\x1B[30;43;1m"); // 30=black, 43=yellow bkgnd, 1=bold
-	std::string color_lineno("\x1B[33;1m");   // 33=yellow, 1=bold
-	std::string color_default("\x1B[0m");     // Reset/normal (all attributes off).
+	// A note on the "\x1B[K" at the end of each sequence:
+	// This is the "Erase in Line" sequence, which in this form clears the terminal from the cursor position
+	// to the end of the line.  This is needed after every SGR color sequence to prevent scrolling at the bottom of
+	// the terminal at the wrong time from causing that entire line to have the non-default background color.  It also
+	// prevents issues with Horizontal Tab not setting the background to the current color.
+	// A more extensive discussion of this topic is available in the GNU grep source (git://git.savannah.gnu.org/grep.git,
+	// see src/grep.c), which is where I got this solution from.
+	std::string color_filename("\x1B[32;1m\x1B[K"); // 32=green, 1=bold
+	std::string color_match("\x1B[30;43;1m\x1B[K"); // 30=black, 43=yellow bkgnd, 1=bold
+	std::string color_lineno("\x1B[33;1m\x1B[K");   // 33=yellow, 1=bold
+	std::string color_default("\x1B[0m\x1B[K");     // Reset/normal (all attributes off).
 
 	if(!enable_color)
 	{

@@ -188,8 +188,8 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
-AC_CHECK_TYPES([std::is_trivial<int>], [AC_DEFINE([HAVE_IS_TRIVIAL], [1], [Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
-AC_CHECK_TYPES([std::is_trivially_copyable<int>], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1], [Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
+AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL], [1], [Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
+AC_CHECK_TYPES([std::is_trivially_copyable<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1], [Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
 
 AC_LANG_POP([C++])
 
@@ -205,17 +205,21 @@ AC_LANG_POP([C++])
 ###
 
 AC_LANG_PUSH([C++])
+
+# Check if the C++ compiler supports a "restrict" variant.
+### @todo Works on Fedora 23/g++5.3.1 20160406 (Red Hat 5.3.1-6), doesn't work on Cygwin/g++ (GCC) 5.4.0.
+#AC_C_RESTRICT
+
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does.
 
 # Capture the compile command line in the binary.
 AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-Wa,-ahlsn=\$@.ss -save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
-#AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be.
+AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be.
 #AX_APPEND_COMPILE_FLAGS([-ftree-vectorize -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
-#AX_APPEND_COMPILE_FLAGS([-fopenmp], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])
 
@@ -264,6 +268,15 @@ AC_LANG_POP([C++])
 ###
 
 AC_LANG_PUSH([C++])
+
+# There's an issue with at least Cygwin's std lib and/or gcc itself which makes to_string() unavailable
+# (see e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580 (fixed on gcc trunk 2015-11-13),
+# https://sourceware.org/ml/cygwin/2015-01/msg00251.html).  Check for existence here and we'll roll our own
+# if necessary.
+AC_CHECK_DECLS([std::to_string(int)],
+				[AC_DEFINE([HAVE_TO_STRING], [1], [If defined, the std::to_string() function exists.])
+				],
+				[], [#include <string>])
 
 AC_SEARCH_LIBS([argp_parse],[argp])
 
