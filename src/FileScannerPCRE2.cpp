@@ -212,16 +212,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		}
 
 		// There was a match.  Package it up in the MatchList which was passed in.
-		/// @todo Optimize this count.
-		long num_lines_since_last_match = 0; // = std::count(prev_lineno_search_end, file_data+ovector[0], '\n');
-		for(const char *i = prev_lineno_search_end; i<file_data+ovector[0]; ++i)
-		{
-			if(*i == '\n')
-			{
-				++num_lines_since_last_match;
-			}
-		}
-		line_no += num_lines_since_last_match;
+		line_no += CountLinesSinceLastMatch(prev_lineno_search_end, file_data+ovector[0]);
 		prev_lineno_search_end = file_data+ovector[0];
 		if(line_no == prev_lineno)
 		{

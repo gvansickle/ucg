@@ -97,6 +97,10 @@ public:
 	void Run(int thread_index);
 
 protected:
+
+	static size_t CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
+			const char * __restrict__ start_of_current_match) noexcept;
+
 	bool m_ignore_case;
 
 	bool m_word_regexp;
