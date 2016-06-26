@@ -78,11 +78,24 @@ public:
 
 		// Put the first character in the MSB, so that microstrings sort the same as a regular string.
 		m_storage = 0;
-		while(num_chars > 0)
+		if(num_chars > 0)
 		{
-			m_storage |= (static_cast<underlying_storage_type>(*start) << (8*num_chars));
+			m_storage = (static_cast<underlying_storage_type>(*start) << (8*3));
+		}
+		if(num_chars > 1)
+		{
 			++start;
-			--num_chars;
+			m_storage |= (static_cast<underlying_storage_type>(*start) << (8*2));
+		}
+		if(num_chars > 2)
+		{
+			++start;
+			m_storage |= (static_cast<underlying_storage_type>(*start) << (8*1));
+		}
+		if(num_chars > 3)
+		{
+			++start;
+			m_storage |= static_cast<underlying_storage_type>(*start);
 		}
 	}
 
@@ -91,11 +104,12 @@ public:
 	size_t length() const noexcept
 	{
 		auto tmp = m_storage;
-		auto ptr = reinterpret_cast<const char *>(tmp);
 
 		// If we're little-endian, swap the bytes of the tmp var.
 		/// @todo Check for little endianness.
 		tmp = __builtin_bswap32(tmp);
+
+		auto ptr = reinterpret_cast<const char *>(&tmp);
 
 		return strnlen(ptr, 4);
 	};

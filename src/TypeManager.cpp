@@ -483,10 +483,10 @@ void TypeManager::CompileTypeTables()
 		m_fast_include_extensions[j] = i;
 		++j;
 
-		LOG(INFO) << "Added " << static_cast<std::string>(i) << "(" << std::hex << static_cast<std::string>(i) << ") to m_fast_include_extensions";
+		LOG(INFO) << "Added " << static_cast<std::string>(i) << "(" << std::hex << i.urep() << ") to m_fast_include_extensions";
 	}
 
-	/// Sort the fast_include_extensions list so we can binary search it.
+	// Sort the fast_include_extensions list so we can binary search it.
 	std::sort(m_fast_include_extensions.begin(), m_fast_include_extensions.end());
 }
 
