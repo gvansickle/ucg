@@ -98,6 +98,11 @@ public:
 
 protected:
 
+	__attribute__((target("sse4.2")))
+	static size_t CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
+			const char * __restrict__ start_of_current_match) noexcept;
+
+	__attribute__((target("default")))
 	static size_t CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
 			const char * __restrict__ start_of_current_match) noexcept;
 

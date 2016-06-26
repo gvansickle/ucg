@@ -191,31 +191,12 @@ void FileScanner::AssignToNextCore()
 #endif
 }
 
+__attribute__((target("default")))
 size_t FileScanner::CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
 		const char * __restrict__ start_of_current_match) noexcept
 {
 	size_t num_lines_since_last_match = 0;
 
-#if defined(__SSE4_2__)
-	const char * last_ptr = prev_lineno_search_end;
-	size_t len = start_of_current_match-prev_lineno_search_end;
-	__m128i looking_for = _mm_set1_epi8('\n');
-	for(size_t i = 0; i<len; last_ptr+=16, i += 16)
-	{
-		int substr_len = len-i < 16 ? len-i : 16;
-		__m128i substr = _mm_loadu_si128((const __m128i*)last_ptr);
-		__m128i match_mask = _mm_cmpestrm(substr, substr_len, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
-		num_lines_since_last_match += __builtin_popcountll(_mm_cvtsi128_si64(match_mask));
-	}
-#elif 0
-	for(const char *i = prev_lineno_search_end; i<start_of_current_match; ++i)
-	{
-		if(*i == '\n')
-		{
-			++num_lines_since_last_match;
-		}
-	}
-#elif 1
 	const char * last_ptr = prev_lineno_search_end;
 	while(1)
 	{
@@ -230,9 +211,27 @@ size_t FileScanner::CountLinesSinceLastMatch(const char * __restrict__ prev_line
 			break;
 		}
 	}
-#else
-#error Cannot find a suitable memchr().
-#endif
 
 	return num_lines_since_last_match;
 }
+
+__attribute__((target("sse4.2")))
+size_t FileScanner::CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
+		const char * __restrict__ start_of_current_match) noexcept
+{
+	size_t num_lines_since_last_match = 0;
+
+	const char * last_ptr = prev_lineno_search_end;
+	size_t len = start_of_current_match-prev_lineno_search_end;
+	__m128i looking_for = _mm_set1_epi8('\n');
+	for(size_t i = 0; i<len; last_ptr+=16, i += 16)
+	{
+		int substr_len = len-i < 16 ? len-i : 16;
+		__m128i substr = _mm_loadu_si128((const __m128i*)last_ptr);
+		__m128i match_mask = _mm_cmpestrm(substr, substr_len, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
+		num_lines_since_last_match += __builtin_popcountll(_mm_cvtsi128_si64(match_mask));
+	}
+
+	return num_lines_since_last_match;
+}
+

@@ -188,8 +188,10 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
-AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL], [1], [Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
-AC_CHECK_TYPES([std::is_trivially_copyable<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1], [Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
+AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL], [1],
+	[Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
+AC_CHECK_TYPES([std::is_trivially_copyable<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1],
+	[Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
 
 AC_LANG_POP([C++])
 
@@ -217,7 +219,7 @@ AC_LANG_PUSH([C++])
 AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-Wa,-ahlsn=\$@.ss -save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
 AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be.
-#AX_APPEND_COMPILE_FLAGS([-ftree-vectorize -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
+AX_APPEND_COMPILE_FLAGS([-ftree-vectorize]) # -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
