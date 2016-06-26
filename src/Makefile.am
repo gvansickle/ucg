@@ -17,7 +17,7 @@
 
 SUBDIRS = libext
 
-noinst_LIBRARIES = libsrc.a 
+noinst_LIBRARIES = libsrc.a libsrc_sse4_2.a
 libsrc_a_SOURCES = \
 	ArgParse.cpp ArgParse.h \
 	DirInclusionManager.cpp DirInclusionManager.h \
@@ -39,3 +39,10 @@ libsrc_a_SOURCES = \
 libsrc_a_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_a_CFLAGS = $(AM_CFLAGS)
 libsrc_a_CXXFLAGS = $(AM_CXXFLAGS)
+
+libsrc_sse4_2_a_SOURCES = \
+	FileScanner_sse4_2.cpp
+
+libsrc_sse4_2_a_CPPFLAGS = $(AM_CPPFLAGS) -msse4.2
+libsrc_sse4_2_a_CFLAGS = $(AM_CFLAGS) -msse4.2
+libsrc_sse4_2_a_CXXFLAGS = $(AM_CXXFLAGS) -msse4.2
