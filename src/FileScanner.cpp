@@ -254,6 +254,7 @@ static void (*resolve_CountLinesSinceLastMatch (void)) (void)
 size_t FileScanner::resolve_CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
 			const char * __restrict__ start_of_current_match) //noexcept //__attribute__((ifunc("resolve_CountLinesSinceLastMatch")));
 {
+	/// @todo Probably needs some attention paid to multithreading.
 	if(__builtin_cpu_supports("sse4.2"))
 	{
 		LOG(INFO) << "Using sse4.2 CountLinesSinceLastMatch";
