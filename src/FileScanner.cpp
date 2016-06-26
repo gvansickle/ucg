@@ -45,6 +45,8 @@
 
 static std::mutex f_assign_affinity_mutex;
 
+FileScanner::CLSLM_type FileScanner::CountLinesSinceLastMatch = &FileScanner::resolve_CountLinesSinceLastMatch;
+
 
 std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::string> &in_queue,
 			sync_queue<MatchList> &output_queue,
@@ -191,8 +193,8 @@ void FileScanner::AssignToNextCore()
 #endif
 }
 
-__attribute__((target("default")))
-size_t FileScanner::CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
+//__attribute__((target("default")))
+size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ prev_lineno_search_end,
 		const char * __restrict__ start_of_current_match) noexcept
 {
 	size_t num_lines_since_last_match = 0;
@@ -215,10 +217,11 @@ size_t FileScanner::CountLinesSinceLastMatch(const char * __restrict__ prev_line
 	return num_lines_since_last_match;
 }
 
-__attribute__((target("sse4.2")))
-size_t FileScanner::CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
+//__attribute__((target("sse4.2")))
+size_t FileScanner::CountLinesSinceLastMatch_sse4_2(const char * __restrict__ prev_lineno_search_end,
 		const char * __restrict__ start_of_current_match) noexcept
 {
+#if TEMP
 	size_t num_lines_since_last_match = 0;
 
 	const char * last_ptr = prev_lineno_search_end;
@@ -233,5 +236,35 @@ size_t FileScanner::CountLinesSinceLastMatch(const char * __restrict__ prev_line
 	}
 
 	return num_lines_since_last_match;
+#else
+	return CountLinesSinceLastMatch_default(prev_lineno_search_end, start_of_current_match);
+#endif
+}
+
+#if 0
+extern "C"
+{
+static void (*resolve_CountLinesSinceLastMatch (void)) (void)
+{
+	return (void(*)())FileScanner::CountLinesSinceLastMatch_default;
+}
+}
+#endif
+
+size_t FileScanner::resolve_CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
+			const char * __restrict__ start_of_current_match) //noexcept //__attribute__((ifunc("resolve_CountLinesSinceLastMatch")));
+{
+	if(__builtin_cpu_supports("sse4.2"))
+	{
+		LOG(INFO) << "Using sse4.2 CountLinesSinceLastMatch";
+		CountLinesSinceLastMatch = &FileScanner::CountLinesSinceLastMatch_sse4_2;
+	}
+	else
+	{
+		LOG(INFO) << "Using default CountLinesSinceLastMatch";
+		CountLinesSinceLastMatch = &FileScanner::CountLinesSinceLastMatch_default;
+	}
+
+	return CountLinesSinceLastMatch(prev_lineno_search_end, start_of_current_match);
 }
 

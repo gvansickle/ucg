@@ -98,12 +98,20 @@ public:
 
 protected:
 
-	__attribute__((target("sse4.2")))
-	static size_t CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
+	typedef size_t (*CLSLM_type)(const char * __restrict__ prev_lineno_search_end,
+			const char * __restrict__ start_of_current_match);
+
+	static size_t resolve_CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
+			const char * __restrict__ start_of_current_match);
+
+	static CLSLM_type CountLinesSinceLastMatch;
+
+	//__attribute__((target("sse4.2")))
+	static size_t CountLinesSinceLastMatch_sse4_2(const char * __restrict__ prev_lineno_search_end,
 			const char * __restrict__ start_of_current_match) noexcept;
 
-	__attribute__((target("default")))
-	static size_t CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
+	//__attribute__((target("default")))
+	static size_t CountLinesSinceLastMatch_default(const char * __restrict__ prev_lineno_search_end,
 			const char * __restrict__ start_of_current_match) noexcept;
 
 	bool m_ignore_case;
