@@ -217,11 +217,11 @@ size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ p
 	return num_lines_since_last_match;
 }
 
-//__attribute__((target("sse4.2")))
+__attribute__((target("sse4.2")))
 size_t FileScanner::CountLinesSinceLastMatch_sse4_2(const char * __restrict__ prev_lineno_search_end,
 		const char * __restrict__ start_of_current_match) noexcept
 {
-#if TEMP
+#if 1
 	size_t num_lines_since_last_match = 0;
 
 	const char * last_ptr = prev_lineno_search_end;
