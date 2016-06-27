@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include <cpuid.h>  // Need this because clang doesn't support __builtin_cpu_supports().
 #include <immintrin.h>
 
 #include "Logger.h"
@@ -233,7 +234,13 @@ size_t FileScanner::resolve_CountLinesSinceLastMatch(const char * __restrict__ p
 			const char * __restrict__ start_of_current_match) //noexcept //__attribute__((ifunc("resolve_CountLinesSinceLastMatch")));
 {
 	/// @todo Probably needs some attention paid to multithreading.
-	if(__builtin_cpu_supports("sse4.2"))
+
+
+	uint32_t eax, ebx, ecx, edx;
+
+	__get_cpuid(1, &eax, &ebx, &ecx, &edx);
+
+	if(ecx & bit_SSE4_2)
 	{
 		LOG(INFO) << "Using sse4.2 CountLinesSinceLastMatch";
 		CountLinesSinceLastMatch = &FileScanner::CountLinesSinceLastMatch_sse4_2;
