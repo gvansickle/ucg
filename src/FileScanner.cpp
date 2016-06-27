@@ -20,6 +20,11 @@
 #include "config.h"
 
 #include <cpuid.h>  // Need this because clang doesn't support __builtin_cpu_supports().
+
+#ifndef bit_SSE4_2
+#define bit_SSE4_2 bit_SSE42 // Need this because clang and gcc don't agree on what to do with a ".".
+#endif
+
 #include <immintrin.h>
 
 #include "Logger.h"
