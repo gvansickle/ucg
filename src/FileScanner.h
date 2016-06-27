@@ -98,21 +98,37 @@ public:
 
 protected:
 
-	typedef size_t (*CLSLM_type)(const char * __restrict__ prev_lineno_search_end,
-			const char * __restrict__ start_of_current_match);
+	/// @name Member-Function Pseudo-Multiversioning
+	/// All this mechanism is to support something along the lines of gcc's function multiversioning,
+	/// which doesn't work prior to gcc 4.9, at all on Cygwin even when the compiler/binutils support it,
+	/// and doesn't exist on OSX/clang.  And I didn't even bother looking at the *BSDs.
+	/// @{
+
+	/// Only exists to declare the function pointer type.  E.g., static and noexcept can't appear in an
+	/// typedef or alias, even under C++11.
+	static size_t undefined_ifunc_CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
+					const char * __restrict__ start_of_current_match) noexcept;
+
+	using CLSLM_type = decltype(&undefined_ifunc_CountLinesSinceLastMatch);
+	//typedef size_t (*CLSLM_type)(const char * __restrict__ prev_lineno_search_end,
+	//		const char * __restrict__ start_of_current_match);
 
 	static size_t resolve_CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
-			const char * __restrict__ start_of_current_match);
+			const char * __restrict__ start_of_current_match) noexcept;
 
-	static CLSLM_type CountLinesSinceLastMatch;
+	//static CLSLM_type CountLinesSinceLastMatch noexcept;
+	static size_t (*CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
+				const char * __restrict__ start_of_current_match) noexcept;
+
+	//__attribute__((target("default")))
+	static size_t CountLinesSinceLastMatch_default(const char * __restrict__ prev_lineno_search_end,
+			const char * __restrict__ start_of_current_match) noexcept;
 
 	//__attribute__((target("sse4.2")))
 	static size_t CountLinesSinceLastMatch_sse4_2(const char * __restrict__ prev_lineno_search_end,
 			const char * __restrict__ start_of_current_match) noexcept;
 
-	//__attribute__((target("default")))
-	static size_t CountLinesSinceLastMatch_default(const char * __restrict__ prev_lineno_search_end,
-			const char * __restrict__ start_of_current_match) noexcept;
+	///@}
 
 	bool m_ignore_case;
 

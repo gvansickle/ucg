@@ -21,11 +21,10 @@
 
 #include <cpuid.h>  // Need this because clang doesn't support __builtin_cpu_supports().
 
+// Need this because clang and gcc don't agree on what to do with a ".".
 #ifndef bit_SSE4_2
-#define bit_SSE4_2 bit_SSE42 // Need this because clang and gcc don't agree on what to do with a ".".
+#define bit_SSE4_2 bit_SSE42
 #endif
-
-#include <immintrin.h>
 
 #include "Logger.h"
 #include "FileScanner.h"
@@ -236,12 +235,12 @@ static void (*resolve_CountLinesSinceLastMatch (void)) (void)
 #endif
 
 size_t FileScanner::resolve_CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
-			const char * __restrict__ start_of_current_match) //noexcept //__attribute__((ifunc("resolve_CountLinesSinceLastMatch")));
+			const char * __restrict__ start_of_current_match) noexcept //__attribute__((ifunc("resolve_CountLinesSinceLastMatch")));
 {
 	/// @todo Probably needs some attention paid to multithreading.
 
 
-	uint32_t eax, ebx, ecx, edx;
+	uint32_t eax, ebx, ecx = 0, edx;
 
 	__get_cpuid(1, &eax, &ebx, &ecx, &edx);
 
