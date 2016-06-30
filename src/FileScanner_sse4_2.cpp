@@ -24,6 +24,10 @@
 #include <cstdint>   // For uintptr_t.
 #include <immintrin.h>
 
+static constexpr size_t f_alignment { sizeof(__m128i) };
+static constexpr uintptr_t f_alignment_mask { f_alignment-1 };
+/// @todo static_assert() that it's a power of 2.
+
 __attribute__((target("sse4.2")))
 size_t FileScanner::CountLinesSinceLastMatch_sse4_2(const char * __restrict__ prev_lineno_search_end,
 		const char * __restrict__ start_of_current_match) noexcept
@@ -35,16 +39,52 @@ size_t FileScanner::CountLinesSinceLastMatch_sse4_2(const char * __restrict__ pr
 	// Calculate the total number of chars we need to search for '\n's in.
 	size_t len = start_of_current_match-prev_lineno_search_end;
 
-	// Check any unaligned bytes the slow way.
-	while((len > 0) && (reinterpret_cast<uintptr_t>(last_ptr) & (sizeof(__m128i)-1)))
-	{
-		if(*last_ptr == '\n')
-		{
-			++num_lines_since_last_match;
-		}
+	// The character we're looking for, broadcast to all 16 bytes of the looking_for xmm register.
+	const __m128i looking_for = _mm_set1_epi8('\n');
 
-		++last_ptr;
-		--len;
+	// Check if we need to handle an unaligned start address.
+	if(reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask)
+	{
+		// We do.  Check if we can use a single unaligned load to search the unaligned starting bytes.
+		if(len >= f_alignment)
+		{
+			// We can, the read won't go past the end of the buffer.
+
+			// Load the first unaligned 16 bytes of the passed string.  Note that we won't actually use
+			// all of them in the compare; this is just to get the unaligned portion of the buffer out of the way.
+			__m128i substr = _mm_loadu_si128((const __m128i*)last_ptr);
+			// This is the number of unaligned bytes.
+			const int num_bytes_to_search = f_alignment - (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask);
+
+			// Do the match.
+			__m128i match_mask = _mm_cmpestrm(substr, num_bytes_to_search, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
+			// Get the bottom 64 bits of the match results.  Bits 0-15 tell us if a match happened in the corresponding byte.
+			// SSE2, should result in "movq r64, xmm".
+			uint64_t match_bitmask = _mm_cvtsi128_si64(match_mask);
+			// Count the bits.
+			// Using __builtin_popcountll() here vs. popcnt intrinsic.
+			/// @todo Could we use SSE4.1 _mm_testc_si128() or similar here?
+			num_lines_since_last_match += __builtin_popcountll(match_bitmask);
+
+			// Adjust for the next portion of the counting.
+			// Remember, we only searched num_bytes_to_search bytes, not necessarily all 16 bytes we read in.
+			last_ptr += num_bytes_to_search;
+			len -= num_bytes_to_search;
+		}
+		else
+		{
+			// There aren't 16 bytes to load.  Check the unaligned bytes the slow way.
+			while((len > 0) && (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask))
+			{
+				if(*last_ptr == '\n')
+				{
+					++num_lines_since_last_match;
+				}
+
+				++last_ptr;
+				--len;
+			}
+		}
 	}
 
 	if(len == 0)
@@ -53,7 +93,6 @@ size_t FileScanner::CountLinesSinceLastMatch_sse4_2(const char * __restrict__ pr
 		return num_lines_since_last_match;
 	}
 
-	__m128i looking_for = _mm_set1_epi8('\n');
 	for(size_t i = 0; i<len; last_ptr+=16, i += 16)
 	{
 		int substr_len = len-i < 16 ? len-i : 16;
