@@ -244,7 +244,7 @@ size_t FileScanner::resolve_CountLinesSinceLastMatch(const char * __restrict__ p
 
 	__get_cpuid(1, &eax, &ebx, &ecx, &edx);
 
-	if(ecx & bit_SSE4_2)
+	if(1)//ecx & bit_SSE4_2)
 	{
 		LOG(INFO) << "Using sse4.2 CountLinesSinceLastMatch";
 		CountLinesSinceLastMatch = &FileScanner::CountLinesSinceLastMatch_sse4_2;
