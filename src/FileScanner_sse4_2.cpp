@@ -31,7 +31,11 @@ inline uint8_t popcount16(uint16_t bits) noexcept __attribute__((const /* Doesn'
 #if defined(__POPCNT__) && __POPCNT__==1
 #error "TEST: Shouldn't have POPCNT"
 
-__builtin_popcount
+inline uint8_t popcount16(uint16_t bits) noexcept
+{
+	return __builtin_popcount(bits);
+}
+
 
 #else
 
