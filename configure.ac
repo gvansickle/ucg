@@ -225,6 +225,14 @@ AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])
 
+# Check for instruction set extensions we can make use of.
+AC_SUBST([UCG_CXXFLAGS_SSE4_2])
+AC_SUBST([UCG_CXXFLAGS_POPCNT])
+AC_SUBST([UCG_CXXFLAGS_NO_POPCNT])
+AX_APPEND_COMPILE_FLAGS([-msse4.2], [UCG_CXXFLAGS_SSE4_2]) 
+AX_APPEND_COMPILE_FLAGS([-mpopcnt], [UCG_CXXFLAGS_POPCNT], [$UCG_CXXFLAGS_SSE4_2])
+AX_APPEND_COMPILE_FLAGS([-mno-popcnt], [UCG_CXXFLAGS_NO_POPCNT], [$UCG_CXXFLAGS_SSE4_2])
+
 # Check for pthreads.  Note that we don't necessarily require pthreads; we require and use C++11 std::thread<>,
 # which whatever it uses under-the-hood we don't really care about.  If in fact C++11 is using pthreads, we can
 # optionally use some of its functionality, e.g. naming threads, for diagnostic, logging, and other purposes.

@@ -24,11 +24,47 @@
 #include <cstdint>   // For uintptr_t.
 #include <immintrin.h>
 
+// Declaration here only so we can apply gcc attributes.
+inline uint8_t popcount16(uint16_t bits) noexcept __attribute__((const /* Doesn't access globals, has no side-effects.*/,
+		artificial /*Should appear in debug info even after being inlined.*/));
+
+#if defined(__POPCNT__) && __POPCNT__==1
+#error "TEST: Shouldn't have POPCNT"
+
+inline uint8_t popcount16(uint16_t bits) noexcept
+{
+	return __builtin_popcount(bits);
+}
+
+
+#else
+
+/**
+ * Count the number of bits set in #bits using the Brian Kernighan method (https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan).
+ * Iterates once per set bit, i.e. a maximum of 16 times.
+ *
+ * @param bits  The 16-bit value to count the set bits of.
+ * @return The number of bits set in #bits.
+ */
+inline uint8_t popcount16(uint16_t bits) noexcept
+{
+	uint8_t num_set_bits { 0 };
+
+	for(; bits; ++num_set_bits)
+	{
+		bits &= bits-1;
+	}
+
+	return num_set_bits;
+}
+
+#endif
+
 static constexpr size_t f_alignment { sizeof(__m128i) };
 static constexpr uintptr_t f_alignment_mask { f_alignment-1 };
 /// @todo static_assert() that it's a power of 2.
 
-__attribute__((target("sse4.2")))
+//__attribute__((target("sse4.2")))
 size_t FileScanner::CountLinesSinceLastMatch_sse4_2(const char * __restrict__ prev_lineno_search_end,
 		const char * __restrict__ start_of_current_match) noexcept
 {
@@ -58,13 +94,13 @@ size_t FileScanner::CountLinesSinceLastMatch_sse4_2(const char * __restrict__ pr
 
 			// Do the match.
 			__m128i match_mask = _mm_cmpestrm(substr, num_bytes_to_search, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
-			// Get the bottom 64 bits of the match results.  Bits 0-15 tell us if a match happened in the corresponding byte.
-			// SSE2, should result in "movq r64, xmm".
-			uint64_t match_bitmask = _mm_cvtsi128_si64(match_mask);
+			// Get the bottom 32 bits of the match results.  Bits 0-15 tell us if a match happened in the corresponding byte.
+			// SSE2, should result in "movd r32, xmm".
+			uint32_t match_bitmask = _mm_cvtsi128_si32(match_mask);
 			// Count the bits.
-			// Using __builtin_popcountll() here vs. popcnt intrinsic.
+			// Using __builtin_popcount() here vs. popcnt intrinsic.
 			/// @todo Could we use SSE4.1 _mm_testc_si128() or similar here?
-			num_lines_since_last_match += __builtin_popcountll(match_bitmask);
+			num_lines_since_last_match += popcount16(match_bitmask);
 
 			// Adjust for the next portion of the counting.
 			// Remember, we only searched num_bytes_to_search bytes, not necessarily all 16 bytes we read in.
@@ -98,7 +134,8 @@ size_t FileScanner::CountLinesSinceLastMatch_sse4_2(const char * __restrict__ pr
 		int substr_len = len-i < 16 ? len-i : 16;
 		__m128i substr = _mm_load_si128((const __m128i*)last_ptr);
 		__m128i match_mask = _mm_cmpestrm(substr, substr_len, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
-		num_lines_since_last_match += __builtin_popcountll(_mm_cvtsi128_si64(match_mask));
+		uint32_t match_bitmask = _mm_cvtsi128_si32(match_mask);
+		num_lines_since_last_match += popcount16(match_bitmask);
 	}
 
 	return num_lines_since_last_match;

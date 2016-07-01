@@ -43,6 +43,7 @@ libsrc_a_CXXFLAGS = $(AM_CXXFLAGS)
 libsrc_sse4_2_a_SOURCES = \
 	FileScanner_sse4_2.cpp
 
-libsrc_sse4_2_a_CPPFLAGS = $(AM_CPPFLAGS) -msse4.2
-libsrc_sse4_2_a_CFLAGS = $(AM_CFLAGS) -msse4.2
-libsrc_sse4_2_a_CXXFLAGS = $(AM_CXXFLAGS) -msse4.2
+libsrc_sse4_2_a_CPPFLAGS = $(AM_CPPFLAGS) $(UCG_CXXFLAGS_SSE4_2) $(UCG_CXXFLAGS_NO_POPCNT)
+libsrc_sse4_2_a_CFLAGS = $(AM_CFLAGS) $(UCG_CXXFLAGS_SSE4_2) $(UCG_CXXFLAGS_NO_POPCNT)
+libsrc_sse4_2_a_CXXFLAGS = $(AM_CXXFLAGS) $(UCG_CXXFLAGS_SSE4_2) $(UCG_CXXFLAGS_NO_POPCNT)
+
