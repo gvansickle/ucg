@@ -21,8 +21,7 @@ libext_a_SOURCES = \
 	filesystem.hpp \
 	integer.hpp \
 	multivesioning.hpp multiversioning.cpp \
-	string.hpp \
-	dummy.cpp
+	string.hpp
 
 libext_a_CPPFLAGS = $(AM_CPPFLAGS)
 libext_a_CFLAGS = $(AM_CFLAGS)
