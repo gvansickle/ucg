@@ -21,22 +21,11 @@
 
 #include "FileScanner.h"
 
+#include <libext/multiversioning.hpp>
+
 #include <cstdint>   // For uintptr_t.
 #include <immintrin.h>
 
-#define TOKEN_APPEND_HELPER(tok1, ...) tok1 ## __VA_ARGS__
-#define TOKEN_APPEND(tok1, ...) TOKEN_APPEND_HELPER(tok1, __VA_ARGS__)
-#define MULTIVERSION_DECORATOR /* nothing */
-#if defined(__SSE4_2__) && __SSE4_2__==1
-#define MULTIVERSION_DECORATOR_SSE4_2	_sse4_2
-#endif
-#if defined(__POPCNT__) && __POPCNT__==1
-#define MULTIVERSION_DECORATOR_POPCNT	_popcnt
-#else
-#define MULTIVERSION_DECORATOR_POPCNT	_no_popcnt
-#endif
-#define MULTIVERSION_DECORATOR_3 _test1
-#define MULTIVERSION(funcname) TOKEN_APPEND(TOKEN_APPEND(funcname, MULTIVERSION_DECORATOR_SSE4_2), MULTIVERSION_DECORATOR_POPCNT)
 
 // Declaration here only so we can apply gcc attributes.
 inline uint8_t popcount16(uint16_t bits) noexcept __attribute__((const /* Doesn't access globals, has no side-effects.*/,

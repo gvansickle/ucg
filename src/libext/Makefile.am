@@ -20,6 +20,7 @@ libext_a_SOURCES = \
 	cpuidex.hpp cpuidex.cpp \
 	filesystem.hpp \
 	integer.hpp \
+	multivesioning.hpp multiversioning.cpp \
 	string.hpp \
 	dummy.cpp
 
