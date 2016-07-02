@@ -19,12 +19,7 @@
 
 #include "config.h"
 
-#include <cpuid.h>  // Need this because clang doesn't support __builtin_cpu_supports().
-
-// Need this because clang and gcc don't agree on what to do with a ".".
-#ifndef bit_SSE4_2
-#define bit_SSE4_2 bit_SSE42
-#endif
+#include <libext/cpuidex.hpp>
 
 #include "Logger.h"
 #include "FileScanner.h"
@@ -239,15 +234,15 @@ size_t FileScanner::resolve_CountLinesSinceLastMatch(const char * __restrict__ p
 {
 	/// @todo Probably needs some attention paid to multithreading.
 
-
-	uint32_t eax, ebx, ecx = 0, edx;
-
-	__get_cpuid(1, &eax, &ebx, &ecx, &edx);
-
-	if(1)//ecx & bit_SSE4_2)
+	if(sys_has_sse4_2() && sys_has_popcnt())
 	{
-		LOG(INFO) << "Using sse4.2 CountLinesSinceLastMatch";
-		CountLinesSinceLastMatch = &FileScanner::CountLinesSinceLastMatch_sse4_2;
+		LOG(INFO) << "Using sse4.2+popcnt CountLinesSinceLastMatch";
+		CountLinesSinceLastMatch = &FileScanner::CountLinesSinceLastMatch_sse4_2_popcnt;
+	}
+	else if(sys_has_sse4_2() && !sys_has_popcnt())
+	{
+		LOG(INFO) << "Using sse4.2+no_popcnt CountLinesSinceLastMatch";
+		CountLinesSinceLastMatch = &FileScanner::CountLinesSinceLastMatch_sse4_2_no_popcnt;
 	}
 	else
 	{

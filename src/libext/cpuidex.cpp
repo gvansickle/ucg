@@ -19,3 +19,39 @@
 
 #include "cpuidex.hpp"
 
+#include <cstdint>
+#include <cpuid.h>  // Need this because clang doesn't support __builtin_cpu_supports().
+
+// Need this because clang and gcc don't agree on what to do with a ".".
+#ifndef bit_SSE4_2
+#define bit_SSE4_2 bit_SSE42
+#endif
+
+
+// Results of the CPUID instruction.
+static uint32_t eax, ebx, ecx, edx;
+
+static bool CPUID_info_valid = false;
+
+
+static void GetCPUIDInfo() noexcept
+{
+	// Skip the CPUID call if we've already done it once.
+	if(!CPUID_info_valid)
+	{
+		__get_cpuid(1, &eax, &ebx, &ecx, &edx);
+		CPUID_info_valid = true;
+	}
+}
+
+bool sys_has_sse4_2() noexcept
+{
+	GetCPUIDInfo();
+	return ecx & bit_SSE4_2;
+}
+
+bool sys_has_popcnt() noexcept
+{
+	GetCPUIDInfo();
+	return ecx & bit_POPCNT;
+}

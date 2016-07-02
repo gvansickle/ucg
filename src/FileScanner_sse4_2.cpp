@@ -24,13 +24,33 @@
 #include <cstdint>   // For uintptr_t.
 #include <immintrin.h>
 
+#define TOKEN_APPEND_HELPER(tok1, ...) tok1 ## __VA_ARGS__
+#define TOKEN_APPEND(tok1, ...) TOKEN_APPEND_HELPER(tok1, __VA_ARGS__)
+#define MULTIVERSION_DECORATOR /* nothing */
+#if defined(__SSE4_2__) && __SSE4_2__==1
+#define MULTIVERSION_DECORATOR_SSE4_2	_sse4_2
+#endif
+#if defined(__POPCNT__) && __POPCNT__==1
+#define MULTIVERSION_DECORATOR_POPCNT	_popcnt
+#else
+#define MULTIVERSION_DECORATOR_POPCNT	_no_popcnt
+#endif
+#define MULTIVERSION_DECORATOR_3 _test1
+#define MULTIVERSION(funcname) TOKEN_APPEND(TOKEN_APPEND(funcname, MULTIVERSION_DECORATOR_SSE4_2), MULTIVERSION_DECORATOR_POPCNT)
+
 // Declaration here only so we can apply gcc attributes.
 inline uint8_t popcount16(uint16_t bits) noexcept __attribute__((const /* Doesn't access globals, has no side-effects.*/,
 		artificial /*Should appear in debug info even after being inlined.*/));
 
 #if defined(__POPCNT__) && __POPCNT__==1
-#error "TEST: Shouldn't have POPCNT"
 
+/**
+ * For systems that support the POPCNT instruction, we can use it through the gcc/clang builtin __builtin_popcount().
+ * It inlines nicely into the POPCNT instruction.
+ *
+ * @param bits
+ * @return
+ */
 inline uint8_t popcount16(uint16_t bits) noexcept
 {
 	return __builtin_popcount(bits);
@@ -42,6 +62,9 @@ inline uint8_t popcount16(uint16_t bits) noexcept
 /**
  * Count the number of bits set in #bits using the Brian Kernighan method (https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan).
  * Iterates once per set bit, i.e. a maximum of 16 times.
+ *
+ * @note On systems which do not support POPCNT, we can't use the __builtin_popcount() here.  It expands into a function call
+ *       to a generic implementation which is much too slow for our needs here.
  *
  * @param bits  The 16-bit value to count the set bits of.
  * @return The number of bits set in #bits.
@@ -65,7 +88,7 @@ static constexpr uintptr_t f_alignment_mask { f_alignment-1 };
 /// @todo static_assert() that it's a power of 2.
 
 //__attribute__((target("sse4.2")))
-size_t FileScanner::CountLinesSinceLastMatch_sse4_2(const char * __restrict__ prev_lineno_search_end,
+size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
 		const char * __restrict__ start_of_current_match) noexcept
 {
 	size_t num_lines_since_last_match = 0;
@@ -78,6 +101,7 @@ size_t FileScanner::CountLinesSinceLastMatch_sse4_2(const char * __restrict__ pr
 	// The character we're looking for, broadcast to all 16 bytes of the looking_for xmm register.
 	const __m128i looking_for = _mm_set1_epi8('\n');
 
+	// PROLOG
 	// Check if we need to handle an unaligned start address.
 	if(reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask)
 	{
