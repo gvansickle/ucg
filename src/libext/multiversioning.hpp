@@ -27,6 +27,10 @@
 #define TOKEN_APPEND(tok1, ...) TOKEN_APPEND_HELPER(tok1, __VA_ARGS__)
 ///@}
 
+
+/// For passing in arguments to macros which may contain commas.
+#define SINGLE_ARG(...)  __VA_ARGS__
+
 /// @name MULTIVERSION_DECORATOR_<FEATURE> function definition decorators
 ///@{
 #if defined(__SSE4_2__) && __SSE4_2__==1
@@ -46,11 +50,22 @@
 ///   void *memcpy(void *, const void *, size_t) __attribute__ ((ifunc ("resolve_memcpy")));
 /// Note that is not a declaration, but a definition.
 /// Anyway, since we can't rely on gcc's ifunc() functionality, we'll macro up something similar.
+///
+/// Call this macro like this from your cpp file:
+///
+///   MULTIVERSION_DEF(FileScanner::CountLinesSinceLastMatch, SINGLE_ARG(size_t (*FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
+///		const char * __restrict__ start_of_current_match) noexcept), resolve_CountLinesSinceLastMatch)
+///
+/// Be sure to note the SINGLE_ARG() around the second param.
+///
+/// @todo Now that I have this working, I think I don't like it.  It just hides what is almost exactly the
+/// gcc syntax for this, and if we're not going to ever use gcc's ifunc(), probably just obfuscates things.
+/// Probably won't get used unless I can come up with a good reason.
 #define MULTIVERSION_DEF(funcname, func_type_def, ifunc_resolver_name) \
 	/* ifunc()-like resolver for funcname(). */ \
 	extern "C"	void * ifunc_resolver_name (void) ; \
-	using funcname ## _type = decltype(func_type_def); \
-	funcname ## _type funcname = reinterpret_cast<funcname ## _type>(:: ifunc_resolver_name ()));
+	/* static initialization line for the function pointer. */ \
+	func_type_def = reinterpret_cast<decltype(funcname)>(:: ifunc_resolver_name ());
 
 
 #endif /* SRC_LIBEXT_MULTIVERSIONING_HPP_ */

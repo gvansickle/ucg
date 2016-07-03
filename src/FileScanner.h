@@ -107,26 +107,11 @@ protected:
 	/// and doesn't exist on OSX/clang.  And I didn't even bother looking at the *BSDs.
 	/// @{
 
-	/// Only exists to declare the function pointer type for use by the alias below.  static and noexcept can't appear in an
-	/// typedef or alias, even under C++11, so we have to do this and then extract the type with decltype().
-	static size_t undefined_ifunc_CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
-					const char * __restrict__ start_of_current_match) noexcept;
-
-	/// Alias for the function type which we want to multiversion.
-	using CLSLM_type = decltype(&undefined_ifunc_CountLinesSinceLastMatch);
-
-#if 0
-	static size_t resolve_CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
-			const char * __restrict__ start_of_current_match) noexcept;
-#endif
-
 	friend void* ::resolve_CountLinesSinceLastMatch(void);
 
 	/// The member function pointer which will be set at runtime to point to the best function version.
 	static size_t (*CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
 				const char * __restrict__ start_of_current_match) noexcept;
-
-	static_assert(sizeof(CLSLM_type) == sizeof(void*), "sizes differ");
 
 	//__attribute__((target("default")))
 	static size_t CountLinesSinceLastMatch_default(const char * __restrict__ prev_lineno_search_end,
