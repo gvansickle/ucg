@@ -41,4 +41,16 @@
 
 #define MULTIVERSION(funcname) TOKEN_APPEND(TOKEN_APPEND(funcname, MULTIVERSION_DECORATOR_SSE4_2), MULTIVERSION_DECORATOR_POPCNT)
 
+/// This macro would be what expands to the multiversion function definition under gcc.
+/// So something like this in a .c/.cpp file:
+///   void *memcpy(void *, const void *, size_t) __attribute__ ((ifunc ("resolve_memcpy")));
+/// Note that is not a declaration, but a definition.
+/// Anyway, since we can't rely on gcc's ifunc() functionality, we'll macro up something similar.
+#define MULTIVERSION_DEF(funcname, func_type_def, ifunc_resolver_name) \
+	/* ifunc()-like resolver for funcname(). */ \
+	extern "C"	void * ifunc_resolver_name (void) ; \
+	using funcname ## _type = decltype(func_type_def); \
+	funcname ## _type funcname = reinterpret_cast<funcname ## _type>(:: ifunc_resolver_name ()));
+
+
 #endif /* SRC_LIBEXT_MULTIVERSIONING_HPP_ */

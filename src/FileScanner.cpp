@@ -20,6 +20,7 @@
 #include "config.h"
 
 #include <libext/cpuidex.hpp>
+#include <libext/multiversioning.hpp>
 
 #include "Logger.h"
 #include "FileScanner.h"
@@ -45,8 +46,21 @@
 
 static std::mutex f_assign_affinity_mutex;
 
-FileScanner::CLSLM_type FileScanner::CountLinesSinceLastMatch = &FileScanner::resolve_CountLinesSinceLastMatch;
+#if 0
 
+MULTIVERSION_DEF(CountLinesSinceLastMatch, static size_t (*CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
+		const char * __restrict__ start_of_current_match) noexcept, resolve_CountLinesSinceLastMatch)
+
+#else
+//__attribute__((ifunc("resolve_CountLinesSinceLastMatch")));
+extern "C"	void * resolve_CountLinesSinceLastMatch(void);
+
+//FileScanner::CLSLM_type FileScanner::CountLinesSinceLastMatch = &FileScanner::resolve_CountLinesSinceLastMatch;
+//FileScanner::CLSLM_type FileScanner::CountLinesSinceLastMatch = reinterpret_cast<FileScanner::CLSLM_type>(::resolve_CountLinesSinceLastMatch());
+size_t (*FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
+		const char * __restrict__ start_of_current_match) noexcept
+		= reinterpret_cast<decltype(FileScanner::CountLinesSinceLastMatch)>(::resolve_CountLinesSinceLastMatch());
+#endif
 
 std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::string> &in_queue,
 			sync_queue<MatchList> &output_queue,
@@ -219,18 +233,36 @@ size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ p
 
 
 
-#if 0
+#if 1
 extern "C"
 {
-static void (*resolve_CountLinesSinceLastMatch (void)) (void)
+void * resolve_CountLinesSinceLastMatch(void)
 {
-	return (void(*)())FileScanner::CountLinesSinceLastMatch_default;
+	void *retval;
+
+	if(sys_has_sse4_2() && sys_has_popcnt())
+	{
+		LOG(INFO) << "Using sse4.2+popcnt CountLinesSinceLastMatch";
+		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse4_2_popcnt);
+	}
+	else if(sys_has_sse4_2() && !sys_has_popcnt())
+	{
+		LOG(INFO) << "Using sse4.2+no_popcnt CountLinesSinceLastMatch";
+		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse4_2_no_popcnt);
+	}
+	else
+	{
+		LOG(INFO) << "Using default CountLinesSinceLastMatch";
+		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_default);
+	}
+
+	return retval;
 }
 }
-#endif
+#else
 
 size_t FileScanner::resolve_CountLinesSinceLastMatch(const char * __restrict__ prev_lineno_search_end,
-			const char * __restrict__ start_of_current_match) noexcept //__attribute__((ifunc("resolve_CountLinesSinceLastMatch")));
+			const char * __restrict__ start_of_current_match) noexcept
 {
 	/// @todo Probably needs some attention paid to multithreading.
 
@@ -252,4 +284,4 @@ size_t FileScanner::resolve_CountLinesSinceLastMatch(const char * __restrict__ p
 
 	return CountLinesSinceLastMatch(prev_lineno_search_end, start_of_current_match);
 }
-
+#endif
