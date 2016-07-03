@@ -157,6 +157,12 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 		len -= 16;
 	}
 
+	// Hint to gcc that these vars don't have these properties at this point.
+	if((len > 16) || (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask))
+	{
+		__builtin_unreachable();
+	}
+
 	//
 	// EPILOGUE
 	// Take care of any left over bytes.  They will start on an aligned boundary (last_ptr will be aligned),
