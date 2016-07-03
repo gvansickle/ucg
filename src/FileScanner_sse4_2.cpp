@@ -74,7 +74,7 @@ inline uint8_t popcount16(uint16_t bits) noexcept
 
 static constexpr size_t f_alignment { sizeof(__m128i) };
 static constexpr uintptr_t f_alignment_mask { f_alignment-1 };
-/// @todo static_assert() that it's a power of 2.
+static_assert(f_alignment == 16, "sizeof(__m128i) should be 16, but isn't");
 
 //__attribute__((target("sse4.2")))
 size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
@@ -111,8 +111,6 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 			// SSE2, should result in "movd r32, xmm".
 			uint32_t match_bitmask = _mm_cvtsi128_si32(match_mask);
 			// Count the bits.
-			// Using __builtin_popcount() here vs. popcnt intrinsic.
-			/// @todo Could we use SSE4.1 _mm_testc_si128() or similar here?
 			num_lines_since_last_match += popcount16(match_bitmask);
 
 			// Adjust for the next portion of the counting.

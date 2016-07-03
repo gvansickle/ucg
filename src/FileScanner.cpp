@@ -46,20 +46,15 @@
 
 static std::mutex f_assign_affinity_mutex;
 
-#if 0
-
-MULTIVERSION_DEF(FileScanner::CountLinesSinceLastMatch, SINGLE_ARG(size_t (*FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
-		const char * __restrict__ start_of_current_match) noexcept), resolve_CountLinesSinceLastMatch)
-
-#else
-//__attribute__((ifunc("resolve_CountLinesSinceLastMatch")));
+/// Resolver function for determining the best version of CountLinesSinceLastMatch to call.
+/// Does its work at static init time, so incurs no call-time overhead.
 extern "C"	void * resolve_CountLinesSinceLastMatch(void);
 
 /// Definition of the multiversioned CountLinesSinceLastMatch function.
 size_t (*FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
 		const char * __restrict__ start_of_current_match) noexcept
 		= reinterpret_cast<decltype(FileScanner::CountLinesSinceLastMatch)>(::resolve_CountLinesSinceLastMatch());
-#endif
+
 
 std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::string> &in_queue,
 			sync_queue<MatchList> &output_queue,
@@ -238,17 +233,14 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 
 	if(sys_has_sse4_2() && sys_has_popcnt())
 	{
-		LOG(INFO) << "Using sse4.2+popcnt CountLinesSinceLastMatch";
 		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse4_2_popcnt);
 	}
 	else if(sys_has_sse4_2() && !sys_has_popcnt())
 	{
-		LOG(INFO) << "Using sse4.2+no_popcnt CountLinesSinceLastMatch";
 		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse4_2_no_popcnt);
 	}
 	else
 	{
-		LOG(INFO) << "Using default CountLinesSinceLastMatch";
 		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_default);
 	}
 
