@@ -145,19 +145,33 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 
 	//
 	// MAIN LOOP
+	// Process the buffer in aligned, sizeof(__m128i) chunks.
 	//
-	for(size_t i = 0; i<len; last_ptr+=16, i += 16)
+	while(last_ptr < (start_of_current_match-15))
 	{
-		int substr_len = len-i < 16 ? len-i : 16;
 		__m128i substr = _mm_load_si128((const __m128i*)last_ptr);
-		__m128i match_mask = _mm_cmpestrm(substr, substr_len, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
+		__m128i match_mask = _mm_cmpestrm(substr, 16, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
 		uint32_t match_bitmask = _mm_cvtsi128_si32(match_mask);
 		num_lines_since_last_match += popcount16(match_bitmask);
+		last_ptr += 16;
+		len -= 16;
 	}
 
 	//
 	// EPILOGUE
+	// Take care of any left over bytes.  They will start on an aligned boundary (last_ptr will be aligned),
+	// but there may be anywhere from 0 to 15 bytes.
 	//
+	while(len > 0)
+	{
+		if(*last_ptr == '\n')
+		{
+			++num_lines_since_last_match;
+		}
+
+		++last_ptr;
+		--len;
+	}
 
 	return num_lines_since_last_match;
 }
