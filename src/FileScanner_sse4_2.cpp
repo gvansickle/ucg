@@ -72,9 +72,9 @@ inline uint8_t popcount16(uint16_t bits) noexcept
 
 #endif
 
-static constexpr size_t f_alignment { sizeof(__m128i) };
+static constexpr size_t f_alignment { alignof(__m128i) };
 static constexpr uintptr_t f_alignment_mask { f_alignment-1 };
-static_assert(f_alignment == 16, "sizeof(__m128i) should be 16, but isn't");
+static_assert(f_alignment == 16, "alignof(__m128i) should be 16, but isn't");
 
 //__attribute__((target("sse4.2")))
 size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
@@ -90,7 +90,10 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 	// The character we're looking for, broadcast to all 16 bytes of the looking_for xmm register.
 	const __m128i looking_for = _mm_set1_epi8('\n');
 
-	// PROLOG
+	//
+	// PROLOGUE
+	//
+
 	// Check if we need to handle an unaligned start address.
 	if(reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask)
 	{
@@ -140,6 +143,9 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 		return num_lines_since_last_match;
 	}
 
+	//
+	// MAIN LOOP
+	//
 	for(size_t i = 0; i<len; last_ptr+=16, i += 16)
 	{
 		int substr_len = len-i < 16 ? len-i : 16;
@@ -148,6 +154,10 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 		uint32_t match_bitmask = _mm_cvtsi128_si32(match_mask);
 		num_lines_since_last_match += popcount16(match_bitmask);
 	}
+
+	//
+	// EPILOGUE
+	//
 
 	return num_lines_since_last_match;
 }
