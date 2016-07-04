@@ -19,6 +19,7 @@ noinst_LIBRARIES = libext.a
 libext_a_SOURCES = \
 	cpuidex.hpp cpuidex.cpp \
 	filesystem.hpp \
+	hints.hpp \
 	integer.hpp \
 	multivesioning.hpp multiversioning.cpp \
 	string.hpp

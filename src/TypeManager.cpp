@@ -19,6 +19,7 @@
 
 #include <config.h>
 
+#include <libext/hints.hpp>
 #include "TypeManager.h"
 
 #include "Logger.h"
@@ -377,7 +378,7 @@ void TypeManager::TypeAddExt(const std::string& type, const std::string& ext)
 	m_active_type_map[type].push_back("."+ext);
 }
 
-void TypeManager::TypeAddGlobExclude(const std::string& type, const std::string& glob)
+void TypeManager::TypeAddGlobExclude(const std::string& type maybe_unused, const std::string& glob)
 {
 #if 0 /// @todo Does it make any sense at this point to add globs to these maps?
 	m_builtin_and_user_type_map[type].push_back("?"+glob);

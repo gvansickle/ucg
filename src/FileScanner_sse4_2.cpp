@@ -22,6 +22,7 @@
 #include "FileScanner.h"
 
 #include <libext/multiversioning.hpp>
+#include <libext/hints.hpp>
 
 #include <cstdint>   // For uintptr_t.
 #include <immintrin.h>
@@ -158,10 +159,14 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 	}
 
 	// Hint to gcc that these vars don't have these properties at this point.
-	if((len > 16) || (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask))
-	{
-		__builtin_unreachable();
-	}
+//	if((len > 16) || (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask))
+//	{
+//		__builtin_unreachable();
+//	}
+
+	assume((len <= 16) && ((reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask) == 0));
+	//promise((reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask) == 0);
+	//assume_aligned(last_ptr, 16);
 
 	//
 	// EPILOGUE
