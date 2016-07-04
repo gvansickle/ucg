@@ -98,7 +98,10 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 	// Check if we need to handle an unaligned start address.
 	if(reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask)
 	{
-		// We do.  Check if we can use a single unaligned load to search the unaligned starting bytes.
+		// We do.  Determine how many unaligned prologue bytes we have.
+		const size_t num_unaligned_prologue_bytes = f_alignment - (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask);
+
+		// Check if we can use a single unaligned load to search the unaligned starting bytes.
 		if(len >= f_alignment)
 		{
 			// We can, the read won't go past the end of the buffer.
@@ -106,11 +109,9 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 			// Load the first unaligned 16 bytes of the passed string.  Note that we won't actually use
 			// all of them in the compare; this is just to get the unaligned portion of the buffer out of the way.
 			__m128i substr = _mm_loadu_si128((const __m128i*)last_ptr);
-			// This is the number of unaligned bytes.
-			const int num_bytes_to_search = f_alignment - (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask);
 
 			// Do the match.
-			__m128i match_mask = _mm_cmpestrm(substr, num_bytes_to_search, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
+			__m128i match_mask = _mm_cmpestrm(substr, num_unaligned_prologue_bytes, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
 			// Get the bottom 32 bits of the match results.  Bits 0-15 tell us if a match happened in the corresponding byte.
 			// SSE2, should result in "movd r32, xmm".
 			uint32_t match_bitmask = _mm_cvtsi128_si32(match_mask);
@@ -119,8 +120,8 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 
 			// Adjust for the next portion of the counting.
 			// Remember, we only searched num_bytes_to_search bytes, not necessarily all 16 bytes we read in.
-			last_ptr += num_bytes_to_search;
-			len -= num_bytes_to_search;
+			last_ptr += num_unaligned_prologue_bytes;
+			len -= num_unaligned_prologue_bytes;
 		}
 		else
 		{
@@ -140,9 +141,12 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 
 	if(len == 0)
 	{
-		// The string didn't have >= sizeof(__m128i) chars in it.
+		// The string didn't have > sizeof(__m128i) chars in it.
 		return num_lines_since_last_match;
 	}
+
+	/// @note Whatever hints we try to give the compiler here regarding the alignment of last_ptr (including creating a const __m128i *)
+	/// make no difference to the generated assembly.  Which seems to be OK, I don't see any problems with what gets generated.
 
 	//
 	// MAIN LOOP
@@ -158,15 +162,10 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 		len -= 16;
 	}
 
-	// Hint to gcc that these vars don't have these properties at this point.
-//	if((len > 16) || (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask))
-//	{
-//		__builtin_unreachable();
-//	}
-
-	assume((len <= 16) && ((reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask) == 0));
-	//promise((reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask) == 0);
-	//assume_aligned(last_ptr, 16);
+	// Hint to gcc that these vars have these properties at this point.
+	// This does prevent at least gcc from exploding the loop below into a huge amount
+	// of sse code.
+	assume(len < 16);
 
 	//
 	// EPILOGUE
