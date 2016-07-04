@@ -132,8 +132,8 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 		}
 		else
 		{
-			// There aren't 16 bytes to load.  Check the unaligned bytes the slow way.
-			while((len > 0) && (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask))
+			// There aren't 16 bytes to load.  Check the unaligned bytes (which is also all the bytes) the slow way.
+			while(len > 0)
 			{
 				if(*last_ptr == '\n')
 				{
@@ -143,6 +143,8 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 				++last_ptr;
 				--len;
 			}
+
+			return num_lines_since_last_match;
 		}
 	}
 
