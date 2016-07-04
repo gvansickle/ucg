@@ -99,6 +99,7 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 	if(reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask)
 	{
 		// We do.  Determine how many unaligned prologue bytes we have.
+		// These are the bytes starting at last_ptr up to but not including the byte at the first aligned address.
 		const size_t num_unaligned_prologue_bytes = f_alignment - (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask);
 
 		// Check if we can use a single unaligned load to search the unaligned starting bytes.
@@ -112,9 +113,15 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 
 			// Do the match.
 			__m128i match_mask = _mm_cmpestrm(substr, num_unaligned_prologue_bytes, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
+
 			// Get the bottom 32 bits of the match results.  Bits 0-15 tell us if a match happened in the corresponding byte.
-			// SSE2, should result in "movd r32, xmm".
+			// SSE2, should result in "movd %xxmN, %r32".
 			uint32_t match_bitmask = _mm_cvtsi128_si32(match_mask);
+
+			// The above should never result in more than the bottom 16 bits of match_bitmask being set.
+			// Hint this to the compiler.  This prevents gcc from adding an unnecessary movzwl %r9w,%r9d before the popcount16() call.
+			assume(match_bitmask <= 0xFFFF);
+
 			// Count the bits.
 			num_lines_since_last_match += popcount16(match_bitmask);
 
@@ -156,7 +163,13 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 	{
 		__m128i substr = _mm_load_si128((const __m128i*)last_ptr);
 		__m128i match_mask = _mm_cmpestrm(substr, 16, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
+
 		uint32_t match_bitmask = _mm_cvtsi128_si32(match_mask);
+
+		// The above should never result in more than the bottom 16 bits of match_bitmask being set.
+		// Hint this to the compiler.  This prevents gcc from adding an unnecessary movzwl %r9w,%r9d before the popcount16() call.
+		assume(match_bitmask <= 0xFFFF);
+
 		num_lines_since_last_match += popcount16(match_bitmask);
 		last_ptr += 16;
 		len -= 16;
