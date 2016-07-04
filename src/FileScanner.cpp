@@ -231,7 +231,7 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 {
 	void *retval;
 
-	if(sys_has_sse4_2() && sys_has_popcnt())
+	if(1)//sys_has_sse4_2() && sys_has_popcnt())
 	{
 		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse4_2_popcnt);
 	}
