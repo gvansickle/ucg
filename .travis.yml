@@ -17,6 +17,8 @@ before_install:
 before_script:
  - echo "g++ --version:" && g++ --version && echo "===="
  - # pwd ==> /home/travis/build/gvansickle/ucg
+ - if [ $TRAVIS_OS_NAME == osx ]; then sysctl -a hw; fi
+ - if [ $TRAVIS_OS_NAME == linux ]; then cat /proc/cpuinfo | grep flags; fi
 
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
