@@ -163,10 +163,23 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 	//
 	while(last_ptr < (start_of_current_match-15))
 	{
+		// Load an xmm register with 16 aligned bytes.  SSE2, L/Th: 1/0.25-0.5, plus cache effects.
 		__m128i substr = _mm_load_si128((const __m128i*)last_ptr);
+
+#if 0
+		// Compare the 16 bytes with '\n'.  SSE4.2, L/Th: 10-11/6-4
 		__m128i match_mask = _mm_cmpestrm(substr, 16, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
 
+		// Copy the lower 32 bits out of the xmm reg into an r32.  L/Th: 2-1/1-1.
 		uint32_t match_bitmask = _mm_cvtsi128_si32(match_mask);
+#else
+		// Compare the 16 bytes with '\n'.  SSE2, L/Th: 1/0.5.
+		// match_bytemask will contain a 0xFF for a matching byte, 0 for a non-matching byte.
+		__m128i match_bytemask = _mm_cmpeq_epi8(substr, looking_for);
+
+		// Convert the bytemask into a bitmask in the lower 16 bits of match_bitmask.  SSE2, L/Th: 3-1/1
+		uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
+#endif
 
 		// The above should never result in more than the bottom 16 bits of match_bitmask being set.
 		// Hint this to the compiler.  This prevents gcc from adding an unnecessary movzwl %r9w,%r9d before the popcount16() call.
