@@ -17,6 +17,8 @@
 
 /** @file Macros for compiler optimization hints.  */
 
+#include <config.h>
+
 #ifndef SRC_LIBEXT_HINTS_HPP_
 #define SRC_LIBEXT_HINTS_HPP_
 
