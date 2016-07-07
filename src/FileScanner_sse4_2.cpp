@@ -83,7 +83,7 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 {
 	size_t num_lines_since_last_match = 0;
 
-	const char * last_ptr = prev_lineno_search_end;
+	const char * __restrict__ last_ptr = prev_lineno_search_end;
 
 	// Calculate the total number of chars we need to search for '\n's in.
 	size_t len = start_of_current_match-prev_lineno_search_end;
@@ -163,6 +163,8 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 	//
 	while(last_ptr < (start_of_current_match-15))
 	{
+		const register __m128i looking_for2 = _mm_set1_epi8('\n');
+
 		// Load an xmm register with 16 aligned bytes.  SSE2, L/Th: 1/0.25-0.5, plus cache effects.
 		__m128i substr = _mm_load_si128((const __m128i*)last_ptr);
 
@@ -175,7 +177,7 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 #else
 		// Compare the 16 bytes with '\n'.  SSE2, L/Th: 1/0.5.
 		// match_bytemask will contain a 0xFF for a matching byte, 0 for a non-matching byte.
-		__m128i match_bytemask = _mm_cmpeq_epi8(substr, looking_for);
+		__m128i match_bytemask = _mm_cmpeq_epi8(substr, looking_for2);
 
 		// Convert the bytemask into a bitmask in the lower 16 bits of match_bitmask.  SSE2, L/Th: 3-1/1
 		uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
