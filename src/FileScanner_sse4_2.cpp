@@ -77,14 +77,14 @@ static constexpr size_t f_alignment { alignof(__m128i) };
 static constexpr uintptr_t f_alignment_mask { f_alignment-1 };
 static_assert(f_alignment == 16, "alignof(__m128i) should be 16, but isn't");
 
-static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_ptr, uint8_t num_bytes, const char searchchar)
+static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_ptr, uint8_t num_unaligned_bytes, size_t len, const char searchchar)
 {
 	size_t num_lines_since_last_match = 0;
 
-	assume(num_bytes < f_alignment);
+	assume(num_unaligned_bytes < f_alignment);
 
 	// Check if we can use a single unaligned load to search the unaligned starting bytes.
-	if(num_bytes == f_alignment)
+	if(len >= f_alignment)
 	{
 		// We can, the read won't go past the end of the buffer.
 
@@ -93,10 +93,11 @@ static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_p
 
 		// Load the first unaligned 16 bytes of the passed string.  Note that we won't actually use
 		// all of them in the compare; this is just to get the unaligned portion of the buffer out of the way.
+		// SSE2, L/Th: 1/0.25-0.5.
 		__m128i substr = _mm_loadu_si128((const __m128i*)unaligned_start_ptr);
 
 		// Do the match.
-		__m128i match_mask = _mm_cmpestrm(substr, num_bytes, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
+		__m128i match_mask = _mm_cmpestrm(substr, num_unaligned_bytes, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
 
 		// Get the bottom 32 bits of the match results.  Bits 0-15 tell us if a match happened in the corresponding byte.
 		// SSE2, should result in "movd %xxmN, %r32".
@@ -112,7 +113,7 @@ static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_p
 	else
 	{
 		// There aren't 16 bytes to load.  Check the unaligned bytes (which is also all the bytes) the slow way.
-		while(num_bytes > 0)
+		while(num_unaligned_bytes > 0)
 		{
 			if(*unaligned_start_ptr == searchchar)
 			{
@@ -120,7 +121,7 @@ static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_p
 			}
 
 			++unaligned_start_ptr;
-			--num_bytes;
+			--num_unaligned_bytes;
 		}
 	}
 
@@ -152,7 +153,7 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 		// These are the bytes starting at last_ptr up to but not including the byte at the first aligned address.
 		const size_t num_unaligned_prologue_bytes = std::min(len, f_alignment - (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask));
 
-		num_lines_since_last_match += memcnt_prologue(prev_lineno_search_end, num_unaligned_prologue_bytes, '\n');
+		num_lines_since_last_match += memcnt_prologue(prev_lineno_search_end, num_unaligned_prologue_bytes, len, '\n');
 
 		len -= num_unaligned_prologue_bytes;
 		last_ptr += num_unaligned_prologue_bytes;
@@ -177,20 +178,12 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 		// Load an xmm register with 16 aligned bytes.  SSE2, L/Th: 1/0.25-0.5, plus cache effects.
 		__m128i substr = _mm_load_si128((const __m128i * __restrict__)last_ptr);
 
-#if 0
-		// Compare the 16 bytes with '\n'.  SSE4.2, L/Th: 10-11/6-4
-		__m128i match_mask = _mm_cmpestrm(substr, 16, looking_for, 16, _SIDD_SBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_BIT_MASK);
-
-		// Copy the lower 32 bits out of the xmm reg into an r32.  L/Th: 2-1/1-1.
-		uint32_t match_bitmask = _mm_cvtsi128_si32(match_mask);
-#else
 		// Compare the 16 bytes with '\n'.  SSE2, L/Th: 1/0.5.
 		// match_bytemask will contain a 0xFF for a matching byte, 0 for a non-matching byte.
 		__m128i match_bytemask = _mm_cmpeq_epi8(substr, looking_for);
 
 		// Convert the bytemask into a bitmask in the lower 16 bits of match_bitmask.  SSE2, L/Th: 3-1/1
 		uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
-#endif
 
 		// The above should never result in more than the bottom 16 bits of match_bitmask being set.
 		// Hint this to the compiler.  This prevents gcc from adding an unnecessary movzwl %r9w,%r9d before the popcount16() call.
