@@ -84,7 +84,7 @@ static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_p
 	assume(num_unaligned_bytes < f_alignment);
 
 	// Check if we can use a single unaligned load to search the unaligned starting bytes.
-	if(len >= f_alignment)
+	if(likely(len >= f_alignment))
 	{
 		// We can, the read won't go past the end of the buffer.
 
