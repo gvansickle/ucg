@@ -24,7 +24,7 @@
 #include <libext/multiversioning.hpp>
 #include <libext/hints.hpp>
 
-#include <cstdint>   // For uintptr_t.
+#include <cstdint>
 #include <immintrin.h>
 
 
@@ -197,7 +197,6 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 
 			num_lines_since_last_match += popcount16(match_bitmask);
 			last_ptr += 16;
-			//len -= 16;
 		}
 
 		len -= num_aligned_reads_bytes;
