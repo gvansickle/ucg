@@ -1,11 +1,11 @@
 # UniversalCodeGrep
 
+[![License](https://img.shields.io/badge/License-GPL3-red.svg)](LICENSE)
+[![Travis-CI Build Status](https://travis-ci.org/gvansickle/ucg.svg?branch=master)](https://travis-ci.org/gvansickle/ucg)
 <a href="https://scan.coverity.com/projects/gvansickle-ucg">
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/7451/badge.svg"/>
 </a>
-
-[![Travis-CI Build Status](https://travis-ci.org/gvansickle/ucg.svg?branch=master)](https://travis-ci.org/gvansickle/ucg)
 
 UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.
 
