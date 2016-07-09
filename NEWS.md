@@ -7,10 +7,11 @@
 	- `ack`-style `--ignore-file=FILTER:FILTERARGS`: Files matching FILTER:FILTERARGS (e.g. "ext:txt,cpp") will be ignored.
 	- `grep`-style `--include=GLOB`: Only files matching GLOB will be searched.
 	- `grep`-style `--exclude=GLOB`: Files matching GLOB will be ignored.
-	- `ag`-style `--ignore=GLOB`: Files matching GLOB will be ignored.  (Note that unlike `ag`'s option, this does not apply to directories.
+	- `ag`-style `--ignore=GLOB`: Files matching GLOB will be ignored.  Note that unlike `ag`'s option, this does not apply to directories).
 - Experimental support for OSX and PC-BSD.
 - Now compiles and links with either or both of libpcre and libpcre2, if available.  Defaults to using libpcre2 for matching.
 - Directory tree traversal now uses more than one thread (two by default).  Can be overridden with new "--dirjobs" command-line parameter.  Overall performance improvement on all platforms vs. 0.2.2 (e.g., ~25% on Fedora 23 with hot cache).
+- Line number counting is now done by either a generic or a vectorized (sse4.2 with/without popcount) version of FileScanner::CountLinesSinceLastMatch(), depending on the host system's ISA extension support.  Measurable performance increase; line number counting went from ~6.5% of total cycles to less than 1% on one workload per valgrind/callgrind.
 
 ### Changed
 - Improved error reporting when directory traversal runs into problems.  
@@ -19,6 +20,7 @@
 - Scanner threads now use a reuseable buffer when reading in files, reducing memory allocations by ~10% (and ~40% fewer bytes allocated) compared to version 0.2.2.
 - Refactored FileScanner to be a base class with derived classes handling the particulars of using libpcre or libpcre2 to do the scanning. 
 - Added a basic diagnostic/debug logging facility.
+- ResizableArray now aligns allocations to 64-byte boundaries to match Core i7 cache line sizes in an effort to prevent false sharing.
 
 ### Fixed
 - Cygwin now requires AC_USE_SYSTEM_EXTENSIONS for access to get_current_dir_name().  Resolves #76.
