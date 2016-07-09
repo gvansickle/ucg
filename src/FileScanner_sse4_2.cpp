@@ -157,7 +157,7 @@ static inline size_t memcnt_prologue2(const char * __restrict__ unaligned_start_
 	match_bitmask &= 0xFFFFU << (f_alignment - num_unaligned_bytes);
 	if(len < num_unaligned_bytes)
 	{
-		match_bitmask &= 0x0FFFFU >> (f_alignment - len);
+		match_bitmask &= 0x0FFFFU >> (num_unaligned_bytes - len);
 	}
 
 	// Count any searchchars we found.
