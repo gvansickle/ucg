@@ -26,6 +26,8 @@
 
 #include "../build_info.h"
 
+#include <libext/cpuidex.hpp>
+
 #include <locale>
 #include <algorithm>
 #include <vector>
@@ -510,6 +512,13 @@ void ArgParse::PrintVersionText(FILE* stream)
 	std::fprintf(stream, "\nCompiler info:\n");
 	std::fprintf(stream, " Name ($(CXX)): %s\n", g_cxx);
 	std::fprintf(stream, " Version string: \"%s\"\n", g_cxx_version_str);
+
+	//
+	// Runtime info
+	//
+	std::fprintf(stream, "\nISA extensions in use:\n");
+	std::fprintf(stream, " sse4.2: %s\n", sys_has_sse4_2() ? "yes" : "no");
+	std::fprintf(stream, " popcnt: %s\n", sys_has_popcnt() ? "yes" : "no");
 
 	//
 	// libpcre info

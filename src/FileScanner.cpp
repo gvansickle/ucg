@@ -19,6 +19,9 @@
 
 #include "config.h"
 
+#include <libext/cpuidex.hpp>
+#include <libext/multiversioning.hpp>
+
 #include "Logger.h"
 #include "FileScanner.h"
 #include "FileScannerCpp11.h"
@@ -33,6 +36,7 @@
 #include <libext/string.hpp>
 #include <thread>
 #include <mutex>
+#include <cstring> // For memchr().
 #ifndef HAVE_SCHED_SETAFFINITY
 #else
 	#include <sched.h>
@@ -41,6 +45,15 @@
 #include "ResizableArray.h"
 
 static std::mutex f_assign_affinity_mutex;
+
+/// Resolver function for determining the best version of CountLinesSinceLastMatch to call.
+/// Does its work at static init time, so incurs no call-time overhead.
+extern "C"	void * resolve_CountLinesSinceLastMatch(void);
+
+/// Definition of the multiversioned CountLinesSinceLastMatch function.
+size_t (*FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
+		const char * __restrict__ start_of_current_match) noexcept
+		= reinterpret_cast<decltype(FileScanner::CountLinesSinceLastMatch)>(::resolve_CountLinesSinceLastMatch());
 
 
 std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::string> &in_queue,
@@ -102,17 +115,27 @@ void FileScanner::Run(int thread_index)
 	// Create a reusable, resizable buffer for the File() reads.
 	auto file_data_storage = std::make_shared<ResizableArray<char>>();
 
+	using namespace std::chrono;
+	steady_clock::duration accum_elapsed_time {0};
+	long long total_bytes_read {0};
+
 	// Pull new filenames off the input queue until it's closed.
 	std::string next_string;
 	while(m_in_queue.wait_pull(std::move(next_string)) != queue_op_status::closed)
 	{
-		MatchList ml(next_string);
-
 		try
 		{
 			// Try to open and read the file.  This could throw.
 			LOG(INFO) << "Attempting to scan file \'" << next_string << "\'";
+			//steady_clock::time_point start = steady_clock::now();
 			File f(next_string, file_data_storage);
+			//steady_clock::time_point end = steady_clock::now();
+			//accum_elapsed_time += (end - start);
+			total_bytes_read += f.size();
+
+
+			MatchList ml(next_string);
+
 
 			if(f.size() == 0)
 			{
@@ -148,6 +171,11 @@ void FileScanner::Run(int thread_index)
 			throw;
 		}
 	}
+
+#if 0
+	duration<double> elapsed = duration_cast<duration<double>>(accum_elapsed_time);
+	LOG(INFO) << "Total bytes read = " << total_bytes_read << ", elapsed time = " << elapsed.count() << ", Bytes/Sec=" << total_bytes_read/elapsed.count() << std::endl;
+#endif
 }
 
 void FileScanner::AssignToNextCore()
@@ -171,6 +199,52 @@ void FileScanner::AssignToNextCore()
 	m_next_core++;
 	m_next_core %= std::thread::hardware_concurrency();
 #endif
+}
+
+//__attribute__((target("default")))
+size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ prev_lineno_search_end,
+		const char * __restrict__ start_of_current_match) noexcept
+{
+	size_t num_lines_since_last_match = 0;
+
+	const char * last_ptr = prev_lineno_search_end;
+	while(1)
+	{
+		last_ptr = (const char*)std::memchr((const void*)last_ptr, '\n', start_of_current_match-last_ptr);
+		if(last_ptr != NULL)
+		{
+			++num_lines_since_last_match;
+			++last_ptr;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return num_lines_since_last_match;
+}
+
+
+
+extern "C" void * resolve_CountLinesSinceLastMatch(void)
+{
+	void *retval;
+
+	if(sys_has_sse4_2() && sys_has_popcnt())
+	{
+		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse4_2_popcnt);
+	}
+	else if(sys_has_sse4_2() && !sys_has_popcnt())
+	{
+		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse4_2_no_popcnt);
+	}
+	else
+	{
+		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_default);
+	}
+
+	return retval;
 }
 
 

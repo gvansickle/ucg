@@ -30,6 +30,9 @@
 #include "MatchList.h"
 
 
+extern "C" void* resolve_CountLinesSinceLastMatch(void);
+
+
 /// The regular expression engines we support.
 /// @note Which of these is supported depends on which libraries were available at compile-time.
 enum class RegexEngine
@@ -97,6 +100,33 @@ public:
 	void Run(int thread_index);
 
 protected:
+
+	/// @name Member-Function Pseudo-Multiversioning
+	/// All this mechanism is to support something along the lines of gcc's function multiversioning,
+	/// which doesn't work prior to gcc 4.9, at all on Cygwin even when the compiler/binutils support it,
+	/// and doesn't exist on OSX/clang.  And I didn't even bother looking at the *BSDs.
+	/// @{
+
+	friend void* ::resolve_CountLinesSinceLastMatch(void);
+
+	/// The member function pointer which will be set at runtime to point to the best function version.
+	static size_t (*CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
+				const char * __restrict__ start_of_current_match) noexcept;
+
+	//__attribute__((target("default")))
+	static size_t CountLinesSinceLastMatch_default(const char * __restrict__ prev_lineno_search_end,
+			const char * __restrict__ start_of_current_match) noexcept;
+
+	//__attribute__((target("sse4.2", "popcnt")))
+	static size_t CountLinesSinceLastMatch_sse4_2_popcnt(const char * __restrict__ prev_lineno_search_end,
+			const char * __restrict__ start_of_current_match) noexcept;
+
+	//__attribute__((target("sse4.2", "no-popcnt")))
+	static size_t CountLinesSinceLastMatch_sse4_2_no_popcnt(const char * __restrict__ prev_lineno_search_end,
+				const char * __restrict__ start_of_current_match) noexcept;
+
+	///@}
+
 	bool m_ignore_case;
 
 	bool m_word_regexp;

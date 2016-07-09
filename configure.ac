@@ -188,8 +188,10 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
-AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL], [1], [Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
-AC_CHECK_TYPES([std::is_trivially_copyable<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1], [Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
+AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL], [1],
+	[Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
+AC_CHECK_TYPES([std::is_trivially_copyable<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1],
+	[Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
 
 AC_LANG_POP([C++])
 
@@ -214,18 +216,33 @@ AC_LANG_PUSH([C++])
 # Append them to AM_CXXFLAGS if it does.
 
 # Capture the compile command line in the binary.
-AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS])
-#AX_APPEND_COMPILE_FLAGS([-Wa,-ahlsn=\$@.ss -save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
-AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be.
-#AX_APPEND_COMPILE_FLAGS([-ftree-vectorize -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
+#AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS])
+#AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
+#AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be. @note Doesn't seem to do anything.
+AX_APPEND_COMPILE_FLAGS([-ftree-vectorize]) # -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])
 
+# Check for instruction set extensions we can make use of.
+AX_APPEND_COMPILE_FLAGS([-msse4.2], [UCG_CXXFLAGS_SSE4_2]) 
+AX_APPEND_COMPILE_FLAGS([-mpopcnt], [UCG_CXXFLAGS_POPCNT], [$UCG_CXXFLAGS_SSE4_2])
+AX_APPEND_COMPILE_FLAGS([-mno-popcnt], [UCG_CXXFLAGS_NO_POPCNT], [$UCG_CXXFLAGS_SSE4_2])
+AC_SUBST([UCG_CXXFLAGS_SSE4_2], [$UCG_CXXFLAGS_SSE4_2])
+AC_SUBST([UCG_CXXFLAGS_POPCNT], [$UCG_CXXFLAGS_POPCNT])
+AC_SUBST([UCG_CXXFLAGS_NO_POPCNT], [$UCG_CXXFLAGS_NO_POPCNT])
+AC_MSG_CHECKING([if compiler supports all required ISA extensions])
+AS_IF(
+	[test "x$UCG_CXXFLAGS_SSE4_2" = x], [AC_MSG_ERROR([compiler must support sse4.2 ISA extensions])],
+	[test "x$UCG_CXXFLAGS_POPCNT" = x], [AC_MSG_ERROR([compiler must support sse4.2+popcnt ISA extensions])],
+	[test "x$UCG_CXXFLAGS_NO_POPCNT" = x], [AC_MSG_ERROR([compiler must support sse4.2+no-popcnt ISA extensions])],
+	[AC_MSG_RESULT([yes])]
+)
+
 # Check for pthreads.  Note that we don't necessarily require pthreads; we require and use C++11 std::thread<>,
-# which whatever it uses under-the-hood we don't really care about.  If in fact C++11 is using pthreads, we can
-# optionally use some of its functionality, e.g. naming threads, for diagnostic, logging, and other purposes.
+# whatever it uses under-the-hood we don't really care about.  If in fact C++11 is using pthreads, we can
+# optionally use some of its functionality, e.g. naming threads for diagnostic, logging, and other purposes.
 # Macro docs: http://www.gnu.org/software/autoconf-archive/ax_pthread.html#ax_pthread
 AX_PTHREAD
 AS_IF([test "x$ax_pthread_ok" == xyes],

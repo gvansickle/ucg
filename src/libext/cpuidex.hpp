@@ -15,7 +15,12 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file This file only exists so that we don't have an empty .a, which causes some linkers issues (OSX). */
+/** @file  Portable CPUID-related functionality. */
 
-const char link_me_please[] {__FILE__};
+#ifndef SRC_LIBEXT_CPUIDEX_HPP_
+#define SRC_LIBEXT_CPUIDEX_HPP_
 
+bool sys_has_sse4_2() noexcept;
+bool sys_has_popcnt() noexcept;
+
+#endif /* SRC_LIBEXT_CPUIDEX_HPP_ */

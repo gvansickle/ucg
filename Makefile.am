@@ -78,5 +78,5 @@ ucg_CPPFLAGS = -I $(top_srcdir)/src \
 ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.a
+ucg_LDADD = ./src/libsrc.a ./src/libext/libext.a ./src/libsrc_sse4_2_no_popcnt.a ./src/libsrc_sse4_2_popcnt.a
 

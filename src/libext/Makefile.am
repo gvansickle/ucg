@@ -17,10 +17,12 @@
 
 noinst_LIBRARIES = libext.a 
 libext_a_SOURCES = \
+	cpuidex.hpp cpuidex.cpp \
 	filesystem.hpp \
+	hints.hpp \
 	integer.hpp \
-	string.hpp \
-	dummy.cpp
+	multiversioning.hpp multiversioning.cpp \
+	string.hpp
 
 libext_a_CPPFLAGS = $(AM_CPPFLAGS)
 libext_a_CFLAGS = $(AM_CFLAGS)
