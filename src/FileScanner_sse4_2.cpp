@@ -75,6 +75,7 @@ inline uint8_t popcount16(uint16_t bits) noexcept
 
 static constexpr size_t f_alignment { alignof(__m128i) };
 static constexpr uintptr_t f_alignment_mask { f_alignment-1 };
+static_assert(is_power_of_2(f_alignment), "alignof(__m128i) should be a power of 2, but isn't");
 static_assert(f_alignment == 16, "alignof(__m128i) should be 16, but isn't");
 
 static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_ptr, uint8_t num_unaligned_bytes, size_t len, const char searchchar)
@@ -128,6 +129,42 @@ static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_p
 	return num_lines_since_last_match;
 }
 
+static inline size_t memcnt_prologue2(const char * __restrict__ unaligned_start_ptr, uint8_t num_unaligned_bytes, size_t len, const char searchchar)
+{
+	// Load the 16-byte xmm register from the previous 16-byte-aligned address,
+	// then ignore any matches before unaligned_start_address and after len.
+	// This does a couple of things:
+	// 1. Prevents the 16-byte read from spanning a 4KB page boundary into a page that isn't ours.
+	// 2. Allows us to do an aligned read (movdqa) vs. an unaligned one (movdqu), maybe gaining us some cycles.
+
+	const __m128i * __restrict__ aligned_pre_start_ptr = reinterpret_cast<const __m128i * __restrict__>(unaligned_start_ptr - (f_alignment - num_unaligned_bytes));
+
+	// The character we're looking for, broadcast to all 16 bytes of the looking_for xmm register.
+	const __m128i looking_for = _mm_set1_epi8(searchchar);
+
+	// Load an xmm register with 16 aligned bytes.  SSE2, L/Th: 1/0.25-0.5, plus cache effects.
+	__m128i prologue_bytes = _mm_load_si128(aligned_pre_start_ptr);
+
+	// Compare the 16 bytes with searchchar.  SSE2, L/Th: 1/0.5.
+	// match_bytemask will contain a 0xFF for a matching byte, 0 for a non-matching byte.
+	__m128i match_bytemask = _mm_cmpeq_epi8(prologue_bytes, looking_for);
+
+	// Convert the bytemask into a bitmask in the lower 16 bits of match_bitmask.  SSE2, L/Th: 3-1/1
+	uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
+
+	// Mask off the invalid bits of the match_bitmask, i.e. anything before unaligned_start_ptr,
+	// and if len < num_unaligned_bytes, anything after min(len,
+	match_bitmask &= 0xFFFFU << (f_alignment - num_unaligned_bytes);
+	if(len < num_unaligned_bytes)
+	{
+		match_bitmask &= 0x0FFFFU >> (f_alignment - len);
+	}
+
+	// Count any searchchars we found.
+	return popcount16(match_bitmask);
+
+}
+
 //__attribute__((target("sse4.2")))
 size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_lineno_search_end,
 		const char * __restrict__ start_of_current_match) noexcept
@@ -147,13 +184,14 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 	//
 
 	// Check if we need to handle an unaligned start address.
-	if(reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask)
+	uint16_t start_unaligned_byte_offset = reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask;
+	if(start_unaligned_byte_offset)
 	{
 		// We do.  Determine how many unaligned prologue bytes we have.
 		// These are the bytes starting at last_ptr up to but not including the byte at the first aligned address.
-		const size_t num_unaligned_prologue_bytes = std::min(len, f_alignment - (reinterpret_cast<uintptr_t>(last_ptr) & f_alignment_mask));
+		const size_t num_unaligned_prologue_bytes = std::min(len, f_alignment - start_unaligned_byte_offset);
 
-		num_lines_since_last_match += memcnt_prologue(prev_lineno_search_end, num_unaligned_prologue_bytes, len, '\n');
+		num_lines_since_last_match += memcnt_prologue2(prev_lineno_search_end, f_alignment - start_unaligned_byte_offset, len, '\n');
 
 		len -= num_unaligned_prologue_bytes;
 		last_ptr += num_unaligned_prologue_bytes;
