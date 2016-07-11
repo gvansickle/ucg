@@ -21,6 +21,7 @@ before_script:
  - if [ $TRAVIS_OS_NAME == linux ]; then cat /proc/cpuinfo | grep flags; fi
  - lscpu
  - free -ht
+ - df --output main.cpp
 
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
