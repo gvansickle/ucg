@@ -177,6 +177,7 @@ defaults:
       type: pages
     values:
       layout: single
+      share: true
   # _docs
   - scope:
       path: ""
