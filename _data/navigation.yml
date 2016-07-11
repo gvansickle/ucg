@@ -9,6 +9,12 @@ main:
 
   - title: "Portability Pointers"
     url: /portability-pointers/
+    
+  - title: "Categories"
+    url: /categories/
+    
+  - title: "Posts By Tag"
+    url: /tags/
 
 docs:
   - title: "Introduction"
