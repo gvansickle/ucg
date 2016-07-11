@@ -1,7 +1,24 @@
 # main links links
 main:
-  - title: "Sample Navigation Link"
-    url: https://mmistakes.github.io/minimal-mistakes/docs/navigation/
 
-  - title: "Sample Navigation Link 2"
-    url: /
+  - title: "Documentation"
+    url: /docs/01-Installation.html
+
+  - title: "Design Details"
+    url: /design/
+
+  - title: "Portability Pointers"
+    url: /portability-pointers/
+
+docs:
+  - title: "Introduction"
+    children:
+      - title: "Speed"
+        url: /docs/speed/
+
+  - title: "Installation"
+    children:
+      - title: "Ubuntu"
+        url: /docs/01-Installation.html
+      - title: "Fedora"
+        url: /docs/installation/
