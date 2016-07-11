@@ -3,7 +3,7 @@ title:  "Portability Pointers: POPCNT"
 categories: 
   - "Portability Pointers"
 tags:
-  - CPUID
+  - POPCNT
 ---
 
 ## The POPCNT Instruction: Not Portable Unless It Is, And Then Only Sometimes
