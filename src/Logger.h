@@ -16,7 +16,9 @@
  */
 
 /**
- * @file A basic multithreaded logging facility.
+ * @file Logger.h
+ *
+ * A basic multithreaded logging facility.
  */
 
 #ifndef SRC_LOGGER_H_

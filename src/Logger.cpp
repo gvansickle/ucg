@@ -16,7 +16,9 @@
  */
 
 /**
- * @file A basic multithreaded logging facility.
+ * @file Logger.cpp
+ *
+ * A basic multithreaded logging facility.
  */
 
 #include <config.h>
