@@ -135,6 +135,18 @@ AS_IF([test "$LN_S" == 'ln -s'],
 # Autotest needs autom4te, or 'missing's stub for it. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
+# Doxygen support.
+DX_INIT_DOXYGEN([UniversalCodeGrep])
+DX_DOXYGEN_FEATURE(ON)
+DX_DOT_FEATURE(ON)
+DX_HTML_FEATURE(ON)
+DX_CHM_FEATURE(OFF)
+DX_CHI_FEATURE(OFF)
+DX_MAN_FEATURE(OFF)
+DX_RTF_FEATURE(OFF)
+DX_XML_FEATURE(OFF)
+DX_PDF_FEATURE(OFF)
+DX_PS_FEATURE(OFF)
 
 ###
 ### Checks for libraries

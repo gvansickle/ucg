@@ -72,6 +72,9 @@ verify-provenance:
 	
 dist-hook:
 	echo -n "$$(cd $(top_srcdir) && git describe --long --dirty | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
+	
+# Doxygen rules
+@DX_RULES@
 
 ucg_CPPFLAGS = -I $(top_srcdir)/src \
 	$(AM_CPPFLAGS) 
