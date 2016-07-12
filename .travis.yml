@@ -19,7 +19,7 @@ before_script:
  - # pwd ==> /home/travis/build/gvansickle/ucg
  - if [ $TRAVIS_OS_NAME == osx ]; then sysctl -a hw.optional; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then cat /proc/cpuinfo | grep flags; fi
- - lscpu
+ - # lscpu = Doesn't exist on OSX.
  - free -ht
  - df --output main.cpp
 
