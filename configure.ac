@@ -97,6 +97,8 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_RANLIB
 PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED
+# Find the sed option which turns on Extended Regular Expressions.
+
 
 ## Checks for programs needed to run the testsuite.
 
