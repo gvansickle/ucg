@@ -101,7 +101,7 @@ AC_PROG_SED
 AC_CACHE_CHECK([for $SED option that supports extended regexes], [ac_cv_path_ESED],
 	[ac_cv_path_ESED=''
 	for EREoption in -r -E; do
-	   	esedout=`echo "yeabcds" | $SED $EREoption 's/(abcd)//'`
+	   	esedout=`echo "yeabcds" | $SED $EREoption 's/(abcd)//' 2> /dev/null`
 	    test "x$esedout" = xyes \
 	    && ac_cv_path_ESED="$SED $EREoption" ac_path_ESED_found=: && break
 	done
