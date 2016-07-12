@@ -98,7 +98,17 @@ AC_PROG_RANLIB
 PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED
 # Find the sed option which turns on Extended Regular Expressions.
-
+AC_CACHE_CHECK([for $SED option that supports extended regexes], [ac_cv_path_ESED],
+	[ac_cv_path_ESED=''
+	for EREoption in -r -E; do
+	   	esedout=`echo "yeabcds" | $SED $EREoption 's/(abcd)//'`
+	    test "x$esedout" = xyes \
+	    && ac_cv_path_ESED="$SED $EREoption" ac_path_ESED_found=: && break
+	done
+	])
+AS_IF([ test "x$ac_path_ESED_found" = "x:" ],
+	[AC_SUBST([ESED], [$ac_cv_path_ESED])], # Note: AC_CACHE_CHECK handles the AC_MSG_RESULT() in the success case.
+	[AC_MSG_ERROR([could not find $SED option that supports extended regexes])])
 
 ## Checks for programs needed to run the testsuite.
 

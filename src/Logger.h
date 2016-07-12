@@ -19,6 +19,8 @@
  * @file Logger.h
  *
  * A basic multithreaded logging facility.
+ *
+ * @todo Redirecting to streams/files, timestamp, maybe sorting by timestamp, more log severity levels: trace, debug, info, warning, error, fatal.
  */
 
 #ifndef SRC_LOGGER_H_
@@ -34,7 +36,6 @@
 #include <thread>
 #include <mutex>
 
-/// @todo Redirecting to streams/files, timestamp, maybe sorting by timestamp, more log severity levels: trace, debug, info, warning, error, fatal.
 
 /**
  * Call this from inside the thread's callable object to set its name.
