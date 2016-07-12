@@ -19,9 +19,9 @@ before_script:
  - # pwd ==> /home/travis/build/gvansickle/ucg
  - if [ $TRAVIS_OS_NAME == osx ]; then sysctl -a hw.optional; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then cat /proc/cpuinfo | grep flags; fi
- - # lscpu = Doesn't exist on OSX.
- - free -ht
- - df --output main.cpp
+ - # lscpu = Doesn't exist on OSX or Cygwin
+ - # free -ht = Doesn't exist on OSX or Cygwin
+ - df main.cpp # df does exist on Cygwin.  Also on OSX, but params are different, no --output, -T is different.
 
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
