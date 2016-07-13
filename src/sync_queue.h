@@ -191,7 +191,7 @@ public:
 	/**
 	 *  Blocks the calling thread until:
 	 *	 - The queue is empty, and
-	 *	 - There are #num_workers threads waiting to be notified of new work arriving in the queue.
+	 *	 - There are @p num_workers threads waiting to be notified of new work arriving in the queue.
 	 *	 - Or, the queue is closed.
 	 *
 	 *  The use case here is a situation where you have one "master" thread spawning one or more worker threads which then
@@ -200,7 +200,7 @@ public:
 	 *  and when all the workers are waiting and there's no work in the queue, the master closes the queue, which causes the
 	 *  worker threads to exit, which are then joined by the master thread.
 	 *
-	 *	 @note This is definitely not a Boost API.
+	 *	@note This is definitely not a Boost API.
 	 */
 	queue_op_status wait_for_worker_completion(size_t num_workers)
 	{

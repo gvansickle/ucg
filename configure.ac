@@ -146,7 +146,6 @@ AS_IF([test "$LN_S" == 'ln -s'],
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 # Doxygen support.
-DX_INIT_DOXYGEN([UniversalCodeGrep])
 DX_DOXYGEN_FEATURE(ON)
 DX_DOT_FEATURE(ON)
 DX_HTML_FEATURE(ON)
@@ -157,6 +156,7 @@ DX_RTF_FEATURE(OFF)
 DX_XML_FEATURE(OFF)
 DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
+DX_INIT_DOXYGEN([UniversalCodeGrep])
 
 ###
 ### Checks for libraries

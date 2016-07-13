@@ -34,6 +34,7 @@ bin_PROGRAMS=ucg
 ucg_SOURCES=main.cpp build_info.h
 nodist_ucg_SOURCES=build_info.cpp
 CLEANFILES=build_info.cpp
+MOSTLYCLEANFILES=$(DX_CLEANFILES)
 
 
 # Collect some make-time info. 

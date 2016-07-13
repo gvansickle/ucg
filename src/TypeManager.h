@@ -48,12 +48,11 @@ public:
 	~TypeManager() = default;
 
 	/**
-	 * Determine if the file with the given path and name should be scanned based on the
+	 * Determine if the file with the given @p name should be scanned based on the
 	 * enabled file types.
 	 *
-	 * @param path
 	 * @param name
-	 * @return
+	 * @return true if file should be scanned, false otherwise.
 	 */
 	bool FileShouldBeScanned(const std::string &name) const noexcept;
 
@@ -79,15 +78,15 @@ public:
 	bool notype(const std::string &type_name);
 
 	/**
-	 * Determines if #type is in the m_active_type_map as a type name.
+	 * Determines if @p type is in the m_active_type_map as a type name.
 	 *
 	 * @param type  Name of the type to check.
-	 * @return true if #type names a type, false otherwise.
+	 * @return true if @p type names a type, false otherwise.
 	 */
 	bool IsType(const std::string &type) const;
 
 	/**
-	 * Adds a new filter spec to a (possibly new) #type, based on #filter_spec_string.
+	 * Adds a new filter spec to a (possibly new) @p type, based on @p filter_spec_string.
 	 *
 	 * @param delete_type_first   If true, treat as a "--type-set=", and delete any existing file type spec first.
 	 * @param filter_spec_string
@@ -96,7 +95,7 @@ public:
 	void TypeAddFromFilterSpecString(bool delete_type_first, const std::string &filter_spec_string);
 
 	/**
-	 * Adds and then notype()s a new filter spec to the anonymous type used for '--ignore-file=', based on #filter_spec_string.
+	 * Adds and then notype()s a new filter spec to the anonymous type used for '--ignore-file=', based on @p filter_spec_string.
 	 * This is for use by the --ignore-file=FILTER:FILTERARGS command-line option.
 	 *
 	 * @param filter_spec_string
@@ -105,7 +104,7 @@ public:
 	void TypeAddIgnoreFileFromFilterSpecString(const std::string &filter_spec_string);
 
 	/**
-	 * Adds and then type()s a new filter spec to the anonymous type used for '--include=glob', based on #filter_spec_string.
+	 * Adds and then type()s a new filter spec to the anonymous type used for '--include=glob', based on @p filter_spec_string.
 	 *
 	 * @param filter_spec_string
 	 * @exception TypeManagerException  filter_spec_string cannot be parsed.
@@ -113,10 +112,10 @@ public:
 	void TypeAddIncludeGlobFromFilterSpecString(const std::string &filter_spec_string);
 
 	/**
-	 * Deletes #type from the m_active_type_map.
+	 * Deletes @p type from the m_active_type_map.
 	 *
 	 * @param type  Name of the type to delete.
-	 * @return true if #type named a type, false if it did not.
+	 * @return true if @p type named a type, false if it did not.
 	 */
 	bool TypeDel(const std::string &type);
 
