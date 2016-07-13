@@ -74,6 +74,7 @@ for PROGNAME in $PERF_PROGRAMS_TO_COMPARE grep; do
 	AS_ECHO([--]) >> $PERF_RESULTS_FILE
 done;
 
+
 AT_CLEANUP
 
 
@@ -84,6 +85,10 @@ AT_SETUP([Boost: compare performance to grep, 'BOOST.*HPP'])
 
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+
+# Record info on the filesystem where the test data lies.
+TEST_DATA_FS_INFO=`get_dev_and_fs_type "${BOOST_PATH}"`
+AS_ECHO(["The test data \"${BOOST_PATH}\" is on filesystem $TEST_DATA_FS_INFO"]) >> $PERF_RESULTS_FILE
 
 AS_ECHO([""]) >> $PERF_RESULTS_FILE
 AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE

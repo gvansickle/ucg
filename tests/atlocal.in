@@ -54,6 +54,15 @@ ESED="@ESED@"
 MKDIR_P="@MKDIR_P@"
 TEST_LN_S="@TEST_LN_S@"
 
+### Functions for use in the testsuite.
+
+get_dev_and_fs_type()
+{
+	# Get, in as portable a way as possible, the device and filesystem type on which the
+	# file passed in $1 resides.
+	mount | fgrep -w "`df \"$1\" | grep '%' | sed -e 's/.*% *//'`"
+}
+
 ASX_SCRIPT ()
 {
 	# Note: '\r' removal in here because script outputs \r\n's, even on Linuxes.
