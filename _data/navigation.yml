@@ -3,12 +3,15 @@ main:
 
   - title: "Documentation"
     url: /docs/01-Installation.html
+    
+  - title: "About"
+    url: /pages/about.html
 
   - title: "Design Details"
     url: /design/
 
   - title: "Portability Pointers"
-    url: /portability-pointers/
+    url: /categories/portability-pointers/
     
   - title: "Categories"
     url: /categories/

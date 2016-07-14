@@ -5,8 +5,10 @@
 
 UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.
 
-## Table of Contents
 
+
+## Table of Contents
+{:.no_toc}
 * [Introduction](#introduction)
   * [Speed](#speed)
 * [License](#license)
@@ -34,6 +36,8 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
   * [Extension List Filter](#extension-list-filter)
   * [Literal Filename Filter](#literal-filename-filter)
 * [Author](#author)
+
+{:toc}
 
 ## Introduction
 
