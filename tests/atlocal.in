@@ -80,13 +80,9 @@ PROG_WDIFF=wdiff
 
 TEST_GROUPS=("ucg" "grep")
 
-echo here >> $PERF_RESULTS_FILE
-
 declare -A TEST_GROUP_TO_PROGS
 TEST_GROUP_TO_PROGS["ucg"]="ucg"
 TEST_GROUP_TO_PROGS["grep"]="grep"
-
-echo here >> $PERF_RESULTS_FILE
 
 declare -A TEST_GROUP_TO_PARAMS_PRE
 TEST_GROUP_TO_PARAMS_PRE["ucg"]="--noenv --cpp"
@@ -114,8 +110,6 @@ NUM_ITERATIONS=10
 
 declare -a AVG_TIME
 declare -a PREP_RUN_FILES
-
-echo here >> $PERF_RESULTS_FILE
 
 ucg_jobs()
 {
@@ -186,11 +180,11 @@ run_test_cmdlines()
 	done
 	
 	# Output the results.
-	echo "| Program | Avg of ${NUM_ITERATIONS} runs |";
-	echo "|---------|---------------|";
+	echo "| Program | Avg of ${NUM_ITERATIONS} runs |" >> "${RESULTS_FILE}";
+	echo "|---------|---------------|" >> "${RESULTS_FILE}";
 	for ((i=0;i<${#CMD_LINE_ARRAY[@]}; ++i));
 	do
-		echo "| ${CMD_LINE_ARRAY[i]} | ${AVG_TIME[i]} |";
+		echo "| ${CMD_LINE_ARRAY[i]} | ${AVG_TIME[i]} |" >> "${RESULTS_FILE}";
 	done
 }
 
@@ -230,22 +224,21 @@ diff_prep_run_output()
 	# /dev/fd/63: 44357 words  0 0% common  44357 100% deleted  0 0% changed
 	# /dev/fd/62: 0 words
 
-	echo "| Command line | Total matched lines count | Percent of output words common |";
-	echo "|--------------|---------------------------|--------------------------------|";
+	echo "| Command line | Total matched lines count | Percent of output words common |" >> "${RESULTS_FILE}";
+	echo "|--------------|---------------------------|--------------------------------|" >> "${RESULTS_FILE}";
 	for ((i=0;i<${#CMD_LINE_ARRAY[@]}; ++i));
 	do
-		echo "| ${CMD_LINE_ARRAY[i]} | ${NUM_MATCHED_LINES[i]} | ${WORDS_COMMON_PCT[i]} |"
+		echo "| ${CMD_LINE_ARRAY[i]} | ${NUM_MATCHED_LINES[i]} | ${WORDS_COMMON_PCT[i]} |" >> "${RESULTS_FILE}";
 	done
 
 }
-
-echo "here" >> $PERF_RESULTS_FILE
 
 
 declare -a VAR
 
 mkfifo cmd_line_pipe
 generate_cmdlines_ucgjobs_compare > cmd_line_pipe &
+
 echo here6 >> $PERF_RESULTS_FILE
 
 mapfile -t VAR < cmd_line_pipe
@@ -253,7 +246,7 @@ mapfile -t VAR < cmd_line_pipe
 echo here7 >> $PERF_RESULTS_FILE
 
 for V in "${VAR[@]}"; do
-	echo ">> $V";
+	echo ">> $V" >> "${RESULTS_FILE}";
 done
 
 run_test_cmdlines VAR[@]
