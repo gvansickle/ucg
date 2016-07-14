@@ -72,3 +72,192 @@ ASX_SCRIPT ()
 		*) exit 1;;
 	esac
 }
+
+perf_test_1()
+{
+
+PROG_WDIFF=wdiff
+
+TEST_GROUPS=("ucg" "grep")
+
+echo here >> $PERF_RESULTS_FILE
+
+declare -A TEST_GROUP_TO_PROGS
+TEST_GROUP_TO_PROGS["ucg"]="ucg"
+TEST_GROUP_TO_PROGS["grep"]="grep"
+
+echo here >> $PERF_RESULTS_FILE
+
+declare -A TEST_GROUP_TO_PARAMS_PRE
+TEST_GROUP_TO_PARAMS_PRE["ucg"]="--noenv --cpp"
+TEST_GROUP_TO_PARAMS_PRE["grep"]="-Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx"
+
+declare -A PROG_TO_PARAMS_JOBS
+PROG_TO_PARAMS_JOBS["ucg"]="0 1 2 3 4"
+PROG_TO_PARAMS_JOBS["grep"]="0"
+
+declare -A PROG_TO_PARAMS_DIRJOBS
+PROG_TO_PARAMS_DIRJOBS["ucg"]="0 1 2 3 4"
+PROG_TO_PARAMS_DIRJOBS["grep"]="0"
+
+REGEX='BOOST.*HPP'
+#REGEX="TEST_BOOST_NO_INTRINSIC_WCHAR_T"
+
+RESULTS_FILE=$PERF_RESULTS_FILE
+echo "at_srcdir = $at_srcdir";
+TEST_DATA_DIR="${BOOST_PATH}"
+
+# Make time only output elapsed time in seconds.
+TIMEFORMAT=%R
+
+NUM_ITERATIONS=10
+
+declare -a AVG_TIME
+declare -a PREP_RUN_FILES
+
+echo here >> $PERF_RESULTS_FILE
+
+ucg_jobs()
+{
+	if [ "${1}" == "0" ];
+	then
+		echo "";
+	else
+		echo "-j${1}";
+	fi;
+}
+
+ucg_dirjobs()
+{
+	if [ "${1}" == "0" ];
+	then
+		echo "";
+	else
+		echo "--dirjobs=${1}";
+	fi;
+}
+
+generate_cmdlines_ucgjobs_compare()
+{
+	for GROUP in "${TEST_GROUPS[@]}"; do
+		PROG=${TEST_GROUP_TO_PROGS[$GROUP]};
+		PARAMS_PRE=${TEST_GROUP_TO_PARAMS_PRE[$GROUP]};
+		for NUM_JOBS in ${PROG_TO_PARAMS_JOBS[$PROG]}; do
+			for NUM_DIRJOBS in ${PROG_TO_PARAMS_DIRJOBS[$PROG]}; do
+				COMMAND_LINE="{ time ${PROG} ${PARAMS_PRE} $(ucg_dirjobs $NUM_DIRJOBS) $(ucg_jobs $NUM_JOBS) ${REGEX} ${TEST_DATA_DIR} 1>&3- 2>&4-; }";
+				echo "$COMMAND_LINE";
+			done
+		done
+	done
+}
+
+run_test_cmdlines()
+{
+	declare -a CMD_LINE_ARRAY;
+	CMD_LINE_ARRAY=("${!1}")
+	i=0;
+	
+	echo "Start" >> "${RESULTS_FILE}"
+	
+	for COMMAND_LINE in "${CMD_LINE_ARRAY[@]}";
+	do
+		echo "Trying: $COMMAND_LINE" >> "${RESULTS_FILE}";
+		# "Prep" run, to eliminate disk cache variability and capture the matches.
+		# We pipe the results through sort so we can diff these later. 
+		PREP_RUN_FILES[$i]="SearchResults_${i}.txt"
+		echo "Prep run for command line: '${COMMAND_LINE}'" > SearchResults_${i}.txt; 
+		{ ( eval "${COMMAND_LINE[@]}" 2>&1 ); } 3>&1 4>&2 | sort >> SearchResults_${i}.txt;
+	
+		# Timing runs.
+		for ((ITER=0; $ITER<$NUM_ITERATIONS; ITER++)); do
+			#{ REAL_TIME[$ITER]=$( { time ${PROG} ${PARAM_LIST[@]} ${REGEX} ${TEST_DATA_DIR} 1>&3- 2>&4-; } 2>&1 ); } 3>&1 4>&2;
+			{ REAL_TIME[$ITER]=$( eval ${COMMAND_LINE} 2>&1 ); } 3>&1 4>&2;
+			echo "${REAL_TIME[$ITER]}" >> "${RESULTS_FILE}";
+		done
+	
+		# Determine the average.
+		AVG_TIME[i]=0;
+		for ELAPSED in ${REAL_TIME[@]}; do
+			AVG_TIME[i]=$(echo "${AVG_TIME[i]} + $ELAPSED" | bc -ls);
+		done
+		AVG_TIME[i]=$(echo "${AVG_TIME[i]} / $NUM_ITERATIONS" | bc -ls);
+		echo "Average elapsed time: ${AVG_TIME[i]}" >> "${RESULTS_FILE}";
+		((++i));
+	done
+	
+	# Output the results.
+	echo "| Program | Avg of ${NUM_ITERATIONS} runs |";
+	echo "|---------|---------------|";
+	for ((i=0;i<${#CMD_LINE_ARRAY[@]}; ++i));
+	do
+		echo "| ${CMD_LINE_ARRAY[i]} | ${AVG_TIME[i]} |";
+	done
+}
+
+diff_prep_run_output()
+{
+	declare -a PREP_RUN_OUTPUT_FILENAMES;
+	PREP_RUN_OUTPUT_FILENAMES=("${!1}")
+	declare -a CMD_LINE_ARRAY;
+	CMD_LINE_ARRAY=("${!2}")
+	i=0;
+	
+	# Use the grep results as the standard.
+	GOLD_STD_FILE="${PREP_RUN_OUTPUT_FILENAMES[-1]}"
+	
+	for NAME in "${PREP_RUN_OUTPUT_FILENAMES[@]}";
+	do
+		#echo $NAME;
+		NUM_MATCHED_LINES[i]=$(cat "${NAME}" | tail -n +3 | wc -l );
+		WDIFF_OUT="$($PROG_WDIFF -123 -s  <(tail -n +3 "${GOLD_STD_FILE}") <(tail -n +3 "${NAME}") | tr -s ' ')";
+		# filename of second file now is field 13.
+		WORDS_COMMON=$(echo $WDIFF_OUT | cut -d' ' -f16);
+		WORDS_DELETED=$(echo $WDIFF_OUT | cut -d' ' -f19);
+		WORDS_COMMON_PCT[i]=$(echo $WDIFF_OUT | cut -d' ' -f17)
+		#echo "WDIFF_OUT = '${WDIFF_OUT}'";
+		((i++))
+	done;
+	
+	# diff -u0 <(tail -n +3 SearchResults_1.txt) <(tail -n +3 SearchResults_10.txt) | diffstat -Es
+	# Output will be:
+	# " 0 files changed"
+	# " 1 file changed, 19473 deletions(-)"
+	# wdiff -123 -s  <(tail -n +3 SearchResults_1.txt) <(tail -n +3 SearchResults_10.txt)
+	# Output will be:
+	# /dev/fd/63: 44357 words  44357 100% common  0 0% deleted  0 0% changed
+	# /dev/fd/62: 44357 words  44357 100% common  0 0% inserted  0 0% changed
+	# Or with empty file:
+	# /dev/fd/63: 44357 words  0 0% common  44357 100% deleted  0 0% changed
+	# /dev/fd/62: 0 words
+
+	echo "| Command line | Total matched lines count | Percent of output words common |";
+	echo "|--------------|---------------------------|--------------------------------|";
+	for ((i=0;i<${#CMD_LINE_ARRAY[@]}; ++i));
+	do
+		echo "| ${CMD_LINE_ARRAY[i]} | ${NUM_MATCHED_LINES[i]} | ${WORDS_COMMON_PCT[i]} |"
+	done
+
+}
+
+echo "here" >> $PERF_RESULTS_FILE
+
+
+declare -a VAR
+
+mkfifo cmd_line_pipe
+generate_cmdlines_ucgjobs_compare > cmd_line_pipe &
+echo here6 >> $PERF_RESULTS_FILE
+
+mapfile -t VAR < cmd_line_pipe
+
+echo here7 >> $PERF_RESULTS_FILE
+
+for V in "${VAR[@]}"; do
+	echo ">> $V";
+done
+
+run_test_cmdlines VAR[@]
+
+diff_prep_run_output PREP_RUN_FILES[@] VAR[@]
+}
+

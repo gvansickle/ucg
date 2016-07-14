@@ -89,11 +89,7 @@ AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
 TEST_DATA_FS_INFO=`get_dev_and_fs_type "${BOOST_PATH}"`
 AS_ECHO(["The test data \"${BOOST_PATH}\" is on filesystem $TEST_DATA_FS_INFO"]) >> $PERF_RESULTS_FILE
 
-TEST_GROUPS=("ucg" "grep")
-
-declare -A TEST_GROUP_TO_PROGS
-TEST_GROUP_TO_PROGS["ucg"]="./ucg"
-TEST_GROUP_TO_PROGS["grep"]="grep"
+perf_test_1
 
 AT_CLEANUP
 
