@@ -1,13 +1,11 @@
 ---
 layout: archive
-permalink: /categories/portability-pointers/
+permalink: /categories/portability-pointers/index.html
 title: "Portability Pointers"
 author_profile: true
 ---
 
 {% include base_path %}
-
-# Portability Pointers
 
 Some hints, tips, and things I've discovered in my efforts to write portable code in the 21st century.
 
@@ -19,12 +17,27 @@ your program, or to test your program, chances are it ain't portable.  And I'm j
 
 To wit:
 
+{% comment %}
+
 {% include group-by-array collection=site.posts field="categories" %}
 
-{% for category in "Portability Pointers" %}
-  {% assign posts = group_items[forloop.index0] %}
-  <h2 id="{{ category | slugify }}" class="archive__subtitle">{{ category }}</h2>
-  {% for post in posts %}
-    {% include archive-single.html %}
-  {% endfor %}
+{% assign category = "Portability Pointers" %}
+{% assign posts = group_items[0] %}
+<h2 id="{{ category | slugify }}" class="archive__subtitle">{{ category }}</h2>
+{% for post in posts %}
+  {% include archive-single.html %}
 {% endfor %}
+
+{% endcomment %}
+
+<!-- start index.html body -->
+{% include base_path %}
+
+<h3 class="archive__subtitle">Recent Posts</h3>
+
+{% for post in paginator.posts %}
+  {% include archive-single.html %}
+{% endfor %}
+
+{% include paginator.html %}
+<!-- end index.html body -->
