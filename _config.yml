@@ -194,7 +194,7 @@ defaults:
 # Outputting
 permalink: /:categories/:title/
 paginate: 2 # amount of posts to show
-paginate_path: "/portability-pointers/page:num/"
+paginate_path: "/portability_pointers/page:num/"
 timezone: # http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 
@@ -231,7 +231,7 @@ category_archive:
 tag_archive:
   type: liquid
   path: /tags/
-portability-pointers:
+portability_pointers:
   type: liquid
   path: /
 
