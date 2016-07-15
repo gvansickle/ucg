@@ -5,19 +5,18 @@ title: "Portability Pointers"
 author_profile: true
 ---
 
-{% include base_path %}
+<h3 class="archive__subtitle">Some hints, tips, and things I've discovered in my efforts to write portable code in the 21st century.</h3>
 
-Some hints, tips, and things I've discovered in my efforts to write portable code in the 21st century.
+<h2>The First Rule of Portability is: Nothing is Portable</h2>
 
-## The First Rule of Portability is: Nothing is Portable
-
-While it sounds like hyperbole (I mean, after all, this *is* the 21st century!  ...Right?), the fact of the matter is,
+<p>While it sounds like hyperbole (I mean, after all, this *is* the 21st century!  ...Right?), the fact of the matter is,
 virtually nothing is portable.  Ok, ok, maybe not _nothing_, but if you need to use it in your program, or to build
-your program, or to test your program, chances are it ain't portable.  And I'm just talking POSIX-oid platforms here.
+your program, or to test your program, chances are it ain't portable.  And I'm just talking POSIX-oid platforms here.</p>
 
 To wit:
 
 {% comment %}
+{% include base_path %}
 
 {% include group-by-array collection=site.posts field="categories" %}
 

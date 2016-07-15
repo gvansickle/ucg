@@ -1,6 +1,11 @@
 ---
 title:  "Welcome to Jekyll!"
 excerpt: "Post welcoming you to Jekyll"
+categories: 
+  - "Portability Pointers"
+  - Boilerplate
+tags:
+  - Welcome
 ---
 
 date:   2016-02-11 19:44:30 -0600
