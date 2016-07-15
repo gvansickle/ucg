@@ -193,8 +193,8 @@ defaults:
 
 # Outputting
 permalink: /:categories/:title/
-paginate: 5 # amount of posts to show
-paginate_path: categories/portability-pointers/page:num/
+paginate: 2 # amount of posts to show
+paginate_path: portability-pointers/page:num/
 timezone: # http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 
