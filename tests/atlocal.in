@@ -91,7 +91,10 @@ declare -a PREP_RUN_FILES
 run_test_cmdlines()
 {
 	declare -a CMD_LINE_ARRAY;
-	CMD_LINE_ARRAY=("${!1}")
+	##CMD_LINE_ARRAY=("${!1}")
+	
+	IFS=$'\n' read -d '' -r -a CMD_LINE_ARRAY < "${1}"
+	
 	i=0;
 	
 	echo "Start" >> "${RESULTS_FILE}"
@@ -186,16 +189,16 @@ awk -f $srcdir/performance_test_gen.awk > cmd_line_pipe &
 
 echo here6 >> $PERF_RESULTS_FILE
 
-mapfile -t VAR < cmd_line_pipe
+#mapfile -t VAR < cmd_line_pipe
 
 echo here7 >> $PERF_RESULTS_FILE
 
-for V in "${VAR[@]}"; do
-	echo ">> $V" >> "${RESULTS_FILE}";
-done
+#for V in "${VAR[@]}"; do
+#	echo ">> $V" >> "${RESULTS_FILE}";
+#done
 
-run_test_cmdlines VAR[@]
+run_test_cmdlines cmd_line_pipe ###VAR[@]
 
-diff_prep_run_output PREP_RUN_FILES[@] VAR[@]
+#diff_prep_run_output PREP_RUN_FILES[@] VAR[@]
 }
 
