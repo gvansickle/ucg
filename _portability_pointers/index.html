@@ -15,10 +15,10 @@ your program, or to test your program, chances are it ain't portable.  And I'm j
 
 To wit:
 
-{% comment %}
+
 {% include base_path %}
 
-{% include group-by-array collection=site.posts field="categories" %}
+{% include group-by-array collection=site.portability_pointers field="categories" %}
 
 {% assign category = "Portability Pointers" %}
 {% assign posts = group_items[0] %}
@@ -27,8 +27,9 @@ To wit:
   {% include archive-single.html %}
 {% endfor %}
 
-{% endcomment %}
 
+
+{% comment %}
 <!-- start index.html body -->
 {% include base_path %}
 
@@ -42,3 +43,5 @@ To wit:
 
 {% include paginator.html %}
 <!-- end index.html body -->
+
+{% endcomment %}
