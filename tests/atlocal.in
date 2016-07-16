@@ -78,30 +78,7 @@ perf_test_1()
 
 PROG_WDIFF=wdiff
 
-TEST_GROUPS=("ucg" "grep")
-
-declare -A TEST_GROUP_TO_PROGS
-TEST_GROUP_TO_PROGS["ucg"]="ucg"
-TEST_GROUP_TO_PROGS["grep"]="grep"
-
-declare -A TEST_GROUP_TO_PARAMS_PRE
-TEST_GROUP_TO_PARAMS_PRE["ucg"]="--noenv --cpp"
-TEST_GROUP_TO_PARAMS_PRE["grep"]="-Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx"
-
-declare -A PROG_TO_PARAMS_JOBS
-PROG_TO_PARAMS_JOBS["ucg"]="0 1 2 3 4"
-PROG_TO_PARAMS_JOBS["grep"]="0"
-
-declare -A PROG_TO_PARAMS_DIRJOBS
-PROG_TO_PARAMS_DIRJOBS["ucg"]="0 1 2 3 4"
-PROG_TO_PARAMS_DIRJOBS["grep"]="0"
-
-REGEX='BOOST.*HPP'
-#REGEX="TEST_BOOST_NO_INTRINSIC_WCHAR_T"
-
 RESULTS_FILE=$PERF_RESULTS_FILE
-echo "at_srcdir = $at_srcdir";
-TEST_DATA_DIR="${BOOST_PATH}"
 
 # Make time only output elapsed time in seconds.
 TIMEFORMAT=%R
