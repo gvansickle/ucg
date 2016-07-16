@@ -106,7 +106,7 @@ AT_CHECK([awk -f $srcdir/performance_test_gen.awk > cmdlines.txt], [0], [stdout]
 
 AT_CHECK([run_test_cmdlines cmdlines.txt], [0], [stdout], [stderr])
 
-perf_test_1
+###perf_test_1
 
 AT_CLEANUP
 

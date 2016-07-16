@@ -183,7 +183,7 @@ diff_prep_run_output()
 
 	echo "| Command line | Total matched lines count | Percent of output words common |" >> "${RESULTS_FILE}";
 	echo "|--------------|---------------------------|--------------------------------|" >> "${RESULTS_FILE}";
-	for ((i=0;i<${#CMD_LINE_ARRAY[@]}; ++i));
+	for i in `seq 0 $((${#CMD_LINE_ARRAY[@]} - 1))`;
 	do
 		echo "| ${CMD_LINE_ARRAY[i]} | ${NUM_MATCHED_LINES[i]} | ${WORDS_COMMON_PCT[i]} |" >> "${RESULTS_FILE}";
 	done
