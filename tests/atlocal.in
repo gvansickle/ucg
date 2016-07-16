@@ -73,13 +73,6 @@ ASX_SCRIPT ()
 	esac
 }
 
-perf_test_1()
-{
-
-PROG_WDIFF=wdiff
-
-RESULTS_FILE=$PERF_RESULTS_FILE
-
 # Make time only output elapsed time in seconds.
 TIMEFORMAT=%R
 
@@ -87,12 +80,13 @@ NUM_ITERATIONS=10
 
 declare -a AVG_TIME
 declare -a PREP_RUN_FILES
+RESULTS_FILE=$PERF_RESULTS_FILE
 
 run_test_cmdlines()
 {
 	declare -a CMD_LINE_ARRAY;
-	##CMD_LINE_ARRAY=("${!1}")
-	
+
+	# Load the command lines from the filename passed as arg 1.	
 	IFS=$'\n' read -d '' -r -a CMD_LINE_ARRAY < "${1}"
 	
 	i=0;
@@ -133,6 +127,23 @@ run_test_cmdlines()
 		echo "| ${CMD_LINE_ARRAY[i]} | ${AVG_TIME[i]} |" >> "${RESULTS_FILE}";
 	done
 }
+
+perf_test_1()
+{
+
+PROG_WDIFF=wdiff
+
+RESULTS_FILE=$PERF_RESULTS_FILE
+
+# Make time only output elapsed time in seconds.
+TIMEFORMAT=%R
+
+NUM_ITERATIONS=10
+
+declare -a AVG_TIME
+declare -a PREP_RUN_FILES
+
+
 
 diff_prep_run_output()
 {

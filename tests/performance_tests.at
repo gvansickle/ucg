@@ -102,7 +102,9 @@ AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
 TEST_DATA_FS_INFO=`get_dev_and_fs_type "${BOOST_PATH}"`
 AS_ECHO(["The test data \"${BOOST_PATH}\" is on filesystem $TEST_DATA_FS_INFO"]) >> $PERF_RESULTS_FILE
 
-AT_CHECK([awk -f $srcdir/performance_test_gen.awk > $abs_builddir/cmdlines.txt], [0], [stdout], [stderr])
+AT_CHECK([awk -f $srcdir/performance_test_gen.awk > cmdlines.txt], [0], [stdout], [stderr])
+
+AT_CHECK([run_test_cmdlines cmdlines.txt], [0], [stdout], [stderr])
 
 perf_test_1
 
