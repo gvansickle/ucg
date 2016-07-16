@@ -1,12 +1,17 @@
 
 # Determine the number of elements in an array.
-function alen (a, i)
+function alen (a, i, i_max)
 {
-  for (i in a);
-	return i+0
+	i_max = 0
+	for (i in a)
+	{
+		print("i=", i)
+		if (i+0 > i_max+0) i_max=i
+	}
+	return i_max+0
 }
 
-function adelete(a)
+function adelete(a,    i)
 {
 	# Delete all entries in array a.
 	for (i in a)
