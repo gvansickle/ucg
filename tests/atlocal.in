@@ -193,10 +193,10 @@ diff_prep_run_output()
 
 declare -a VAR
 
-mkfifo cmd_line_pipe
+#mkfifo cmd_line_pipe
 #generate_cmdlines_ucgjobs_compare > cmd_line_pipe &
-awk -f $srcdir/performance_test_gen.awk > $abs_builddir/cmdlines.txt
-awk -f $srcdir/performance_test_gen.awk > cmd_line_pipe &
+#awk -f $srcdir/performance_test_gen.awk > $abs_builddir/cmdlines.txt
+#awk -f $srcdir/performance_test_gen.awk > cmd_line_pipe &
 
 echo here6 >> $PERF_RESULTS_FILE
 
@@ -208,7 +208,7 @@ echo here7 >> $PERF_RESULTS_FILE
 #	echo ">> $V" >> "${RESULTS_FILE}";
 #done
 
-run_test_cmdlines cmd_line_pipe ###VAR[@]
+#run_test_cmdlines cmd_line_pipe ###VAR[@]
 
 #diff_prep_run_output PREP_RUN_FILES[@] VAR[@]
 }
