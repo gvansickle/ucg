@@ -23,7 +23,7 @@ function acopy(ain, aout,    i)
     
 	for (i=1; i <= alen(ain); i++ )
 	{
-		print("acopy: ", i, ain[i])
+		###print("acopy: ", i, ain[i])
 	    aout[i] = ain[i];
     }
     
@@ -41,7 +41,7 @@ function join_val_range(in_array, out_array, join_on_regex, regex_to_replace, pr
 		if(match(temp_entry, join_on_regex) == 0)
 		{
 			# No match, just pass this line through.
-			print("No join match, passthrough: ", temp_entry)
+			###print("No join match, passthrough: ", temp_entry)
 			out_array[out_i]=temp_entry
 			out_i++
 		}
@@ -57,7 +57,7 @@ function join_val_range(in_array, out_array, join_on_regex, regex_to_replace, pr
 				# There is a non-empty prefix (command-line option), so do a join with the values 1-max_val.
 				for (scan_jobs=1; scan_jobs <= 4; scan_jobs++ )
 				{
-					print("here", out_i, scan_jobs)
+					###print("here", out_i, scan_jobs)
 					temp_entry=in_array[in_i]
 					sub(regex_to_replace, prefix scan_jobs, temp_entry)
 					out_array[out_i]=temp_entry
@@ -91,7 +91,7 @@ BEGIN {
 	#REGEX="TEST_BOOST_NO_INTRINSIC_WCHAR_T"
 	TEST_DATA_DIR="${BOOST_PATH}"
 
-	print("Num test groups: ", alen(TEST_GROUPS))
+	### print("Num test groups: ", alen(TEST_GROUPS))
 	
 	COMMAND_LINE=""
 	cla_index=1
@@ -122,29 +122,18 @@ BEGIN {
 				cla_index++
 			}
 		}
-		#print(COMMAND_LINE)
 	}
 	
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
-
-	print("Printing CLA_COPY:")
-	for (i=1; i <= alen(CLA_COPY); i++ )
-	{
-		print(i, CLA_COPY[i])
-	}
-
 	join_val_range(CLA_COPY, CMD_LINE_ARRAY, "ucg", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ucg"], 4)
+	acopy(CMD_LINE_ARRAY, CLA_COPY)
+	join_val_range(CLA_COPY, CMD_LINE_ARRAY, "grep", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["grep"], 4)
 	
-	print("Printing command line array:")
-	for (ivb in CMD_LINE_ARRAY)
-	{
-		print(ivb, CMD_LINE_ARRAY[ivb])
-	}
+	###print("Printing command line array:")
 	cla_alen = alen(CMD_LINE_ARRAY)
-	print("alen(CMD_LINE_ARRAY): ", alen(CMD_LINE_ARRAY), cla_alen)
 	for ( i = 1; i <= cla_alen; i++ )
 	{
-		print(i, CMD_LINE_ARRAY[i])
+		print(CMD_LINE_ARRAY[i])
 	}
 }
 
