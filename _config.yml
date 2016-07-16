@@ -157,6 +157,9 @@ collections:
   docs:
     output: true
     permalink: /:collection/:path/
+  portability_pointers:
+    output: true
+    permalink: /:collection/:path/
 
 # Front Matter Defaults
 defaults:
@@ -190,11 +193,23 @@ defaults:
       comments: false
       sidebar:
         nav: "docs"
+    # _portability_pointers
+  - scope:
+      path: ""
+      type: portability_pointers
+    values:
+      layout: single
+      read_time: true
+      author_profile: true
+      share: true
+      comments: false
+      sidebar:
+        nav: "portability_pointers"
 
 # Outputting
 permalink: /:categories/:title/
 paginate: 2 # amount of posts to show
-paginate_path: "/portability_pointers/page:num/"
+paginate_path: "/page:num/"
 timezone: # http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 
@@ -233,7 +248,7 @@ tag_archive:
   path: /tags/
 portability_pointers:
   type: liquid
-  path: /
+  path: /portability_pointers/
 
 # https://github.com/jekyll/jekyll-archives
 # jekyll-archives:
