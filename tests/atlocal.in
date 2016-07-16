@@ -148,9 +148,9 @@ declare -a PREP_RUN_FILES
 diff_prep_run_output()
 {
 	declare -a PREP_RUN_OUTPUT_FILENAMES;
-	PREP_RUN_OUTPUT_FILENAMES=("${!1}")
+	#PREP_RUN_OUTPUT_FILENAMES=("${!1}")
 	declare -a CMD_LINE_ARRAY;
-	CMD_LINE_ARRAY=("${!2}")
+	#CMD_LINE_ARRAY=("${!2}")
 	i=0;
 	
 	# Use the grep results as the standard.
