@@ -5,7 +5,7 @@ function alen (a, i, i_max)
 	i_max = 0
 	for (i in a)
 	{
-		print("i=", i)
+		###print("i=", i)
 		if (i+0 > i_max+0) i_max=i
 	}
 	return i_max+0
