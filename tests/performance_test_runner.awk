@@ -95,7 +95,7 @@ BEGIN {
 		for(ITER=1; ITER <= NUM_ITERATIONS; ++ITER)
 		{
 			#{ REAL_TIME[$ITER]=$( { time ${PROG} ${PARAM_LIST[@]} ${REGEX} ${TEST_DATA_DIR} 1>&3- 2>&4-; } 2>&1 ); } 3>&1 4>&2;
-			wrapped_cmd_line=("{ REAL_TIME[" ITER "]=$( eval \"" COMMAND_LINE "\" 2>&1 ); } 3>&1 4>&2;");# echo \"${REAL_TIME[" ITER "]}\" >> " RESULTS_FILE ";");
+			wrapped_cmd_line=("{ REAL_TIME[" ITER "]=$( eval \"" COMMAND_LINE "\" 2>&1 ); } 3>&1 4>&2; echo \"${REAL_TIME[" ITER "]}\" >> " RESULTS_FILE ";");
 			system(wrapped_cmd_line);
 			print(wrapped_cmd_line);
 			# 
