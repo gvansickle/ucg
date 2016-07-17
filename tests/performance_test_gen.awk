@@ -76,7 +76,7 @@ function join_val_range(in_array, out_array, join_on_regex, regex_to_replace, pr
 			if (prefix != "")
 			{
 				# There is a non-empty prefix (command-line option), so do a join with the values 1-max_val.
-				for (scan_jobs=1; scan_jobs <= 4; scan_jobs++ )
+				for (scan_jobs=1; scan_jobs <= max_val; scan_jobs++ )
 				{
 					###print("here", out_i, scan_jobs)
 					temp_entry=in_array[in_i]
@@ -93,6 +93,17 @@ function join_val_range(in_array, out_array, join_on_regex, regex_to_replace, pr
 
 BEGIN {
 
+	if(ARGC != 3)
+	{
+		print("Incorrect number of args: ", ARGC) | "cat 1>&2"
+		exit 1
+	}
+	
+	# Get command line args.
+	REGEX=ARGV[1]
+	TEST_DATA_DIR=ARGV[2]
+	
+
 	TEST_GROUPS[1]="built_ucg"
 	TEST_GROUPS[2]="system_grep"
 	
@@ -107,10 +118,6 @@ BEGIN {
 	
 	PROG_TO_PARAMS_DIRJOBS["ucg"]="--dirjobs="
 	PROG_TO_PARAMS_DIRJOBS["grep"]=""
-	
-	REGEX="'BOOST.*HPP'"
-	#REGEX="TEST_BOOST_NO_INTRINSIC_WCHAR_T"
-	TEST_DATA_DIR="${BOOST_PATH}"
 
 	### print("Num test groups: ", alen(TEST_GROUPS))
 	
@@ -123,7 +130,7 @@ BEGIN {
 		PROG = TEST_GROUP_TO_PROGS[j]
 		dirjobs_option = PROG_TO_PARAMS_DIRJOBS[PROG]
 		scanjobs_option = PROG_TO_PARAMS_JOBS[PROG]
-		COMMAND_LINE = "{ time " PROG " " TEST_GROUP_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER " REGEX " " TEST_DATA_DIR " 1>&3- 2>&4-; }"
+		COMMAND_LINE = "{ time " PROG " " TEST_GROUP_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }"
 		
 		# Output the default "number of threads to use for scanning" command-line option (i.e. empty).
 		CL_COPY=COMMAND_LINE
@@ -146,9 +153,9 @@ BEGIN {
 	}
 	
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
-	join_val_range(CLA_COPY, CMD_LINE_ARRAY, "ucg", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ucg"], 4)
+	join_val_range(CLA_COPY, CMD_LINE_ARRAY, "time ucg", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ucg"], 4)
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
-	join_val_range(CLA_COPY, CMD_LINE_ARRAY, "grep", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["grep"], 4)
+	join_val_range(CLA_COPY, CMD_LINE_ARRAY, "time grep", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["grep"], 4)
 	
 	###print("Printing command line array:")
 	cla_alen = alen(CMD_LINE_ARRAY)

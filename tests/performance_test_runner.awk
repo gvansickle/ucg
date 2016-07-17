@@ -78,7 +78,6 @@ BEGIN {
 		COMMAND_LINE=CMD_LINE_ARRAY[i];
 		
 		###TEMP
-		sub(/\${BOOST_PATH}/, BOOST_PATH, COMMAND_LINE);
 		#COMMAND_LINE="\" COMMAND_LINE \"";
 		
 		
@@ -86,16 +85,18 @@ BEGIN {
 		# "Prep" run, to eliminate disk cache variability and capture the matches.
 		# We pipe the results through sort so we can diff these later. 
 		PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
-		print("Prep run for command line: '", COMMAND_LINE, "'") > PREP_RUN_FILES[i]; 
-		wrapped_cmd_line=("{ ( eval \"" COMMAND_LINE "\" 2>&1 ); } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
+		wrapped_cmd_line=("{ " COMMAND_LINE " 2>>" PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
+		print("Prep run for wrapped command line: '" wrapped_cmd_line "'") > PREP_RUN_FILES[i];
 		system(wrapped_cmd_line);
 		print(wrapped_cmd_line);
 	
 		# Timing runs.
+		TIME_RESULTS_FILE=("./time_results_" i ".txt");
+		wrapped_cmd_line=("{ " COMMAND_LINE " 2>>" TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
+		print("Timing run for wrapped command line: '" wrapped_cmd_line "'") > TIME_RESULTS_FILE;
 		for(ITER=1; ITER <= NUM_ITERATIONS; ++ITER)
 		{
 			#{ REAL_TIME[$ITER]=$( { time ${PROG} ${PARAM_LIST[@]} ${REGEX} ${TEST_DATA_DIR} 1>&3- 2>&4-; } 2>&1 ); } 3>&1 4>&2;
-			wrapped_cmd_line=("{ REAL_TIME[" ITER "]=$( eval \"" COMMAND_LINE "\" 2>&1 ); } 3>&1 4>&2; echo \"${REAL_TIME[" ITER "]}\" >> " RESULTS_FILE ";");
 			system(wrapped_cmd_line);
 			print(wrapped_cmd_line);
 			# 
