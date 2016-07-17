@@ -53,13 +53,15 @@ function acopy(ain, aout,    i)
 
 
 BEGIN {
-	if(ARGC != 2)
+	if(ARGC != 4)
 	{
 		print("Incorrect number of args: ", ARGC)
 		exit 1
 	}
 
 	NUM_ITERATIONS=10;
+	RESULTS_FILE=ARGV[2];
+	BOOST_PATH=ARGV[3];
 	
 	cur_line=0
 	while(getline < ARGV[1])
@@ -69,23 +71,34 @@ BEGIN {
 		#print "cur_line=", cur_line, $0
 	}
 	
-	print("Start");
+	print("Starting performance tests, results file is", RESULTS_FILE);
 	
 	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
 	{
 		COMMAND_LINE=CMD_LINE_ARRAY[i];
-		print("Trying: ", COMMAND_LINE);
+		
+		###TEMP
+		sub(/\${BOOST_PATH}/, BOOST_PATH, COMMAND_LINE);
+		#COMMAND_LINE="\" COMMAND_LINE \"";
+		
+		
+		print("Timing: ", COMMAND_LINE) >> RESULTS_FILE;
 		# "Prep" run, to eliminate disk cache variability and capture the matches.
 		# We pipe the results through sort so we can diff these later. 
 		PREP_RUN_FILES[i]="SearchResults_" i ".txt";
 		print("Prep run for command line: '", COMMAND_LINE, "'") > "SearchResults_" i ".txt"; 
-		# { ( eval "${COMMAND_LINE[@]}" 2>&1 ); } 3>&1 4>&2 | sort >> SearchResults_${i}.txt;
+		wrapped_cmd_line=("{ ( eval \"" COMMAND_LINE "\" 2>&1 ); } 3>&1 4>&2 | sort >> SearchResults_" i ".txt;");
+		system(wrapped_cmd_line);
+		print(wrapped_cmd_line);
 	
 		# Timing runs.
 		for(ITER=1; ITER <= NUM_ITERATIONS; ++ITER)
 		{
 			#{ REAL_TIME[$ITER]=$( { time ${PROG} ${PARAM_LIST[@]} ${REGEX} ${TEST_DATA_DIR} 1>&3- 2>&4-; } 2>&1 ); } 3>&1 4>&2;
-			system("{ REAL_TIME[$ITER]=$( eval ${COMMAND_LINE} 2>&1 ); } 3>&1 4>&2;");
+			wrapped_cmd_line=("{ REAL_TIME[" ITER "]=$( eval \"" COMMAND_LINE "\" 2>&1 ); } 3>&1 4>&2;");# echo \"${REAL_TIME[" ITER "]}\" >> " RESULTS_FILE ";");
+			system(wrapped_cmd_line);
+			print(wrapped_cmd_line);
+			# 
 			#echo "${REAL_TIME[$ITER]}" >> "${RESULTS_FILE}";
 			REAL_TIME[ITER]=0.5;
 		}
@@ -98,14 +111,14 @@ BEGIN {
 			AVG_TIME[i]=(AVG_TIME[i] + ELAPSED);
 		}
 		AVG_TIME[i]=(AVG_TIME[i] / NUM_ITERATIONS);
-		print("Average elapsed time: ${AVG_TIME[i]}") >> "${RESULTS_FILE}";
+		print("Average elapsed time:", AVG_TIME[i]) >> RESULTS_FILE;
 	}
 	
 	# Output the results.
-#	echo "| Program | Avg of ${NUM_ITERATIONS} runs |" >> "${RESULTS_FILE}";
-#	echo "|---------|---------------|" >> "${RESULTS_FILE}";
-#	for i in `seq 0 $((${#CMD_LINE_ARRAY[@]} - 1))`; ### ((i=0;i<${#CMD_LINE_ARRAY[@]}; ++i));
-#	do
-#		echo "| ${CMD_LINE_ARRAY[i]} | ${AVG_TIME[i]} |" >> "${RESULTS_FILE}";
-#	done
+	print("| Program | Avg of", NUM_ITERATIONS, "runs |") >> RESULTS_FILE;
+	print("|---------|---------------|") >> RESULTS_FILE;
+	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
+	{
+		print("|", CMD_LINE_ARRAY[i], "|", AVG_TIME[i], "|") >> RESULTS_FILE;
+	}
 }
