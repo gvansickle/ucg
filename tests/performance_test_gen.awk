@@ -130,7 +130,7 @@ BEGIN {
 		PROG = TEST_GROUP_TO_PROGS[j]
 		dirjobs_option = PROG_TO_PARAMS_DIRJOBS[PROG]
 		scanjobs_option = PROG_TO_PARAMS_JOBS[PROG]
-		COMMAND_LINE = "{ time " PROG " " TEST_GROUP_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }"
+		COMMAND_LINE = "{ time -p " PROG " " TEST_GROUP_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }"
 		
 		# Output the default "number of threads to use for scanning" command-line option (i.e. empty).
 		CL_COPY=COMMAND_LINE
@@ -153,9 +153,9 @@ BEGIN {
 	}
 	
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
-	join_val_range(CLA_COPY, CMD_LINE_ARRAY, "time ucg", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ucg"], 4)
+	join_val_range(CLA_COPY, CMD_LINE_ARRAY, " ucg ", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ucg"], 4)
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
-	join_val_range(CLA_COPY, CMD_LINE_ARRAY, "time grep", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["grep"], 4)
+	join_val_range(CLA_COPY, CMD_LINE_ARRAY, " grep ", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["grep"], 4)
 	
 	###print("Printing command line array:")
 	cla_alen = alen(CMD_LINE_ARRAY)
