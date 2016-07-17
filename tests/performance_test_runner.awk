@@ -80,19 +80,21 @@ BEGIN {
 		###TEMP
 		#COMMAND_LINE="\" COMMAND_LINE \"";
 		
+		TIME_FORMAT="real %e\\nuser %U\\nsys %S\\n"
+		
 		
 		print("Timing: ", COMMAND_LINE) >> RESULTS_FILE;
 		# "Prep" run, to eliminate disk cache variability and capture the matches.
 		# We pipe the results through sort so we can diff these later. 
 		PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
-		wrapped_cmd_line=("{ " COMMAND_LINE " 2>>" PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
+		wrapped_cmd_line=("{ export TIME='" TIME_FORMAT "'; export TIMEFORMAT='%R'; " COMMAND_LINE " 2>>" PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
 		print("Prep run for wrapped command line: '" wrapped_cmd_line "'") > PREP_RUN_FILES[i];
 		system(wrapped_cmd_line);
 		print(wrapped_cmd_line);
 	
 		# Timing runs.
 		TIME_RESULTS_FILE=("./time_results_" i ".txt");
-		wrapped_cmd_line=("{ " COMMAND_LINE " 2>>" TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
+		wrapped_cmd_line=("{ export TIME='" TIME_FORMAT "'; export TIMEFORMAT='%R'; " COMMAND_LINE " 2>>" TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
 		print("Timing run for wrapped command line: '" wrapped_cmd_line "'") > TIME_RESULTS_FILE;
 		for(ITER=1; ITER <= NUM_ITERATIONS; ++ITER)
 		{
@@ -101,7 +103,26 @@ BEGIN {
 			print(wrapped_cmd_line);
 			# 
 			#echo "${REAL_TIME[$ITER]}" >> "${RESULTS_FILE}";
-			REAL_TIME[ITER]=0.5;
+			#REAL_TIME[ITER]=0.5;
+		}
+		
+		# Retrieve the timing data.
+		adelete(REAL_TIME);
+		REAL_TIME[1]=0;
+		NUM_TIMES=0;
+		while((getline < (TIME_RESULTS_FILE)) > 0)
+		{
+			if($1 == "real")
+			{
+				NUM_TIMES += 1;
+				REAL_TIME[NUM_TIMES] += $2;
+				print("Time entry: " REAL_TIME[NUM_TIMES]) >> RESULTS_FILE;
+			}
+		}
+		if(NUM_TIMES > NUM_ITERATIONS)
+		{
+			print("ERROR: Too many time entries: " NUM_TIMES);
+			exit 1;
 		}
 	
 		# Determine the average.
