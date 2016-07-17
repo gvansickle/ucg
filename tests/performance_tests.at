@@ -104,7 +104,7 @@ AS_ECHO(["The test data \"${BOOST_PATH}\" is on filesystem $TEST_DATA_FS_INFO"])
 
 AT_CHECK([awk -f $srcdir/performance_test_gen.awk 'BOOST.*HPP' "${BOOST_PATH}" > ./cmdlines.txt], [0], [stdout], [stderr])
 
-AT_CHECK([awk -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt $PERF_RESULTS_FILE "${BOOST_PATH}"], [0], [stdout], [stderr])
+AT_CHECK([awk -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt $PERF_RESULTS_FILE "${BOOST_PATH}"], [0], [stdout-nolog], [stderr])
 
 ###REGEX="TEST_BOOST_NO_INTRINSIC_WCHAR_T"
 ###perf_test_1
