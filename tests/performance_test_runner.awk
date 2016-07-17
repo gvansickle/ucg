@@ -85,9 +85,9 @@ BEGIN {
 		print("Timing: ", COMMAND_LINE) >> RESULTS_FILE;
 		# "Prep" run, to eliminate disk cache variability and capture the matches.
 		# We pipe the results through sort so we can diff these later. 
-		PREP_RUN_FILES[i]="SearchResults_" i ".txt";
-		print("Prep run for command line: '", COMMAND_LINE, "'") > "SearchResults_" i ".txt"; 
-		wrapped_cmd_line=("{ ( eval \"" COMMAND_LINE "\" 2>&1 ); } 3>&1 4>&2 | sort >> SearchResults_" i ".txt;");
+		PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
+		print("Prep run for command line: '", COMMAND_LINE, "'") > PREP_RUN_FILES[i]; 
+		wrapped_cmd_line=("{ ( eval \"" COMMAND_LINE "\" 2>&1 ); } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
 		system(wrapped_cmd_line);
 		print(wrapped_cmd_line);
 	
