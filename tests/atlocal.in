@@ -84,10 +84,20 @@ RESULTS_FILE=$PERF_RESULTS_FILE
 
 run_test_cmdlines()
 {
-	declare -a CMD_LINE_ARRAY;
+	# For faking arrays in POSIX sh.
+	CMD_LINE_ARRAY='CMD_LINE_ARRAY';
 
-	# Load the command lines from the filename passed as arg 1.	
-	IFS=$'\n' read -d '' -r -a CMD_LINE_ARRAY < "${1}"
+	# Load the command lines from the filename passed as arg 1.
+	i=0;
+	cat "${1}" | while IFS=$'\n' read line; do
+	  eval ${CMD_LINE_ARRAY}${i}="'${line}
+	  '";
+	  content=$(echo $(eval echo \$$CMD_LINE_ARRAY${i}));
+	  echo "XXX: $content";
+	  echo ">>>x $line";
+	  echo $i;
+	  i=$((i+1));
+	done
 	
 	i=0;
 	
@@ -116,7 +126,7 @@ run_test_cmdlines()
 		done
 		AVG_TIME[i]=$(echo "${AVG_TIME[i]} / $NUM_ITERATIONS" | bc -ls);
 		echo "Average elapsed time: ${AVG_TIME[i]}" >> "${RESULTS_FILE}";
-		((++i));
+		i=$((i+1));
 	done
 	
 	# Output the results.
@@ -160,7 +170,7 @@ diff_prep_run_output()
 	do
 		#echo $NAME;
 		NUM_MATCHED_LINES[i]=$(cat "${NAME}" | tail -n +3 | wc -l );
-		WDIFF_OUT="$($PROG_WDIFF -123 -s  <(tail -n +3 "${GOLD_STD_FILE}") <(tail -n +3 "${NAME}") | tr -s ' ')";
+		###WDIFF_OUT="$($PROG_WDIFF -123 -s  <(tail -n +3 "${GOLD_STD_FILE}") <(tail -n +3 "${NAME}") | tr -s ' ')";
 		# filename of second file now is field 13.
 		WORDS_COMMON=$(echo $WDIFF_OUT | cut -d' ' -f16);
 		WORDS_DELETED=$(echo $WDIFF_OUT | cut -d' ' -f19);
