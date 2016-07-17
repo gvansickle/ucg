@@ -46,6 +46,7 @@ after_success:
  - tar xjf boost_1_58_0.tar.bz2
  - cd ucg/build
  - make check #TESTSUITEFLAGS='-v -d -x'
+ - cat tests/testsuite.log
  - cat tests/perf_test_results.txt
  - #./ucg --cpp 'endif' ..
  - #./ucg --cpp 'endif' ../
