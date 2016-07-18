@@ -144,7 +144,7 @@ AS_IF([test "$LN_S" == 'ln -s'],
 AC_CACHE_CHECK([for suitable time command], [ac_cv_path_PROG_TIME],
 	[AC_PATH_PROGS_FEATURE_CHECK([PROG_TIME], [time],
 		[for posix_option in '' '-p'; do
-	   			timeout=`$ac_path_PROG_TIME $posix_option echo hello 2>&1 | awk '/real/ {print $2}' 2> /dev/null`
+	   			timeout=`{ $ac_path_PROG_TIME $posix_option echo hello ; } 2>&1 | grep -E 'real[^0123456789]+[0123456789\.]+$'`
 	    	test "x$timeout" != x \
 	    	&& ac_cv_path_PROG_TIME="$ac_path_PROG_TIME $posix_option" ac_path_PROG_TIME_found=: && break
 			done;],
