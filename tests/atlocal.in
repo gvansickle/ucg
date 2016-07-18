@@ -83,61 +83,6 @@ declare -a AVG_TIME
 declare -a PREP_RUN_FILES
 RESULTS_FILE=$PERF_RESULTS_FILE
 
-run_test_cmdlines()
-{
-	# For faking arrays in POSIX sh.
-	CMD_LINE_ARRAY='CMD_LINE_ARRAY';
-
-	# Load the command lines from the filename passed as arg 1.
-	i=0;
-	cat "${1}" | while IFS=$'\n' read line; do
-	  eval ${CMD_LINE_ARRAY}${i}="'${line}
-	  '";
-	  content=$(echo $(eval echo \$$CMD_LINE_ARRAY${i}));
-	  echo "XXX: $content";
-	  echo ">>>x $line";
-	  echo $i;
-	  i=$((i+1));
-	done
-	
-	i=0;
-	
-	echo "Start" >> "${RESULTS_FILE}"
-	
-	for COMMAND_LINE in "${CMD_LINE_ARRAY[@]}";
-	do
-		echo "Trying: $COMMAND_LINE" >> "${RESULTS_FILE}";
-		# "Prep" run, to eliminate disk cache variability and capture the matches.
-		# We pipe the results through sort so we can diff these later. 
-		PREP_RUN_FILES[$i]="SearchResults_${i}.txt"
-		echo "Prep run for command line: '${COMMAND_LINE}'" > SearchResults_${i}.txt; 
-		{ ( eval "${COMMAND_LINE[@]}" 2>&1 ); } 3>&1 4>&2 | sort >> SearchResults_${i}.txt;
-	
-		# Timing runs.
-		for ITER in `seq 0 $(($NUM_ITERATIONS - 1))`; do
-			#{ REAL_TIME[$ITER]=$( { time ${PROG} ${PARAM_LIST[@]} ${REGEX} ${TEST_DATA_DIR} 1>&3- 2>&4-; } 2>&1 ); } 3>&1 4>&2;
-			{ REAL_TIME[$ITER]=$( eval ${COMMAND_LINE} 2>&1 ); } 3>&1 4>&2;
-			echo "${REAL_TIME[$ITER]}" >> "${RESULTS_FILE}";
-		done
-	
-		# Determine the average.
-		AVG_TIME[i]=0;
-		for ELAPSED in ${REAL_TIME[@]}; do
-			AVG_TIME[i]=$(echo "${AVG_TIME[i]} + $ELAPSED" | bc -ls);
-		done
-		AVG_TIME[i]=$(echo "${AVG_TIME[i]} / $NUM_ITERATIONS" | bc -ls);
-		echo "Average elapsed time: ${AVG_TIME[i]}" >> "${RESULTS_FILE}";
-		i=$((i+1));
-	done
-	
-	# Output the results.
-	echo "| Program | Avg of ${NUM_ITERATIONS} runs |" >> "${RESULTS_FILE}";
-	echo "|---------|---------------|" >> "${RESULTS_FILE}";
-	for i in `seq 0 $((${#CMD_LINE_ARRAY[@]} - 1))`; ### ((i=0;i<${#CMD_LINE_ARRAY[@]}; ++i));
-	do
-		echo "| ${CMD_LINE_ARRAY[i]} | ${AVG_TIME[i]} |" >> "${RESULTS_FILE}";
-	done
-}
 
 perf_test_1()
 {
@@ -201,25 +146,6 @@ diff_prep_run_output()
 
 }
 
-
-declare -a VAR
-
-#mkfifo cmd_line_pipe
-#generate_cmdlines_ucgjobs_compare > cmd_line_pipe &
-#awk -f $srcdir/performance_test_gen.awk > $abs_builddir/cmdlines.txt
-#awk -f $srcdir/performance_test_gen.awk > cmd_line_pipe &
-
-echo here6 >> $PERF_RESULTS_FILE
-
-#mapfile -t VAR < cmd_line_pipe
-
-echo here7 >> $PERF_RESULTS_FILE
-
-#for V in "${VAR[@]}"; do
-#	echo ">> $V" >> "${RESULTS_FILE}";
-#done
-
-#run_test_cmdlines cmd_line_pipe ###VAR[@]
 
 #diff_prep_run_output PREP_RUN_FILES[@] VAR[@]
 }
