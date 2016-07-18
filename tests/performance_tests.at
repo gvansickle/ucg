@@ -80,7 +80,7 @@ AT_CLEANUP
 ###
 ### Improved performance comparison.
 ###
-AT_SETUP([New Perf Comp])
+AT_SETUP([ucg vs. grep, 'BOOST.*HPP' on Boost source])
 
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])

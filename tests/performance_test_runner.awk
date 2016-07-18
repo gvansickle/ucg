@@ -70,6 +70,7 @@ BEGIN {
 		CMD_LINE_ARRAY[cur_line]=$0;
 		#print "cur_line=", cur_line, $0
 	}
+	close(ARGV[1])
 	
 	print("Starting performance tests, results file is", RESULTS_FILE);
 	
@@ -87,14 +88,15 @@ BEGIN {
 		# "Prep" run, to eliminate disk cache variability and capture the matches.
 		# We pipe the results through sort so we can diff these later. 
 		PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
-		wrapped_cmd_line=("{ export TIME='" TIME_FORMAT "'; export TIMEFORMAT='%R'; " COMMAND_LINE " 2>>" PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
+		wrapped_cmd_line=("{ " COMMAND_LINE " 2>>" PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
 		print("Prep run for wrapped command line: '" wrapped_cmd_line "'") > PREP_RUN_FILES[i];
 		system(wrapped_cmd_line);
 		print(wrapped_cmd_line);
+		close(PREP_RUN_FILES[i]);
 	
 		# Timing runs.
 		TIME_RESULTS_FILE=("./time_results_" i ".txt");
-		wrapped_cmd_line=("{ export TIME='" TIME_FORMAT "'; export TIMEFORMAT='%R'; " COMMAND_LINE " 2>>" TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
+		wrapped_cmd_line=("{ " COMMAND_LINE " 2>>" TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
 		print("Timing run for wrapped command line: '" wrapped_cmd_line "'") > TIME_RESULTS_FILE;
 		for(ITER=1; ITER <= NUM_ITERATIONS; ++ITER)
 		{
@@ -124,6 +126,7 @@ BEGIN {
 			print("ERROR: Too many time entries: " NUM_TIMES);
 			exit 1;
 		}
+		close(TIME_RESULTS_FILE);
 	
 		# Determine the average.
 		AVG_TIME[i]=0;
