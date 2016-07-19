@@ -103,6 +103,15 @@ BEGIN {
 	REGEX=ARGV[1]
 	TEST_DATA_DIR=ARGV[2]
 	
+		
+	# Pick up a usable "time" program from the environment, the testsuite should have put it there.
+	PROG_TIME=ENVIRON["PROG_TIME"]
+	if(PROG_TIME == "")
+	{
+		print("ERROR: env var $PROG_TIME is not set.");
+		exit 1;
+	}
+	
 
 	TEST_GROUPS[1]="built_ucg"
 	TEST_GROUPS[2]="system_grep"
@@ -130,7 +139,7 @@ BEGIN {
 		PROG = TEST_GROUP_TO_PROGS[j]
 		dirjobs_option = PROG_TO_PARAMS_DIRJOBS[PROG]
 		scanjobs_option = PROG_TO_PARAMS_JOBS[PROG]
-		COMMAND_LINE = "{ time -p " PROG " " TEST_GROUP_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }"
+		COMMAND_LINE=("{ " PROG_TIME " " PROG " " TEST_GROUP_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }")
 		
 		# Output the default "number of threads to use for scanning" command-line option (i.e. empty).
 		CL_COPY=COMMAND_LINE

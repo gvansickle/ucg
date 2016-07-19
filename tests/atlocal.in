@@ -53,7 +53,7 @@ PROG_SCRIPT_POST_TEXT="@PROG_SCRIPT_POST_TEXT@"
 ESED="@ESED@"
 MKDIR_P="@MKDIR_P@"
 TEST_LN_S="@TEST_LN_S@"
-PROG_TIME="@PROG_TIME@"
+export PROG_TIME="@PROG_TIME@"
 
 ### Functions for use in the testsuite.
 

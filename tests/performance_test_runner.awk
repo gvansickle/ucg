@@ -78,15 +78,9 @@ BEGIN {
 	{
 		COMMAND_LINE=CMD_LINE_ARRAY[i];
 		
-		###TEMP
-		#COMMAND_LINE="\" COMMAND_LINE \"";
-		
-		TIME_FORMAT="real %e\\nuser %U\\nsys %S\\n"
-		
-		
-		print("Timing: ", COMMAND_LINE) >> RESULTS_FILE;
 		# "Prep" run, to eliminate disk cache variability and capture the matches.
-		# We pipe the results through sort so we can diff these later. 
+		# We pipe the results through sort so we can diff these later.
+		print("Timing: ", COMMAND_LINE) >> RESULTS_FILE;
 		PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
 		wrapped_cmd_line=("{ " COMMAND_LINE " 2>>" PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
 		print("Prep run for wrapped command line: '" wrapped_cmd_line "'") > PREP_RUN_FILES[i];
@@ -100,12 +94,9 @@ BEGIN {
 		print("Timing run for wrapped command line: '" wrapped_cmd_line "'") > TIME_RESULTS_FILE;
 		for(ITER=1; ITER <= NUM_ITERATIONS; ++ITER)
 		{
-			#{ REAL_TIME[$ITER]=$( { time ${PROG} ${PARAM_LIST[@]} ${REGEX} ${TEST_DATA_DIR} 1>&3- 2>&4-; } 2>&1 ); } 3>&1 4>&2;
+			# Do a single run.
 			system(wrapped_cmd_line);
 			print(wrapped_cmd_line);
-			# 
-			#echo "${REAL_TIME[$ITER]}" >> "${RESULTS_FILE}";
-			#REAL_TIME[ITER]=0.5;
 		}
 		
 		# Retrieve the timing data.
@@ -130,20 +121,33 @@ BEGIN {
 	
 		# Determine the average.
 		AVG_TIME[i]=0;
+		SAMPLE_STD_DEV[i]=0;
+		SEM[i]=0;
 		for (j=1; j <= alen(REAL_TIME); ++j)
 		{
 			ELAPSED=REAL_TIME[j];
 			AVG_TIME[i]=(AVG_TIME[i] + ELAPSED);
 		}
 		AVG_TIME[i]=(AVG_TIME[i] / NUM_ITERATIONS);
-		print("Average elapsed time:", AVG_TIME[i]) >> RESULTS_FILE;
+		# Calculate the sample std deviation and the standard error of the mean (SEM).
+		# https://en.wikipedia.org/wiki/Standard_error#Standard_error_of_the_mean
+		for(j=1; j <= alen(REAL_TIME); ++j)
+		{
+			# sample std dev is sqrt((sum of squared deviations from mean)/(N-1))
+			SAMPLE_STD_DEV[i] += (AVG_TIME[i] - REAL_TIME[j])^2;
+		}
+		SAMPLE_STD_DEV[i] = sqrt(SAMPLE_STD_DEV[i]/(NUM_TIMES-1));
+		SEM[i] = SAMPLE_STD_DEV[i]/sqrt(NUM_TIMES);
+		print("Average elapsed time      :", AVG_TIME[i]) >> RESULTS_FILE;
+		print("Sample stddev             :", SAMPLE_STD_DEV[i]) >> RESULTS_FILE;
+		print("Standard Error of the Mean:", SEM[i]) >> RESULTS_FILE;
 	}
 	
 	# Output the results.
-	print("| Program | Avg of", NUM_ITERATIONS, "runs |") >> RESULTS_FILE;
-	print("|---------|---------------|") >> RESULTS_FILE;
+	print("| Program | Avg of", NUM_ITERATIONS, "runs | Sample Stddev | SEM |") >> RESULTS_FILE;
+	print("|---------|----------------|---------------|-----|") >> RESULTS_FILE;
 	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
 	{
-		print("|", CMD_LINE_ARRAY[i], "|", AVG_TIME[i], "|") >> RESULTS_FILE;
+		print("|", CMD_LINE_ARRAY[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|") >> RESULTS_FILE;
 	}
 }
