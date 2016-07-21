@@ -51,6 +51,19 @@ function acopy(ain, aout,    i)
     return 0
 }
 
+# Return a count of the number of lines in the given text file.
+function line_count(filename,	cmd_line)
+{
+	retval=0;
+	cmd_line=("cat " filename " | tail -n +3 | wc -l");
+	while((cmd_line | getline retval) > 0)
+	{
+		# Keep reading.
+	}
+	close(cmd_line);
+	return retval;
+}
+
 
 BEGIN {
 	if(ARGC != 4)
@@ -143,11 +156,20 @@ BEGIN {
 		print("Standard Error of the Mean:", SEM[i]) >> RESULTS_FILE;
 	}
 	
-	# Output the results.
-	print("| Program | Avg of", NUM_ITERATIONS, "runs | Sample Stddev | SEM |") >> RESULTS_FILE;
-	print("|---------|----------------|---------------|-----|") >> RESULTS_FILE;
+	# Determine any differences in the outputs.
+	# Use the grep results (last) as the standard.
+	GREP_OUT_INDEX=alen(CMD_LINE_ARRAY);
+	GOLD_STD_FILE=(PREP_RUN_FILES[GREP_OUT_INDEX])
 	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
 	{
-		print("|", CMD_LINE_ARRAY[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|") >> RESULTS_FILE;
+		NUM_MATCHED_LINES[i]=line_count(PREP_RUN_FILES[i]);
+	}
+	
+	# Output the results.
+	print("| Program | Avg of", NUM_ITERATIONS, "runs | Sample Stddev | SEM | Num Matched Lines |") >> RESULTS_FILE;
+	print("|---------|----------------|---------------|-----|-------------------|") >> RESULTS_FILE;
+	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
+	{
+		print("|", CMD_LINE_ARRAY[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|", NUM_MATCHED_LINES[i], "|") >> RESULTS_FILE;
 	}
 }
