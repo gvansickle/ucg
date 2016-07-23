@@ -52,7 +52,7 @@ function acopy(ain, aout,    i)
 }
 
 # Return a count of the number of lines in the given text file.
-function line_count(filename,	cmd_line)
+function line_count(filename,	cmd_line, retval)
 {
 	retval=0;
 	cmd_line=("cat " filename " | tail -n +3 | wc -l");
