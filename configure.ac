@@ -134,6 +134,7 @@ AS_IF([$PROG_SCRIPT -qfc "echo hello" /dev/null > /dev/null 2>&1],
       [AC_MSG_ERROR([could not determine how to invoke $PROG_SCRIPT])])
 
 AC_PROG_MKDIR_P
+AC_PROG_AWK
 AC_PROG_LN_S
 AS_IF([test "$LN_S" == 'ln -s'],
 	[AC_SUBST([TEST_LN_S], [$LN_S])],
