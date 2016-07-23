@@ -111,6 +111,8 @@ BEGIN {
 		print("ERROR: env var $PROG_TIME is not set.");
 		exit 1;
 	}
+	### @todo
+	###PROG_TIME=("/usr/bin/time -f 'real %e\\npct_cpu %P\\ntimed_cmd_line %C\\n'");
 	
 
 	TEST_GROUPS[1]="built_ucg"

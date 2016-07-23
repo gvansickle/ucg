@@ -98,7 +98,7 @@ BEGIN {
 		wrapped_cmd_line=("{ " COMMAND_LINE " 2>>" PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
 		print("Prep run for wrapped command line: '" wrapped_cmd_line "'") > PREP_RUN_FILES[i];
 		system(wrapped_cmd_line);
-		print(wrapped_cmd_line);
+		###print(wrapped_cmd_line);
 		close(PREP_RUN_FILES[i]);
 	
 		# Timing runs.
@@ -109,7 +109,7 @@ BEGIN {
 		{
 			# Do a single run.
 			system(wrapped_cmd_line);
-			print(wrapped_cmd_line);
+			###print(wrapped_cmd_line);
 		}
 		
 		# Retrieve the timing data.
