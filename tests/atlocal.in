@@ -50,10 +50,13 @@ PROG_SCRIPT="@PROG_SCRIPT@"
 PROG_SCRIPT_TYPE="@PROG_SCRIPT_TYPE@"
 PROG_SCRIPT_PRE_TEXT="@PROG_SCRIPT_PRE_TEXT@"
 PROG_SCRIPT_POST_TEXT="@PROG_SCRIPT_POST_TEXT@"
-ESED="@ESED@"
-MKDIR_P="@MKDIR_P@"
-TEST_LN_S="@TEST_LN_S@"
+export SED="@SED@"
+export ESED="@ESED@"
+export MKDIR_P="@MKDIR_P@"
+export TEST_LN_S="@TEST_LN_S@"
 export PROG_TIME="@PROG_TIME@"
+export FGREP="@FGREP@"
+export EGREP="@EGREP@"
 export AWK="@AWK@"
 
 ### Functions for use in the testsuite.
@@ -62,7 +65,7 @@ get_dev_and_fs_type()
 {
 	# Get, in as portable a way as possible, the device and filesystem type on which the
 	# file passed in $1 resides.
-	mount | fgrep -w "`df \"$1\" | grep '%' | sed -e 's/.*% *//'`"
+	mount | $FGREP -w "`df \"$1\" | grep '%' | $SED -e 's/.*% *//'`"
 }
 
 ASX_SCRIPT ()
@@ -76,68 +79,4 @@ ASX_SCRIPT ()
 }
 
 
-declare -a PREP_RUN_FILES
-RESULTS_FILE=$PERF_RESULTS_FILE
-
-
-perf_test_1()
-{
-
-PROG_WDIFF=wdiff
-
-RESULTS_FILE=$PERF_RESULTS_FILE
-
-
-declare -a PREP_RUN_FILES
-
-
-
-diff_prep_run_output()
-{
-	declare -a PREP_RUN_OUTPUT_FILENAMES;
-	#PREP_RUN_OUTPUT_FILENAMES=("${!1}")
-	declare -a CMD_LINE_ARRAY;
-	#CMD_LINE_ARRAY=("${!2}")
-	i=0;
-	
-	# Use the grep results as the standard.
-	GOLD_STD_FILE="${PREP_RUN_OUTPUT_FILENAMES[-1]}"
-	
-	for NAME in "${PREP_RUN_OUTPUT_FILENAMES[@]}";
-	do
-		#echo $NAME;
-		NUM_MATCHED_LINES[i]=$(cat "${NAME}" | tail -n +3 | wc -l );
-		###WDIFF_OUT="$($PROG_WDIFF -123 -s  <(tail -n +3 "${GOLD_STD_FILE}") <(tail -n +3 "${NAME}") | tr -s ' ')";
-		# filename of second file now is field 13.
-		WORDS_COMMON=$(echo $WDIFF_OUT | cut -d' ' -f16);
-		WORDS_DELETED=$(echo $WDIFF_OUT | cut -d' ' -f19);
-		WORDS_COMMON_PCT[i]=$(echo $WDIFF_OUT | cut -d' ' -f17)
-		#echo "WDIFF_OUT = '${WDIFF_OUT}'";
-		((i++))
-	done;
-	
-	# diff -u0 <(tail -n +3 SearchResults_1.txt) <(tail -n +3 SearchResults_10.txt) | diffstat -Es
-	# Output will be:
-	# " 0 files changed"
-	# " 1 file changed, 19473 deletions(-)"
-	# wdiff -123 -s  <(tail -n +3 SearchResults_1.txt) <(tail -n +3 SearchResults_10.txt)
-	# Output will be:
-	# /dev/fd/63: 44357 words  44357 100% common  0 0% deleted  0 0% changed
-	# /dev/fd/62: 44357 words  44357 100% common  0 0% inserted  0 0% changed
-	# Or with empty file:
-	# /dev/fd/63: 44357 words  0 0% common  44357 100% deleted  0 0% changed
-	# /dev/fd/62: 0 words
-
-	echo "| Command line | Total matched lines count | Percent of output words common |" >> "${RESULTS_FILE}";
-	echo "|--------------|---------------------------|--------------------------------|" >> "${RESULTS_FILE}";
-	for i in `seq 0 $((${#CMD_LINE_ARRAY[@]} - 1))`;
-	do
-		echo "| ${CMD_LINE_ARRAY[i]} | ${NUM_MATCHED_LINES[i]} | ${WORDS_COMMON_PCT[i]} |" >> "${RESULTS_FILE}";
-	done
-
-}
-
-
-#diff_prep_run_output PREP_RUN_FILES[@] VAR[@]
-}
 

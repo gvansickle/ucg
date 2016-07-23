@@ -134,6 +134,8 @@ AS_IF([$PROG_SCRIPT -qfc "echo hello" /dev/null > /dev/null 2>&1],
       [AC_MSG_ERROR([could not determine how to invoke $PROG_SCRIPT])])
 
 AC_PROG_MKDIR_P
+AC_PROG_EGREP
+AC_PROG_FGREP
 AC_PROG_AWK
 AC_PROG_LN_S
 AS_IF([test "$LN_S" == 'ln -s'],
@@ -145,7 +147,7 @@ AS_IF([test "$LN_S" == 'ln -s'],
 AC_CACHE_CHECK([for suitable time command], [ac_cv_path_PROG_TIME],
 	[AC_PATH_PROGS_FEATURE_CHECK([PROG_TIME], [time],
 		[for posix_option in '' '-p'; do
-	   			timeout=`{ $ac_path_PROG_TIME $posix_option echo hello ; } 2>&1 | grep -E 'real[[^0123456789]]+[[0123456789\.]]+$'`
+	   			timeout=`{ $ac_path_PROG_TIME $posix_option echo hello ; } 2>&1 | $EGREP 'real[[^0123456789]]+[[0123456789\.]]+$'`
 	    	test "x$timeout" != x \
 	    	&& ac_cv_path_PROG_TIME="$ac_path_PROG_TIME $posix_option" ac_path_PROG_TIME_found=: && break
 			done;],
