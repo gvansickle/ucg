@@ -73,7 +73,7 @@ MOSTLYCLEANFILES +=  $(CLEANFILES_REPORT_BOILERPLATE) stampfile-all-third-party-
 # We need to hook 'clean' here because we need to rm the entire untarred source trees, not just individual files.	
 clean-local:
 	@:; # Strip any spaces off the ends of the directory list.
-	DIRLIST="$$(echo "$(CLEAN_LOCAL_DIRS)" | $(SED) -r 's/[ ]*(.*)[ ]*/\1\n/')"; \
+	DIRLIST="$$(echo "$(CLEAN_LOCAL_DIRS)" | $(ESED) 's/[ ]*(.*)[ ]*/\1\n/')"; \
 	if [ -n "$${DIRLIST}" ]; then \
 		for DIRNAME in $${DIRLIST}; \
 		do \

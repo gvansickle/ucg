@@ -50,8 +50,23 @@ PROG_SCRIPT="@PROG_SCRIPT@"
 PROG_SCRIPT_TYPE="@PROG_SCRIPT_TYPE@"
 PROG_SCRIPT_PRE_TEXT="@PROG_SCRIPT_PRE_TEXT@"
 PROG_SCRIPT_POST_TEXT="@PROG_SCRIPT_POST_TEXT@"
-MKDIR_P="@MKDIR_P@"
-TEST_LN_S="@TEST_LN_S@"
+export SED="@SED@"
+export ESED="@ESED@"
+export MKDIR_P="@MKDIR_P@"
+export TEST_LN_S="@TEST_LN_S@"
+export PROG_TIME="@PROG_TIME@"
+export FGREP="@FGREP@"
+export EGREP="@EGREP@"
+export AWK="@AWK@"
+
+### Functions for use in the testsuite.
+
+get_dev_and_fs_type()
+{
+	# Get, in as portable a way as possible, the device and filesystem type on which the
+	# file passed in $1 resides.
+	mount | $FGREP -w "`df \"$1\" | grep '%' | $SED -e 's/.*% *//'`"
+}
 
 ASX_SCRIPT ()
 {
@@ -62,3 +77,6 @@ ASX_SCRIPT ()
 		*) exit 1;;
 	esac
 }
+
+
+

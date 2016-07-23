@@ -97,6 +97,18 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_RANLIB
 PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED
+# Find the sed option which turns on Extended Regular Expressions.
+AC_CACHE_CHECK([for $SED option that supports extended regexes], [ac_cv_path_ESED],
+	[ac_cv_path_ESED=''
+	for EREoption in -r -E; do
+	   	esedout=`echo "yeabcds" | $SED $EREoption 's/(abcd)//' 2> /dev/null`
+	    test "x$esedout" = xyes \
+	    && ac_cv_path_ESED="$SED $EREoption" ac_path_ESED_found=: && break
+	done
+	])
+AS_IF([ test "x$ac_path_ESED_found" = "x:" ],
+	[AC_SUBST([ESED], [$ac_cv_path_ESED])], # Note: AC_CACHE_CHECK handles the AC_MSG_RESULT() in the success case.
+	[AC_MSG_ERROR([could not find $SED option that supports extended regexes])])
 
 ## Checks for programs needed to run the testsuite.
 
@@ -122,17 +134,46 @@ AS_IF([$PROG_SCRIPT -qfc "echo hello" /dev/null > /dev/null 2>&1],
       [AC_MSG_ERROR([could not determine how to invoke $PROG_SCRIPT])])
 
 AC_PROG_MKDIR_P
+AC_PROG_EGREP
+AC_PROG_FGREP
+AC_PROG_AWK
 AC_PROG_LN_S
 AS_IF([test "$LN_S" == 'ln -s'],
 	[AC_SUBST([TEST_LN_S], [$LN_S])],
 	[AC_SUBST([TEST_LN_S], [:])
 	AC_MSG_WARN([couldn't find a real 'ln -s', will not be able to run all tests])])
+	
+# Find a usable "time" command.
+AC_CACHE_CHECK([for suitable time command], [ac_cv_path_PROG_TIME],
+	[AC_PATH_PROGS_FEATURE_CHECK([PROG_TIME], [time],
+		[for posix_option in '' '-p'; do
+	   			timeout=`{ $ac_path_PROG_TIME $posix_option echo hello ; } 2>&1 | $EGREP 'real[[^0123456789]]+[[0123456789\.]]+$'`
+	    	test "x$timeout" != x \
+	    	&& ac_cv_path_PROG_TIME="$ac_path_PROG_TIME $posix_option" ac_path_PROG_TIME_found=: && break
+			done;],
+		[	ac_cv_path_PROG_TIME=time
+			AC_MSG_WARN([could not find a POSIX-compiant time command; some tests may fail])
+		])
+	])
+AC_SUBST([PROG_TIME], [$ac_cv_path_PROG_TIME])
 
 ## Checks for maintainer tools.
 
 # Autotest needs autom4te, or 'missing's stub for it. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
+# Doxygen support.
+DX_DOXYGEN_FEATURE(ON)
+DX_DOT_FEATURE(ON)
+DX_HTML_FEATURE(ON)
+DX_CHM_FEATURE(OFF)
+DX_CHI_FEATURE(OFF)
+DX_MAN_FEATURE(OFF)
+DX_RTF_FEATURE(OFF)
+DX_XML_FEATURE(OFF)
+DX_PDF_FEATURE(OFF)
+DX_PS_FEATURE(OFF)
+DX_INIT_DOXYGEN([UniversalCodeGrep])
 
 ###
 ### Checks for libraries

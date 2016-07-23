@@ -26,6 +26,12 @@ ACLOCAL_AMFLAGS = -I m4 --install
 # Note that we can't list these other libraries in e.g. *_DEPENDENCIES because that replaces all Automake-generated dependencies.
 SUBDIRS = third_party src . tests
 
+# Set these *FILE Automake vars to empty, so that we can simply always append (+=) to them later.
+CLEANFILES =
+MOSTLYCLEANFILES =
+DISTCLEANFILES =
+MAINTAINERCLEANFILES =
+
 # Make sure README.rd and other docs get distributed and installed correctly.
 dist_doc_DATA = README.md NEWS.md COPYING AUTHORS
 
@@ -33,8 +39,12 @@ dist_doc_DATA = README.md NEWS.md COPYING AUTHORS
 bin_PROGRAMS=ucg
 ucg_SOURCES=main.cpp build_info.h
 nodist_ucg_SOURCES=build_info.cpp
-CLEANFILES=build_info.cpp
-
+CLEANFILES+=build_info.cpp
+ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
+ucg_CFLAGS = $(AM_CFLAGS)
+ucg_CXXFLAGS = $(AM_CXXFLAGS)
+ucg_LDFLAGS = $(AM_LDFLAGS)
+ucg_LDADD = ./src/libsrc.a ./src/libext/libext.a ./src/libsrc_sse4_2_no_popcnt.a ./src/libsrc_sse4_2_popcnt.a
 
 # Collect some make-time info. 
 FORCE:
@@ -56,27 +66,30 @@ build_info.cpp: FORCE verify-provenance
 	echo "// CXX" >> "$@.tmp";\
 	echo "const char *g_cxx = \"$(CXX)\";" >> "$@.tmp";
 # This is known to work for g++ and clang++.
-	$(AM_V_GEN) CXX_VERSION_STR=$$(if $$($(CXX) --version > /dev/null); then echo "$$($(CXX) --version | tr '\n' ' ' | $(SED) -E -n 's/^(.*[0-9]+\.[0-9]+\.[0-9]+.*)$$/\1/p')"; else echo "unknown"; fi;); \
+	$(AM_V_GEN) CXX_VERSION_STR=$$(if $$($(CXX) --version > /dev/null); then echo "$$($(CXX) --version | tr '\n' ' ' | $(ESED) -n 's/^(.*[0-9]+\.[0-9]+\.[0-9]+.*)$$/\1/p')"; else echo "unknown"; fi;); \
 	echo "const char *g_cxx_version_str = \"$${CXX_VERSION_STR}\";" >> "$@.tmp";\
 	mv "$@.tmp" "$@"
 
 # Make sure we're either trying to build from a git repo or a tarball, and not in some weird state.
 verify-provenance:
-	$(AM_V_GEN) if [ -d "$(top_srcdir)/.git" -a -f "$(top_srcdir)/.tarball-version" ]; \
+	@if [ -d "$(top_srcdir)/.git" -a -f "$(top_srcdir)/.tarball-version" ]; \
 	then \
 		echo "ERROR: The top-level source directory, \"$(top_srcdir)\", appears to be in an"; \
 		echo "inconsistent state: it looks like both an extracted tarball and a .git repo."; \
 		echo "Removing the file \"$(top_srcdir)/.tarball-version\" will allow it to build."; \
 		exit 1; \
 	fi;
+
 	
+# Doxygen rules
+@DX_RULES@
+MOSTLYCLEANFILES+=$(DX_CLEANFILES)
+
+
+## ------------- ##
+## Distribution. ##
+## ------------- ##
+
+# .tarball-version should only ever exist in a distribution tarball.
 dist-hook:
 	echo -n "$$(cd $(top_srcdir) && git describe --long --dirty | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
-
-ucg_CPPFLAGS = -I $(top_srcdir)/src \
-	$(AM_CPPFLAGS) 
-ucg_CFLAGS = $(AM_CFLAGS)
-ucg_CXXFLAGS = $(AM_CXXFLAGS)
-ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.a ./src/libext/libext.a ./src/libsrc_sse4_2_no_popcnt.a ./src/libsrc_sse4_2_popcnt.a
-

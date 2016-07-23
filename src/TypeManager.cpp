@@ -53,6 +53,7 @@ static const std::set<Type> f_builtin_type_array =
 	{ "aspx", {".master", ".ascx", ".asmx", ".aspx", ".svc"} },
 	{ "autoconf", {".ac", ".in"} },
 	{ "automake", {".am", ".in"} },
+	{ "awk", {".awk"} },
 	{ "batch", {".bat", ".cmd"} },
 	{ "cc", {".c", ".h", ".xs"} },
 	{ "cfmx", {".cfc", ".cfm", ".cfml"} },
