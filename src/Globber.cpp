@@ -71,6 +71,7 @@ void Globber::Run()
 	LOG(INFO) << "Globber threads = " << threads.size();
 
 	// Push the initial paths to the queue to start the threads off.
+	LOG(INFO) << "Number of start paths = " << m_start_paths.size();
 	for(auto path : m_start_paths)
 	{
 		dir_queue.wait_push(path);
@@ -109,6 +110,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 	{
 		dirs[0] = const_cast<char*>(dir.c_str());
 		dirs[1] = 0;
+		size_t old_val {0};
 
 		// If we haven't seen m_num_start_paths_remaining == 0 yet...
 		if(!start_paths_have_been_consumed)
@@ -119,12 +121,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 			{
 				// Spin until we get a successful compare and exchange.  If old_val was already 0, we're done decrementing,
 				// so skip the spin here entirely.
-			}
-			if(old_val == 0)
-			{
-				// We've consumed all of the paths given on the command line, we no longer need to do this check.
-				LOG(INFO) << "All start paths consumed.";
-				start_paths_have_been_consumed = true;
 			}
 		}
 
@@ -141,6 +137,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		{
 			std::string name;
 			std::string path;
+			bool skip_inclusion_checks = false;
 
 			if(ftsent->fts_info == FTS_F || ftsent->fts_info == FTS_D)
 			{
@@ -149,6 +146,15 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 			}
 
 			LOG(INFO) << "Considering file \'" << ftsent->fts_path << "\' at depth = " << ftsent->fts_level;
+
+			// Determine if we should skip the inclusion/exclusion checks for this file/dir.  We should only do this
+			// for files/dirs specified on the command line, which will have an fts_level of FTS_ROOTLEVEL (0), and the
+			// start_paths_have_been_consumed flag will still be false.
+			if((ftsent->fts_level == FTS_ROOTLEVEL) && !start_paths_have_been_consumed)
+			{
+				skip_inclusion_checks = true;
+			}
+
 			if(ftsent->fts_info == FTS_F)
 			{
 				// It's a normal file.
@@ -156,7 +162,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				stats.m_num_files_found++;
 
 				// Check for inclusion.
-				if(!start_paths_have_been_consumed || m_type_manager.FileShouldBeScanned(name))
+				if(skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
 				{
 					LOG(INFO) << "... should be scanned.";
 					// Extension was in the hash table.
@@ -181,7 +187,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 					LOG(INFO) << "... --no-recurse specified, skipping.";
 					fts_set(fts, ftsent, FTS_SKIP);
 				}
-				if(start_paths_have_been_consumed && m_dir_inc_manager.DirShouldBeExcluded(path, name))
+				if(!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(path, name))
 				{
 					// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 					LOG(INFO) << "... should be ignored.";
@@ -190,7 +196,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 
 				if((m_dirjobs > 1) && (ftsent->fts_level == FTS_ROOTLEVEL))
 				{
-					// We're doing things multithreaded, so we have to detect cycles ourselves.
+					// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
 					if(HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino).m_val))
 					{
 						// Found cycle.
@@ -200,7 +206,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 					}
 				}
 
-				if(m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL && m_dirjobs > 1)
+				if(m_recurse_subdirs && (ftsent->fts_level > FTS_ROOTLEVEL) && (m_dirjobs > 1))
 				{
 					// Queue it up for scanning.
 					LOG(INFO) << "... subdir, queuing it up for multithreaded scanning.";
@@ -219,9 +225,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 			{
 				ERROR() << "Directory traversal error at path \'" << ftsent->fts_path << "\': "
 						<< LOG_STRERROR(ftsent->fts_errno) << ".";
-#if 0
-				m_bad_path = ftsent->fts_path;
-#endif
 				break;
 			}
 			else if(ftsent->fts_info == FTS_NS)
@@ -246,6 +249,14 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 			}
 		}
 		fts_close(fts);
+
+		if(old_val == 0)
+		{
+			// We've consumed all of the paths given on the command line, we no longer need to do the check.
+			LOG(INFO) << "All start paths consumed.";
+			start_paths_have_been_consumed = true;
+		}
+
 	}
 
 	/// @todo Add the local stats to the class's stats.
