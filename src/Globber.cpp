@@ -110,27 +110,20 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		dirs[0] = const_cast<char*>(dir.c_str());
 		dirs[1] = 0;
 
+		// If we haven't seen m_num_start_paths_remaining == 0 yet...
 		if(!start_paths_have_been_consumed)
 		{
-			// Compare-and-Exchange loop to decrement the m_num_start_paths_remaining counter until it's 0.
+			// Compare-and-Exchange loop to decrement the m_num_start_paths_remaining counter by 1.
 			size_t old_val = m_num_start_paths_remaining.load();
-			size_t new_val { 1 }; // Only initializing to avoid "may be used uninitialized warning in the if() after the while() below.
-			do
+			while(old_val != 0 && !m_num_start_paths_remaining.compare_exchange_weak(old_val, old_val - 1));
 			{
-				if(old_val != 0)
-				{
-					// Decrement it.
-					new_val = old_val - 1;
-				}
-				else
-				{
-					break;
-				}
+				// Spin until we get a successful compare and exchange.  If old_val was already 0, we're done decrementing,
+				// so skip the spin here entirely.
 			}
-			while(!m_num_start_paths_remaining.compare_exchange_weak(old_val, new_val));
-			if(new_val == 0)
+			if(old_val == 0)
 			{
 				// We've consumed all of the paths given on the command line, we no longer need to do this check.
+				LOG(INFO) << "All start paths consumed.";
 				start_paths_have_been_consumed = true;
 			}
 		}
