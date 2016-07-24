@@ -113,6 +113,7 @@ int main(int argc, char **argv)
 		output_task_thread.join();
 
 		// Check for errors.
+#if 0
 		if(globber.Error())
 		{
 			std::cout << "ucg: \"" << globber.ErrorPath() << "\": No such file or directory" << std::endl;
@@ -121,6 +122,7 @@ int main(int argc, char **argv)
 			// but I suppose it could be argued that there is no match here.
 			return 1;
 		}
+#endif
 
 		auto total_matched_lines = output_task.GetTotalMatchedLines();
 

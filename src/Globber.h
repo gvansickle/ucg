@@ -26,6 +26,7 @@
 #include <set>
 #include <string>
 #include <thread>
+#include <atomic>
 #include <libext/filesystem.hpp>
 
 #include "sync_queue_impl_selector.h"
@@ -65,18 +66,25 @@ public:
 
 	void Run();
 
+#if 0
 	bool Error() const noexcept { return m_bad_path.size() != 0; };
 
 	std::string ErrorPath() const noexcept { return m_bad_path; };
+#endif
 
 private:
 
 	void RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index);
 
+	/// Vector of the paths which the user gave on the command line.
 	std::vector<std::string> m_start_paths;
 
+	std::atomic<size_t> m_num_start_paths_remaining;
+
+	/// Reference to the TypeManager which will be used to include or exclude the files we find during the traversal.
 	TypeManager &m_type_manager;
 
+	/// Reference to the DirInclusionManager which will be used to include or exclude the directories we traverse.
 	DirInclusionManager &m_dir_inc_manager;
 
 	bool m_recurse_subdirs;
@@ -90,8 +98,6 @@ private:
 	bool HasDirBeenVisited(dev_ino_pair_type di) { std::unique_lock<std::mutex> lock(m_dir_mutex); return !m_dir_has_been_visited.insert(di).second; };
 
 	DirectoryTraversalStats m_traversal_stats;
-
-	std::string m_bad_path;
 };
 
 
