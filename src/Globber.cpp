@@ -117,7 +117,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		{
 			// Compare-and-Exchange loop to decrement the m_num_start_paths_remaining counter by 1.
 			size_t old_val = m_num_start_paths_remaining.load();
-			while(old_val != 0 && !m_num_start_paths_remaining.compare_exchange_weak(old_val, old_val - 1));
+			while(old_val != 0 && !m_num_start_paths_remaining.compare_exchange_weak(old_val, old_val - 1))
 			{
 				// Spin until we get a successful compare and exchange.  If old_val was already 0, we're done decrementing,
 				// so skip the spin here entirely.
