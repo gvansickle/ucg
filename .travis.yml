@@ -17,7 +17,8 @@ before_install:
 before_script:
  - echo "g++ --version:" && g++ --version && echo "===="
  - # pwd ==> /home/travis/build/gvansickle/ucg
- - if [ $TRAVIS_OS_NAME == osx ]; then sysctl -a hw; fi
+ - sysctl --help && sysctl -a
+ - #if [ $TRAVIS_OS_NAME == osx ]; then sysctl -a hw; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then cat /proc/cpuinfo | grep flags; fi
  - # lscpu = Doesn't exist on OSX or Cygwin
  - # free -ht = Doesn't exist on OSX or Cygwin
