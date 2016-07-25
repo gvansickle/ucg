@@ -62,6 +62,15 @@ echo "ucg Performance Test Results" > $PERF_RESULTS_FILE
 AT_CLEANUP
 
 #
+# Record some system info.
+#
+AT_SETUP([Recording system info])
+AS_ECHO(["START SYSTEM INFO"]) >> $PERF_RESULTS_FILE
+AT_CHECK([get_system_info >> $PERF_RESULTS_FILE], [0], [stdout], [stderr])
+AS_ECHO(["END SYSTEM INFO"]) >> $PERF_RESULTS_FILE
+AT_CLEANUP
+
+#
 # Get the versions of the programs we're comparing to.
 #
 AT_SETUP([Getting program versions])
@@ -97,6 +106,7 @@ AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
 ### at_top_srcdir=../..
 ### 
 
+AS_ECHO(["START PERFTEST"]) >> $PERF_RESULTS_FILE
 
 # Record info on the filesystem where the test data lies.
 TEST_DATA_FS_INFO=`get_dev_and_fs_type "${BOOST_PATH}"`
@@ -107,6 +117,8 @@ AT_CHECK([$AWK -f $srcdir/performance_test_gen.awk -- 'BOOST.*HPP' "${BOOST_PATH
 AT_CAPTURE_FILE([./cmdlines.txt])
 
 AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt $PERF_RESULTS_FILE "${BOOST_PATH}"], [0], [stdout-nolog], [stderr])
+
+AS_ECHO(["END PERFTEST"]) >> $PERF_RESULTS_FILE
 
 AT_CLEANUP
 
@@ -119,6 +131,8 @@ AT_SETUP([ucg vs. grep, literal string on Boost source])
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
 
+AS_ECHO(["START PERFTEST"]) >> $PERF_RESULTS_FILE
+
 # Record info on the filesystem where the test data lies.
 TEST_DATA_FS_INFO=`get_dev_and_fs_type "${BOOST_PATH}"`
 AS_ECHO(["The test data \"${BOOST_PATH}\" is on filesystem $TEST_DATA_FS_INFO"]) >> $PERF_RESULTS_FILE
@@ -128,6 +142,8 @@ AT_CHECK([$AWK -f $srcdir/performance_test_gen.awk -- "TEST_BOOST_NO_INTRINSIC_W
 AT_CAPTURE_FILE([./cmdlines.txt])
 
 AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt $PERF_RESULTS_FILE "${BOOST_PATH}"], [0], [stdout-nolog], [stderr])
+
+AS_ECHO(["END PERFTEST"]) >> $PERF_RESULTS_FILE
 
 AT_CLEANUP
 

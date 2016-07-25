@@ -68,6 +68,71 @@ get_dev_and_fs_type()
 	mount | $FGREP -w "`df \"$1\" | grep '%' | $SED -e 's/.*% *//'`"
 }
 
+uname_or_unknown()
+{
+	# If "uname" doesn't exist or it fails on the given param in $1, echo back "unknown".
+	uname $1 2>/dev/null || echo "unknown";
+}
+
+get_system_info()
+{
+	# Collects and returns information regarding the test system.
+	
+	# Using uname.
+	echo "";
+	echo "START uname info.";
+	# POSIX uname options.
+	echo "kernel_uname_s: "`uname_or_unknown -s`"";
+	echo "kernel_release_uname_r: "`uname_or_unknown -r`"";
+	echo "kernel_version_uname_v: "`uname_or_unknown -v`"";
+	echo "machine_uname_m: "`uname_or_unknown -m`"";
+	# Non-POSIX uname options.
+	echo "processor_uname_p: "`uname_or_unknown -p`"";
+	echo "END uname info.";
+	echo "";
+	
+	# Using sysctl.
+	echo "";
+	echo "START sysctl info.";
+	if PROG_SYSCTL=$(which sysctl 2>/dev/null);
+	then
+		echo "# Found sysctl: PROG_SYSCTL=$PROG_SYSCTL";
+		for NAME in hw.activecpu hw.physicalcpu hw.logicalcpu hw.model hw.optional kernel.osrelease kernel.ostype;
+		do
+			if SYSCTL_STDOUT=$($PROG_SYSCTL $NAME);
+			then
+				echo "$SYSCTL_STDOUT";
+			else
+				echo "${NAME}: none";
+			fi;
+		done;
+	else
+		echo "# No sysctl utility found.";
+	fi
+	echo "END sysctl info.";
+	echo "";
+	
+	# Using lscpu.
+	echo "";
+	echo "START lscpu info.";
+	if PROG_LSCPU=$(which lscpu 2>/dev/null);
+	then
+		echo "# Found lscpu: PROG_LSCPU=$PROG_LSCPU";
+		$PROG_LSCPU 2>/dev/null || echo "ERROR: Could not run \"$PROG_LSCPU\".";
+	else
+		echo "# No lscpu found.";
+	fi;
+	echo "END lscpu info.";
+	echo "";
+	
+	# Using cat /proc/cpuinfo.
+	echo "";
+	echo "START /proc/cpuinfo info.";
+	cat /proc/cpuinfo 2>/dev/null || echo "ERROR: Could not cat /proc/cpuinfo."
+	echo "END /proc/cpuinfo info.";
+	echo "";
+}
+
 ASX_SCRIPT ()
 {
 	# Note: '\r' removal in here because script outputs \r\n's, even on Linuxes.
