@@ -17,12 +17,12 @@ before_install:
 before_script:
  - echo "g++ --version:" && g++ --version && echo "===="
  - # pwd ==> /home/travis/build/gvansickle/ucg
- - sysctl --help && sysctl -a
+ - sysctl -a
  - #if [ $TRAVIS_OS_NAME == osx ]; then sysctl -a hw; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then cat /proc/cpuinfo | grep flags; fi
  - # lscpu = Doesn't exist on OSX or Cygwin
  - # free -ht = Doesn't exist on OSX or Cygwin
- - df main.cpp # df does exist on Cygwin.  Also on OSX, but params are different, no --output, -T is different.
+ - # df main.cpp # df does exist on Cygwin.  Also on OSX, but params are different, no --output, -T is different.
  - mount | fgrep -w "`df . | grep '%' | sed -e 's/.*% *//'`"
 
 script:
