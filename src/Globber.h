@@ -66,12 +66,6 @@ public:
 
 	void Run();
 
-#if 0
-	bool Error() const noexcept { return m_bad_path.size() != 0; };
-
-	std::string ErrorPath() const noexcept { return m_bad_path; };
-#endif
-
 private:
 
 	void RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index);

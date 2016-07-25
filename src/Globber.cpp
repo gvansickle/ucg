@@ -132,6 +132,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		/// in multiple threads, and there's only a process-wide cwd, we'll specify it anyway.
 		/// @todo Current gnulib supports additional flags here: FTS_CWDFD | FTS_DEFER_STAT | FTS_NOATIME.  We should
 		/// check for these and use them if they exist.
+
 		FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/, NULL);
 		while(FTSENT *ftsent = fts_read(fts))
 		{

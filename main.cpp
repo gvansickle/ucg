@@ -112,18 +112,6 @@ int main(int argc, char **argv)
 		// Wait for the output thread to complete.
 		output_task_thread.join();
 
-		// Check for errors.
-#if 0
-		if(globber.Error())
-		{
-			std::cout << "ucg: \"" << globber.ErrorPath() << "\": No such file or directory" << std::endl;
-			// Both ack and ag return 1 in this situation, which indicates that "no matches were found".
-			// We'll follow their lead; this is really sort of an error, and grep would return 2 here,
-			// but I suppose it could be argued that there is no match here.
-			return 1;
-		}
-#endif
-
 		auto total_matched_lines = output_task.GetTotalMatchedLines();
 
 		if(total_matched_lines == 0)
