@@ -141,8 +141,11 @@ UCG_CREATE_NORMAL_DIRTREE
 
 # Use grep's matches as the standard to compare against.
 # Note that GNU grep 2.25 considers the --exclude-dir= param if you don't have the trailing "/" on dir1 below.
+# However, "grep (GNU grep) 2.5.1-FreeBSD" doesn't recognize the "--exclude-dir=" param at all.
+# Since the desired behavior of ucg is to not ignore a dir specified on the command line, we'll make grep
+# output matches consistent with that behavior by simply never ignoring the dir in the first place.
 # Sort, because with multithreading we almost certainly won't visit the directories in the same order.
-AT_CHECK([$EGREP -Rn --exclude-dir=dir1 'line' dir1/ | sort > expout], [0], [stdout], [stderr])
+AT_CHECK([$EGREP -Rn 'line' dir1 | sort > expout], [0], [stdout], [stderr])
 
 AT_CAPTURE_FILE([expout])
 
