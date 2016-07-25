@@ -122,7 +122,7 @@ BEGIN {
 	TEST_GROUP_TO_PROGS["system_grep"]="grep"
 	
 	TEST_GROUP_TO_PARAMS_PRE["built_ucg"]="--noenv --cpp"
-	TEST_GROUP_TO_PARAMS_PRE["system_grep"]="-Ern --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
+	TEST_GROUP_TO_PARAMS_PRE["system_grep"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
 	
 	PROG_TO_PARAMS_JOBS["ucg"]="-j"
 	PROG_TO_PARAMS_JOBS["grep"]=""
