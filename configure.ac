@@ -93,7 +93,8 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 
-m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+#m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+AM_PROG_AR
 AC_PROG_RANLIB
 PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED

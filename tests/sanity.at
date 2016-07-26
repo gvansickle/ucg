@@ -23,8 +23,8 @@ AT_SETUP([Error code with bad search path])
 
 # Note that the stdout match text here has a literal '\n' in it due to the line break; don't try
 # to put this on one line.
-AT_CHECK([ucg 'a' /thisDirDoesntExist], [1], [ucg: "/thisDirDoesntExist": No such file or directory
-], [stderr])
+AT_CHECK([ucg 'a' ./thisDirDoesntExist], [1], [stdout], [stderr])
+AT_CHECK([cat stderr | $EGREP 'ucg:.*thisDirDoesntExist.*[[Nn]]o such file or directory'], [0], [stdout], [stderr])
 
 AT_CLEANUP
 
@@ -84,6 +84,7 @@ AT_CHECK([ucg --noenv 'hidden'],[0],[.hidden_with_extension.sh:1:hidden-with-ext
 
 AT_CLEANUP
 
+# Specifying both hidden files should get us two matches.
 AT_SETUP([Hidden file handling, specified])
 
 AT_DATA([.hidden_no_extension],[hidden-no-extension
@@ -92,8 +93,6 @@ AT_DATA([.hidden_no_extension],[hidden-no-extension
 AT_DATA([.hidden_with_extension.sh],[hidden-with-extension
 ])
 
-# Specifying both files should get us two matches, but it currently doesn't due to issue #64.
-AT_XFAIL_IF([true])
 AT_CHECK([ucg --noenv 'hidden' .hidden* | LCT],[0],[2],[stderr])
 
 AT_CLEANUP

@@ -8,6 +8,7 @@
 	- `grep`-style `--include=GLOB`: Only files matching GLOB will be searched.
 	- `grep`-style `--exclude=GLOB`: Files matching GLOB will be ignored.
 	- `ag`-style `--ignore=GLOB`: Files matching GLOB will be ignored.  Note that unlike `ag`'s option, this does not apply to directories).
+- Files and directories specified on the command line (including hidden files) are now scanned regardless of ignore settings, and in the case of files, whether they are recognized as text files.
 - Experimental support for OSX and PC-BSD.
 - Now compiles and links with either or both of libpcre and libpcre2, if available.  Defaults to using libpcre2 for matching.
 - Directory tree traversal now uses more than one thread (two by default).  Can be overridden with new "--dirjobs" command-line parameter.  Overall performance improvement on all platforms vs. 0.2.2 (e.g., ~25% on Fedora 23 with hot cache).

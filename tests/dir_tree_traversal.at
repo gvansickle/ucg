@@ -119,7 +119,7 @@ UCG_CREATE_NORMAL_DIRTREE
 
 # Use grep's matches as the standard to compare against.
 # Sort, because with multithreading we almost certainly won't visit the directories in the same order.
-grep -ERn 'line' dir1 | sort > expout
+$EGREP -Rn 'line' dir1 | sort > expout
 
 # Multi-threaded.
 AT_CHECK([ucg --noenv --dirjobs=2 'line' dir1 | sort], [0], [expout], [stderr])
@@ -127,5 +127,64 @@ AT_CHECK([ucg --noenv --dirjobs=2 'line' dir1 | sort], [0], [expout], [stderr])
 # Check the results for six matching lines, no warnings.
 AT_CHECK([cat expout | LCT], [0], [6], [ignore])
 AT_CHECK([cat stderr | LCT], [0], [0])
+
+AT_CLEANUP
+
+
+###
+### Normal directory tree, multithreaded, dirs on command line, dirs ignored.
+###
+AT_SETUP([Normal tree, mt, ignore-dir vs. dir on cmd line])
+
+# Create the directory tree.
+UCG_CREATE_NORMAL_DIRTREE
+
+# Use grep's matches as the standard to compare against.
+# Note that GNU grep 2.25 considers the --exclude-dir= param if you don't have the trailing "/" on dir1 below.
+# However, "grep (GNU grep) 2.5.1-FreeBSD" doesn't recognize the "--exclude-dir=" param at all.
+# Since the desired behavior of ucg is to not ignore a dir specified on the command line, we'll make grep
+# output matches consistent with that behavior by simply never ignoring the dir in the first place.
+# Sort, because with multithreading we almost certainly won't visit the directories in the same order.
+AT_CHECK([$EGREP -Rn 'line' dir1 | sort > expout], [0], [stdout], [stderr])
+
+AT_CAPTURE_FILE([expout])
+
+# Multi-threaded, --ignore-dir.
+AT_CHECK([ucg --noenv --dirjobs=2 --ignore-dir=dir1 'line' dir1 | sort], [0], [expout], [stderr])
+
+# Check the results for six matching lines, no warnings.
+AT_CHECK([cat expout | LCT], [0], [6], [ignore])
+AT_CHECK([cat stderr | LCT], [0], [0])
+
+AT_CLEANUP
+
+
+###
+### Normal directory tree, multithreaded, file on command line, file excluded.
+###
+AT_SETUP([Normal tree, mt, exclude vs. file on cmd line])
+
+# Create the directory tree.
+UCG_CREATE_NORMAL_DIRTREE
+
+# Use grep's matches as the standard to compare against.
+# Note that GNU grep 2.25 always considers the --exclude= param for files, even when a file matching it is explicitly given on the command line.
+# grep's output is also a different format when giving the full path:
+#   $ grep -ERn 'line' dir1/dir2/file1.py
+#     1:line 1
+#     2:line2
+#     3:line3
+# I.e., it drops the filename prefix.  ucg doesn't, and I think it probably shouldn't, so we'll force the issue by specifying -H here.
+# Sort, because with multithreading we almost certainly won't visit the directories in the same order.
+AT_CHECK([$EGREP -Rn -H 'line' dir1/dir2/file1.py | sort > expout], [0], [stdout], [stderr])
+
+AT_CAPTURE_FILE([expout])
+
+# Multi-threaded, --ignore file, specify file on command line.
+AT_CHECK([ucg --noenv --dirjobs=2 --exclude=dir1/dir2/file1.py 'line' dir1/dir2/file1.py ./nosuchdir | sort], [0], [expout], [stderr])
+
+# Check the results for 3 matching lines, one warning.
+AT_CHECK([cat expout | LCT], [0], [3], [ignore])
+AT_CHECK([cat stderr | $EGREP 'ucg:.*nosuchdir.*[[Nn]]o such file or directory'], [0], [stdout], [stderr])
 
 AT_CLEANUP
