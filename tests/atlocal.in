@@ -97,7 +97,8 @@ get_system_info()
 	if PROG_SYSCTL=$(which sysctl 2>/dev/null);
 	then
 		echo "# Found sysctl: PROG_SYSCTL=$PROG_SYSCTL";
-		for NAME in hw.activecpu hw.physicalcpu hw.logicalcpu hw.model hw.optional kernel.osrelease kernel.ostype;
+		# For *BSD: hw.ncpu, kern.smp.cpus, hw.physmem, hw.usermem
+		for NAME in hw.ncpu hw.physmem hw.usermem hw.activecpu hw.physicalcpu hw.logicalcpu hw.model hw.optional kern.smp.cpus kernel.osrelease kernel.ostype;
 		do
 			if SYSCTL_STDOUT=$($PROG_SYSCTL $NAME);
 			then
@@ -123,6 +124,13 @@ get_system_info()
 		echo "# No lscpu found.";
 	fi;
 	echo "END lscpu info.";
+	echo "";
+	
+	# Using cpuid.
+	echo "";
+	echo "START cpuid info.";
+	cpuid 2>/dev/null || echo "ERROR: Could not run cpuid."
+	echo "END cpuid info.";
 	echo "";
 	
 	# Using cat /proc/cpuinfo.
