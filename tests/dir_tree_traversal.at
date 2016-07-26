@@ -181,10 +181,10 @@ AT_CHECK([$EGREP -Rn -H 'line' dir1/dir2/file1.py | sort > expout], [0], [stdout
 AT_CAPTURE_FILE([expout])
 
 # Multi-threaded, --ignore file, specify file on command line.
-AT_CHECK([ucg --noenv --dirjobs=2 --exclude=dir1/dir2/file1.py 'line' dir1/dir2/file1.py | sort], [0], [expout], [stderr])
+AT_CHECK([ucg --noenv --dirjobs=2 --exclude=dir1/dir2/file1.py 'line' dir1/dir2/file1.py ./nosuchdir | sort], [0], [expout], [stderr])
 
-# Check the results for 3 matching lines, no warnings.
+# Check the results for 3 matching lines, one warning.
 AT_CHECK([cat expout | LCT], [0], [3], [ignore])
-AT_CHECK([cat stderr | LCT], [0], [0])
+AT_CHECK([cat stderr | $EGREP 'ucg:.*nosuchdir.*[[Nn]]o such file or directory'], [0], [stdout], [stderr])
 
 AT_CLEANUP
