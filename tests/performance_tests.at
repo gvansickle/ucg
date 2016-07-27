@@ -156,7 +156,7 @@ AT_SETUP([ucg vs. grep, literal string on 500MB file, match at end])
 AS_ECHO(["START PERFTEST"]) >> $PERF_RESULTS_FILE
 
 # Generate the test file.
-AT_CHECK([./dummy-file-gen -b 500000000 | fold -s > ./500MBLoremIpsum.txt], [0], [stdout], [stderr])
+AT_CHECK([${at_top_build_prefix}dummy-file-gen -b 500000000 | fold -s > ./500MBLoremIpsum.txt], [0], [stdout], [stderr])
 AT_CHECK([echo "TEST_BOOST_NO_INTRINSIC_WCHAR_T" >> ./500MBLoremIpsum.txt], [0], [stdout], [stderr])
 
 # Record info on the filesystem where the test data lies.
