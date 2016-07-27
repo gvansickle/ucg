@@ -148,6 +148,31 @@ AS_ECHO(["END PERFTEST"]) >> $PERF_RESULTS_FILE
 AT_CLEANUP
 
 
+###
+### ucg vs. grep, literal string on single ~500MB file.
+###
+AT_SETUP([ucg vs. grep, literal string on 500MB file, match at end])
+
+AS_ECHO(["START PERFTEST"]) >> $PERF_RESULTS_FILE
+
+# Generate the test file.
+AT_CHECK([./dummy-file-gen -b 500000000 | fold -s > ./500MBLoremIpsum.txt], [0], [stdout], [stderr])
+AT_CHECK([echo "TEST_BOOST_NO_INTRINSIC_WCHAR_T" >> ./500MBLoremIpsum.txt], [0], [stdout], [stderr])
+
+# Record info on the filesystem where the test data lies.
+TEST_DATA_FS_INFO=`get_dev_and_fs_type "${BOOST_PATH}"`
+AS_ECHO(["The test data \"${BOOST_PATH}\" is on filesystem $TEST_DATA_FS_INFO"]) >> $PERF_RESULTS_FILE
+
+AT_CHECK([$AWK -f $srcdir/performance_test_gen.awk -- "TEST_BOOST_NO_INTRINSIC_WCHAR_T" "./500MBLoremIpsum.txt" > ./cmdlines.txt], [0], [stdout], [stderr])
+
+AT_CAPTURE_FILE([./cmdlines.txt])
+
+AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt $PERF_RESULTS_FILE "./500MBLoremIpsum.txt"], [0], [stdout-nolog], [stderr])
+
+AS_ECHO(["END PERFTEST"]) >> $PERF_RESULTS_FILE
+
+AT_CLEANUP
+
 #
 # Search on literal string.
 #

@@ -23,7 +23,7 @@
 
 #include "lorem_ipsum.hpp"
 
-constexpr std::size_t f_lorem_ipsum_text_len = std::strlen(f_lorem_ipsum_text);
+static const std::size_t f_lorem_ipsum_text_len = std::strlen(f_lorem_ipsum_text);
 
 int main(int argc, char **argv)
 {
