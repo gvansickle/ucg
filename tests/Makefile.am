@@ -21,6 +21,18 @@ EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in
 CLEANFILES = perf_test_results.txt
 DISTCLEANFILES = atconfig
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
+
+###
+### Dummy file generator exe.
+### Only built during a "make check", and not installed.
+###
+check_PROGRAMS = dummy-file-gen
+dummy_file_gen_SOURCES = dummy-file-gen.cpp
+dummy_file_gen_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
+dummy_file_gen_CFLAGS = $(AM_CFLAGS)
+dummy_file_gen_CXXFLAGS = $(AM_CXXFLAGS)
+dummy_file_gen_LDFLAGS = $(AM_LDFLAGS)
+
      
 # This line appears in the Autoconf/Autotest manual, but see configure.ac.
 # The "AM_MISSING_PROG([AUTOM4TE], [autom4te])" line there takes care of this,
