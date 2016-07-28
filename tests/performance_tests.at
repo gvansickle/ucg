@@ -58,6 +58,7 @@ AT_BANNER([UniversalCodeGrep performance tests])
 # Create the logfile.
 #
 AT_SETUP([Create report log file])
+AT_KEYWORDS([performance])
 echo "ucg Performance Test Results" > $PERF_RESULTS_FILE
 AT_CLEANUP
 
@@ -65,6 +66,7 @@ AT_CLEANUP
 # Record some system info.
 #
 AT_SETUP([Recording system info])
+AT_KEYWORDS([performance])
 AS_ECHO(["START SYSTEM INFO"]) >> $PERF_RESULTS_FILE
 AT_CHECK([get_system_info >> $PERF_RESULTS_FILE], [0], [stdout], [stderr])
 AS_ECHO(["END SYSTEM INFO"]) >> $PERF_RESULTS_FILE
@@ -74,6 +76,7 @@ AT_CLEANUP
 # Get the versions of the programs we're comparing to.
 #
 AT_SETUP([Getting program versions])
+AT_KEYWORDS([performance])
 
 # Loop through the programs we're comparing performance with.
 for PROGNAME in $PERF_PROGRAMS_TO_COMPARE grep; do
@@ -90,6 +93,7 @@ AT_CLEANUP
 ### ucg vs. grep, 'BOOST.*HPP' on Boost source.
 ###
 AT_SETUP([ucg vs. grep, 'BOOST.*HPP' on Boost source])
+AT_KEYWORDS([performance long])
 
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
@@ -128,6 +132,7 @@ AT_CLEANUP
 ### ucg vs. grep, literal string on Boost source.
 ###
 AT_SETUP([ucg vs. grep, literal string on Boost source])
+AT_KEYWORDS([performance long])
 
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
@@ -154,6 +159,7 @@ AT_CLEANUP
 ### Generate test files for large file tests.
 ###
 AT_SETUP([generating files for large file tests])
+AT_KEYWORDS([performance])
 # Generate the test file $TEST_FILE_NAME_LARGE_FILE_1, which is Lorum ipsum text with one distinct test string at the end.
 AT_CHECK([${builddir}/dummy-file-gen -b 500000000 | fold -s > ${TEST_FILE_NAME_LARGE_FILE_1}], [0], [stdout], [stderr])
 AT_CHECK([cat stderr | $EGREP 'Number of bytes written:'], [0], [ignore], [ignore])
@@ -164,6 +170,7 @@ AT_CLEANUP
 ### ucg vs. grep, regex 'TEST_.*_NO_.*_WCHAR_T' on single ~500MB file.
 ###
 AT_SETUP([ucg vs. grep, regex on 500MB file, match at end])
+AT_KEYWORDS([performance])
 
 AS_ECHO(["START PERFTEST"]) >> $PERF_RESULTS_FILE
 
@@ -186,6 +193,7 @@ AT_CLEANUP
 ### ucg vs. grep, literal string on single ~500MB file.
 ###
 AT_SETUP([ucg vs. grep, literal string on 500MB file, match at end])
+AT_KEYWORDS([performance])
 
 AS_ECHO(["START PERFTEST"]) >> $PERF_RESULTS_FILE
 
@@ -207,6 +215,7 @@ AT_CLEANUP
 ### Delete test files for the large file tests.
 ###
 AT_SETUP([deleting files for large file tests])
+AT_KEYWORDS([performance])
 # Delete the test file $TEST_FILE_NAME_LARGE_FILE_1, which is Lorum ipsum text with one distinct test string at the end.
 AT_CHECK([test -f "${TEST_FILE_NAME_LARGE_FILE_1}" && rm "${TEST_FILE_NAME_LARGE_FILE_1}"], [0], [stdout], [stderr])
 AT_CLEANUP
@@ -216,6 +225,7 @@ AT_CLEANUP
 # Search on literal string.
 #
 AT_SETUP([Boost: find all '#endif's])
+AT_KEYWORDS([performance])
 
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
@@ -237,6 +247,7 @@ AT_CLEANUP
 # Search with regex 'BOOST.*HPP'
 #
 AT_SETUP([Boost: search with regex 'BOOST.*HPP'])
+AT_KEYWORDS([performance])
 
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
@@ -256,6 +267,7 @@ AT_CLEANUP
 # Search with ignore of part of the dir tree.
 #
 AT_SETUP([Boost: search with --ignore-dir=doc])
+AT_KEYWORDS([performance])
 
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
