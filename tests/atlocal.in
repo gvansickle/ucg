@@ -102,7 +102,11 @@ get_system_info()
 	then
 		echo "# Found sysctl: PROG_SYSCTL=$PROG_SYSCTL";
 		# For *BSD: hw.ncpu, kern.smp.cpus, hw.physmem, hw.usermem
-		for NAME in hw.ncpu hw.physmem hw.usermem hw.activecpu hw.physicalcpu hw.logicalcpu hw.model hw.optional kern.smp.cpus kernel.osrelease kernel.ostype;
+		# For OSX:
+		#   hw.physicalcpu ==> Number of cores
+		#   hw.logicalcpu ==> Number of cores * number of hyperthreads per core
+		#   hw.packages ==> Number of physical CPU packages. 
+		for NAME in hw.ncpu hw.physmem hw.usermem hw.activecpu hw.physicalcpu hw.logicalcpu hw.packages hw.model hw.optional kern.smp.cpus kernel.osrelease kernel.ostype;
 		do
 			if SYSCTL_STDOUT=$($PROG_SYSCTL $NAME);
 			then
