@@ -83,6 +83,11 @@ get_system_info()
 	# Collects and returns information regarding the test system.
 	
 	# Using uname.
+	#
+	# OSX: Note that on a VMWare box running on a Xeon, we get the following:
+	# machine_uname_m: x86_64
+	# processor_uname_p: i386
+	#
 	echo "";
 	echo "START uname info.";
 	# POSIX uname options.
@@ -101,12 +106,23 @@ get_system_info()
 	if PROG_SYSCTL=$(which sysctl 2>/dev/null);
 	then
 		echo "# Found sysctl: PROG_SYSCTL=$PROG_SYSCTL";
+		#
 		# For *BSD: hw.ncpu, kern.smp.cpus, hw.physmem, hw.usermem
+		#
 		# For OSX:
 		#   hw.physicalcpu ==> Number of cores
 		#   hw.logicalcpu ==> Number of cores * number of hyperthreads per core
-		#   hw.packages ==> Number of physical CPU packages. 
-		for NAME in hw.ncpu hw.physmem hw.usermem hw.activecpu hw.physicalcpu hw.logicalcpu hw.packages hw.model hw.optional kern.smp.cpus kernel.osrelease kernel.ostype;
+		#   hw.packages ==> Number of physical CPU packages.
+		#	machdep.cpu.vendor: ==> E.g. "GenuineIntel"
+		#   machdep.cpu.brand_string: ==> E.g. "Intel(R) Xeon(R) CPU           X5570  @ 2.93GHz"
+		#   machdep.cpu.features: ==> Space-separated list of CPU extensions.  E.g.:
+		#		"FPU VME DE PSE TSC MSR PAE MCE CX8 APIC SEP MTRR PGE MCA CMOV PAT PSE36 CLFSH DS MMX FXSR SSE SSE2 SS SSE3 MON SSSE3 CX16 SSE4.1 SSE4.2 x2APIC POPCNT VMM"
+		#   machdep.cpu.extfeatures: ==> More CPU extensions.  E.g.:
+		#		"SYSCALL XD EM64T LAHF RDTSCP TSCI"
+		#
+		for NAME in hw.ncpu hw.physmem hw.usermem \
+		hw.activecpu hw.physicalcpu hw.logicalcpu hw.packages hw.model hw.optional kern.smp.cpus kernel.osrelease kernel.ostype \
+		machdep.cpu.vendor machdep.cpu.brand_string machdep.cpu.features machdep.cpu.extfeatures;
 		do
 			if SYSCTL_STDOUT=$($PROG_SYSCTL $NAME);
 			then
