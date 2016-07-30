@@ -37,18 +37,6 @@ fi
 #	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_ACK;
 #fi
 
-##### @todo DELETE
-# Paths to source that we'll test against.
-# @todo Maybe take this in as a parameter?  The only issue is that this doesn't work during a "make distcheck",
-# which arguably is not a big deal.
-#BOOST_PATH=${abs_top_srcdir}/../boost_1_58_0
-# We generate this one.
-#TEST_FILE_NAME_LARGE_FILE_1="${abs_top_builddir}/tests/500MBLoremIpsum.cpp"
-
-# The file where we'll put the results of the performance tests.
-# This file will be created by testsuite.at.
-#PERF_RESULTS_FILE=${abs_top_builddir}/tests/perf_test_results.txt
-##### @todo DELETE
 
 PROG_SCRIPT="@PROG_SCRIPT@"
 PROG_SCRIPT_TYPE="@PROG_SCRIPT_TYPE@"
