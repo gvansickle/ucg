@@ -44,7 +44,7 @@ m4_define([UCG_PERF_RESULTS_FILE], [${builddir}/perf_test_results.txt])
 m4_define([EXTRACT_AND_APPEND_TIME],[
 		# $1 == program name.
 		AS_ECHO_N(["| $1 | "]) >> UCG_PERF_RESULTS_FILE;
-		cat stderr | egrep "real[[[:space:]]]+" | $ESED 's/real[[[:space:]]]+(.*)/\1/' | tr -d '\n' >> UCG_PERF_RESULTS_FILE;
+		cat stderr | $EGREP "real[[[:space:]]]+" | $ESED 's/real[[[:space:]]]+(.*)/\1/' | tr -d '\n' >> UCG_PERF_RESULTS_FILE;
 		AS_ECHO_N(" | ") >> UCG_PERF_RESULTS_FILE;
 		cat stdout | LCT >> UCG_PERF_RESULTS_FILE;
 		AS_ECHO([" |"]) >> UCG_PERF_RESULTS_FILE;
@@ -112,10 +112,10 @@ AT_KEYWORDS([performance])
 AS_ECHO(["START PROGVER INFO"]) >> UCG_PERF_RESULTS_FILE
 # Loop through the programs we're comparing performance with.
 for PROGNAME in $PERF_PROGRAMS_TO_COMPARE grep; do
-	AS_ECHO([--]) >> UCG_PERF_RESULTS_FILE
+	AS_ECHO([PROGVER_START]) >> UCG_PERF_RESULTS_FILE
 	AS_ECHO(["$PROGNAME --version:"]) >> UCG_PERF_RESULTS_FILE
 	AS_ECHO(["$($PROGNAME --version)"]) >> UCG_PERF_RESULTS_FILE
-	AS_ECHO([--]) >> UCG_PERF_RESULTS_FILE
+	AS_ECHO([PROGVER_END]) >> UCG_PERF_RESULTS_FILE
 done;
 AS_ECHO(["END PROGVER INFO"]) >> UCG_PERF_RESULTS_FILE
 
