@@ -136,9 +136,11 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 TEST_DATA_FS_INFO=`get_dev_and_fs_type UCG_BOOST_PATH`
 AS_ECHO(["The test data \"UCG_BOOST_PATH\" is on filesystem $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
 
-AT_CHECK([$AWK -f $srcdir/performance_test_gen.awk -- 'BOOST.*HPP' UCG_BOOST_PATH > ./cmdlines.txt], [0], [stdout], [stderr])
+AT_CHECK([$AWK -f $srcdir/performance_test_gen.awk -- 'BOOST.*HPP' UCG_BOOST_PATH UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
 
-AT_CAPTURE_FILE([./cmdlines.txt])
+AT_CAPTURE_FILE([./cmdlines.sh])
+
+AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
 
 AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt UCG_PERF_RESULTS_FILE UCG_BOOST_PATH], [0], [stdout-nolog], [stderr])
 

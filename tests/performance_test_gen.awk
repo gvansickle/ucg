@@ -93,7 +93,7 @@ function join_val_range(in_array, out_array, join_on_regex, regex_to_replace, pr
 
 BEGIN {
 
-	if(ARGC != 3)
+	if(ARGC != 4)
 	{
 		print("Incorrect number of args: ", ARGC) | "cat 1>&2"
 		exit 1
@@ -102,6 +102,9 @@ BEGIN {
 	# Get command line args.
 	REGEX=ARGV[1]
 	TEST_DATA_DIR=ARGV[2]
+	# @TODO from runner
+	NUM_ITERATIONS=2;
+	RESULTS_FILE=ARGV[3];
 	
 		
 	# Pick up a usable "time" program from the environment, the testsuite should have put it there.
@@ -168,10 +171,33 @@ BEGIN {
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
 	join_val_range(CLA_COPY, CMD_LINE_ARRAY, " grep ", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["grep"], 4)
 	
-	###print("Printing command line array:")
+	###
+	### Output the test script.
+	###
+	print("#!/bin/sh");
+	print("\n# GENERATED FILE, DO NOT EDIT\n");
+	print("NUM_ITERATIONS=" NUM_ITERATIONS ";");
+	print("\necho \"Starting performance tests, results file is '" RESULTS_FILE "'\"");
 	cla_alen = alen(CMD_LINE_ARRAY)
 	for ( i = 1; i <= cla_alen; i++ )
 	{
-		print(CMD_LINE_ARRAY[i])
+		print("")
+		print("# Prep run, to eliminate disk cache variability and capture the matches.")
+		print("# We pipe the results through sort so we can diff these later.")
+		COMMAND_LINE=CMD_LINE_ARRAY[i];
+		print("echo \"Timing: " COMMAND_LINE "\" >>", RESULTS_FILE);
+		PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
+		wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
+		print("echo \"Prep run for wrapped command line: '" wrapped_cmd_line "' > " PREP_RUN_FILES[i]);
+		print(wrapped_cmd_line);
+		print("");
+		print("echo '# Timing runs.'");
+		TIME_RESULTS_FILE=("./time_results_" i ".txt");
+		wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
+		print("Timing run for wrapped command line: '" wrapped_cmd_line "') > " TIME_RESULTS_FILE);
+		print("for ITER in $(seq 0 $(expr $NUM_ITERATIONS - 1));\ndo")
+		print("    # Do a single run.")
+		print("    " wrapped_cmd_line);
+		print("done;");
 	}
 }
