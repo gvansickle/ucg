@@ -90,7 +90,7 @@ AT_BANNER([UniversalCodeGrep performance tests])
 AT_SETUP([Create report log file])
 AT_KEYWORDS([performance])
 AS_ECHO(["ucg Performance Test Results"]) > UCG_PERF_RESULTS_FILE
-AS_ECHO(["Test run started at: `date '+%Y-%m-%d %T%z' | sed 's/\(..\)\(..\)$/\1:\2/'`]) >> UCG_PERF_RESULTS_FILE
+AS_ECHO(["Test run started at: `date '+%Y-%m-%d %T%z' | sed 's/\(..\)\(..\)$/\1:\2/'`"]) >> UCG_PERF_RESULTS_FILE
 AT_CLEANUP
 
 #
