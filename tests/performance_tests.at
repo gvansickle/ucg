@@ -89,8 +89,8 @@ AT_BANNER([UniversalCodeGrep performance tests])
 #
 AT_SETUP([Create report log file])
 AT_KEYWORDS([performance])
-echo "ucg Performance Test Results" > UCG_PERF_RESULTS_FILE
-echo UCG_TEST_FILE_NAME_LARGE_FILE_1 >> UCG_PERF_RESULTS_FILE
+AS_ECHO(["ucg Performance Test Results"]) > UCG_PERF_RESULTS_FILE
+AS_ECHO(["Test run started at: `date '+%Y-%m-%d %T%z' | sed 's/\(..\)\(..\)$/\1:\2/'`]) >> UCG_PERF_RESULTS_FILE
 AT_CLEANUP
 
 #
@@ -109,6 +109,7 @@ AT_CLEANUP
 AT_SETUP([Getting program versions])
 AT_KEYWORDS([performance])
 
+AS_ECHO(["START PROGVER INFO"]) >> UCG_PERF_RESULTS_FILE
 # Loop through the programs we're comparing performance with.
 for PROGNAME in $PERF_PROGRAMS_TO_COMPARE grep; do
 	AS_ECHO([--]) >> UCG_PERF_RESULTS_FILE
@@ -116,7 +117,7 @@ for PROGNAME in $PERF_PROGRAMS_TO_COMPARE grep; do
 	AS_ECHO(["$($PROGNAME --version)"]) >> UCG_PERF_RESULTS_FILE
 	AS_ECHO([--]) >> UCG_PERF_RESULTS_FILE
 done;
-
+AS_ECHO(["END PROGVER INFO"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
 
