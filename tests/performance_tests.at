@@ -136,7 +136,7 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 TEST_DATA_FS_INFO=`get_dev_and_fs_type UCG_BOOST_PATH`
 AS_ECHO(["The test data \"UCG_BOOST_PATH\" is on filesystem $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
 
-AT_CHECK([$AWK -f $srcdir/performance_test_gen.awk -- 'BOOST.*HPP' UCG_BOOST_PATH UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
+AT_CHECK([$AWK -v CHARACTERIZE=1 -f $srcdir/performance_test_gen.awk -- 'BOOST.*HPP' UCG_BOOST_PATH UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
 
 AT_CAPTURE_FILE([./cmdlines.sh])
 
@@ -164,11 +164,11 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 TEST_DATA_FS_INFO=`get_dev_and_fs_type UCG_BOOST_PATH`
 AS_ECHO(["The test data \"UCG_BOOST_PATH\" is on filesystem $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
 
-AT_CHECK([$AWK -f $srcdir/performance_test_gen.awk -- "TEST_BOOST_NO_INTRINSIC_WCHAR_T" UCG_BOOST_PATH > ./cmdlines.txt], [0], [stdout], [stderr])
+AT_CHECK([$AWK -v CHARACTERIZE=0 -f $srcdir/performance_test_gen.awk -- "TEST_BOOST_NO_INTRINSIC_WCHAR_T" UCG_BOOST_PATH UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
 
-AT_CAPTURE_FILE([./cmdlines.txt])
-
-AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt UCG_PERF_RESULTS_FILE UCG_BOOST_PATH], [0], [stdout-nolog], [stderr])
+AT_CAPTURE_FILE([./cmdlines.sh])
+AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
+AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
 
 AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
@@ -199,11 +199,11 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 TEST_DATA_FS_INFO=`get_dev_and_fs_type "UCG_TEST_FILE_NAME_LARGE_FILE_1"`
 AS_ECHO(["The test data \"UCG_TEST_FILE_NAME_LARGE_FILE_1\" is on filesystem $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
 
-AT_CHECK([$AWK -f $srcdir/performance_test_gen.awk -- 'TEST_.*_NO_.*_WCHAR_T' "UCG_TEST_FILE_NAME_LARGE_FILE_1" > ./cmdlines.txt], [0], [stdout], [stderr])
+AT_CHECK([$AWK -v CHARACTERIZE=0 -f $srcdir/performance_test_gen.awk -- 'TEST_.*_NO_.*_WCHAR_T' "UCG_TEST_FILE_NAME_LARGE_FILE_1" UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
 
-AT_CAPTURE_FILE([./cmdlines.txt])
-
-AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt UCG_PERF_RESULTS_FILE "UCG_TEST_FILE_NAME_LARGE_FILE_1"], [0], [stdout-nolog], [stderr])
+AT_CAPTURE_FILE([./cmdlines.sh])
+AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
+AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
 
 AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
@@ -222,11 +222,11 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 TEST_DATA_FS_INFO=`get_dev_and_fs_type "UCG_TEST_FILE_NAME_LARGE_FILE_1"`
 AS_ECHO(["The test data \"UCG_TEST_FILE_NAME_LARGE_FILE_1\" is on filesystem $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
 
-AT_CHECK([$AWK -f $srcdir/performance_test_gen.awk -- "TEST_BOOST_NO_INTRINSIC_WCHAR_T" "UCG_TEST_FILE_NAME_LARGE_FILE_1" > ./cmdlines.txt], [0], [stdout], [stderr])
+AT_CHECK([$AWK -v CHARACTERIZE=0 -f $srcdir/performance_test_gen.awk -- "TEST_BOOST_NO_INTRINSIC_WCHAR_T" "UCG_TEST_FILE_NAME_LARGE_FILE_1" UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
 
-AT_CAPTURE_FILE([./cmdlines.txt])
-
-AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt UCG_PERF_RESULTS_FILE "UCG_TEST_FILE_NAME_LARGE_FILE_1"], [0], [stdout-nolog], [stderr])
+AT_CAPTURE_FILE([./cmdlines.sh])
+AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
+AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
 
 AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 

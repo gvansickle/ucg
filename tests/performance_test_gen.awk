@@ -105,6 +105,7 @@ BEGIN {
 	# @TODO from runner
 	NUM_ITERATIONS=2;
 	RESULTS_FILE=ARGV[3];
+	## PARAM: Specify the CHARACTERIZE value on the command like: awk -v CHARACTERIZE=1 -f ...
 	
 		
 	# Pick up a usable "time" program from the environment, the testsuite should have put it there.
@@ -127,10 +128,24 @@ BEGIN {
 	TEST_GROUP_TO_PARAMS_PRE["built_ucg"]="--noenv --cpp"
 	TEST_GROUP_TO_PARAMS_PRE["system_grep"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
 	
-	PROG_TO_PARAMS_JOBS["ucg"]="-j"
+	if(CHARACTERIZE == 0)
+	{
+		PROG_TO_PARAMS_JOBS["ucg"]=""
+	}
+	else
+	{
+		PROG_TO_PARAMS_JOBS["ucg"]="-j"
+	}
 	PROG_TO_PARAMS_JOBS["grep"]=""
 	
-	PROG_TO_PARAMS_DIRJOBS["ucg"]="--dirjobs="
+	if(CHARACTERIZE == 0)
+	{
+		PROG_TO_PARAMS_DIRJOBS["ucg"]=""
+	}
+	else
+	{
+		PROG_TO_PARAMS_DIRJOBS["ucg"]="--dirjobs="
+	}
 	PROG_TO_PARAMS_DIRJOBS["grep"]=""
 
 	### print("Num test groups: ", alen(TEST_GROUPS))
