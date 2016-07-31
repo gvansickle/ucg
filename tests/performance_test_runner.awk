@@ -66,28 +66,19 @@ function line_count(filename,	cmd_line, retval)
 
 
 BEGIN {
-	if(ARGC != 4)
+	if(ARGC != 3)
 	{
 		print("Incorrect number of args: ", ARGC)
 		exit 1
 	}
 
 	NUM_ITERATIONS=2;
+	NUM_RUNS=ARGV[1];
 	RESULTS_FILE=ARGV[2];
-	BOOST_PATH=ARGV[3];
-	
-	cur_line=0
-	while(getline < ARGV[1])
-	{
-		cur_line++;
-		CMD_LINE_ARRAY[cur_line]=$0;
-		#print "cur_line=", cur_line, $0
-	}
-	close(ARGV[1])
 	
 	print("Starting performance tests, results file is", RESULTS_FILE);
 	
-	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
+	for(i=1; i<=NUM_RUNS; ++i)
 	{
 		COMMAND_LINE=CMD_LINE_ARRAY[i];
 		PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
@@ -162,7 +153,7 @@ BEGIN {
 	# Use the grep results (last) as the standard.
 	GREP_OUT_INDEX=alen(CMD_LINE_ARRAY);
 	GOLD_STD_FILE=(PREP_RUN_FILES[GREP_OUT_INDEX])
-	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
+	for(i=1; i<=NUM_RUNS; ++i)
 	{
 		NUM_MATCHED_LINES[i]=line_count(PREP_RUN_FILES[i]);
 	}
@@ -170,7 +161,7 @@ BEGIN {
 	# Output the results.
 	print("| Program | Avg of", NUM_ITERATIONS, "runs | Sample Stddev | SEM | Num Matched Lines |") >> RESULTS_FILE;
 	print("|---------|----------------|---------------|-----|-------------------|") >> RESULTS_FILE;
-	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
+	for(i=1; i<=NUM_RUNS; ++i)
 	{
 		print("|", CMD_LINE_ARRAY[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|", NUM_MATCHED_LINES[i], "|") >> RESULTS_FILE;
 	}

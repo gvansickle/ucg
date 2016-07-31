@@ -188,13 +188,13 @@ BEGIN {
 		print("echo \"Timing: " COMMAND_LINE "\" >>", RESULTS_FILE);
 		PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
 		wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
-		print("echo \"Prep run for wrapped command line: '" wrapped_cmd_line "' > " PREP_RUN_FILES[i]);
+		print("echo \"Prep run for wrapped command line: '" wrapped_cmd_line "'\" > " PREP_RUN_FILES[i]);
 		print(wrapped_cmd_line);
 		print("");
-		print("echo '# Timing runs.'");
+		print("# Timing runs.");
 		TIME_RESULTS_FILE=("./time_results_" i ".txt");
 		wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
-		print("Timing run for wrapped command line: '" wrapped_cmd_line "') > " TIME_RESULTS_FILE);
+		print("echo \"Timing run for wrapped command line: '" wrapped_cmd_line "'\" > " TIME_RESULTS_FILE);
 		print("for ITER in $(seq 0 $(expr $NUM_ITERATIONS - 1));\ndo")
 		print("    # Do a single run.")
 		print("    " wrapped_cmd_line);

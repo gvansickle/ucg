@@ -142,7 +142,7 @@ AT_CAPTURE_FILE([./cmdlines.sh])
 
 AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
 
-AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt UCG_PERF_RESULTS_FILE UCG_BOOST_PATH], [0], [stdout-nolog], [stderr])
+AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
 
 AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
