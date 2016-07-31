@@ -102,11 +102,14 @@ BEGIN {
 	# Get command line args.
 	REGEX=ARGV[1]
 	TEST_DATA_DIR=ARGV[2]
-	# @TODO from runner
-	NUM_ITERATIONS=2;
 	RESULTS_FILE=ARGV[3];
+	## PARAM: Specify the NUM_ITERATIONS value on the command line: awk -v NUM_ITERATIONS=5 -f...
 	## PARAM: Specify the CHARACTERIZE value on the command like: awk -v CHARACTERIZE=1 -f ...
-	
+	if((NUM_ITERATIONS < 0) || (NUM_ITERATIONS > 10))
+	{
+		print("ERROR: Bad NUM_ITERATIONS.") | "cat 1>&2"
+		exit 1;
+	}
 		
 	# Pick up a usable "time" program from the environment, the testsuite should have put it there.
 	PROG_TIME=ENVIRON["PROG_TIME"]

@@ -72,9 +72,14 @@ BEGIN {
 		exit 1
 	}
 
-	NUM_ITERATIONS=2;
 	NUM_RUNS=ARGV[1];
 	RESULTS_FILE=ARGV[2];
+	## PARAM: Specify the NUM_ITERATIONS value on the command line: awk -v NUM_ITERATIONS=5 -f...
+	if((NUM_ITERATIONS < 0) || (NUM_ITERATIONS > 10))
+	{
+		print("ERROR: Bad NUM_ITERATIONS.") | "cat 1>&2"
+		exit 1;
+	}
 	
 	print("Starting performance tests, results file is", RESULTS_FILE);
 	
