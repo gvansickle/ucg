@@ -144,7 +144,7 @@ BEGIN {
 		PROG = TEST_GROUP_TO_PROGS[j]
 		dirjobs_option = PROG_TO_PARAMS_DIRJOBS[PROG]
 		scanjobs_option = PROG_TO_PARAMS_JOBS[PROG]
-		COMMAND_LINE=("{ " PROG_TIME " " PROG " " TEST_GROUP_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }")
+		COMMAND_LINE=(j " ! " PROG " ! { " PROG_TIME " " PROG " " TEST_GROUP_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }")
 		
 		# Output the default "number of threads to use for scanning" command-line option (i.e. empty).
 		CL_COPY=COMMAND_LINE
@@ -181,10 +181,17 @@ BEGIN {
 	cla_alen = alen(CMD_LINE_ARRAY)
 	for ( i = 1; i <= cla_alen; i++ )
 	{
+		acopy(CMD_LINE_ARRAY, CLA_COPY)
+		#print(">>1 :", CMD_LINE_ARRAY[i]);
+		split(CMD_LINE_ARRAY[i], CMD_LINE_ARRAY_2, "[[:space:]]+![[:space:]]+");
+		#print(">>1 :", CMD_LINE_ARRAY_2[1], CMD_LINE_ARRAY_2[2], CMD_LINE_ARRAY_2[3])
+		GROUP_NAME=CMD_LINE_ARRAY_2[1]
+		PROG_NAME=CMD_LINE_ARRAY_2[2]
+		COMMAND_LINE=CMD_LINE_ARRAY_2[3]
+		
 		print("")
 		print("# Prep run, to eliminate disk cache variability and capture the matches.")
 		print("# We pipe the results through sort so we can diff these later.")
-		COMMAND_LINE=CMD_LINE_ARRAY[i];
 		print("echo \"Timing: " COMMAND_LINE "\" >>", RESULTS_FILE);
 		PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
 		wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
@@ -195,6 +202,8 @@ BEGIN {
 		TIME_RESULTS_FILE=("./time_results_" i ".txt");
 		wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
 		print("echo \"Timing run for wrapped command line: '" wrapped_cmd_line "'\" > " TIME_RESULTS_FILE);
+		print("echo \"TEST_GROUP_NAME: " GROUP_NAME "\" >> " TIME_RESULTS_FILE);
+		print("echo \"TEST_PROG_NAME: " PROG_NAME "\" >> " TIME_RESULTS_FILE);
 		print("for ITER in $(seq 0 $(expr $NUM_ITERATIONS - 1));\ndo")
 		print("    # Do a single run.")
 		print("    " wrapped_cmd_line);
