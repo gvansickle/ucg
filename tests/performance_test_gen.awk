@@ -27,6 +27,16 @@ function alen (a, i, i_max)
 	return i_max+0
 }
 
+function aderef(array, i)
+{
+	if (! (i in array))
+	{
+		print("ERROR: no such index " i " in array ") | "cat 1>&2";
+		exit(1);
+	}
+	return array[i];
+}
+
 function adelete(a,    i)
 {
 	# Delete all entries in array a.
@@ -103,11 +113,12 @@ BEGIN {
 	REGEX=ARGV[1]
 	TEST_DATA_DIR=ARGV[2]
 	RESULTS_FILE=ARGV[3];
+	## PARAM: Specify PROGLIST= comma separated list of TEST_GROUPS[] names.
 	## PARAM: Specify the NUM_ITERATIONS value on the command line: awk -v NUM_ITERATIONS=5 -f...
 	## PARAM: Specify the CHARACTERIZE value on the command like: awk -v CHARACTERIZE=1 -f ...
-	if((NUM_ITERATIONS < 0) || (NUM_ITERATIONS > 10))
+	if((NUM_ITERATIONS < 1) || (NUM_ITERATIONS > 10))
 	{
-		print("ERROR: Bad NUM_ITERATIONS.") | "cat 1>&2"
+		print("ERROR: Bad NUM_ITERATIONS.") | "cat 1>&2";
 		exit 1;
 	}
 		
@@ -115,20 +126,33 @@ BEGIN {
 	PROG_TIME=ENVIRON["PROG_TIME"]
 	if(PROG_TIME == "")
 	{
-		print("ERROR: env var $PROG_TIME is not set.");
+		print("ERROR: env var $PROG_TIME is not set.") | "cat 1>&2";
 		exit 1;
 	}
-	### @todo
-	###PROG_TIME=("/usr/bin/time -f 'real %e\\npct_cpu %P\\ntimed_cmd_line %C\\n'");
 	
+	print("PROGLIST=" PROGLIST) | "cat 1>&2";
+	split(PROGLIST, PROGLIST_ARRAY, ",");
+	for(i=1; i<=alen(PROGLIST_ARRAY); ++i)
+	{
+		# Split the "built_prog:/path/to/prog" entries apart.
+		split(PROGLIST_ARRAY[i], a, ":");
+		print("Index: " i " in PROGLIST_ARRAY=" PROGLIST_ARRAY[i]) | "cat 1>&2";
+		TEST_GROUPS[i]=aderef(a, 1);
+		TEST_GROUP_TO_PROGS[a[1]]=aderef(a, 2);
+		print("TEST_GROUPS[i]: " TEST_GROUPS[i]) | "cat 1>&2";
+		print("TEST_GROUP_TO_PROGS[a[1]]: " TEST_GROUP_TO_PROGS[a[1]]) | "cat 1>&2";
+	}
 
-	TEST_GROUPS[1]="built_ucg"
-	TEST_GROUPS[2]="system_grep"
+	#TEST_GROUPS[1]="built_ucg"
+	#TEST_GROUPS[2]="system_ag"
+	#TEST_GROUPS[3]="system_grep"
 	
-	TEST_GROUP_TO_PROGS["built_ucg"]="ucg"
-	TEST_GROUP_TO_PROGS["system_grep"]="grep"
+	#TEST_GROUP_TO_PROGS["built_ucg"]="ucg";
+	#TEST_GROUP_TO_PROGS["system_ag"]=PROGLIST_ARRAY["system_ag"];
+	#TEST_GROUP_TO_PROGS["system_grep"]="grep";
 	
 	TEST_GROUP_TO_PARAMS_PRE["built_ucg"]="--noenv --cpp"
+	TEST_GROUP_TO_PARAMS_PRE["system_ag"]="--cpp"
 	TEST_GROUP_TO_PARAMS_PRE["system_grep"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
 	
 	if(CHARACTERIZE == 0)
@@ -139,6 +163,7 @@ BEGIN {
 	{
 		PROG_TO_PARAMS_JOBS["ucg"]="-j"
 	}
+	PROG_TO_PARAMS_JOBS["ag"]=""
 	PROG_TO_PARAMS_JOBS["grep"]=""
 	
 	if(CHARACTERIZE == 0)
@@ -149,6 +174,7 @@ BEGIN {
 	{
 		PROG_TO_PARAMS_DIRJOBS["ucg"]="--dirjobs="
 	}
+	PROG_TO_PARAMS_DIRJOBS["ag"]=""
 	PROG_TO_PARAMS_DIRJOBS["grep"]=""
 
 	### print("Num test groups: ", alen(TEST_GROUPS))
@@ -158,8 +184,10 @@ BEGIN {
 	
 	for (i=1; i <= alen(TEST_GROUPS); i++ )
 	{
-		j = TEST_GROUPS[i]
-		PROG = TEST_GROUP_TO_PROGS[j]
+		if(! i in TEST_GROUPS) print("ERROR: no index " i " in TEST_GROUPS") | "cat 1>&2";
+		j = TEST_GROUPS[i];
+		if(! j in TEST_GROUP_TO_PROGS) print("ERROR: no index " j " in TEST_GROUP_TO_PROGS") | "cat 1>&2";
+		PROG = TEST_GROUP_TO_PROGS[j];
 		dirjobs_option = PROG_TO_PARAMS_DIRJOBS[PROG]
 		scanjobs_option = PROG_TO_PARAMS_JOBS[PROG]
 		COMMAND_LINE=(j " ! " PROG " ! { " PROG_TIME " " PROG " " TEST_GROUP_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }")
@@ -186,6 +214,8 @@ BEGIN {
 	
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
 	join_val_range(CLA_COPY, CMD_LINE_ARRAY, " ucg ", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ucg"], 4)
+	acopy(CMD_LINE_ARRAY, CLA_COPY)
+	join_val_range(CLA_COPY, CMD_LINE_ARRAY, " ag ", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ag"], 4)
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
 	join_val_range(CLA_COPY, CMD_LINE_ARRAY, " grep ", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["grep"], 4)
 	

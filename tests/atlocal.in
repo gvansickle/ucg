@@ -27,15 +27,18 @@ XFAILFILE=$abs_builddir/.badversion
 trap "test -r $XFAILFILE && cat $XFAILFILE; exit $?" 1 2 13 15
 
 # At testsuite-time, find the programs we wish to compare performance with.
+PROGLIST=built_ucg:ucg
 PERF_PROGRAMS_TO_COMPARE=ucg
 if PROG_AG="$(which ag)";
 then
 	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_AG;
+	PROGLIST=$PROGLIST,system_ag:$PROG_AG
 fi
 #if PROG_ACK="$(which ack)";
 #then
 #	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_ACK;
 #fi
+PROGLIST=$PROGLIST,system_grep:grep
 
 
 PROG_SCRIPT="@PROG_SCRIPT@"
