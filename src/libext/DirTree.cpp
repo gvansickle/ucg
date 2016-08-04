@@ -21,7 +21,7 @@
 
 #include "DirTree.h"
 
-#include <fcntl.h> // For AT_FDCWD
+#include <fcntl.h> // For AT_FDCWD, AT_NO_AUTOMOUNT
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -30,6 +30,20 @@
 #include <iostream>
 #include <queue>
 #include <map>
+
+// Take care of some portability issues.
+#ifndef AT_NO_AUTOMOUNT
+#define AT_NO_AUTOMOUNT 0  // Not defined on at least Cygwin.
+#endif
+#ifndef O_NOATIME
+#define O_NOATIME 0  // Not defined on at least Cygwin.
+#endif
+#ifndef O_SEARCH
+// Not defined on at least Linux.  O_SEARCH is POSIX.1-2008, but not defined on at least Linux.
+// Possible reason, quoted from the standard: "Since O_RDONLY has historically had the value zero, implementations are not able to distinguish
+// between O_SEARCH and O_SEARCH | O_RDONLY, and similarly for O_EXEC."
+#define O_SEARCH 0
+#endif
 
 DirTree::DirTree()
 {
@@ -148,7 +162,10 @@ void DirTree::Read(std::vector<std::string> start_paths)
 	std::queue<DirStackEntry> dir_stack;
 	for(auto p : start_paths)
 	{
+		// AT_FDCWD == Start at the cwd of the process.
 		dir_stack.push(DirStackEntry(AtFD::weak_dup(AT_FDCWD), p));
+
+		/// @todo The start_paths can be files or dirs.  Currently the loop below will only work if they're dirs.
 	}
 
 	while(!dir_stack.empty())
@@ -158,8 +175,8 @@ void DirTree::Read(std::vector<std::string> start_paths)
 
 		std::cout << "POP: " << dse.at_fd.get_at_fd() << '\n';
 
-		// AT_FDCWD == Start at the cwd of the process.
-		file_fd = openat(dse.at_fd.get_at_fd(), dse.path.c_str(), O_RDONLY | O_NOATIME | O_NOCTTY); // Could be a file or dir.
+		int openat_dir_search_flags = O_SEARCH ? O_SEARCH : O_RDONLY;
+		file_fd = openat(dse.at_fd.get_at_fd(), dse.path.c_str(), openat_dir_search_flags | O_DIRECTORY | O_NOATIME | O_NOCTTY);
 		d = fdopendir(file_fd);
 		if(d == nullptr)
 		{
