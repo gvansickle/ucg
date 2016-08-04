@@ -30,6 +30,7 @@
 #include <iostream>
 #include <queue>
 #include <map>
+#include <memory>
 
 // Take care of some portability issues.
 #ifndef AT_NO_AUTOMOUNT
@@ -133,6 +134,7 @@ public:
 private:
 	static std::map<int, size_t> m_refcount_map;
 	static void inc_refcount(int fd) { if(fd >= 0) { m_refcount_map.at(fd)++;}; };
+
 	int m_real_file_descriptor {-1};
 };
 
@@ -141,14 +143,30 @@ std::map<int, size_t> AtFD::m_refcount_map;
 class DirStackEntry
 {
 public:
-	DirStackEntry(AtFD parent_dir, std::string path)
+	DirStackEntry(std::shared_ptr<DirStackEntry> parent_dse, AtFD parent_dir, std::string path)
 	{
+		m_parent_dir = parent_dse;
 		at_fd = parent_dir;
 		this->path = path;
 	};
 
+	std::string get_name()
+	{
+		std::string retval;
+
+		if(m_parent_dir)
+		{
+			retval = m_parent_dir->get_name() + "/";
+		}
+		retval += path;
+
+		return retval;
+	}
+
 	std::string path;
 	AtFD at_fd;
+
+	std::shared_ptr<DirStackEntry> m_parent_dir { nullptr };
 };
 
 void DirTree::Read(std::vector<std::string> start_paths)
@@ -159,11 +177,11 @@ void DirTree::Read(std::vector<std::string> start_paths)
 	struct dirent *dp {nullptr};
 	int file_fd;
 
-	std::queue<DirStackEntry> dir_stack;
+	std::queue<std::shared_ptr<DirStackEntry>> dir_stack;
 	for(auto p : start_paths)
 	{
 		// AT_FDCWD == Start at the cwd of the process.
-		dir_stack.push(DirStackEntry(AtFD::weak_dup(AT_FDCWD), p));
+		dir_stack.push(std::make_shared<DirStackEntry>(DirStackEntry(nullptr, AtFD::weak_dup(AT_FDCWD), p)));
 
 		/// @todo The start_paths can be files or dirs.  Currently the loop below will only work if they're dirs.
 	}
@@ -173,10 +191,10 @@ void DirTree::Read(std::vector<std::string> start_paths)
 		auto dse = dir_stack.front();
 		dir_stack.pop();
 
-		std::cout << "POP: " << dse.at_fd.get_at_fd() << '\n';
+		std::cout << "POP: " << dse.get()->at_fd.get_at_fd() << '\n';
 
 		int openat_dir_search_flags = O_SEARCH ? O_SEARCH : O_RDONLY;
-		file_fd = openat(dse.at_fd.get_at_fd(), dse.path.c_str(), openat_dir_search_flags | O_DIRECTORY | O_NOATIME | O_NOCTTY);
+		file_fd = openat(dse.get()->at_fd.get_at_fd(), dse.get()->path.c_str(), openat_dir_search_flags | O_DIRECTORY | O_NOATIME | O_NOCTTY);
 		d = fdopendir(file_fd);
 		if(d == nullptr)
 		{
@@ -231,18 +249,18 @@ void DirTree::Read(std::vector<std::string> start_paths)
 
 			if(is_file)
 			{
-				std::cout << "File: " << dse.path + "/" + dname << '\n';
+				std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';
 			}
 			else if(is_dir)
 			{
-				std::cout << "Dir: " << dse.path + "/" + dname << '\n';
+				std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
 
 				if(!dir_atfd.is_valid())
 				{
 					dir_atfd = AtFD::weak_dup(file_fd);
 				}
 
-				dir_stack.push(DirStackEntry(dir_atfd, dname));
+				dir_stack.push(std::make_shared<DirStackEntry>(DirStackEntry(dse, dir_atfd, dname)));
 			}
 		}
 
