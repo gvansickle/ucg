@@ -66,57 +66,35 @@ function line_count(filename,	cmd_line, retval)
 
 
 BEGIN {
-	if(ARGC != 4)
+	if(ARGC != 3)
 	{
 		print("Incorrect number of args: ", ARGC)
 		exit 1
 	}
 
-	NUM_ITERATIONS=2;
+	NUM_RUNS=ARGV[1];
 	RESULTS_FILE=ARGV[2];
-	BOOST_PATH=ARGV[3];
-	
-	cur_line=0
-	while(getline < ARGV[1])
+	## PARAM: Specify the NUM_ITERATIONS value on the command line: awk -v NUM_ITERATIONS=5 -f...
+	if((NUM_ITERATIONS < 0) || (NUM_ITERATIONS > 10))
 	{
-		cur_line++;
-		CMD_LINE_ARRAY[cur_line]=$0;
-		#print "cur_line=", cur_line, $0
+		print("ERROR: Bad NUM_ITERATIONS.") | "cat 1>&2"
+		exit 1;
 	}
-	close(ARGV[1])
 	
 	print("Starting performance tests, results file is", RESULTS_FILE);
 	
-	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
+	for(i=1; i<=NUM_RUNS; ++i)
 	{
 		COMMAND_LINE=CMD_LINE_ARRAY[i];
 		PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
 		TIME_RESULTS_FILE=("./time_results_" i ".txt");
-		if(0)
-		{		
-			# "Prep" run, to eliminate disk cache variability and capture the matches.
-			# We pipe the results through sort so we can diff these later.
-			print("Timing: ", COMMAND_LINE) >> RESULTS_FILE;
-			wrapped_cmd_line=("{ " COMMAND_LINE " 2>>" PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
-			print("Prep run for wrapped command line: '" wrapped_cmd_line "'") > PREP_RUN_FILES[i];
-			system(wrapped_cmd_line);
-			###print(wrapped_cmd_line);
-			close(PREP_RUN_FILES[i]);
-	
-			# Timing runs.
-			wrapped_cmd_line=("{ " COMMAND_LINE " 2>>" TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
-			print("Timing run for wrapped command line: '" wrapped_cmd_line "'") > TIME_RESULTS_FILE;
-			for(ITER=1; ITER <= NUM_ITERATIONS; ++ITER)
-			{
-				# Do a single run.
-				system(wrapped_cmd_line);
-				###print(wrapped_cmd_line);
-			}
-		}
+
 		
 		# Retrieve the timing data.
 		adelete(REAL_TIME);
 		REAL_TIME[1]=0;
+		TEST_GROUP_NAME[i]="unknown";
+		TEST_PROG_NAME[i]="unknown";
 		NUM_TIMES=0;
 		while((getline < (TIME_RESULTS_FILE)) > 0)
 		{
@@ -125,6 +103,16 @@ BEGIN {
 				NUM_TIMES += 1;
 				REAL_TIME[NUM_TIMES] += $2;
 				print("Time entry: " REAL_TIME[NUM_TIMES]) >> RESULTS_FILE;
+			}
+			if($1 == "TEST_GROUP_NAME:")
+			{
+				print($1 " " $2) >> RESULTS_FILE;
+				TEST_GROUP_NAME[i]=$2;
+			}
+			if($1 == "TEST_PROG_NAME:")
+			{
+				print($1 " " $2) >> RESULTS_FILE;
+				TEST_PROG_NAME[i]=$2;
 			}
 		}
 		if(NUM_TIMES > NUM_ITERATIONS)
@@ -162,7 +150,7 @@ BEGIN {
 	# Use the grep results (last) as the standard.
 	GREP_OUT_INDEX=alen(CMD_LINE_ARRAY);
 	GOLD_STD_FILE=(PREP_RUN_FILES[GREP_OUT_INDEX])
-	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
+	for(i=1; i<=NUM_RUNS; ++i)
 	{
 		NUM_MATCHED_LINES[i]=line_count(PREP_RUN_FILES[i]);
 	}
@@ -170,8 +158,8 @@ BEGIN {
 	# Output the results.
 	print("| Program | Avg of", NUM_ITERATIONS, "runs | Sample Stddev | SEM | Num Matched Lines |") >> RESULTS_FILE;
 	print("|---------|----------------|---------------|-----|-------------------|") >> RESULTS_FILE;
-	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
+	for(i=1; i<=NUM_RUNS; ++i)
 	{
-		print("|", CMD_LINE_ARRAY[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|", NUM_MATCHED_LINES[i], "|") >> RESULTS_FILE;
+		print("|", TEST_PROG_NAME[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|", NUM_MATCHED_LINES[i], "|") >> RESULTS_FILE;
 	}
 }

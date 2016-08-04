@@ -18,6 +18,7 @@
 noinst_LIBRARIES = libext.a 
 libext_a_SOURCES = \
 	cpuidex.hpp cpuidex.cpp \
+	DirTree.h DirTree.cpp \
 	filesystem.hpp \
 	hints.hpp \
 	integer.hpp \
