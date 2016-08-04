@@ -27,9 +27,6 @@
 #include <dirent.h>
 #include <cstring>
 
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-
 #include <iostream>
 #include <queue>
 #include <map>
@@ -44,22 +41,6 @@ DirTree::~DirTree()
 {
 	// TODO Auto-generated destructor stub
 }
-
-static void Closer(int * ptr_to_at_fd) noexcept
-{
-	close(*ptr_to_at_fd);
-}
-
-std::shared_ptr<int> make_shared_fd(int fd)
-{
-	return std::shared_ptr<int>(new int(fd), [=](int*fd){ if(*fd > 0) { std::cout << "CLOSING FD " << *fd << std::endl; close(*fd); } });
-}
-
-struct rcfd
-{
-	int m_ref_counted_file_desc {-1};
-	size_t m_refcount {0};
-};
 
 class AtFD
 {
@@ -158,7 +139,6 @@ public:
 
 void DirTree::Read(std::vector<std::string> start_paths)
 {
-#if 1
 	int num_entries {0};
 	struct stat statbuf;
 	DIR *d {nullptr};
@@ -239,7 +219,6 @@ void DirTree::Read(std::vector<std::string> start_paths)
 			else if(is_dir)
 			{
 				std::cout << "Dir: " << dse.path + "/" + dname << '\n';
-				//auto dirfd = openat(dse.dir_fd, dname, O_RDONLY | O_NOATIME | O_NOCTTY);
 
 				if(!dir_atfd.is_valid())
 				{
@@ -252,10 +231,4 @@ void DirTree::Read(std::vector<std::string> start_paths)
 
 		closedir(d);
 	}
-#else
-	for(auto& p : fs::recursive_directory_iterator(start_paths[0], fs::directory_options::follow_directory_symlink))
-	{
-		std::cout << p << "\n";
-	}
-#endif
 }
