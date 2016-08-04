@@ -147,7 +147,7 @@ void FileScanner::Run(int thread_index)
 			size_t file_size = f.size();
 
 			// Scan the file data for occurrences of the regex, sending matches to the MatchList ml.
-			ScanFile(file_data, file_size, ml);
+			//ScanFile(file_data, file_size, ml);
 
 			if(!ml.empty())
 			{

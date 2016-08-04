@@ -21,6 +21,11 @@
 
 #include "Globber.h"
 
+/// @todo
+#include <libext/DirTree.h>
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
 #include "Logger.h"
 #include "TypeManager.h"
 #include "DirInclusionManager.h"
@@ -35,6 +40,7 @@
 #include <system_error>
 #include <string>
 #include <libext/string.hpp>
+
 
 
 Globber::Globber(std::vector<std::string> start_paths,
@@ -58,6 +64,12 @@ void Globber::Run()
 {
 	sync_queue<std::string> dir_queue;
 	std::vector<std::thread> threads;
+
+#if 1 /// @todo TEMP
+	DirTree dt;
+	dt.Read(m_start_paths);
+	return;
+#endif
 
 	/// @todo It looks like OSX needs any trailing slashes to be removed from the m_start_paths here, or its fts lib will double them up.
 	/// Doesn't seem to affect the overall scanning results though.
@@ -108,6 +120,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 
 	while(dir_queue.wait_pull(std::move(dir)) != queue_op_status::closed)
 	{
+#if 1
 		dirs[0] = const_cast<char*>(dir.c_str());
 		dirs[1] = 0;
 		size_t old_val {0};
@@ -257,6 +270,112 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 			LOG(INFO) << "All start paths consumed.";
 			start_paths_have_been_consumed = true;
 		}
+#else
+		size_t old_val {0};
+
+		// If we haven't seen m_num_start_paths_remaining == 0 yet...
+		if(!start_paths_have_been_consumed)
+		{
+			// Compare-and-Exchange loop to decrement the m_num_start_paths_remaining counter by 1.
+			size_t old_val = m_num_start_paths_remaining.load();
+			while(old_val != 0 && !m_num_start_paths_remaining.compare_exchange_weak(old_val, old_val - 1))
+			{
+				// Spin until we get a successful compare and exchange.  If old_val was already 0, we're done decrementing,
+				// so skip the spin here entirely.
+			}
+		}
+
+		auto rdi = fs::recursive_directory_iterator(dir, fs::directory_options::follow_directory_symlink);
+		for(auto& p : rdi)
+		{
+			bool skip_inclusion_checks = false;
+			std::string name = p.path().filename();
+			std::string path = p.path().string();
+
+			LOG(INFO) << "Considering file \'" << path << "\' at depth = " << rdi.depth();
+
+			// Determine if we should skip the inclusion/exclusion checks for this file/dir.  We should only do this
+			// for files/dirs specified on the command line, which will have an fts_level of FTS_ROOTLEVEL (0), and the
+			// start_paths_have_been_consumed flag will still be false.
+			if((rdi.depth() == 0) && !start_paths_have_been_consumed)
+			{
+				skip_inclusion_checks = true;
+			}
+
+			fs::file_status s;
+			s = p.status();
+			if(fs::is_regular_file(s))
+			{
+				// It's a normal file.
+				LOG(INFO) << "... normal file.";
+				stats.m_num_files_found++;
+
+				// Check for inclusion.
+				if(skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
+				{
+					LOG(INFO) << "... should be scanned.";
+					// Extension was in the hash table.
+					m_out_queue.wait_push(std::move(path));
+
+					// Count the number of files we found that were included in the search.
+					stats.m_num_files_scanned++;
+				}
+				else
+				{
+					stats.m_num_files_rejected++;
+				}
+			}
+			else if(fs::is_directory(s))
+			{
+				LOG(INFO) << "... directory.";
+				stats.m_num_directories_found++;
+				// It's a directory.  Check if we should descend into it.
+				if(!m_recurse_subdirs && rdi.depth() > 0)
+				{
+					// We were told not to recurse into subdirectories.
+					LOG(INFO) << "... --no-recurse specified, skipping.";
+					//fts_set(fts, ftsent, FTS_SKIP);
+					rdi.disable_recursion_pending();
+				}
+				if(!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(path, name))
+				{
+					// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
+					LOG(INFO) << "... should be ignored.";
+					//fts_set(fts, ftsent, FTS_SKIP);
+					rdi.disable_recursion_pending();
+				}
+#if 0
+				if((m_dirjobs > 1) && (rdi.depth() == 0))
+				{
+					// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
+					if(HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino).m_val))
+					{
+						// Found cycle.
+						WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
+						//fts_set(fts, ftsent, FTS_SKIP);
+						rdi.disable_recursion_pending();
+						continue;
+					}
+				}
+#endif
+				if(m_recurse_subdirs && (rdi.depth() > 0) && (m_dirjobs > 1))
+				{
+					// Queue it up for scanning.
+					LOG(INFO) << "... subdir, queuing it up for multithreaded scanning.";
+					dir_queue.wait_push(std::move(path));
+					//fts_set(fts, ftsent, FTS_SKIP);
+					rdi.disable_recursion_pending();
+				}
+			}
+		}
+
+		if(old_val == 0)
+		{
+			// We've consumed all of the paths given on the command line, we no longer need to do the check.
+			LOG(INFO) << "All start paths consumed.";
+			start_paths_have_been_consumed = true;
+		}
+#endif
 
 	}
 

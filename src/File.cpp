@@ -124,7 +124,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 
 		// Read in the whole file.
 		/// @todo Handle read() errors better.
-		while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
+		//while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
 	}
 
 	// We don't need the file descriptor anymore.
