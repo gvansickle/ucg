@@ -27,24 +27,49 @@
 #include <dirent.h>
 #include <cstring>
 
+#include <stdexcept>
 #include <iostream>
 #include <queue>
 #include <map>
 #include <memory>
+#include <algorithm>
 
-// Take care of some portability issues.
+#define EXPAND_MACRO_HELPER(x) #x
+#define EXPAND_MACRO(p) EXPAND_MACRO_HELPER(p)
+#define STATIC_MESSAGE_HELPER(m) _Pragma(#m)
+#define STATIC_MESSAGE(m) STATIC_MESSAGE_HELPER(message #m)
+
+/// @name Take care of some portability issues.
+/// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
+/// - No AT_FDCWD, no openat, no fdopendir, no fstatat.
+/// Cygwin:
+/// - No O_NOATIME, no AT_NO_AUTOMOUNT.
+/// Linux:
+/// - No O_SEARCH.
+/// @{
 #ifndef AT_NO_AUTOMOUNT
 #define AT_NO_AUTOMOUNT 0  // Not defined on at least Cygwin.
 #endif
 #ifndef O_NOATIME
+// From "The GNU C Library" manual <https://www.gnu.org/software/libc/manual/html_mono/libc.html#toc-File-System-Interface-1>
+// 13.14.3 I/O Operating Modes: "Only the owner of the file or the superuser may use this bit."
 #define O_NOATIME 0  // Not defined on at least Cygwin.
 #endif
 #ifndef O_SEARCH
-// Not defined on at least Linux.  O_SEARCH is POSIX.1-2008, but not defined on at least Linux.
+// O_SEARCH is POSIX.1-2008, but not defined on at least Linux/glibc 2.24.
 // Possible reason, quoted from the standard: "Since O_RDONLY has historically had the value zero, implementations are not able to distinguish
 // between O_SEARCH and O_SEARCH | O_RDONLY, and similarly for O_EXEC."
 #define O_SEARCH 0
 #endif
+
+#ifdef _POSIX_OPEN_MAX
+// Posix specifies the minimum of this to be 20.
+//STATIC_MESSAGE(Posix open max is _POSIX_OPEN_MAX)
+//STATIC_MESSAGE("_POSIX_OPEN_MAX=" EXPAND_MACRO(_POSIX_OPEN_MAX))
+//#pragma message "_POSIX_OPEN_MAX=" EXPAND_MACRO(_POSIX_OPEN_MAX)
+#endif
+
+///@}
 
 DirTree::DirTree()
 {
@@ -69,15 +94,14 @@ public:
 
 	~AtFD()
 	{
-		if(m_real_file_descriptor == -1 || m_real_file_descriptor == AT_FDCWD)
+		if(m_real_file_descriptor == -1 || m_real_file_descriptor == AT_FDCWD || m_real_file_descriptor < 0)
 			return;
 
-		auto it = m_refcount_map.find(m_real_file_descriptor);
-		it->second--;
-		if(it->second == 0)
+		m_refcount_map[m_real_file_descriptor]--;
+		if(m_refcount_map[m_real_file_descriptor] == 0)
 		{
 			//std::cout << "REF COUNT == 0, DELETE AND CLOSE: " << m_real_file_descriptor << '\n';
-			m_refcount_map.erase(it);
+			//m_refcount_map.erase(it);
 			close(m_real_file_descriptor);
 		}
 	}
@@ -88,27 +112,29 @@ public:
 	{
 		AtFD retval;
 
-		retval.m_real_file_descriptor = fd;
-
 		if(fd == AT_FDCWD)
 		{
+			retval.m_real_file_descriptor = fd;
 			return retval;
 		}
+		else if(fd < 0)
+		{
+			throw std::out_of_range("fd < 0");
+		}
 
-		auto it = m_refcount_map.find(fd);
-		if(it == m_refcount_map.end())
+		//auto it = m_refcount_map.find(fd);
+		if(0 == get_refcount_or_allocate(fd))
 		{
 			// Hasn't been duped yet.
 			retval.m_real_file_descriptor = dup(fd);
 			//std::cout << "NEW dup, original = " << fd << ", new = " << retval.m_real_file_descriptor << '\n';
-			m_refcount_map[retval.m_real_file_descriptor] = 1;
+			auto cur_refcnt = get_refcount_or_allocate(retval.m_real_file_descriptor);
+			if(cur_refcnt != 0) { throw std::out_of_range("new fd's refcount not 0"); };
+			inc_refcount(retval.m_real_file_descriptor);
 		}
 		else
 		{
-			/// @todo This should probably be an error.
-			std::cout << "REFCOUNT dup, original = " << fd << '\n';
-			it->second++;
-			retval.m_real_file_descriptor = it->first;
+			throw std::out_of_range("original fd is in map");
 		}
 
 		return retval;
@@ -134,19 +160,52 @@ public:
 	};
 
 private:
-	static std::map<int, size_t> m_refcount_map;
+	//static std::map<int, size_t> m_refcount_map;
+	static std::vector<size_t> m_refcount_map;
+	static size_t get_refcount_or_allocate(int fd)
+	{
+		if(fd < 0)
+		{
+			return 0;
+		}
+
+		long unsigned int ufd = fd;
+
+		if(ufd >= m_refcount_map.size())
+		{
+			// Off the end, reallocate the vector.
+			decltype(m_refcount_map)::size_type new_size = std::max(ufd+1, m_refcount_map.size()*2);
+			m_refcount_map.resize(new_size);
+		}
+		return m_refcount_map[fd];
+	}
 	static void inc_refcount(int fd)
 	{
 		if(fd >= 0)
 		{
-			m_refcount_map.at(fd)++;
+			m_refcount_map[fd]++;
 		};
 	};
+	static bool dec_refcount(int fd)
+	{
+		if(fd >= 0)
+		{
+			m_refcount_map[fd]--;
+			if(m_refcount_map[fd] == 0)
+			{
+				// It's zero, tell caller to close the fd.
+				return true;
+			}
+		}
+		return false;
+	}
 
 	int m_real_file_descriptor {-1};
 };
 
-std::map<int, size_t> AtFD::m_refcount_map;
+std::vector<size_t> AtFD::m_refcount_map(256);
+
+//std::map<int, size_t> AtFD::m_refcount_map;
 
 
 class DirStackEntry
@@ -165,15 +224,24 @@ public:
 
 	std::string get_name()
 	{
-		std::string retval;
-
-		if(m_parent_dir)
+		if(m_lazy_full_name.empty())
 		{
-			retval = m_parent_dir->get_name() + "/";
-		}
-		retval += m_path;
+			std::string retval;
 
-		return retval;
+			if(m_parent_dir)
+			{
+				retval = m_parent_dir->get_name() + "/";
+			}
+			retval += m_path;
+
+			m_lazy_full_name.assign(retval);
+
+			return retval;
+		}
+		else
+		{
+			return m_lazy_full_name;
+		}
 	}
 
 	int get_at_fd() const noexcept { return m_at_fd.get_at_fd(); };
@@ -181,6 +249,8 @@ public:
 	std::string m_path;
 	AtFD m_at_fd;
 
+private:
+	std::string m_lazy_full_name {};
 	std::shared_ptr<DirStackEntry> m_parent_dir { nullptr };
 };
 
@@ -265,11 +335,11 @@ void DirTree::Read(std::vector<std::string> start_paths)
 
 			if(is_file)
 			{
-				std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';
+				std::cout << "File: " << '\n';//dse.get()->get_name() + "/" + dname << '\n';
 			}
 			else if(is_dir)
 			{
-				std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
+				std::cout << "Dir: " << '\n';//dse.get()->get_name() + "/" + dname << '\n';
 
 				if(!next_at_dir.is_valid())
 				{

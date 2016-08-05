@@ -40,7 +40,9 @@
 #include <string>
 #include <libext/string.hpp>
 
-
+/// @todo FOR TEST, DELETE
+#define TRAVERSE_ONLY 1
+#define USE_DIRTREE 0
 
 Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
@@ -64,7 +66,7 @@ void Globber::Run()
 	sync_queue<std::string> dir_queue;
 	std::vector<std::thread> threads;
 
-#if 1 /// @todo TEMP
+#if USE_DIRTREE == 1 /// @todo TEMP
 	DirTree dt;
 	dt.Read(m_start_paths);
 	return;
@@ -99,7 +101,8 @@ void Globber::Run()
 		thr.join();
 	}
 
-	///LOG(INFO) << "Number of regular files found: " << m_num_files_found;
+	// Log the traversal stats.
+	LOG(INFO) << m_traversal_stats;
 }
 
 
@@ -123,6 +126,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		dirs[1] = 0;
 		size_t old_val {0};
 
+#if TRAVERSE_ONLY != 1
 		// If we haven't seen m_num_start_paths_remaining == 0 yet...
 		if(!start_paths_have_been_consumed)
 		{
@@ -134,6 +138,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				// so skip the spin here entirely.
 			}
 		}
+#endif
 
 		/// @todo We can't use FS_NOSTAT here.  OSX at least isn't able to determine regular
 		/// files without the stat, so they get returned as FTS_NSOK / 11 /	no stat(2) requested.
@@ -143,22 +148,24 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		/// in multiple threads, and there's only a process-wide cwd, we'll specify it anyway.
 		/// @todo Current gnulib supports additional flags here: FTS_CWDFD | FTS_DEFER_STAT | FTS_NOATIME.  We should
 		/// check for these and use them if they exist.
-
-		FTS *fts = fts_open(dirs, FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/, NULL);
+		//int fts_options = FTS_LOGICAL | FTS_NOCHDIR/*| FTS_NOSTAT*/;
+		int fts_options = FTS_PHYSICAL;
+		FTS *fts = fts_open(dirs, fts_options, NULL);
 		while(FTSENT *ftsent = fts_read(fts))
 		{
-			std::string name;
+			//std::string name;
 			std::string path;
 			bool skip_inclusion_checks = false;
 
 			if(ftsent->fts_info == FTS_F || ftsent->fts_info == FTS_D)
 			{
-				name.assign(ftsent->fts_name, ftsent->fts_namelen);
-				path.assign(ftsent->fts_path, ftsent->fts_pathlen);
+				//name.assign(ftsent->fts_name, ftsent->fts_namelen);
+				//path.assign(ftsent->fts_path, ftsent->fts_pathlen);
 			}
 
 			LOG(INFO) << "Considering file \'" << ftsent->fts_path << "\' at depth = " << ftsent->fts_level;
 
+#if TRAVERSE_ONLY != 1
 			// Determine if we should skip the inclusion/exclusion checks for this file/dir.  We should only do this
 			// for files/dirs specified on the command line, which will have an fts_level of FTS_ROOTLEVEL (0), and the
 			// start_paths_have_been_consumed flag will still be false.
@@ -166,6 +173,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 			{
 				skip_inclusion_checks = true;
 			}
+#endif
 
 			if(ftsent->fts_info == FTS_F)
 			{
@@ -173,6 +181,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				LOG(INFO) << "... normal file.";
 				stats.m_num_files_found++;
 
+#if TRAVERSE_ONLY != 1
 				// Check for inclusion.
 				if(skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
 				{
@@ -187,11 +196,16 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				{
 					stats.m_num_files_rejected++;
 				}
+#else
+				std::cout << "File: " << '\n';//path << '\n';
+#endif
 			}
 			else if(ftsent->fts_info == FTS_D)
 			{
 				LOG(INFO) << "... directory.";
 				stats.m_num_directories_found++;
+
+#if TRAVERSE_ONLY != 1
 				// It's a directory.  Check if we should descend into it.
 				if(!m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
 				{
@@ -218,6 +232,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 					}
 				}
 
+
 				if(m_recurse_subdirs && (ftsent->fts_level > FTS_ROOTLEVEL) && (m_dirjobs > 1))
 				{
 					// Queue it up for scanning.
@@ -225,6 +240,9 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 					dir_queue.wait_push(std::move(path));
 					fts_set(fts, ftsent, FTS_SKIP);
 				}
+#else
+				std::cout << "Dir: " << '\n';//path << ", depth: " << ftsent->fts_level << '\n';
+#endif
 			}
 			/// @note Only FTS_DNR, FTS_ERR, and FTS_NS have valid fts_errno information.
 			else if(ftsent->fts_info == FTS_DNR)
@@ -260,6 +278,8 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				LOG(INFO) << "... unknown file type:" << ftsent->fts_info;
 			}
 		}
+
+		std::cout << "CLOSING FTS" << '\n';
 		fts_close(fts);
 
 		if(old_val == 0)
@@ -270,5 +290,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		}
 	}
 
-	/// @todo Add the local stats to the class's stats.
+	// Add the local stats to the class's stats.
+	m_traversal_stats += stats;
 }

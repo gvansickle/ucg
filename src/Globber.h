@@ -22,6 +22,8 @@
 
 #include <config.h>
 
+#include <iostream>
+
 #include <vector>
 #include <set>
 #include <string>
@@ -36,17 +38,53 @@ class TypeManager;
 class DirInclusionManager;
 
 /**
- * Helper struct to collect up and communicate traversal stats.
+ * Helper class to collect up and communicate directory tree traversal stats.
  */
-struct DirectoryTraversalStats
+class DirectoryTraversalStats
 {
+public:
 	size_t m_num_files_found { 0 };
+	size_t m_num_directories_found { 0 };
 
 	size_t m_num_files_rejected { 0 };
 
 	size_t m_num_files_scanned { 0 };
 
-	size_t m_num_directories_found { 0 };
+
+	/**
+	 * Atomic compound assignment by sum.
+	 * Adds the stats from #other to *this in a thread-safe manner.
+	 * @param other
+	 */
+	void operator+=(const DirectoryTraversalStats & other)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+
+		m_num_files_found += other.m_num_files_found;
+		m_num_directories_found += other.m_num_directories_found;
+		m_num_files_rejected += other.m_num_files_rejected;
+		m_num_files_scanned += other.m_num_files_scanned;
+	}
+
+	/**
+	 * Friend function stream insertion operator.
+	 *
+	 * @param os
+	 * @param dts
+	 * @return
+	 */
+	friend std::ostream& operator<<(std::ostream& os, const DirectoryTraversalStats &dts)
+	{
+		return os << "Number of files found: " << dts.m_num_files_found
+				<< "\nNumber of directories found: " << dts.m_num_directories_found
+				<< "\nNumber of files rejected: " << dts.m_num_files_rejected
+				<< "\nNumber of files sent for scanning: " << dts.m_num_files_scanned;
+
+	};
+
+private:
+
+	std::mutex m_mutex;
 };
 
 
