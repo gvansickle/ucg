@@ -66,6 +66,7 @@ public:
 		inc_refcount(other.m_real_file_descriptor);
 		m_real_file_descriptor = other.m_real_file_descriptor;
 	}
+
 	~AtFD()
 	{
 		if(m_real_file_descriptor == -1 || m_real_file_descriptor == AT_FDCWD)
@@ -75,7 +76,7 @@ public:
 		it->second--;
 		if(it->second == 0)
 		{
-			std::cout << "DELETE AND CLOSE: " << m_real_file_descriptor << '\n';
+			//std::cout << "REF COUNT == 0, DELETE AND CLOSE: " << m_real_file_descriptor << '\n';
 			m_refcount_map.erase(it);
 			close(m_real_file_descriptor);
 		}
@@ -83,7 +84,7 @@ public:
 
 	int get_at_fd() const { return m_real_file_descriptor; };
 
-	static AtFD weak_dup(int fd)
+	static AtFD make_shared_dupfd(int fd)
 	{
 		AtFD retval;
 
@@ -98,12 +99,13 @@ public:
 		if(it == m_refcount_map.end())
 		{
 			// Hasn't been duped yet.
-			std::cout << "NEW dup, original = " << fd << '\n';
 			retval.m_real_file_descriptor = dup(fd);
+			//std::cout << "NEW dup, original = " << fd << ", new = " << retval.m_real_file_descriptor << '\n';
 			m_refcount_map[retval.m_real_file_descriptor] = 1;
 		}
 		else
 		{
+			/// @todo This should probably be an error.
 			std::cout << "REFCOUNT dup, original = " << fd << '\n';
 			it->second++;
 			retval.m_real_file_descriptor = it->first;
@@ -133,12 +135,19 @@ public:
 
 private:
 	static std::map<int, size_t> m_refcount_map;
-	static void inc_refcount(int fd) { if(fd >= 0) { m_refcount_map.at(fd)++;}; };
+	static void inc_refcount(int fd)
+	{
+		if(fd >= 0)
+		{
+			m_refcount_map.at(fd)++;
+		};
+	};
 
 	int m_real_file_descriptor {-1};
 };
 
 std::map<int, size_t> AtFD::m_refcount_map;
+
 
 class DirStackEntry
 {
@@ -146,9 +155,13 @@ public:
 	DirStackEntry(std::shared_ptr<DirStackEntry> parent_dse, AtFD parent_dir, std::string path)
 	{
 		m_parent_dir = parent_dse;
-		at_fd = parent_dir;
-		this->path = path;
+		m_at_fd = parent_dir;
+		m_path = path;
 	};
+
+	DirStackEntry(const DirStackEntry& other) = default;
+
+	~DirStackEntry() = default;
 
 	std::string get_name()
 	{
@@ -158,16 +171,19 @@ public:
 		{
 			retval = m_parent_dir->get_name() + "/";
 		}
-		retval += path;
+		retval += m_path;
 
 		return retval;
 	}
 
-	std::string path;
-	AtFD at_fd;
+	int get_at_fd() const noexcept { return m_at_fd.get_at_fd(); };
+
+	std::string m_path;
+	AtFD m_at_fd;
 
 	std::shared_ptr<DirStackEntry> m_parent_dir { nullptr };
 };
+
 
 void DirTree::Read(std::vector<std::string> start_paths)
 {
@@ -181,7 +197,7 @@ void DirTree::Read(std::vector<std::string> start_paths)
 	for(auto p : start_paths)
 	{
 		// AT_FDCWD == Start at the cwd of the process.
-		dir_stack.push(std::make_shared<DirStackEntry>(DirStackEntry(nullptr, AtFD::weak_dup(AT_FDCWD), p)));
+		dir_stack.push(std::make_shared<DirStackEntry>(DirStackEntry(nullptr, AtFD::make_shared_dupfd(AT_FDCWD), p)));
 
 		/// @todo The start_paths can be files or dirs.  Currently the loop below will only work if they're dirs.
 	}
@@ -191,10 +207,8 @@ void DirTree::Read(std::vector<std::string> start_paths)
 		auto dse = dir_stack.front();
 		dir_stack.pop();
 
-		std::cout << "POP: " << dse.get()->at_fd.get_at_fd() << '\n';
-
 		int openat_dir_search_flags = O_SEARCH ? O_SEARCH : O_RDONLY;
-		file_fd = openat(dse.get()->at_fd.get_at_fd(), dse.get()->path.c_str(), openat_dir_search_flags | O_DIRECTORY | O_NOATIME | O_NOCTTY);
+		file_fd = openat(dse->get_at_fd(), dse->m_path.c_str(), openat_dir_search_flags | O_DIRECTORY | O_NOATIME | O_NOCTTY);
 		d = fdopendir(file_fd);
 		if(d == nullptr)
 		{
@@ -202,7 +216,9 @@ void DirTree::Read(std::vector<std::string> start_paths)
 			perror("fdopendir");
 		}
 
-		AtFD dir_atfd;
+		// This will be the "at" directory for all files and directories found in this directory.
+		AtFD next_at_dir;
+		std::shared_ptr<DirStackEntry> dir_atfd;
 
 		while ((dp = readdir(d)) != NULL)
 		{
@@ -255,12 +271,14 @@ void DirTree::Read(std::vector<std::string> start_paths)
 			{
 				std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
 
-				if(!dir_atfd.is_valid())
+				if(!next_at_dir.is_valid())
 				{
-					dir_atfd = AtFD::weak_dup(file_fd);
+					next_at_dir = AtFD::make_shared_dupfd(file_fd);
 				}
 
-				dir_stack.push(std::make_shared<DirStackEntry>(DirStackEntry(dse, dir_atfd, dname)));
+				dir_atfd = std::make_shared<DirStackEntry>(dse, next_at_dir, dname);
+
+				dir_stack.push(dir_atfd);
 			}
 		}
 
