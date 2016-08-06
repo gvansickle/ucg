@@ -315,10 +315,6 @@ AS_IF([test "x$ax_pthread_ok" == xyes],
 		AC_MSG_NOTICE([no pthreads found])
 	])
 
-
-# Put this in to help with profiling.
-#AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
-
 AC_LANG_POP([C++])
 
 
@@ -342,6 +338,8 @@ AC_SEARCH_LIBS([argp_parse],[argp])
 AC_CHECK_FUNCS([sched_setaffinity])
 
 AC_CHECK_FUNCS([get_current_dir_name])
+
+AC_CHECK_FUNCS([openat])
 
 AC_CHECK_FUNCS([aligned_alloc posix_memalign])
 AS_IF([test "x$ac_cv_func_aligned_alloc" = xno -a "x$ac_cv_func_posix_memalign" = xno],

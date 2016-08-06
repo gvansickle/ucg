@@ -113,7 +113,7 @@ BEGIN {
 	REGEX=ARGV[1]
 	TEST_DATA_DIR=ARGV[2]
 	RESULTS_FILE=ARGV[3];
-	## PARAM: Specify PROGLIST= comma separated list of TEST_GROUPS[] names.
+	## PARAM: Specify PROGLIST= comma separated list of "TEST_PROG_ID:TEST_PROG_PATH" tuples.
 	## PARAM: Specify the NUM_ITERATIONS value on the command line: awk -v NUM_ITERATIONS=5 -f...
 	## PARAM: Specify the CHARACTERIZE value on the command like: awk -v CHARACTERIZE=1 -f ...
 	if((NUM_ITERATIONS < 1) || (NUM_ITERATIONS > 10))
@@ -137,16 +137,16 @@ BEGIN {
 		# Split the "built_prog:/path/to/prog" entries apart.
 		split(PROGLIST_ARRAY[i], a, ":");
 		print("Index: " i " in PROGLIST_ARRAY=" PROGLIST_ARRAY[i]) | "cat 1>&2";
-		TEST_GROUPS[i]=aderef(a, 1);
-		TEST_GROUP_TO_PROGS[a[1]]=aderef(a, 2);
-		print("TEST_GROUPS[i]: " TEST_GROUPS[i]) | "cat 1>&2";
-		print("TEST_GROUP_TO_PROGS[a[1]]: " TEST_GROUP_TO_PROGS[a[1]]) | "cat 1>&2";
+		TEST_PROG_IDS[i]=aderef(a, 1);
+		TEST_PROG_ID_TO_PATH[a[1]]=aderef(a, 2);
+		print("TEST_PROG_IDS[i]: " TEST_PROG_IDS[i]) | "cat 1>&2";
+		print("TEST_PROG_ID_TO_PATH[a[1]]: " TEST_PROG_ID_TO_PATH[a[1]]) | "cat 1>&2";
 	}
 
-	TEST_GROUP_TO_PARAMS_PRE["built_ucg"]="--noenv --cpp"
-	TEST_GROUP_TO_PARAMS_PRE["system_ucg"]="--noenv --cpp"
-	TEST_GROUP_TO_PARAMS_PRE["system_ag"]="--cpp"
-	TEST_GROUP_TO_PARAMS_PRE["system_grep"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
+	TEST_PROG_ID_TO_PARAMS_PRE["built_ucg"]="--noenv --cpp"
+	TEST_PROG_ID_TO_PARAMS_PRE["system_ucg"]="--noenv --cpp"
+	TEST_PROG_ID_TO_PARAMS_PRE["system_ag"]="--cpp"
+	TEST_PROG_ID_TO_PARAMS_PRE["system_grep"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
 	
 	if(CHARACTERIZE == 0)
 	{
@@ -170,20 +170,20 @@ BEGIN {
 	PROG_TO_PARAMS_DIRJOBS["ag"]=""
 	PROG_TO_PARAMS_DIRJOBS["grep"]=""
 
-	### print("Num test groups: ", alen(TEST_GROUPS))
+	### print("Num test groups: ", alen(TEST_PROG_IDS))
 	
 	COMMAND_LINE=""
 	cla_index=1
 	
-	for (i=1; i <= alen(TEST_GROUPS); i++ )
+	for (i=1; i <= alen(TEST_PROG_IDS); i++ )
 	{
-		if(! i in TEST_GROUPS) print("ERROR: no index " i " in TEST_GROUPS") | "cat 1>&2";
-		j = TEST_GROUPS[i];
-		if(! j in TEST_GROUP_TO_PROGS) print("ERROR: no index " j " in TEST_GROUP_TO_PROGS") | "cat 1>&2";
-		PROG = TEST_GROUP_TO_PROGS[j];
+		if(! i in TEST_PROG_IDS) print("ERROR: no index " i " in TEST_PROG_IDS") | "cat 1>&2";
+		j = TEST_PROG_IDS[i];
+		if(! j in TEST_PROG_ID_TO_PATH) print("ERROR: no index " j " in TEST_PROG_ID_TO_PATH") | "cat 1>&2";
+		PROG = TEST_PROG_ID_TO_PATH[j];
 		dirjobs_option = PROG_TO_PARAMS_DIRJOBS[PROG]
 		scanjobs_option = PROG_TO_PARAMS_JOBS[PROG]
-		COMMAND_LINE=(j " ! " PROG " ! { " PROG_TIME " " PROG " " TEST_GROUP_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }")
+		COMMAND_LINE=(j " ! " PROG " ! { " PROG_TIME " " PROG " " TEST_PROG_ID_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }")
 		
 		# Output the default "number of threads to use for scanning" command-line option (i.e. empty).
 		CL_COPY=COMMAND_LINE
@@ -228,8 +228,8 @@ BEGIN {
 		#print(">>1 :", CMD_LINE_ARRAY[i]);
 		split(CMD_LINE_ARRAY[i], CMD_LINE_ARRAY_2, "[[:space:]]+![[:space:]]+");
 		#print(">>1 :", CMD_LINE_ARRAY_2[1], CMD_LINE_ARRAY_2[2], CMD_LINE_ARRAY_2[3])
-		GROUP_NAME=CMD_LINE_ARRAY_2[1]
-		PROG_NAME=CMD_LINE_ARRAY_2[2]
+		PROG_ID=CMD_LINE_ARRAY_2[1]
+		PROG_PATH=CMD_LINE_ARRAY_2[2]
 		COMMAND_LINE=CMD_LINE_ARRAY_2[3]
 		
 		print("")
@@ -245,8 +245,8 @@ BEGIN {
 		TIME_RESULTS_FILE=("./time_results_" i ".txt");
 		wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
 		print("echo \"Timing run for wrapped command line: '" wrapped_cmd_line "'\" > " TIME_RESULTS_FILE);
-		print("echo \"TEST_GROUP_NAME: " GROUP_NAME "\" >> " TIME_RESULTS_FILE);
-		print("echo \"TEST_PROG_NAME: " PROG_NAME "\" >> " TIME_RESULTS_FILE);
+		print("echo \"TEST_PROG_ID: " PROG_ID "\" >> " TIME_RESULTS_FILE);
+		print("echo \"TEST_PROG_PATH: " PROG_PATH "\" >> " TIME_RESULTS_FILE);
 		print("for ITER in $(seq 0 $(expr $NUM_ITERATIONS - 1));\ndo")
 		print("    # Do a single run.")
 		print("    " wrapped_cmd_line);
