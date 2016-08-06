@@ -34,6 +34,15 @@
 #include <memory>
 #include <algorithm>
 
+#if !defined(HAVE_OPENAT) || HAVE_OPENAT == 0
+// No native openat() support.  Assume no *at() functions at all.  Stubs to allow this to compile for now.
+#define AT_FDCWD -200
+#define AT_NO_AUTOMOUNT 0
+inline int openat(int at_fd, const char *fn, int flags) { return -1; };
+inline DIR *fdopendir(int fd) { return nullptr; };
+inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags) { return -1; };
+#endif
+
 #define EXPAND_MACRO_HELPER(x) #x
 #define EXPAND_MACRO(p) EXPAND_MACRO_HELPER(p)
 #define STATIC_MESSAGE_HELPER(m) _Pragma(#m)

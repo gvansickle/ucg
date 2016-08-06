@@ -45,11 +45,9 @@ class DirectoryTraversalStats
 public:
 	size_t m_num_files_found { 0 };
 	size_t m_num_directories_found { 0 };
-
 	size_t m_num_files_rejected { 0 };
-
 	size_t m_num_files_scanned { 0 };
-
+	size_t m_num_dirs_rejected { 0 };
 
 	/**
 	 * Atomic compound assignment by sum.
@@ -64,6 +62,7 @@ public:
 		m_num_directories_found += other.m_num_directories_found;
 		m_num_files_rejected += other.m_num_files_rejected;
 		m_num_files_scanned += other.m_num_files_scanned;
+		m_num_dirs_rejected += other.m_num_dirs_rejected;
 	}
 
 	/**
@@ -78,12 +77,14 @@ public:
 		return os << "Number of files found: " << dts.m_num_files_found
 				<< "\nNumber of directories found: " << dts.m_num_directories_found
 				<< "\nNumber of files rejected: " << dts.m_num_files_rejected
-				<< "\nNumber of files sent for scanning: " << dts.m_num_files_scanned;
+				<< "\nNumber of files sent for scanning: " << dts.m_num_files_scanned
+				<< "\nNumber of directories rejected: " << dts.m_num_dirs_rejected;
 
 	};
 
 private:
 
+	/// Mutex for making the compound assignment by sum operator thread-safe.
 	std::mutex m_mutex;
 };
 

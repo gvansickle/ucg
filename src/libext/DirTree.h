@@ -20,6 +20,8 @@
 #ifndef SRC_LIBEXT_DIRTREE_H_
 #define SRC_LIBEXT_DIRTREE_H_
 
+#include <config.h>
+
 #include <vector>
 #include <string>
 
