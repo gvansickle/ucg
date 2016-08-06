@@ -46,7 +46,7 @@ class ResizableArray
 	// Would pass this in as a defaulted template param, but gcc complains that "error: requested alignment is not an integer constant"
 	// no matter what I do (including initializing this var to the template param).
 	// Also can't make it a "static constexpr int alignment {32}", since that's broken on gcc ~4.8.4.
-#define alignment 64
+#define alignment 4096
 
 public:
 
