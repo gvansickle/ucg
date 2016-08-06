@@ -29,6 +29,11 @@ trap "test -r $XFAILFILE && cat $XFAILFILE; exit $?" 1 2 13 15
 # At testsuite-time, find the programs we wish to compare performance with.
 PROGLIST=built_ucg:ucg
 PERF_PROGRAMS_TO_COMPARE=ucg
+if PROG_SYSTEM_UCG="$(which ucg)";
+then
+	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_SYSTEM_UCG;
+	PROGLIST=$PROGLIST,system_ucg:$PROG_SYSTEM_UCG
+fi
 if PROG_AG="$(which ag)";
 then
 	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_AG;
