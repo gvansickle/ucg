@@ -144,6 +144,7 @@ BEGIN {
 	}
 
 	TEST_GROUP_TO_PARAMS_PRE["built_ucg"]="--noenv --cpp"
+	TEST_GROUP_TO_PARAMS_PRE["system_ucg"]="--noenv --cpp"
 	TEST_GROUP_TO_PARAMS_PRE["system_ag"]="--cpp"
 	TEST_GROUP_TO_PARAMS_PRE["system_grep"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
 	
@@ -206,6 +207,8 @@ BEGIN {
 	
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
 	join_val_range(CLA_COPY, CMD_LINE_ARRAY, " ucg ", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ucg"], 4)
+	acopy(CMD_LINE_ARRAY, CLA_COPY)
+	join_val_range(CLA_COPY, CMD_LINE_ARRAY, "system_ucg", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ag"], 4)
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
 	join_val_range(CLA_COPY, CMD_LINE_ARRAY, " [^[:space:]]*ag ", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ag"], 4)
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
