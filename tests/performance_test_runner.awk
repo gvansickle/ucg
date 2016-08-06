@@ -93,8 +93,8 @@ BEGIN {
 		# Retrieve the timing data.
 		adelete(REAL_TIME);
 		REAL_TIME[1]=0;
-		TEST_GROUP_NAME[i]="unknown";
-		TEST_PROG_NAME[i]="unknown";
+		TEST_PROG_ID[i]="unknown";
+		TEST_PROG_PATH[i]="unknown";
 		NUM_TIMES=0;
 		while((getline < (TIME_RESULTS_FILE)) > 0)
 		{
@@ -104,15 +104,15 @@ BEGIN {
 				REAL_TIME[NUM_TIMES] += $2;
 				print("Time entry: " REAL_TIME[NUM_TIMES]) >> RESULTS_FILE;
 			}
-			if($1 == "TEST_GROUP_NAME:")
+			if($1 == "TEST_PROG_ID:")
 			{
 				print($1 " " $2) >> RESULTS_FILE;
-				TEST_GROUP_NAME[i]=$2;
+				TEST_PROG_ID[i]=$2;
 			}
-			if($1 == "TEST_PROG_NAME:")
+			if($1 == "TEST_PROG_PATH:")
 			{
 				print($1 " " $2) >> RESULTS_FILE;
-				TEST_PROG_NAME[i]=$2;
+				TEST_PROG_PATH[i]=$2;
 			}
 		}
 		if(NUM_TIMES > NUM_ITERATIONS)
@@ -160,6 +160,6 @@ BEGIN {
 	print("|---------|----------------|---------------|-----|-------------------|") >> RESULTS_FILE;
 	for(i=1; i<=NUM_RUNS; ++i)
 	{
-		print("|", TEST_PROG_NAME[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|", NUM_MATCHED_LINES[i], "|") >> RESULTS_FILE;
+		print("|", TEST_PROG_PATH[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|", NUM_MATCHED_LINES[i], "|") >> RESULTS_FILE;
 	}
 }
