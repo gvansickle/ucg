@@ -41,7 +41,7 @@
 #include <libext/string.hpp>
 
 /// @todo FOR TEST, DELETE
-#define TRAVERSE_ONLY 1
+#define TRAVERSE_ONLY 0
 #define USE_DIRTREE 0
 
 Globber::Globber(std::vector<std::string> start_paths,
@@ -148,13 +148,13 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		/// in multiple threads, and there's only a process-wide cwd, we'll specify it anyway.
 		/// @todo Current gnulib supports additional flags here: FTS_CWDFD | FTS_DEFER_STAT | FTS_NOATIME.  We should
 		/// check for these and use them if they exist.
-		//int fts_options = FTS_LOGICAL | FTS_NOCHDIR/*| FTS_NOSTAT*/;
-		int fts_options = FTS_PHYSICAL;
+		int fts_options = FTS_LOGICAL | FTS_NOCHDIR/*| FTS_NOSTAT*/;
+		//int fts_options = FTS_PHYSICAL;
 		FTS *fts = fts_open(dirs, fts_options, NULL);
 		while(FTSENT *ftsent = fts_read(fts))
 		{
-			//std::string name;
-			std::string path;
+			std::string name;
+			//std::string path;
 			bool skip_inclusion_checks = false;
 
 			if(ftsent->fts_info == FTS_F || ftsent->fts_info == FTS_D)
@@ -183,11 +183,12 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 
 #if TRAVERSE_ONLY != 1
 				// Check for inclusion.
+				name.assign(ftsent->fts_name, ftsent->fts_namelen);
 				if(skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
 				{
 					LOG(INFO) << "... should be scanned.";
-					// Extension was in the hash table.
-					m_out_queue.wait_push(std::move(path));
+					// Based on the file name, this file should be scanned.
+					m_out_queue.wait_push(std::string(ftsent->fts_path, ftsent->fts_pathlen));
 
 					// Count the number of files we found that were included in the search.
 					stats.m_num_files_scanned++;
@@ -213,7 +214,8 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 					LOG(INFO) << "... --no-recurse specified, skipping.";
 					fts_set(fts, ftsent, FTS_SKIP);
 				}
-				if(!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(path, name))
+				name.assign(ftsent->fts_name, ftsent->fts_namelen);
+				if(!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
 				{
 					// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 					LOG(INFO) << "... should be ignored.";
@@ -231,13 +233,11 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 						continue;
 					}
 				}
-
-
 				if(m_recurse_subdirs && (ftsent->fts_level > FTS_ROOTLEVEL) && (m_dirjobs > 1))
 				{
-					// Queue it up for scanning.
+					// We're doing the directory traversal multithreaded, so queue it up for scanning.
 					LOG(INFO) << "... subdir, queuing it up for multithreaded scanning.";
-					dir_queue.wait_push(std::move(path));
+					dir_queue.wait_push(std::string(ftsent->fts_path, ftsent->fts_pathlen));
 					fts_set(fts, ftsent, FTS_SKIP);
 				}
 #else
@@ -279,7 +279,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 			}
 		}
 
-		std::cout << "CLOSING FTS" << '\n';
 		fts_close(fts);
 
 		if(old_val == 0)
