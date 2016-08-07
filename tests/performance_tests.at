@@ -205,11 +205,11 @@ AT_KEYWORDS([performance])
 # Generate the test file UCG_TEST_FILE_NAME_LARGE_FILE_1, which is Lorum ipsum text with one distinct test string at the end.
 AT_CHECK([${builddir}/dummy-file-gen -b 500000000 | fold -s > UCG_TEST_FILE_NAME_LARGE_FILE_1], [0], [stdout], [stderr])
 AT_CHECK([cat stderr | $EGREP 'Number of bytes written:'], [0], [ignore], [ignore])
-AT_CHECK([echo "TEST_BOOST_NO_INTRINSIC_WCHAR_T" >> UCG_TEST_FILE_NAME_LARGE_FILE_1], [0], [stdout], [stderr])
+AT_CHECK([echo "iudicemaequumputo" >> UCG_TEST_FILE_NAME_LARGE_FILE_1], [0], [stdout], [stderr])
 AT_CLEANUP
 
 ###
-### ucg vs. grep, regex 'TEST_.*_NO_.*_WCHAR_T' on single ~500MB file.
+### ucg vs. grep, regex 'iudice[\w]*umputo' on single ~500MB file.
 ###
 AT_SETUP([ucg vs. grep, regex on 500MB file, match at end])
 AT_KEYWORDS([performance])
@@ -217,7 +217,7 @@ AT_KEYWORDS([performance])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST],['TEST_.*_NO_.*_WCHAR_T'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
+UCG_GEN_PERFTEST([$PROGLIST],['iudice[\w]*umputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
 # Run the test script.
 AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
 # Summarize the test results.
@@ -237,7 +237,7 @@ AT_KEYWORDS([performance])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST],['TEST_BOOST_NO_INTRINSIC_WCHAR_T'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
+UCG_GEN_PERFTEST([$PROGLIST],['iudicemaequumputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
 # Run the test script.
 AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
 # Summarize the test results.
