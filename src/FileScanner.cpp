@@ -225,7 +225,10 @@ size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ p
 	return num_lines_since_last_match;
 }
 
+const char * FileScanner::LiteralPrescan(const char * __restrict__ start_of_array, const char * __restrict__ end_of_array) noexcept
+{
 
+}
 
 extern "C" void * resolve_CountLinesSinceLastMatch(void)
 {
