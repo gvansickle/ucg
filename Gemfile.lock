@@ -8,7 +8,6 @@ GEM
       thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
     addressable (2.4.0)
-    certified (1.0.0)
     coffee-script (2.4.1)
       coffee-script-source
       execjs
@@ -118,16 +117,12 @@ GEM
       ethon (>= 0.8.0)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
-    wdm (0.1.1)
 
 PLATFORMS
   x64-mingw32
 
 DEPENDENCIES
-  certified (~> 1.0)
   github-pages
-  json
-  wdm (>= 0.1.0)
 
 BUNDLED WITH
    1.12.5

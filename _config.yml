@@ -17,8 +17,7 @@ description              : > # this means to ignore newlines until "url:"
 ### @todo PUT THIS BACK BEFORE COMMITTING.
 # url                      : "https://gvansickle.github.io" # the base hostname & protocol for your site
 baseurl                  : "/ucg" # the subpath of your site, e.g. /blog
-gh_repo                  : # ???
-repository               : gvansickle/ucg # Required to have access to repo metadata locally/prevent Jekyll-metadata from failing.
+repository               : "gvansickle/ucg"  # GitHub username/repo-name, Required to have access to repo metadata locally/prevent Jekyll-metadata from failing.
 teaser                   : # filename of teaser fallback teaser image placed in /images/, .e.g. "500x300.png"
 # breadcrumbs            : false # true, false (default)
 words_per_minute         : 200
@@ -33,6 +32,8 @@ comments:
     appid                :
     num_posts            : # 5 (default)
     colorscheme          : # "light" (default), "dark"
+atom_feed:
+  path                   : # blank (default) uses feed.xml
 
 # SEO Related
 google_site_verification :
@@ -60,10 +61,6 @@ analytics:
   provider               : false # false (default), "google", "google-universal", "custom"
   google:
     tracking_id          :
-
-# Google AdSense
-google_ad_client         :
-google_ad_slot           :
 
 
 # Site Author
@@ -210,25 +207,25 @@ defaults:
 # Outputting
 permalink: /:categories/:title/
 paginate: 2 # amount of posts to show
-paginate_path: "/page:num/"
+paginate_path: /page:num/
 timezone: # http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 
 # Plugins
-gems:
-  - jekyll-paginate
-  - jekyll-sitemap
-  - jekyll-gist
-  - jekyll-feed
-  - jemoji
+# gems:
+#   - jekyll-paginate
+#   - jekyll-sitemap
+#   - jekyll-gist
+#   - jekyll-feed
+#   - jemoji
 
 # mimic GitHub Pages with --safe
-whitelist:
-  - jekyll-paginate
-  - jekyll-sitemap
-  - jekyll-gist
-  - jekyll-feed
-  - jemoji
+# whitelist:
+#   - jekyll-paginate
+#   - jekyll-sitemap
+#   - jekyll-gist
+#   - jekyll-feed
+#   - jemoji
 
 
 # Archives
@@ -247,9 +244,9 @@ category_archive:
 tag_archive:
   type: liquid
   path: /tags/
-portability_pointers:
-  type: liquid
-  path: /portability_pointers/
+#portability-pointers:
+#  type: liquid
+#  path: /portability-pointers/
 
 # https://github.com/jekyll/jekyll-archives
 # jekyll-archives:
