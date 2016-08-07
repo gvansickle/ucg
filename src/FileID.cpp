@@ -24,6 +24,7 @@
 #include <fts.h>
 
 FileID::FileID(const FTSENT *ftsent): m_path(ftsent->fts_path, ftsent->fts_pathlen),
+	m_stat_info_valid(true),
 	m_unique_file_identifier(ftsent->fts_statp->st_dev, ftsent->fts_statp->st_ino),
 	m_size(ftsent->fts_statp->st_size),
 	m_block_size(ftsent->fts_statp->st_blksize),

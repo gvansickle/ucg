@@ -38,9 +38,18 @@ class FileID
 public:
 	FileID() = default;
 	FileID(const FTSENT *ftsent);
+	FileID(const FileID&) = default;
+	FileID& operator=(const FileID&) = default;
+	FileID(FileID&&) = default;
 	~FileID();
 
 	std::string get_path() const { return m_path; };
+
+	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
+
+	off_t GetFileSize() const noexcept { return m_size; };
+
+	blksize_t GetBlockSize() const noexcept { return m_block_size; };
 
 private:
 
@@ -48,6 +57,10 @@ private:
 
 	/// @name Info normally gathered from a stat() call.
 	///@{
+
+	/// Indicator of whether the stat info is valid or not.
+	bool m_stat_info_valid { false };
+
 	dev_ino_pair m_unique_file_identifier;
 
 	/// File size in bytes.

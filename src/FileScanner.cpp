@@ -121,13 +121,12 @@ void FileScanner::Run(int thread_index)
 
 	// Pull new filenames off the input queue until it's closed.
 	FileID next_file;
-	//std::string next_string;
 	while(m_in_queue.wait_pull(std::move(next_file)) != queue_op_status::closed)
 	{
 		try
 		{
 			// Try to open and read the file.  This could throw.
-			LOG(INFO) << "Attempting to scan file \'" << /*next_string*/ next_file.get_path() << "\'";
+			LOG(INFO) << "Attempting to scan file \'" << next_file.get_path() << "\'";
 			//steady_clock::time_point start = steady_clock::now();
 			File f(next_file.get_path(), file_data_storage);
 			//steady_clock::time_point end = steady_clock::now();
