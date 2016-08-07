@@ -23,7 +23,8 @@ To wit:
 {% assign category = "Portability Pointers" %}
 {% assign posts = group_items[0] %}
 <!--  <h2 id="{{ category | slugify }}" class="archive__subtitle">{{ category }}</h2>  -->
-{% for post in posts %}
+<!-- {% for post in site.categories.portability-pointers %} -->
+{% for category in site.data.categories %}{% if post.category == category.slug %}{{ category.name }}{% endif %}{% endfor %}
   {% include archive-single.html %}
 {% endfor %}
 
