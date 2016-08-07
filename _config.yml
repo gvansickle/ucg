@@ -129,6 +129,7 @@ exclude:
 keep_files:
   - .git
   - .svn
+  - .hg
 encoding: "utf-8"
 markdown_ext: "markdown,mkdown,mkdn,mkd,md"
 
@@ -193,7 +194,7 @@ defaults:
       comments: false
       sidebar:
         nav: "docs"
-    # _portability_pointers
+  # _portability_pointers
   - scope:
       path: ""
       type: portability_pointers

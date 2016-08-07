@@ -1,6 +1,15 @@
 # main links links
 main:
 
+  - title: "News"
+    url: https://github.com/gvansickle/ucg/blob/master/NEWS.md
+  
+  - title: "Features"
+    url: /pages/features.html
+    
+  - title: "Install"
+    url: /docs/01-Installation.html
+  
   - title: "Documentation"
     url: /docs/01-Installation.html
     
