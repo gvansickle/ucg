@@ -20,14 +20,33 @@ To wit:
 
 {% include group-by-array collection=site.posts field="categories" %}
 
+{% for category in group_names %}
+  {% assign posts = group_items[forloop.index0] %}
+  
+<!--  {% if category == "Portability Pointers" %} -->
+  <h2 id="{{ category | slugify }}" class="archive__subtitle">{{ category }}</h2>
+  {% for post in posts %}
+<p> CATNAME {{ category.name }} POSTCATS {{ post.categories }} POSTCAT {{ post.category }} </p>
+
+	  	{% if post.category == category.slug %}
+	  		<!-- CATNAME {{ category.name }} POSTCATS {{ post.categories }} POSTCAT {{ post.category }} -->
+	  	{% endif %}
+    {% include archive-single.html %}
+  {% endfor %}
+<!--  {% endif %} -->
+{% endfor %}
+
+{% comment %}
 {% assign category = "Portability Pointers" %}
 {% assign posts = group_items[0] %}
 <!--  <h2 id="{{ category | slugify }}" class="archive__subtitle">{{ category }}</h2>  -->
 <!-- {% for post in site.categories.portability-pointers %} -->
-{% for category in site.data.categories %}{% if post.category == category.slug %}{{ category.name }}{% endif %}{% endfor %}
-  {% include archive-single.html %}
+{% for category in site.data.categories %}
+  {% if post.category == category.slug %}{% include archive-single.html %}{% endif %}
 {% endfor %}
-
+<!-- {% include archive-single.html %}  {{ category.name }}
+{% endfor %} -->
+{% endcomment %}
 
 
 {% comment %}
