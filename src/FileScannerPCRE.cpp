@@ -26,7 +26,7 @@
 
 #include "Logger.h"
 
-FileScannerPCRE::FileScannerPCRE(sync_queue<std::string> &in_queue,
+FileScannerPCRE::FileScannerPCRE(sync_queue<FileID> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case,
