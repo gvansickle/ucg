@@ -206,9 +206,9 @@ defaults:
 
 # Outputting
 permalink: /:categories/:title/
-paginate: 2 # amount of posts to show
-paginate_path: /page:num/
-timezone: # http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+# paginate: 2 # amount of posts to show
+# paginate_path: /page:num/
+timezone: America/Chicago  # http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 
 # Plugins
@@ -244,9 +244,9 @@ category_archive:
 tag_archive:
   type: liquid
   path: /tags/
-#portability-pointers:
-#  type: liquid
-#  path: /portability-pointers/
+portability-pointers:
+  type: liquid
+  path: /portability-pointers/
 
 # https://github.com/jekyll/jekyll-archives
 # jekyll-archives:

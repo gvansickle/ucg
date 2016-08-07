@@ -1,6 +1,6 @@
 ---
 title:  "Portability Pointers: sed"
-categories: 
+categories:
   - "Portability Pointers"
 tags:
   - sed

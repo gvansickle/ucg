@@ -2,7 +2,6 @@
 title:  "Welcome to Jekyll!"
 excerpt: "Post welcoming you to Jekyll"
 categories: 
-  - Portability Pointers
   - Boilerplate
 tags:
   - Welcome

@@ -1,7 +1,7 @@
 ---
 title:  "Portability Pointers: POPCNT"
 categories: 
-  - portability-pointers
+  - Portability Pointers
 tags:
   - POPCNT
 ---
