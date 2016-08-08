@@ -280,26 +280,6 @@ AT_CLEANUP
 
 
 #
-# Search with regex 'BOOST.*HPP'
-#
-AT_SETUP([Boost: search with regex 'BOOST.*HPP'])
-AT_KEYWORDS([performance])
-
-# Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
-
-AS_ECHO([""]) >> UCG_PERF_RESULTS_FILE
-AS_ECHO(["Perf Test Results: $at_desc"]) >> UCG_PERF_RESULTS_FILE
-
-# Loop through the programs we're comparing performance with.
-for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
-	TIME_ONE_PROG(["${PROGNAME}"], ['BOOST.*HPP'])
-done
-
-AT_CLEANUP
-
-
-#
 # Search with ignore of part of the dir tree.
 #
 AT_SETUP([Boost: search with --ignore-dir=doc])

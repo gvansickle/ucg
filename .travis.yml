@@ -38,7 +38,7 @@ script:
  - cd build
  - ../configure
  - make
- - make check
+ - make check 'TESTSUITEFLAGS=--keywords=!performance,!characterize'
  - find . -iname '*.log' -exec cat "{}" \; 
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
 
