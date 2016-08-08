@@ -43,6 +43,7 @@ script:
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
 
 after_success:
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew install grep; fi  # Install gnu grep to test against.
  - cd ../../ && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
  - tar xjf boost_1_58_0.tar.bz2
  - cd ucg/build
