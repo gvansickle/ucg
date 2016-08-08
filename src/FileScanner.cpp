@@ -56,7 +56,7 @@ size_t (*FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_l
 		= reinterpret_cast<decltype(FileScanner::CountLinesSinceLastMatch)>(::resolve_CountLinesSinceLastMatch());
 
 
-std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::string> &in_queue,
+std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<FileID> &in_queue,
 			sync_queue<MatchList> &output_queue,
 			std::string regex,
 			bool ignore_case,
@@ -86,7 +86,7 @@ std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::string> &in_que
 	return retval;
 }
 
-FileScanner::FileScanner(sync_queue<std::string> &in_queue,
+FileScanner::FileScanner(sync_queue<FileID> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case,
@@ -120,26 +120,26 @@ void FileScanner::Run(int thread_index)
 	long long total_bytes_read {0};
 
 	// Pull new filenames off the input queue until it's closed.
-	std::string next_string;
-	while(m_in_queue.wait_pull(std::move(next_string)) != queue_op_status::closed)
+	FileID next_file;
+	while(m_in_queue.wait_pull(std::move(next_file)) != queue_op_status::closed)
 	{
 		try
 		{
 			// Try to open and read the file.  This could throw.
-			LOG(INFO) << "Attempting to scan file \'" << next_string << "\'";
+			LOG(INFO) << "Attempting to scan file \'" << next_file.get_path() << "\'";
 			//steady_clock::time_point start = steady_clock::now();
-			File f(next_string, file_data_storage);
+			File f(next_file.get_path(), file_data_storage);
 			//steady_clock::time_point end = steady_clock::now();
 			//accum_elapsed_time += (end - start);
 			total_bytes_read += f.size();
 
 
-			MatchList ml(next_string);
+			MatchList ml(next_file.get_path());
 
 
 			if(f.size() == 0)
 			{
-				LOG(INFO) << "WARNING: Filesize of \'" << next_string << "\' is 0, skipping.";
+				LOG(INFO) << "WARNING: Filesize of \'" << next_file.get_path() << "\' is 0, skipping.";
 				continue;
 			}
 
@@ -225,7 +225,10 @@ size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ p
 	return num_lines_since_last_match;
 }
 
+const char * FileScanner::LiteralPrescan(const char * __restrict__ start_of_array, const char * __restrict__ end_of_array) noexcept
+{
 
+}
 
 extern "C" void * resolve_CountLinesSinceLastMatch(void)
 {

@@ -31,6 +31,45 @@
 
 #include "Logger.h"
 
+File::File(FileID file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
+{
+	m_filename = file_id.get_path();
+	m_file_descriptor = open(m_filename.c_str(), O_RDONLY);
+	if(m_file_descriptor == -1)
+	{
+		// Couldn't open the file, throw exception.
+		throw std::system_error(errno, std::generic_category());
+	}
+
+	if(!file_id.IsStatInfoValid())
+	{
+		throw FileException("FileID stat info should have been valid");
+	}
+
+	m_file_size = file_id.GetFileSize();
+
+	// If filesize is 0, skip.
+	if(m_file_size == 0)
+	{
+		close(m_file_descriptor);
+		m_file_descriptor = -1;
+		return;
+	}
+
+	// Read or mmap the file into memory.
+	// Note that this closes the file descriptor.
+	m_file_data = GetFileData(m_file_descriptor, m_file_size, file_id.GetBlockSize());
+	m_file_descriptor = -1;
+
+	if(m_file_data == MAP_FAILED)
+	{
+		// Mapping failed.
+		ERROR() << "Couldn't map file \"" << m_filename << "\"" << std::endl;
+		throw std::system_error(errno, std::system_category());
+	}
+}
+
+
 File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
 {
 	// Save the filename.
@@ -76,7 +115,7 @@ File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> st
 
 	// Read or mmap the file into memory.
 	// Note that this closes the file descriptor.
-	m_file_data = GetFileData(m_file_descriptor, m_file_size);
+	m_file_data = GetFileData(m_file_descriptor, m_file_size, 4096);
 	m_file_descriptor = -1;
 
 	if(m_file_data == MAP_FAILED)
@@ -93,7 +132,7 @@ File::~File()
 	FreeFileData(m_file_data, m_file_size);
 }
 
-const char* File::GetFileData(int file_descriptor, size_t file_size)
+const char* File::GetFileData(int file_descriptor, size_t file_size, size_t preferred_block_size)
 {
 	const char *file_data = static_cast<const char *>(MAP_FAILED);
 
@@ -119,7 +158,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 		posix_fadvise(file_descriptor, 0, 0, POSIX_FADV_SEQUENTIAL | POSIX_FADV_WILLNEED);
 #endif
 
-		m_storage->reserve_no_copy(file_size);
+		m_storage->reserve_no_copy(file_size, preferred_block_size);
 		file_data = m_storage->data();
 
 		// Read in the whole file.

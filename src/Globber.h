@@ -30,8 +30,9 @@
 #include <thread>
 #include <atomic>
 #include <libext/filesystem.hpp>
-
 #include "sync_queue_impl_selector.h"
+
+#include "FileID.h"
 
 // Forward decls.
 class TypeManager;
@@ -100,7 +101,7 @@ public:
 			DirInclusionManager &dir_inc_manager,
 			bool recurse_subdirs,
 			int dirjobs,
-			sync_queue<std::string> &out_queue);
+			sync_queue<FileID> &out_queue);
 	~Globber() = default;
 
 	void Run();
@@ -124,7 +125,7 @@ private:
 
 	int m_dirjobs;
 
-	sync_queue<std::string>& m_out_queue;
+	sync_queue<FileID>& m_out_queue;
 
 	std::mutex m_dir_mutex;
 	std::set<dev_ino_pair_type> m_dir_has_been_visited;

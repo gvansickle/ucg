@@ -36,6 +36,35 @@ template<> struct uint_t<128> { using fast = unsigned __int128; };
 template<> struct uint_t<64> { using fast = uint_fast64_t; };
 template<> struct uint_t<32> { using fast = uint_fast32_t; };
 
+/**
+ * constexpr function template for determining at compile time if an unsigned value is a power of two or not.
+ *
+ * @param val
+ * @return  true if #val is a power of two.  false otherwise.
+ */
+template <typename T>
+constexpr
+	typename std::enable_if<
+		std::is_integral<T>::value && std::is_unsigned<T>::value,
+	bool>::type is_power_of_2(T val)
+{
+	// The "val &&" prevents 0 from being incorrectly classified as a power-of-2.
+	return val && !(val & (val - 1));
+};
 
+/**
+ * constexpr function template which clamps integral value #val between [ #lo, #hi ] and returns the result.
+ * @note C++17 has something like this, so this should probably go in a "future/algorithms" library.
+ */
+template <typename T>
+constexpr
+	typename std::enable_if<
+		std::is_integral<T>::value,
+	bool>::type clamp(const T val, const T lo, const T hi)
+{
+	if(val > hi) return hi;
+	if(val < lo) return lo;
+	return val;
+};
 
 #endif /* SRC_LIBEXT_INTEGER_HPP_ */

@@ -27,6 +27,7 @@
 #include <memory>
 
 #include "sync_queue_impl_selector.h"
+#include "FileID.h"
 #include "MatchList.h"
 
 
@@ -80,7 +81,7 @@ public:
 	 * @param engine
 	 * @return
 	 */
-	static std::unique_ptr<FileScanner> Create(sync_queue<std::string> &in_queue,
+	static std::unique_ptr<FileScanner> Create(sync_queue<FileID> &in_queue,
 			sync_queue<MatchList> &output_queue,
 			std::string regex,
 			bool ignore_case,
@@ -89,7 +90,7 @@ public:
 			RegexEngine engine = RegexEngine::DEFAULT);
 
 public:
-	FileScanner(sync_queue<std::string> &in_queue,
+	FileScanner(sync_queue<FileID> &in_queue,
 			sync_queue<MatchList> &output_queue,
 			std::string regex,
 			bool ignore_case,
@@ -127,6 +128,8 @@ protected:
 
 	///@}
 
+	static const char * LiteralPrescan(const char * __restrict__ start_of_array, const char * __restrict__ end_of_array) noexcept;
+
 	bool m_ignore_case;
 
 	bool m_word_regexp;
@@ -153,7 +156,7 @@ private:
 	 */
 	virtual void ScanFile(const char * __restrict__ file_data, size_t file_size, MatchList &ml) = 0;
 
-	sync_queue<std::string>& m_in_queue;
+	sync_queue<FileID>& m_in_queue;
 
 	sync_queue<MatchList> &m_output_queue;
 

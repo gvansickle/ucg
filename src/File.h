@@ -27,6 +27,7 @@
 #include <memory>
 
 #include "ResizableArray.h"
+#include "FileID.h"
 
 /**
  * File() may throw this if it runs into trouble opening the given filename.
@@ -44,6 +45,7 @@ struct FileException : public std::runtime_error
 class File
 {
 public:
+	File(FileID file_id, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
 	File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
 	~File();
 
@@ -69,7 +71,7 @@ private:
 	 * @param file_size        Size of the file.
 	 * @return
 	 */
-	const char* GetFileData(int file_descriptor, size_t file_size);
+	const char* GetFileData(int file_descriptor, size_t file_size, size_t preferred_block_size);
 
 	/**
 	 * Frees the resources allocated by GetFileData().
