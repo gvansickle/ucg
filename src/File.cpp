@@ -58,7 +58,7 @@ File::File(FileID file_id, std::shared_ptr<ResizableArray<char>> storage) : m_st
 
 	// Read or mmap the file into memory.
 	// Note that this closes the file descriptor.
-	m_file_data = GetFileData(m_file_descriptor, m_file_size);
+	m_file_data = GetFileData(m_file_descriptor, m_file_size, file_id.GetBlockSize());
 	m_file_descriptor = -1;
 
 	if(m_file_data == MAP_FAILED)
@@ -115,7 +115,7 @@ File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> st
 
 	// Read or mmap the file into memory.
 	// Note that this closes the file descriptor.
-	m_file_data = GetFileData(m_file_descriptor, m_file_size);
+	m_file_data = GetFileData(m_file_descriptor, m_file_size, 4096);
 	m_file_descriptor = -1;
 
 	if(m_file_data == MAP_FAILED)
@@ -132,7 +132,7 @@ File::~File()
 	FreeFileData(m_file_data, m_file_size);
 }
 
-const char* File::GetFileData(int file_descriptor, size_t file_size)
+const char* File::GetFileData(int file_descriptor, size_t file_size, size_t preferred_block_size)
 {
 	const char *file_data = static_cast<const char *>(MAP_FAILED);
 
@@ -158,7 +158,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 		posix_fadvise(file_descriptor, 0, 0, POSIX_FADV_SEQUENTIAL | POSIX_FADV_WILLNEED);
 #endif
 
-		m_storage->reserve_no_copy(file_size);
+		m_storage->reserve_no_copy(file_size, preferred_block_size);
 		file_data = m_storage->data();
 
 		// Read in the whole file.

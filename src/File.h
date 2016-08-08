@@ -71,7 +71,7 @@ private:
 	 * @param file_size        Size of the file.
 	 * @return
 	 */
-	const char* GetFileData(int file_descriptor, size_t file_size);
+	const char* GetFileData(int file_descriptor, size_t file_size, size_t preferred_block_size);
 
 	/**
 	 * Frees the resources allocated by GetFileData().

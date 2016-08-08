@@ -52,20 +52,4 @@
 /// @note In C++17, [[maybe_unused]] is part of the standard.  We may have to revisit the name of this macro.
 #define maybe_unused	__attribute__((unused))
 
-/**
- * constexpr function template for determining at compile time if an unsigned value is a power of two or not.
- *
- * @param val
- * @return  true if #val is a power of two.  false otherwise.
- */
-template <typename T>
-constexpr
-	typename std::enable_if<
-		std::is_integral<T>::value && std::is_unsigned<T>::value,
-	bool>::type is_power_of_2(T val)
-{
-	// The "val &&" prevents 0 from being incorrectly classified as a power-of-2.
-	return val && !(val & (val - 1));
-};
-
 #endif /* SRC_LIBEXT_HINTS_HPP_ */
