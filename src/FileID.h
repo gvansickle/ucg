@@ -27,6 +27,7 @@
 
 #include <string>
 
+#include <libext/integer.hpp>
 #include <libext/filesystem.hpp>
 
 
@@ -49,7 +50,18 @@ public:
 
 	off_t GetFileSize() const noexcept { return m_size; };
 
-	blksize_t GetBlockSize() const noexcept { return m_block_size; };
+	blksize_t GetBlockSize() const noexcept
+	{
+		// Note: per info here:
+		// http://stackoverflow.com/questions/34498825/io-blksize-seems-just-return-io-bufsize
+		// https://github.com/coreutils/coreutils/blob/master/src/ioblksize.h#L23-L57
+		// http://unix.stackexchange.com/questions/245499/how-does-cat-know-the-optimum-block-size-to-use
+		// ...it seems that as of ~2014, experiments show the minimum I/O size should be >=128KB.
+		// *stat() seems to return 4096 in all my experiments so far, so we'll clamp it to a min of 128KB and a max of
+		// something not unreasonable, e.g. 1M.
+		auto retval = clamp(m_block_size, static_cast<blksize_t>(0x20000), static_cast<blksize_t>(0x100000));
+		return retval;
+	};
 
 private:
 
