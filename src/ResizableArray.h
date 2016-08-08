@@ -87,7 +87,8 @@ public:
 			{
 				std::free(m_current_buffer);
 			}
-			// aligned_alloc() requires size == a power of 2 of alignment.
+
+			// aligned_alloc() requires size == a power of 2 of the alignment.
 			/// @todo Additionally, if the end of the requested size is within ??? bytes of the next page, we want to allocate the next page as well,
 			/// so that we don't have to worry about reading past the end of the buffer causing a page fault.
 			auto requested_size = (needed_size + needed_alignment) - (needed_size & (needed_alignment-1));

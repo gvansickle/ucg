@@ -37,6 +37,7 @@
 #define assume(exp)  if(exp) {} else { __builtin_unreachable(); }
 
 /// @name Linux-like likely() and unlikely() macros.
+/// @{
 /// Only define here if they haven't already been defined.  On Linux, they're defined
 /// in include/linux/compiler.h.
 #if !defined(likely)
@@ -45,6 +46,7 @@
 #if !defined(unlikely)
 #define unlikely(exp) __builtin_expect(!!(exp), false)
 #endif
+/// @}
 
 #define assume_aligned(ptr, align)  (ptr) = static_cast<decltype(ptr)>(__builtin_assume_aligned((ptr), align))
 

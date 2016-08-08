@@ -60,11 +60,9 @@ template <typename T>
 constexpr
 	typename std::enable_if<
 		std::is_integral<T>::value,
-	bool>::type clamp(const T val, const T lo, const T hi)
+	T>::type clamp(const T val, const T lo, const T hi)
 {
-	if(val > hi) return hi;
-	if(val < lo) return lo;
-	return val;
+	return (val > hi) ? hi : ((val < lo) ? lo : val );
 };
 
 #endif /* SRC_LIBEXT_INTEGER_HPP_ */
