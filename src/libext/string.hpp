@@ -114,7 +114,7 @@ public:
 		return strnlen(ptr, 4);
 	};
 
-	bool operator <(const microstring other) const noexcept { return m_storage < other.m_storage; };
+	inline bool operator <(const microstring other) const noexcept { return m_storage < other.m_storage; };
 
 	/// Implicitly convert to a std::string.
 	operator std::string() const
