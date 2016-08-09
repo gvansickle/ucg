@@ -182,7 +182,7 @@ DX_INIT_DOXYGEN([UniversalCodeGrep])
 
 AC_LANG_PUSH([C++])
 
-# We need libpcre for regex matching.  As of this writing there are no C++11 implementations
+# We need libpcre or libpcre2 for regex matching.  As of this writing there are no C++11 implementations
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
@@ -362,28 +362,38 @@ AC_COMPILE_IFELSE(
         ])
 
 ### Find a pthread_setname_np() we can use, and #define a macro M_pthread_setname_np() which will call it.
+AC_MSG_CHECKING([how to set pthread names])
+ptsetname=no
 # For Linux.
 AC_CHECK_DECLS([pthread_setname_np(pthread_t, const char *)],
-				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
-				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_setname_np(pthread_self(), (name))],
+				[AC_DEFINE([M_pthread_setname_np(name)], [pthread_setname_np(pthread_self(), (name))],
 					[Macro for Linux to map to the lowest-common-denominator for this functionality, OSX])
+				ptsetname=Linux
 				],
 				[], [#include <pthread.h>])
+if test $ptsetname = no; then
 # For FreeBSD.
 AC_CHECK_DECLS([pthread_set_name_np(pthread_t, const char *)],
-				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
-				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_set_name_np(pthread_self(), (name))],
+				[AC_DEFINE([M_pthread_setname_np(name)], [pthread_set_name_np(pthread_self(), (name))],
 					[Macro for FreeBSD to map to the lowest-common-denominator for this functionality, OSX])
 				 AC_DEFINE([INCLUDE_PTHREAD_NP], [1], [If defined, include the header <pthread_np.h> because we're on BSD])
+				 ptsetname=BSD
 				],
 				[], [#include <pthread_np.h>])
+fi
+if test $ptsetname = no; then
 # For Mac OSX.
 AC_CHECK_DECLS([pthread_setname_np(const char *)],
-				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
-				 AC_DEFINE([HAVE_NO_THREAD_LOCAL_SUPPORT], [1], [If defined, we have no C++11 thread_local support (clang on OSX)])
+				[AC_DEFINE([HAVE_NO_THREAD_LOCAL_SUPPORT], [1], [If defined, we have no C++11 thread_local support (clang on OSX)])
 				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_setname_np(name)],
 					[Macro for OSX to map to itself])
+				ptsetname=OSX
 				], [], [#include <pthread.h>])
+fi
+AS_IF([test $ptsetname != no],
+	[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro M_pthread_setname_np() can be used to set the current thread's name])
+	AC_MSG_RESULT([$ptsetname])],
+	[AC_MSG_RESULT([none found])])
 
 AC_LANG_POP([C++])
 
