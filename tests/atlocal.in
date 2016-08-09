@@ -43,6 +43,10 @@ fi
 #then
 #	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_ACK;
 #fi
+if PROG_SYSTEM_GGREP="$(which ggrep 2>/dev/null)";
+then
+	PROGLIST=$PROGLIST,gnu_grep:$PROG_SYSTEM_GGREP
+fi
 PROGLIST=$PROGLIST,system_grep:grep
 
 

@@ -25,6 +25,7 @@
 #include <iosfwd>
 
 #include "Match.h"
+#include "OutputContext.h"
 
 /**
  * Container class for holding all Matches found in a given file.
@@ -53,7 +54,7 @@ public:
 	/// Add a match to this MatchList.  Note that this is done by moving, not copying, the given %match.
 	void AddMatch(Match &&match);
 
-	void Print(std::ostream &sstrm, bool istty, bool enable_color, bool print_column) const;
+	void Print(std::ostream &sstrm, OutputContext &output_context) const;
 
 	/// Returns a bool indicating whether the MatchList is empty.
 	/// @note You might expect that this needs to indicate 'empty' after a move-from has occurred.

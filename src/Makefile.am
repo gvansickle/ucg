@@ -31,6 +31,7 @@ libsrc_a_SOURCES = \
 	FileScannerCpp11.cpp FileScannerCpp11.h \
 	FileScannerPCRE.cpp FileScannerPCRE.h \
 	FileScannerPCRE2.cpp FileScannerPCRE2.h \
+	OutputContext.cpp OutputContext.h \
 	OutputTask.cpp OutputTask.h \
 	ResizableArray.h \
 	sync_queue.h \

@@ -146,6 +146,7 @@ BEGIN {
 	TEST_PROG_ID_TO_PARAMS_PRE["built_ucg"]="--noenv --cpp"
 	TEST_PROG_ID_TO_PARAMS_PRE["system_ucg"]="--noenv --cpp"
 	TEST_PROG_ID_TO_PARAMS_PRE["system_ag"]="--cpp"
+	TEST_PROG_ID_TO_PARAMS_PRE["gnu_grep"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
 	TEST_PROG_ID_TO_PARAMS_PRE["system_grep"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
 	
 	if(CHARACTERIZE == 0)
@@ -212,7 +213,7 @@ BEGIN {
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
 	join_val_range(CLA_COPY, CMD_LINE_ARRAY, " [^[:space:]]*ag ", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ag"], 4)
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
-	join_val_range(CLA_COPY, CMD_LINE_ARRAY, " grep ", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["grep"], 4)
+	join_val_range(CLA_COPY, CMD_LINE_ARRAY, "[^[:space:]]+grep", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["grep"], 4)
 	
 	###
 	### Output the test script.
