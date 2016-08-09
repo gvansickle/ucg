@@ -34,7 +34,7 @@ void MatchList::AddMatch(Match &&match)
 	m_match_list.push_back(std::move(match));
 }
 
-void MatchList::Print(std::ostream &sstrm, bool istty, bool enable_color, bool print_column) const
+void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 {
 	std::string no_dotslash_fn;
 
@@ -63,7 +63,7 @@ void MatchList::Print(std::ostream &sstrm, bool istty, bool enable_color, bool p
 	std::string color_lineno("\x1B[33;1m\x1B[K");   // 33=yellow, 1=bold
 	std::string color_default("\x1B[0m\x1B[K");     // Reset/normal (all attributes off).
 
-	if(!enable_color)
+	if(!output_context.is_color_enabled())
 	{
 		color_filename = "";
 		color_match = "";
@@ -71,7 +71,14 @@ void MatchList::Print(std::ostream &sstrm, bool istty, bool enable_color, bool p
 		color_default = "";
 	}
 
-	if(istty)
+	// The only real difference between TTY vs. non-TTY printing here is that for TTY we print:
+	//   filename
+	//   lineno:column:match
+	//   [...]
+	// while for non-TTY we print:
+	//   filename:lineno:column:match
+	//   [...]
+	if(output_context.is_output_tty())
 	{
 		// Render to a TTY device.
 
@@ -79,11 +86,11 @@ void MatchList::Print(std::ostream &sstrm, bool istty, bool enable_color, bool p
 		for(const Match& it : m_match_list)
 		{
 			sstrm << color_lineno << it.m_line_number << color_default + ":";
-			if(print_column)
+			if(output_context.is_column_print_enabled())
 			{
 				sstrm << it.m_pre_match.length()+1 << ":";
 			}
-			sstrm << it.m_pre_match + color_match + it.m_match + color_default + it.m_post_match + "\n";
+			sstrm << it.m_pre_match + color_match + it.m_match + color_default + it.m_post_match + '\n';
 		}
 	}
 	else
@@ -94,11 +101,11 @@ void MatchList::Print(std::ostream &sstrm, bool istty, bool enable_color, bool p
 		{
 			sstrm << color_filename + no_dotslash_fn + color_default + ":"
 					+ color_lineno << it.m_line_number << color_default + ":";
-			if(print_column)
+			if(output_context.is_column_print_enabled())
 			{
 				sstrm << it.m_pre_match.length()+1 << ":";
 			}
-			sstrm << it.m_pre_match + color_match + it.m_match << color_default + it.m_post_match + "\n";
+			sstrm << it.m_pre_match + color_match + it.m_match << color_default + it.m_post_match + '\n';
 		}
 	}
 }

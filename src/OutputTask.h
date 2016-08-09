@@ -22,7 +22,10 @@
 
 #include <MatchList.h>
 
+#include <memory>
+
 #include "sync_queue_impl_selector.h"
+#include "OutputContext.h"
 
 /**
  * Task which serializes the output from the FileScanner threads.
@@ -50,6 +53,8 @@ private:
 
 	/// Whether to print the column number of the first match or not.
 	bool m_print_column;
+
+	std::unique_ptr<OutputContext> m_output_context;
 
 	/// The total number of matched lines as reported by the incoming MatchLists.
 	long long m_total_matched_lines { 0 };
