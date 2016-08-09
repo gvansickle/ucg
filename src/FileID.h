@@ -44,7 +44,7 @@ public:
 	FileID(FileID&&) = default;
 	~FileID();
 
-	std::string get_path() const { return m_path; };
+	std::string GetPath() const { return m_path; };
 
 	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
 
@@ -65,6 +65,7 @@ public:
 
 private:
 
+	/// The path to this file.
 	std::string m_path;
 
 	/// @name Info normally gathered from a stat() call.

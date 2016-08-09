@@ -43,15 +43,13 @@ script:
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
 
 after_success:
- - if [ $TRAVIS_OS_NAME == osx ]; then brew install grep; fi  # Install gnu grep to test against.
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew tap homebrew/dupes; brew install grep; fi  # Install gnu grep to test against.
  - cd ../../ && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
  - tar xjf boost_1_58_0.tar.bz2
  - cd ucg/build
  - make check #TESTSUITEFLAGS='-v -d -x'
  - cat tests/testsuite.log
  - cat tests/perf_test_results.txt
- - #./ucg --cpp 'endif' ..
- - #./ucg --cpp 'endif' ../
  - if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then LD_DEBUG=all && ldd -v ucg; fi
  - #find . -iname '*.log' -exec cat "{}" \; 
