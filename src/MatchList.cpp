@@ -65,7 +65,8 @@ void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 		color_default = &output_context.m_color_default;
 	}
 
-	std::string composition_buffer(256, '\0');
+	std::string composition_buffer;
+	composition_buffer.reserve(256);
 
 	// The only real difference between TTY vs. non-TTY printing here is that for TTY we print:
 	//   filename
