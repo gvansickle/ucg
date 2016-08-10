@@ -162,7 +162,7 @@ AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}],['BOOST.*HPP'],[UCG_BOOST_PATH],[3],[1])
+UCG_GEN_PERFTEST([${PROGLIST}],['BOOST.*HPP'],[UCG_BOOST_PATH],[3],[0])  ### @todo no CHARACTERIZE
 # Run the test script.
 AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
 # Summarize the test results.
