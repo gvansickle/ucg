@@ -52,11 +52,13 @@ test_file.cpp:6:    do_something_else();
 ])
 
 # Check for column output to a TTY.
-AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something'],[0],
-[test_file.cpp
+AT_DATA([test_file.cpp.expected],[test_file.cpp
 4:2:	do_something();
 6:5:    do_something_else();
 ])
+AT_CHECK([{ ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something' ; } > stdout_tty], [0], [stdout], [stderr])
+AT_CHECK([diff test_file.cpp.expected stdout_tty], [0], [stdout], [stderr]) 
+
 
 # Check for nocolumn output to a TTY.
 AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor --nocolumn 'do_something'],[0],

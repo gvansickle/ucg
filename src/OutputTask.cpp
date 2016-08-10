@@ -68,7 +68,7 @@ void OutputTask::Run()
 		if(first_matchlist_printed && m_output_is_tty)
 		{
 			// Print a blank line between the match lists (i.e. the groups of matches in one file).
-			std::cout << "\n";
+			std::cout << '\n';
 		}
 		ml.Print(sstrm, *m_output_context);
 		std::cout << sstrm.str();
