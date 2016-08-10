@@ -37,6 +37,7 @@ void MatchList::AddMatch(Match &&match)
 void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 {
 	std::string no_dotslash_fn;
+	const std::string empty_color_string {""};
 
 	// If the file path starts with a "./", chop it off.
 	// This is to match the behavior of ack.
@@ -49,27 +50,20 @@ void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 		no_dotslash_fn = std::string(m_filename.begin(), m_filename.end());
 	}
 
-	// ANSI SGR parameter setting sequences for setting the color and boldness of the output text.
-	// SGR = Select Graphic Rendition.
-	// A note on the "\x1B[K" at the end of each sequence:
-	// This is the "Erase in Line" sequence, which in this form clears the terminal from the cursor position
-	// to the end of the line.  This is needed after every SGR color sequence to prevent scrolling at the bottom of
-	// the terminal at the wrong time from causing that entire line to have the non-default background color.  It also
-	// prevents issues with Horizontal Tab not setting the background to the current color.
-	// A more extensive discussion of this topic is available in the GNU grep source (git://git.savannah.gnu.org/grep.git,
-	// see src/grep.c), which is where I got this solution from.
-	std::string color_filename("\x1B[32;1m\x1B[K"); // 32=green, 1=bold
-	std::string color_match("\x1B[30;43;1m\x1B[K"); // 30=black, 43=yellow bkgnd, 1=bold
-	std::string color_lineno("\x1B[33;1m\x1B[K");   // 33=yellow, 1=bold
-	std::string color_default("\x1B[0m\x1B[K");     // Reset/normal (all attributes off).
+	const std::string *color_filename { &empty_color_string };
+	const std::string *color_match { &empty_color_string };
+	const std::string *color_lineno { &empty_color_string };
+	const std::string *color_default { &empty_color_string };
 
-	if(!output_context.is_color_enabled())
+	if(output_context.is_color_enabled())
 	{
-		color_filename = "";
-		color_match = "";
-		color_lineno = "";
-		color_default = "";
+		color_filename = &output_context.m_color_filename;
+		color_match = &output_context.m_color_match;
+		color_lineno = &output_context.m_color_lineno;
+		color_default = &output_context.m_color_default;
 	}
+
+	//std::string composition_buffer;
 
 	// The only real difference between TTY vs. non-TTY printing here is that for TTY we print:
 	//   filename
@@ -82,15 +76,15 @@ void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 	{
 		// Render to a TTY device.
 
-		sstrm << color_filename + no_dotslash_fn + color_default + "\n";
+		sstrm << *color_filename + no_dotslash_fn + *color_default + "\n";
 		for(const Match& it : m_match_list)
 		{
-			sstrm << color_lineno << it.m_line_number << color_default + ":";
+			sstrm << *color_lineno << it.m_line_number << *color_default + ":";
 			if(output_context.is_column_print_enabled())
 			{
 				sstrm << it.m_pre_match.length()+1 << ":";
 			}
-			sstrm << it.m_pre_match + color_match + it.m_match + color_default + it.m_post_match + '\n';
+			sstrm << it.m_pre_match + *color_match + it.m_match + *color_default + it.m_post_match + '\n';
 		}
 	}
 	else
@@ -99,13 +93,13 @@ void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 
 		for(const Match& it : m_match_list)
 		{
-			sstrm << color_filename + no_dotslash_fn + color_default + ":"
-					+ color_lineno << it.m_line_number << color_default + ":";
+			sstrm << *color_filename + no_dotslash_fn + *color_default + ":"
+					+ *color_lineno << it.m_line_number << *color_default + ":";
 			if(output_context.is_column_print_enabled())
 			{
 				sstrm << it.m_pre_match.length()+1 << ":";
 			}
-			sstrm << it.m_pre_match + color_match + it.m_match << color_default + it.m_post_match + '\n';
+			sstrm << it.m_pre_match + *color_match + it.m_match << *color_default + it.m_post_match + '\n';
 		}
 	}
 }

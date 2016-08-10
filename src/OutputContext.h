@@ -35,6 +35,14 @@ public:
 	inline bool is_color_enabled() const noexcept { return m_enable_color; };
 	inline bool is_column_print_enabled() const noexcept { return m_print_column; };
 
+	/// @name Active colors.
+	/// @{
+	std::string m_color_filename;
+	std::string m_color_match;
+	std::string m_color_lineno;
+	std::string m_color_default;
+	/// @}
+
 private:
 
 	bool m_output_is_tty;
@@ -44,14 +52,6 @@ private:
 
 	/// Whether to print the column number of the first match or not.
 	bool m_print_column;
-
-	/// @name Active colors.
-	/// @{
-	std::string m_color_filename;
-	std::string m_color_match;
-	std::string m_color_lineno;
-	std::string m_color_default;
-	/// @}
 
 	/// @name Default output colors.
 	/// @{
