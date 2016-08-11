@@ -32,7 +32,7 @@ script:
  - #if [ $TRAVIS_OS_NAME == osx ]; then ls -l -R $(brew --prefix pcre); fi
  - pwd && ls -la
  - git --version
- - git describe
+ - git describe HEAD
  - pkg-config --list-all | grep pcre
  - pkg-config libpcre --print-variables
  - pkg-config libpcre --print-provides
