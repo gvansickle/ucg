@@ -126,7 +126,7 @@ public:
 	underlying_storage_type urep() const noexcept { return m_storage; };
 
 private:
-	underlying_storage_type m_storage;
+	underlying_storage_type m_storage;  // No member initializer, would make the class non-trivial.
 };
 
 #ifdef HAVE_IS_TRIVIAL
