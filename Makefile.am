@@ -59,7 +59,7 @@ build_info.cpp: FORCE verify-provenance
 		GIT_DESCRIBE=$$(cat $(top_srcdir)/.tarball-version); \
 	elif (which git > /dev/null && cd $(top_srcdir) && git describe > /dev/null); then \
 		: We are building from a git repo. ; \
-		GIT_DESCRIBE="$$(cd $(top_srcdir) && git describe --long --dirty)"; \
+		GIT_DESCRIBE="$$(cd $(top_srcdir) && git describe --long --dirty --always)"; \
 	else GIT_DESCRIBE="unknown"; \
 	fi; \
 	echo "const char *g_git_describe = \"$${GIT_DESCRIBE}\";" >> "$@.tmp"; \
