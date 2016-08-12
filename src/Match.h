@@ -24,7 +24,7 @@
 #include <type_traits>
 
 /**
- * Class representing a single match in a single file found by FileScanner::ScanFile*().
+ * Class representing a single match in a single file found by FileScanner*::ScanFile().
  * Mostly struct-like behavior; e.g. all data members are public, no member functions other than the constructors.
  * For performance reasons, this class is only move constructible and assignable, not copy constructible or assignable.
  * This allows MatchList to also then be move constructible.

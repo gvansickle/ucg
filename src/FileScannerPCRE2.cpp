@@ -38,15 +38,16 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 	// Compile the regex.
 	int error_code;
 	PCRE2_SIZE error_offset;
-	uint32_t options = 0;
+	uint32_t regex_compile_options = 0;
 
 	// For now, we won't support capturing.  () will be treated as (?:).
-	options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE | PCRE2_NEVER_BACKSLASH_C | PCRE2_NEVER_UTF | PCRE2_NEVER_UCP;
+	regex_compile_options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE | PCRE2_NEVER_BACKSLASH_C | PCRE2_NEVER_UTF | PCRE2_NEVER_UCP
+			| PCRE2_JIT_COMPLETE;
 
 	if(ignore_case)
 	{
 		// Ignore case while matching.
-		options |= PCRE2_CASELESS;
+		regex_compile_options |= PCRE2_CASELESS;
 	}
 
 	if(m_pattern_is_literal)
@@ -61,7 +62,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 		regex = "\\b(?:" + regex + ")\\b";
 	}
 
-	m_pcre2_regex = pcre2_compile(reinterpret_cast<PCRE2_SPTR8>(regex.c_str()), regex.length(), options, &error_code, &error_offset, NULL);
+	m_pcre2_regex = pcre2_compile(reinterpret_cast<PCRE2_SPTR8>(regex.c_str()), regex.length(), regex_compile_options, &error_code, &error_offset, NULL);
 
 	if (m_pcre2_regex == NULL)
 	{
