@@ -1,0 +1,32 @@
+#
+# Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+#
+# This file is part of UniversalCodeGrep.
+#
+# UniversalCodeGrep is free software: you can redistribute it and/or modify it under the
+# terms of version 3 of the GNU General Public License as published by the Free
+# Software Foundation.
+#
+# UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along with
+# UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
+
+###
+### Check that a trailing '\s+' doesn't match '\n's. 
+###
+AT_SETUP([trailing \s+ does not match '\n's])
+
+AT_DATA([file1.cpp],[abcd  efgh
+Four spaces at the end of the next line
+])
+AS_ECHO(["efgh    "]) >> file1.cpp
+AS_ECHO(["    ijkl"]) >> file1.cpp
+
+# Compare to grep output with equivalent options.
+AT_CHECK([$EGREP -Hrn 'efgh\s+' file1.cpp > expout], [0], [stdout], [stderr])
+AT_CHECK([ucg --noenv 'efgh\s+'], [0], [expout], [stderr])
+
+AT_CLEANUP
