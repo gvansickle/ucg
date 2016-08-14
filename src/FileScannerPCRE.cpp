@@ -27,6 +27,13 @@
 #include "Logger.h"
 
 #ifdef HAVE_LIBPCRE
+
+/// Old enough libpcre's don't have this define.
+#ifndef PCRE_NEVER_UTF
+#define PCRE_NEVER_UTF 0
+#endif
+
+
 /**
  * This callout handler is invoked by PCRE at the end of a potentially successful match.  It's purpose
  * is to prevent a regex like 'abc\s+def' from matching across an eol boundary, since '\s' matches both
