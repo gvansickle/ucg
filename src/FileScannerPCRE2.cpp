@@ -27,7 +27,7 @@
 
 #include "Logger.h"
 
-
+#ifdef HAVE_LIBPCRE2
 static int callout_handler(pcre2_callout_block *cob, void *ctx)
 {
 	const char * p = (const char *)std::memchr(cob->subject+cob->start_match, '\n', cob->current_position - cob->start_match);
@@ -45,6 +45,7 @@ static int callout_handler(pcre2_callout_block *cob, void *ctx)
 		return 1;
 	}
 }
+#endif
 
 FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 		sync_queue<MatchList> &output_queue,
