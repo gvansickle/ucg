@@ -22,6 +22,8 @@
 
 #include <config.h>
 #include <string>
+#include <sstream>
+#include <type_traits>
 
 #if !defined(HAVE_DECL_STD__TO_STRING) || (HAVE_DECL_STD__TO_STRING == 0)
 

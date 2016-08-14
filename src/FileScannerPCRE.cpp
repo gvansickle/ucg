@@ -26,6 +26,40 @@
 
 #include "Logger.h"
 
+#ifdef HAVE_LIBPCRE
+/**
+ * This callout handler is invoked by PCRE at the end of a potentially successful match.  It's purpose
+ * is to prevent a regex like 'abc\s+def' from matching across an eol boundary, since '\s' matches both
+ * 'normal' spaces and also newlines.
+ *
+ * It works in conjunction with a wrapper the constructor puts around the incoming regex, "(?:" + regex + ")(?=.*?$)(?C1)".
+ * What happens is that when PCRE finds a potential match of the given regex, the (?C1) causes this function to be called.
+ * This function then scans the potential match for a '\n' character.  If it finds one, the potential match is rejected by returning
+ * a positive integer (+1), and if it's able to, PCRE backtracks and looks for a different match solution.  If no
+ * '\n' is found, 0 is returned, and the match is accepted.
+ *
+ * @param cob
+ * @return
+ */
+static int callout_handler(pcre_callout_block *cob)
+{
+	const char * p = (const char *)std::memchr(cob->subject+cob->start_match, '\n', cob->current_position - cob->start_match);
+
+	std::string cur_match_str((const char *)cob->subject+cob->start_match, (const char *)cob->subject + cob->current_position);
+
+	if(p == nullptr)
+	{
+		//std::cerr << "CALLOUT: No eols yet, string is: \"" << cur_match_str << "\"\n";
+		return 0;
+	}
+	else
+	{
+		//std::cerr << "CALLOUT: Found eol, string is: \"" << cur_match_str << "\"\n";
+		return 1;
+	}
+}
+#endif
+
 FileScannerPCRE::FileScannerPCRE(sync_queue<std::string> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
@@ -37,15 +71,15 @@ FileScannerPCRE::FileScannerPCRE(sync_queue<std::string> &in_queue,
 	// Compile the regex.
 	const char *error;
 	int error_offset;
-	int options = 0;
+	int regex_compile_options = 0;
 
 	// For now, we won't support capturing.  () will be treated as (?:).
-	options = PCRE_NO_AUTO_CAPTURE;
+	regex_compile_options = PCRE_NO_AUTO_CAPTURE | PCRE_MULTILINE | PCRE_NEVER_UTF;
 
 	if(ignore_case)
 	{
 		// Ignore case while matching.
-		options |= PCRE_CASELESS;
+		regex_compile_options |= PCRE_CASELESS;
 	}
 
 	if(m_pattern_is_literal)
@@ -60,7 +94,16 @@ FileScannerPCRE::FileScannerPCRE(sync_queue<std::string> &in_queue,
 		regex = "\\b(?:" + regex + ")\\b";
 	}
 
-	m_pcre_regex = pcre_compile(regex.c_str(), options, &error, &error_offset, NULL);
+	if(!m_pattern_is_literal)
+	{
+		// Put in our callout, which essentially exists to make '\s' not match a newline.
+		regex = "(?:" + regex + ")(?=.*?$)(?C1)";
+		
+		// PCRE1 has a single global pointer to the callout function.  This is OK for our use here.
+		pcre_callout = callout_handler;
+	}
+
+	m_pcre_regex = pcre_compile(regex.c_str(), regex_compile_options, &error, &error_offset, NULL);
 
 	if (m_pcre_regex == NULL)
 	{
@@ -190,7 +233,8 @@ void FileScannerPCRE::ScanFile(const char* __restrict__ file_data, size_t file_s
 		// Check for non-PCRE_ERROR_NOMATCH error codes.
 		if(rc < 0)
 		{
-			ERROR() << "Match error " << rc << "." << std::endl;
+			// Match error.  Convert to string, throw exception.
+			throw FileScannerException(std::string("PCRE match error: ") + std::to_string(rc));
 			return;
 		}
 		if (rc == 0)

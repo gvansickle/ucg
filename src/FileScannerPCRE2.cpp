@@ -28,6 +28,21 @@
 #include "Logger.h"
 
 #ifdef HAVE_LIBPCRE2
+/**
+ * This callout handler is invoked by PCRE2 at the end of a potentially successful match.  It's purpose
+ * is to prevent a regex like 'abc\s+def' from matching across an eol boundary, since '\s' matches both
+ * 'normal' spaces and also newlines.
+ *
+ * It works in conjunction with a wrapper the constructor puts around the incoming regex, "(?:" + regex + ")(?=.*?$)(?C1)".
+ * What happens is that when PCRE2 finds a potential match of the given regex, the (?C1) causes this function to be called.
+ * This function then scans the potential match for a '\n' character.  If it finds one, the potential match is rejected by returning
+ * a positive integer (+1), and if it's able to, PCRE2 backtracks and looks for a different match solution.  If no
+ * '\n' is found, 0 is returned, and the match is accepted.
+ *
+ * @param cob
+ * @param ctx
+ * @return
+ */
 static int callout_handler(pcre2_callout_block *cob, void *ctx)
 {
 	const char * p = (const char *)std::memchr(cob->subject+cob->start_match, '\n', cob->current_position - cob->start_match);
@@ -237,7 +252,6 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		// Check for non-PCRE2_ERROR_NOMATCH error codes.
 		if(rc < 0)
 		{
-			//ERROR() << "Match error " << rc << "." << std::endl;
 			// Match error.  Convert to string, throw exception.
 			throw FileScannerException(std::string("PCRE2 match error: ") + PCRE2ErrorCodeToErrorString(rc));
 			return;
@@ -261,7 +275,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 
 		ml.AddMatch(std::move(m));
 	}
-#endif
+#endif // HAVE_LIBPCRE2
 }
 
 std::string FileScannerPCRE2::PCRE2ErrorCodeToErrorString(int errorcode)

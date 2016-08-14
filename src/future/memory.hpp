@@ -10,6 +10,4 @@
 
 
 
-
-
 #endif /* SRC_FUTURE_MEMORY_HPP_ */
