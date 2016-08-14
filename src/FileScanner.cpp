@@ -37,6 +37,7 @@
 #include <thread>
 #include <mutex>
 #include <cstring> // For memchr().
+#include <cstddef> // For ptrdiff_t
 #ifndef HAVE_SCHED_SETAFFINITY
 #else
 	#include <sched.h>
@@ -247,4 +248,18 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 	return retval;
 }
 
+std::tuple<const char *, size_t> FileScanner::GetEOL(const char *search_start, const char * buff_one_past_end)
+{
+	std::ptrdiff_t max_len = buff_one_past_end-search_start;
+	const char * p = (const char *)std::memchr(search_start, '\n', max_len);
 
+	if(p == nullptr)
+	{
+		// Not found.
+		return std::make_tuple(buff_one_past_end, max_len);
+	}
+	else
+	{
+		return std::make_tuple(p, p-search_start);
+	}
+}

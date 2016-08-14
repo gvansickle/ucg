@@ -27,6 +27,25 @@
 
 #include "Logger.h"
 
+
+static int callout_handler(pcre2_callout_block *cob, void *ctx)
+{
+	const char * p = (const char *)std::memchr(cob->subject+cob->start_match, '\n', cob->current_position - cob->start_match);
+
+	std::string cur_match_str((const char *)cob->subject+cob->start_match, (const char *)cob->subject + cob->current_position);
+
+	if(p == nullptr)
+	{
+		//std::cerr << "CALLOUT: No eols yet, string is: \"" << cur_match_str << "\"\n";
+		return 0;
+	}
+	else
+	{
+		//std::cerr << "CALLOUT: Found eol, string is: \"" << cur_match_str << "\"\n";
+		return 1;
+	}
+}
+
 FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
@@ -41,7 +60,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 	uint32_t regex_compile_options = 0;
 
 	// For now, we won't support capturing.  () will be treated as (?:).
-	regex_compile_options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE | PCRE2_NEVER_BACKSLASH_C | PCRE2_NEVER_UTF | PCRE2_NEVER_UCP;
+	regex_compile_options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE /*| PCRE2_NEVER_BACKSLASH_C*/ | PCRE2_NEVER_UTF | PCRE2_NEVER_UCP;
 
 	if(ignore_case)
 	{
@@ -59,6 +78,12 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 	{
 		// Surround the regex with \b (word boundary) assertions.
 		regex = "\\b(?:" + regex + ")\\b";
+	}
+
+	if(!m_pattern_is_literal)
+	{
+		// Put in our callout, which essentially exists to make '\s' not match a newline.
+		regex = "(?:" + regex + ")(?=.*?$)(?C1)";
 	}
 
 	m_pcre2_regex = pcre2_compile(reinterpret_cast<PCRE2_SPTR8>(regex.c_str()), regex.length(), regex_compile_options, &error_code, &error_offset, NULL);
@@ -91,6 +116,7 @@ FileScannerPCRE2::~FileScannerPCRE2()
 void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
 #ifdef HAVE_LIBPCRE2
+	// Pointer to the offset vector returned by pcre2_match().
 	PCRE2_SIZE *ovector;
 
 	// Create a std::unique_ptr<> with a custom deleter to manage the lifetime of the match data.
@@ -100,16 +126,24 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 	};
 	std::unique_ptr<pcre2_match_data, match_data_deleter> match_data;
 
-	size_t line_no = 1;
-	size_t prev_lineno = 0;
-	const char *prev_lineno_search_end = file_data;
-	size_t start_offset = 0;
+	size_t line_no {1};
+	size_t prev_lineno {0};
+	const char *prev_lineno_search_end {file_data};
+	size_t start_offset { 0 };
 
 	match_data.reset(pcre2_match_data_create_from_pattern(m_pcre2_regex, NULL));
 	ovector = pcre2_get_ovector_pointer(match_data.get());
 	// Fool the "previous match was zero-length" logic for the first iteration.
 	ovector[0] = -1;
 	ovector[1] = 0;
+
+	pcre2_match_context *mctx = nullptr;
+	if(!m_pattern_is_literal)
+	{
+		// Hook in our callout function.
+		mctx = pcre2_match_context_create(NULL);
+		pcre2_set_callout(mctx, callout_handler, this);
+	}
 
 	// Loop while the start_offset is less than the file_size.
 	while(start_offset < file_size)
@@ -139,13 +173,13 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 				start_offset,
 				options,
 				match_data.get(),
-				NULL
+				mctx
 				);
 
 		// Check for no match.
 		if(rc == PCRE2_ERROR_NOMATCH)
 		{
-			if(options == 0)
+			if(options == 0 )
 			{
 				// We weren't trying to recover from a zero-length match, so there are no more matches.
 				// Break out of the loop.
@@ -202,7 +236,9 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		// Check for non-PCRE2_ERROR_NOMATCH error codes.
 		if(rc < 0)
 		{
-			ERROR() << "Match error " << rc << "." << std::endl;
+			//ERROR() << "Match error " << rc << "." << std::endl;
+			// Match error.  Convert to string, throw exception.
+			throw FileScannerException(std::string("PCRE2 match error: ") + PCRE2ErrorCodeToErrorString(rc));
 			return;
 		}
 		if (rc == 0)

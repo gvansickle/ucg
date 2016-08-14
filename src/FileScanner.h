@@ -127,6 +127,8 @@ protected:
 
 	///@}
 
+	std::tuple<const char *, size_t> GetEOL(const char *search_start, const char * buff_one_past_end);
+
 	bool m_ignore_case;
 
 	bool m_word_regexp;
