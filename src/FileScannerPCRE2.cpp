@@ -130,8 +130,7 @@ FileScannerPCRE2::~FileScannerPCRE2()
 #endif
 }
 
-
-
+#ifdef HAVE_LIBPCRE2
 /// @name Custom deleters for the PCRE2 objects we'll be using.
 /// These are implemented as specializations of the std::default_delete<> template.
 /// For good or ill, this seems to be the best way to handle the specification of a custom deleter for std::unique_ptrs.
@@ -153,7 +152,7 @@ struct default_delete<pcre2_match_context>
 
 }
 /// @}
-
+#endif
 
 void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
