@@ -83,7 +83,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 	if(!m_pattern_is_literal)
 	{
 		// Put in our callout, which essentially exists to make '\s' not match a newline.
-		regex = "(?:" + regex + ").*?$(?C1)";
+		regex = "(?:" + regex + ")(?=.*?$)(?C1)";
 	}
 
 	m_pcre2_regex = pcre2_compile(reinterpret_cast<PCRE2_SPTR8>(regex.c_str()), regex.length(), regex_compile_options, &error_code, &error_offset, NULL);
@@ -137,7 +137,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 	ovector[0] = -1;
 	ovector[1] = 0;
 
-	pcre2_match_context *mctx;
+	pcre2_match_context *mctx = nullptr;
 	if(!m_pattern_is_literal)
 	{
 		// Hook in our callout function.
