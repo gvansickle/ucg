@@ -97,11 +97,8 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 		regex = "\\b(?:" + regex + ")\\b";
 	}
 
-	if(!m_pattern_is_literal)
-	{
-		// Put in our callout, which essentially exists to make '\s' not match a newline.
-		regex = "(?:" + regex + ")(?=.*?$)(?C1)";
-	}
+	// Put in our callout, which essentially exists to make '\s' not match a newline.
+	regex = "(?:" + regex + ")(?=.*?$)(?C1)";
 
 	m_pcre2_regex = pcre2_compile(reinterpret_cast<PCRE2_SPTR8>(regex.c_str()), regex.length(), regex_compile_options, &error_code, &error_offset, NULL);
 
@@ -133,7 +130,6 @@ FileScannerPCRE2::~FileScannerPCRE2()
 #ifdef HAVE_LIBPCRE2
 /// @name Custom deleters for the PCRE2 objects we'll be using.
 /// These are implemented as specializations of the std::default_delete<> template.
-/// For good or ill, this seems to be the best way to handle the specification of a custom deleter for std::unique_ptrs.
 /// @{
 namespace std
 {
@@ -174,13 +170,9 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 	ovector[0] = -1;
 	ovector[1] = 0;
 
-	std::unique_ptr<pcre2_match_context> mctx;
-	if(!m_pattern_is_literal)
-	{
-		// Hook in our callout function.
-		mctx.reset(pcre2_match_context_create(NULL));
-		pcre2_set_callout(mctx.get(), callout_handler, this);
-	}
+	std::unique_ptr<pcre2_match_context> mctx(pcre2_match_context_create(NULL));
+	// Hook in our callout function.
+	pcre2_set_callout(mctx.get(), callout_handler, this);
 
 	// Loop while the start_offset is less than the file_size.
 	while(start_offset < file_size)

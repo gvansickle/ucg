@@ -101,14 +101,11 @@ FileScannerPCRE::FileScannerPCRE(sync_queue<std::string> &in_queue,
 		regex = "\\b(?:" + regex + ")\\b";
 	}
 
-	if(!m_pattern_is_literal)
-	{
-		// Put in our callout, which essentially exists to make '\s' not match a newline.
-		regex = "(?:" + regex + ")(?=.*?$)(?C1)";
+	// Put in our callout, which essentially exists to make '\s' not match a newline.
+	regex = "(?:" + regex + ")(?=.*?$)(?C1)";
 		
-		// PCRE1 has a single global pointer to the callout function.  This is OK for our use here.
-		pcre_callout = callout_handler;
-	}
+	// PCRE1 has a single global pointer to the callout function.  This is OK for our use here.
+	pcre_callout = callout_handler;
 
 	m_pcre_regex = pcre_compile(regex.c_str(), regex_compile_options, &error, &error_offset, NULL);
 
