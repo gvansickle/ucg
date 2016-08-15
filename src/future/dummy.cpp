@@ -18,7 +18,7 @@
 /** @file Dummy cpp file to get this otherwise header-only lib to build portably. */
 
 
-extern char *link_me = "dummy";
+const char *link_me = "dummy";
 
 
 
