@@ -22,6 +22,7 @@
 
 noinst_LIBRARIES = libfuture.a 
 libfuture_a_SOURCES = \
+	dummy.cpp \
 	memory.hpp \
 	string.hpp
 
