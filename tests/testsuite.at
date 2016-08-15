@@ -68,6 +68,11 @@ m4_include([search_modifiers.at])
 m4_include([file_presentation.at])
 
 ###
+### Match correctness tests.
+###
+m4_include([match_correctness.at])
+
+###
 ### Check type inclusion options.
 ###
 m4_include([type_inclusion.at])

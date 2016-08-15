@@ -28,6 +28,7 @@
 ### Fixed
 - Cygwin now requires AC_USE_SYSTEM_EXTENSIONS for access to get_current_dir_name().  Resolves #76.
 - Resolved issue with highlights on wrapped lines sometimes extending the full width of the terminal.  Resolves #80.
+- Resolved issue where matches spanning an eol (e.g. 'a\s+b' matching 'a\nb') would cause the program to throw an exception and terminate.  Resolves #92. 
 
 
 ## [0.2.2] - 2016-04-09

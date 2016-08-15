@@ -182,7 +182,7 @@ DX_INIT_DOXYGEN([UniversalCodeGrep])
 
 AC_LANG_PUSH([C++])
 
-# We need libpcre for regex matching.  As of this writing there are no C++11 implementations
+# We use libpcre or libpcre2 for regex matching.  As of this writing there are no C++11 implementations
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
@@ -427,6 +427,7 @@ AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 ###
 AC_CONFIG_FILES([Makefile
 	src/Makefile
+	src/future/Makefile
 	src/libext/Makefile
 	third_party/Makefile])
 AC_OUTPUT

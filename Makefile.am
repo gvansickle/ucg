@@ -44,7 +44,7 @@ ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS)
 ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.a ./src/libext/libext.a ./src/libsrc_sse4_2_no_popcnt.a ./src/libsrc_sse4_2_popcnt.a
+ucg_LDADD = ./src/libsrc.a ./src/libext/libext.a ./src/future/libfuture.a ./src/libsrc_sse4_2_no_popcnt.a ./src/libsrc_sse4_2_popcnt.a ./src/libsrc.a
 
 # Collect some make-time info. 
 FORCE:
