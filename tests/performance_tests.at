@@ -147,7 +147,7 @@ AT_CAPTURE_FILE([./cmdlines.sh])
 m4_define([UCG_SUMMARIZE_PERFTEST],
 [
 # $1 == NUM_ITERATIONS  ### @todo GRVS: eventually won't need this.
-AT_CHECK([$AWK -v NUM_ITERATIONS=$1 -f $srcdir/performance_test_runner.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
+AT_CHECK([$AWK -v NUM_ITERATIONS=$1 -f $srcdir/performance_test_summarizer.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
 ])
 
 ###
