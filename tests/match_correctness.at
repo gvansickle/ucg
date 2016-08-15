@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
+AT_BANNER([UniversalCodeGrep match correctness checks])
+
 ###
 ### Check that a trailing '\s+' doesn't match '\n's. 
 ###
@@ -29,5 +31,23 @@ AS_ECHO(["efgh    ijkl"]) >> file1.cpp
 # Compare to grep output with equivalent options.
 AT_CHECK([$EGREP -Hrn 'efgh\s+' file1.cpp > expout], [0], [stdout], [stderr])
 AT_CHECK([ucg --noenv 'efgh\s+'], [0], [expout], [stderr])
+
+AT_CLEANUP
+
+
+###
+### Check that a literal with '\n' doesn't match '\n's. 
+###
+AT_SETUP([literal with '\n' does not match '\n's])
+
+AT_DATA([file1.cpp],[abcd  efgh
+ijkl
+])
+
+# Compare to grep output with equivalent options.
+# NOTE: fgrep will actually match both lines.  We'll not match anything, but we should really
+# probably reject the literal with an error message.
+#AT_CHECK([$FGREP -Hrn "$(printf 'efgh\nijkl')" file1.cpp > expout], [0], [stdout], [stderr])
+AT_CHECK([ucg --noenv --cpp --literal "$(printf 'efgh\nijkl')"], [1], [stdout], [stderr])
 
 AT_CLEANUP

@@ -27,9 +27,25 @@
 
 #include "Logger.h"
 
-
+#ifdef HAVE_LIBPCRE2
+/**
+ * This callout handler is invoked by PCRE2 at the end of a potentially successful match.  It's purpose
+ * is to prevent a regex like 'abc\s+def' from matching across an eol boundary, since '\s' matches both
+ * 'normal' spaces and also newlines.
+ *
+ * It works in conjunction with a wrapper the constructor puts around the incoming regex, "(?:" + regex + ")(?=.*?$)(?C1)".
+ * What happens is that when PCRE2 finds a potential match of the given regex, the (?C1) causes this function to be called.
+ * This function then scans the potential match for a '\n' character.  If it finds one, the potential match is rejected by returning
+ * a positive integer (+1), and if it's able to, PCRE2 backtracks and looks for a different match solution.  If no
+ * '\n' is found, 0 is returned, and the match is accepted.
+ *
+ * @param cob
+ * @param ctx
+ * @return
+ */
 static int callout_handler(pcre2_callout_block *cob, void *ctx)
 {
+	(void)ctx;
 	const char * p = (const char *)std::memchr(cob->subject+cob->start_match, '\n', cob->current_position - cob->start_match);
 
 	std::string cur_match_str((const char *)cob->subject+cob->start_match, (const char *)cob->subject + cob->current_position);
@@ -45,6 +61,7 @@ static int callout_handler(pcre2_callout_block *cob, void *ctx)
 		return 1;
 	}
 }
+#endif
 
 FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 		sync_queue<MatchList> &output_queue,
@@ -80,11 +97,8 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 		regex = "\\b(?:" + regex + ")\\b";
 	}
 
-	if(!m_pattern_is_literal)
-	{
-		// Put in our callout, which essentially exists to make '\s' not match a newline.
-		regex = "(?:" + regex + ")(?=.*?$)(?C1)";
-	}
+	// Put in our callout, which essentially exists to make '\s' not match a newline.
+	regex = "(?:" + regex + ")(?=.*?$)(?C1)";
 
 	m_pcre2_regex = pcre2_compile(reinterpret_cast<PCRE2_SPTR8>(regex.c_str()), regex.length(), regex_compile_options, &error_code, &error_offset, NULL);
 
@@ -113,18 +127,37 @@ FileScannerPCRE2::~FileScannerPCRE2()
 #endif
 }
 
+#ifdef HAVE_LIBPCRE2
+/// @name Custom deleters for the PCRE2 objects we'll be using.
+/// These are implemented as specializations of the std::default_delete<> template.
+/// @{
+namespace std
+{
+
+template<>
+struct default_delete<pcre2_match_data>
+{
+	void operator()(pcre2_match_data *ptr) { pcre2_match_data_free(ptr); };
+};
+
+template<>
+struct default_delete<pcre2_match_context>
+{
+	void operator()(pcre2_match_context *mctx) { pcre2_match_context_free(mctx); };
+};
+
+}
+/// @}
+#endif
+
 void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
 #ifdef HAVE_LIBPCRE2
 	// Pointer to the offset vector returned by pcre2_match().
 	PCRE2_SIZE *ovector;
 
-	// Create a std::unique_ptr<> with a custom deleter to manage the lifetime of the match data.
-	struct match_data_deleter
-	{
-		void operator() (pcre2_match_data *ptr) const { pcre2_match_data_free(ptr); };
-	};
-	std::unique_ptr<pcre2_match_data, match_data_deleter> match_data;
+	// Create a std::unique_ptr<> with a custom deleter (see above) to manage the lifetime of the match data.
+	std::unique_ptr<pcre2_match_data> match_data;
 
 	size_t line_no {1};
 	size_t prev_lineno {0};
@@ -137,13 +170,9 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 	ovector[0] = -1;
 	ovector[1] = 0;
 
-	pcre2_match_context *mctx = nullptr;
-	if(!m_pattern_is_literal)
-	{
-		// Hook in our callout function.
-		mctx = pcre2_match_context_create(NULL);
-		pcre2_set_callout(mctx, callout_handler, this);
-	}
+	std::unique_ptr<pcre2_match_context> mctx(pcre2_match_context_create(NULL));
+	// Hook in our callout function.
+	pcre2_set_callout(mctx.get(), callout_handler, this);
 
 	// Loop while the start_offset is less than the file_size.
 	while(start_offset < file_size)
@@ -173,7 +202,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 				start_offset,
 				options,
 				match_data.get(),
-				mctx
+				mctx.get()
 				);
 
 		// Check for no match.
@@ -236,7 +265,6 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		// Check for non-PCRE2_ERROR_NOMATCH error codes.
 		if(rc < 0)
 		{
-			//ERROR() << "Match error " << rc << "." << std::endl;
 			// Match error.  Convert to string, throw exception.
 			throw FileScannerException(std::string("PCRE2 match error: ") + PCRE2ErrorCodeToErrorString(rc));
 			return;
@@ -260,7 +288,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 
 		ml.AddMatch(std::move(m));
 	}
-#endif
+#endif // HAVE_LIBPCRE2
 }
 
 std::string FileScannerPCRE2::PCRE2ErrorCodeToErrorString(int errorcode)
