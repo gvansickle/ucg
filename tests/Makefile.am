@@ -74,6 +74,7 @@ TESTSUITE_AT = \
 	arg_and_rc_handling.at \
 	dir_tree_traversal.at \
 	file_presentation.at \
+	match_correctness.at \
 	type_inclusion.at \
 	version.at \
 	sanity.at \

@@ -128,6 +128,8 @@ protected:
 
 	///@}
 
+	std::tuple<const char *, size_t> GetEOL(const char *search_start, const char * buff_one_past_end);
+
 	static const char * LiteralPrescan(std::string regex, const char * __restrict__ start_of_array, const char * __restrict__ end_of_array) noexcept;
 
 	bool m_ignore_case;

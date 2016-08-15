@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = libext
+SUBDIRS = future libext
 
 noinst_LIBRARIES = libsrc.a libsrc_sse4_2_no_popcnt.a libsrc_sse4_2_popcnt.a
 libsrc_a_SOURCES = \
