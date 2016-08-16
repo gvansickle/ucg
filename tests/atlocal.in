@@ -82,6 +82,17 @@ get_system_info()
 {
 	# Collects and returns information regarding the test system.
 	
+	# Distro
+	#
+	echo "";
+	echo "START /etc/os-release info.";
+	if [ -e /etc/os-release ];
+	then
+		cat /etc/os-release;
+	fi
+	echo "END /etc/os-release info.";
+	echo "";
+	
 	# Using uname.
 	#
 	# OSX: Note that on a VMWare box running on a Xeon, we get the following:
