@@ -52,21 +52,26 @@
 
 #define assume_aligned(ptr, align)  (ptr) = static_cast<decltype(ptr)>(__builtin_assume_aligned((ptr), align))
 
-#ifdef __has_cpp_attribute
+/// Check for support of the __has_cpp_attribute() macro.
+/// Stub in an always-unsupported replacement if it doesn't exist.
+#ifndef __has_cpp_attribute
+	STATIC_MSG_WARN("Compiler does not have __has_cpp_attribute() support, will not use attributes.")
+#	define __has_cpp_attribute(x)  0
+#endif
+
 /// Use [[maybe_unused]] after a variable's declaration to indicate that it might be unused.
-#	if __has_cpp_attribute(maybe_unused)
-		// Have the C++17 spelling.
-#		pragma message "Have C++17 [[maybe_unused]]"
-#		define maybe_unused	maybe_unused
-#	elif __has_cpp_attribute(gnu::unused)
-		// Have the GCC extension spelling.
-		STATIC_MSG("Have G++ extenstion [[gnu::unused]]")
-#		define maybe_unused gnu::unused
-#   else
-		// Not supported.
-#		pragma message "C++17 attribute [[maybe_unused]] not supported"
-#		define maybe_unused
-#	endif
+#if __has_cpp_attribute(maybe_unused)
+	// Have the C++17 spelling.
+#	pragma message "Have C++17 [[maybe_unused]]"
+#	define maybe_unused	maybe_unused
+#elif __has_cpp_attribute(gnu::unused)
+	// Have the GCC extension spelling.
+	STATIC_MSG("Have G++ extenstion [[gnu::unused]]")
+#	define maybe_unused gnu::unused
+#else
+	// Not supported.
+#	pragma message "C++17 attribute [[maybe_unused]] not supported"
+#	define maybe_unused
 #endif
 
 #endif /* SRC_LIBEXT_HINTS_HPP_ */
