@@ -22,8 +22,8 @@
 #include "FileScannerPCRE2.h"
 
 #include <iostream>
-#include <memory>
-#include <libext/string.hpp>
+#include <future/string.hpp>
+#include <cstring>
 
 #include "Logger.h"
 

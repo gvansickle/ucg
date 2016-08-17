@@ -34,6 +34,7 @@
 #include <iostream>
 #include <string>
 #include <libext/string.hpp>
+#include <future/string.hpp>
 #include <thread>
 #include <mutex>
 #include <cstring> // For memchr().
