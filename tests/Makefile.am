@@ -28,7 +28,7 @@ MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
 ### Only built during a "make check", and not installed.
 ###
 check_PROGRAMS = dummy-file-gen
-dummy_file_gen_SOURCES = dummy-file-gen.cpp
+dummy_file_gen_SOURCES = dummy-file-gen.cpp lorem_ipsum.hpp
 dummy_file_gen_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
 dummy_file_gen_CFLAGS = $(AM_CFLAGS)
 dummy_file_gen_CXXFLAGS = $(AM_CXXFLAGS)

@@ -51,7 +51,17 @@
 #define assume_aligned(ptr, align)  (ptr) = static_cast<decltype(ptr)>(__builtin_assume_aligned((ptr), align))
 
 /// Use this after a variable's declaration to indicate that it might be unused.
-/// @note In C++17, [[maybe_unused]] is part of the standard.  We may have to revisit the name of this macro.
-#define maybe_unused	__attribute__((unused))
+#ifdef __has_cpp_attribute
+#	if __has_cpp_attribute(maybe_unused)
+		// Have the C++17 spelling.
+#		define maybe_unused	maybe_unused
+#	elif __has_cpp_attribute(gnu::unused)
+		// Have the GCC extension spelling.
+#		define maybe_unused gnu::unused
+#   else
+		// Not supported.
+#		define maybe_unused
+#	endif
+#endif
 
 #endif /* SRC_LIBEXT_HINTS_HPP_ */
