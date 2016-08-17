@@ -52,8 +52,8 @@
 
 #define assume_aligned(ptr, align)  (ptr) = static_cast<decltype(ptr)>(__builtin_assume_aligned((ptr), align))
 
-/// Use this after a variable's declaration to indicate that it might be unused.
 #ifdef __has_cpp_attribute
+/// Use [[maybe_unused]] after a variable's declaration to indicate that it might be unused.
 #	if __has_cpp_attribute(maybe_unused)
 		// Have the C++17 spelling.
 #		pragma message "Have C++17 [[maybe_unused]]"
