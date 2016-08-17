@@ -119,6 +119,8 @@ private:
 
 };
 
+/// @todo UNUSED, REMOVE?
+#if 0
 static std::string GetPathAsString(FTSENT *ftsent, std::string& name)
 {
 	if(ftsent->fts_parent != nullptr)
@@ -132,6 +134,7 @@ static std::string GetPathAsString(FTSENT *ftsent, std::string& name)
 		return std::string(ftsent->fts_path, ftsent->fts_pathlen);
 	}
 }
+#endif
 
 Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,

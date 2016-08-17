@@ -66,7 +66,7 @@
 #	define maybe_unused	maybe_unused
 #elif __has_cpp_attribute(gnu::unused)
 	// Have the GCC extension spelling.
-	STATIC_MSG("Have G++ extenstion [[gnu::unused]]")
+	STATIC_MSG("Have G++ extenstion [[gnu::unused]], using for [[maybe_unused]]")
 #	define maybe_unused gnu::unused
 #else
 	// Not supported.
