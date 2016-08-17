@@ -55,12 +55,8 @@
 /// Check for support of the __has_cpp_attribute() macro.
 /// Stub in an always-unsupported replacement if it doesn't exist.
 #if !defined(__has_cpp_attribute)
-#	if !defined(__has_attribute)
-		STATIC_MSG_WARN("Compiler does not have __has_cpp_attribute() support, will not use attributes.")
-#		define __has_cpp_attribute(x)  0
-#	else
-#		define __has_cpp_attribute(x)  __has_attribute((x))
-#	endif
+	STATIC_MSG_WARN("Compiler does not have __has_cpp_attribute() support, will not use C++11 attributes.")
+#	define __has_cpp_attribute(x)  0
 #endif
 
 /// Use [[maybe_unused]] after a variable's declaration to indicate that it might be unused.
