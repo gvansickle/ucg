@@ -160,6 +160,6 @@ BEGIN {
 	print("|---------|----------------|---------------|-----|-------------------|") >> RESULTS_FILE;
 	for(i=1; i<=NUM_RUNS; ++i)
 	{
-		print("|", TEST_PROG_PATH[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|", NUM_MATCHED_LINES[i], "|") >> RESULTS_FILE;
+		print("|", TEST_PROG_ID[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|", NUM_MATCHED_LINES[i], "|") >> RESULTS_FILE;
 	}
 }

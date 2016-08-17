@@ -82,8 +82,8 @@ get_system_info()
 {
 	# Collects and returns information regarding the test system.
 	
-	# Distro
-	#
+	# Distro, using /etc/os-release.
+	# This is a file specified by freedesktop.  See https://www.freedesktop.org/software/systemd/man/os-release.html
 	echo "";
 	echo "START /etc/os-release info.";
 	if [ -e /etc/os-release ];
