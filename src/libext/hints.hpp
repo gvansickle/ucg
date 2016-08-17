@@ -24,6 +24,8 @@
 #ifndef SRC_LIBEXT_HINTS_HPP_
 #define SRC_LIBEXT_HINTS_HPP_
 
+#include "static_diagnostics.hpp"
+
 /// Hint to the compiler that #exp is unconditionally true.
 ///
 /// GCC and Clang don't have an explicit intrinsic for this, but __builtin_unreachable() coupled with
@@ -54,12 +56,15 @@
 #ifdef __has_cpp_attribute
 #	if __has_cpp_attribute(maybe_unused)
 		// Have the C++17 spelling.
+#		pragma message "Have C++17 [[maybe_unused]]"
 #		define maybe_unused	maybe_unused
 #	elif __has_cpp_attribute(gnu::unused)
 		// Have the GCC extension spelling.
+		STATIC_MSG("Have G++ extenstion [[gnu::unused]]")
 #		define maybe_unused gnu::unused
 #   else
 		// Not supported.
+#		pragma message "C++17 attribute [[maybe_unused]] not supported"
 #		define maybe_unused
 #	endif
 #endif

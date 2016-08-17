@@ -20,16 +20,7 @@
 #ifndef SRC_LIBEXT_MULTIVERSIONING_HPP_
 #define SRC_LIBEXT_MULTIVERSIONING_HPP_
 
-/// @name Preprocessor token appending helpers.
-/// These two combined allow the expansion of two preprocessor tokens to be token-pasted.
-///@{
-#define TOKEN_APPEND_HELPER(tok1, ...) tok1 ## __VA_ARGS__
-#define TOKEN_APPEND(tok1, ...) TOKEN_APPEND_HELPER(tok1, __VA_ARGS__)
-///@}
-
-
-/// For passing in arguments to macros which may contain commas.
-#define SINGLE_ARG(...)  __VA_ARGS__
+#include "static_diagnostics.hpp"
 
 /// @name MULTIVERSION_DECORATOR_<FEATURE> function definition decorators
 ///@{
