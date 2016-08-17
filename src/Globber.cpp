@@ -39,6 +39,7 @@
 #include <utility>
 #include <system_error>
 #include <string>
+#include <future/string.hpp>
 #include <libext/string.hpp>
 
 /// @todo FOR TEST, DELETE
