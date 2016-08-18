@@ -20,6 +20,7 @@
 #include <string>
 #include <cstring>
 #include <unistd.h>
+#include <cstdlib>
 
 #include "lorem_ipsum.hpp"
 
