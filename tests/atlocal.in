@@ -93,6 +93,17 @@ get_system_info()
 	echo "END /etc/os-release info.";
 	echo "";
 	
+	# Distro, using  /usr/bin/sw_vers
+	# This is for OSX.
+	echo "";
+	echo "START sw_vers info."
+	if [ -x /usr/bin/sw_vers ];
+	then
+		sw_vers;
+	fi
+	echo "END sw_vers info."
+	echo "";
+	
 	# Using uname.
 	#
 	# OSX: Note that on a VMWare box running on a Xeon, we get the following:
