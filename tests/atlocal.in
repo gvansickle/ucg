@@ -129,7 +129,11 @@ get_system_info()
 	then
 		echo "# Found sysctl: PROG_SYSCTL=$PROG_SYSCTL";
 		#
-		# For *BSD: hw.ncpu, kern.smp.cpus, hw.physmem, hw.usermem
+		# For *BSD:
+		#   hw.ncpu, kern.smp.cpus, hw.physmem, hw.usermem
+		#   kern.ostype: FreeBSD
+		#   kern.version: FreeBSD 10.3-RELEASE-p5 #0: Thu Jun 30 03:52:15 UTC 2016
+        #        root@amd64-builder.pcbsd.org:/usr/obj/usr/src/sys/GENERIC
 		#
 		# For OSX:
 		#   hw.physicalcpu ==> Number of cores
