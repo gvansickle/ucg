@@ -36,12 +36,24 @@ static bool CPUID_info_valid = false;
 
 static void GetCPUIDInfo() noexcept
 {
+#if defined(__x86_64__)
 	// Skip the CPUID call if we've already done it once.
 	if(!CPUID_info_valid)
 	{
 		__get_cpuid(1, &eax, &ebx, &ecx, &edx);
 		CPUID_info_valid = true;
 	}
+#else
+	// For non-x86 platforms, we won't have a CPUID, so for now we won't try to determine any extensions.
+	/// @todo Expand ISA extension support to other architectures.
+	CPUID_info_valid = false;
+#endif
+}
+
+bool sys_has_sse2() noexcept
+{
+	GetCPUIDInfo();
+	return edx & bit_SSE2;
 }
 
 bool sys_has_sse4_2() noexcept

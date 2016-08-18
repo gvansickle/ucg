@@ -287,6 +287,10 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 	{
 		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse4_2_no_popcnt);
 	}
+	else if(sys_has_sse2())
+	{
+		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse2);
+	}
 	else
 	{
 		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_default);

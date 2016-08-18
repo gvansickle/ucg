@@ -17,7 +17,7 @@
 
 SUBDIRS = future libext
 
-noinst_LIBRARIES = libsrc.a libsrc_sse4_2_no_popcnt.a libsrc_sse4_2_popcnt.a
+noinst_LIBRARIES = libsrc.a libsrc_sse2.a libsrc_sse4_2_no_popcnt.a libsrc_sse4_2_popcnt.a
 libsrc_a_SOURCES = \
 	ArgParse.cpp ArgParse.h \
 	DirInclusionManager.cpp DirInclusionManager.h \
@@ -45,6 +45,14 @@ libsrc_a_CXXFLAGS = $(AM_CXXFLAGS)
 ###
 ### Libs to contain multiversioned functions.
 ###
+
+# SSE2
+libsrc_sse2_a_SOURCES = \
+	FileScanner_sse4_2.cpp
+
+libsrc_sse2_a_CPPFLAGS = $(AM_CPPFLAGS) $(UCG_CXXFLAGS_SSE2)
+libsrc_sse2_a_CFLAGS = $(AM_CFLAGS) $(UCG_CXXFLAGS_SSE2)
+libsrc_sse2_a_CXXFLAGS = $(AM_CXXFLAGS) $(UCG_CXXFLAGS_SSE2)
 
 # SSE4.2 but no POPCNT. 
 libsrc_sse4_2_no_popcnt_a_SOURCES = \
