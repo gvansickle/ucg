@@ -54,6 +54,7 @@
 
 /// Check for support of the __has_cpp_attribute() macro.
 /// Stub in an always-unsupported replacement if it doesn't exist.
+/// Clang introduced __has_cpp_attribute() support in version 3.6.
 #if !defined(__has_cpp_attribute)
 	STATIC_MSG_WARN("Compiler does not have __has_cpp_attribute() support, will not use C++11 attributes.")
 #	define __has_cpp_attribute(x)  0

@@ -48,10 +48,12 @@ public:
 
 	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
 
-	off_t GetFileSize() const noexcept { return m_size; };
+	off_t GetFileSize() const noexcept { LazyLoadStatInfo(); return m_size; };
 
 	blksize_t GetBlockSize() const noexcept
 	{
+		LazyLoadStatInfo();
+
 		// Note: per info here:
 		// http://stackoverflow.com/questions/34498825/io-blksize-seems-just-return-io-bufsize
 		// https://github.com/coreutils/coreutils/blob/master/src/ioblksize.h#L23-L57
@@ -65,6 +67,8 @@ public:
 
 private:
 
+	void LazyLoadStatInfo() const;
+
 	/// The path to this file.
 	std::string m_path;
 
@@ -72,20 +76,20 @@ private:
 	///@{
 
 	/// Indicator of whether the stat info is valid or not.
-	bool m_stat_info_valid { false };
+	mutable bool m_stat_info_valid { false };
 
-	dev_ino_pair m_unique_file_identifier;
+	mutable dev_ino_pair m_unique_file_identifier;
 
 	/// File size in bytes.
-	off_t m_size { 0 };
+	mutable off_t m_size { 0 };
 
 	/// The preferred I/O block size for this file.
 	/// @note GNU libc documents the units on this as bytes.
-	blksize_t m_block_size { 0 };
+	mutable blksize_t m_block_size { 0 };
 
 	/// Number of blocks allocated for this file.
 	/// @note POSIX doesn't define the units for this.  Linux is documented to use 512-byte units, as is GNU libc.
-	blkcnt_t m_blocks { 0 };
+	mutable blkcnt_t m_blocks { 0 };
 	///@}
 
 };

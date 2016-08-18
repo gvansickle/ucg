@@ -41,10 +41,12 @@ File::File(FileID file_id, std::shared_ptr<ResizableArray<char>> storage) : m_st
 		throw std::system_error(errno, std::generic_category());
 	}
 
+#if 0 /// @todo
 	if(!file_id.IsStatInfoValid())
 	{
 		throw FileException("FileID stat info should have been valid");
 	}
+#endif
 
 	m_file_size = file_id.GetFileSize();
 
