@@ -94,10 +94,16 @@
 #	define ATTR_ARTIFICIAL
 #endif
 #if __has_attribute(const)
-	/// Function doesn't access globals, has no side-effects.
+	/// Function doesn't access globals, only its args, and has no side-effects.
 #	define ATTR_CONST __attribute__((const))
 #else
 #	define ATTR_CONST
+#endif
+#if __has_attribute(pure)
+	/// Function may access globals in addition to its args, and has no side-effects.
+#	define ATTR_PURE __attribute__((pure))
+#else
+#	define ATTR_PURE
 #endif
 #if __has_attribute(alloc_size)
 #	define ATTR_ALLOC_SIZE(size_of_element)  __attribute__((alloc_size(size_of_element)))
