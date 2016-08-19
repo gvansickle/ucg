@@ -52,18 +52,20 @@
 
 #define assume_aligned(ptr, align)  (ptr) = static_cast<decltype(ptr)>(__builtin_assume_aligned((ptr), align))
 
+/// @todo Come up with a way to report the STATIC_MSG_WARN()s below without having them printed on each include.
+
 /// Check for support of the __has_cpp_attribute() macro.
 /// Stub in an always-unsupported replacement if it doesn't exist.
 /// Clang introduced __has_cpp_attribute() support in version 3.6.
 #if !defined(__has_cpp_attribute)
-	STATIC_MSG_WARN("Compiler does not have __has_cpp_attribute() support, will not use C++11 attributes.")
+	//STATIC_MSG_WARN("Compiler does not have __has_cpp_attribute() support, will not use C++11 attributes.")
 #	define __has_cpp_attribute(x)  0
 #endif
 
 /// Check for support of the __has_attribute() macro.
 /// GCC uses this for detection of its own __attribute__()'s.
 #if !defined(__has_attribute)
-	STATIC_MSG_WARN("Compiler does not have __has_attribute() support, will not use GCC attributes.")
+	//STATIC_MSG_WARN("Compiler does not have __has_attribute() support, will not use GCC attributes.")
 #	define __has_attribute(x)  0
 #endif
 
@@ -78,7 +80,7 @@
 #	define maybe_unused gnu::unused
 #else
 	// Not supported.
-	STATIC_MSG("C++17 attribute [[maybe_unused]] not supported")
+	//STATIC_MSG("C++17 attribute [[maybe_unused]] not supported")
 #	define maybe_unused
 #endif
 
