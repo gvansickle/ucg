@@ -50,6 +50,7 @@
 #endif
 /// @}
 
+/// @todo Doesn't seem to have any affect on GCC 6.1.
 #define assume_aligned(ptr, align)  (ptr) = static_cast<decltype(ptr)>(__builtin_assume_aligned((ptr), align))
 
 /// @todo Come up with a way to report the STATIC_MSG_WARN()s below without having them printed on each include.
@@ -98,5 +99,15 @@
 #else
 #	define ATTR_CONST
 #endif
-
+#if __has_attribute(alloc_size)
+#	define ATTR_ALLOC_SIZE(size_of_element)  __attribute__((alloc_size(size_of_element)))
+#else
+#	define ATTR_ALLOC_SIZE(size_of_element)
+#endif
+/// @todo two-param version of alloc_size().
+#if __has_attribute(malloc)
+#	define ATTR_MALLOC	__attribute__((malloc))
+#else
+#	define ATTR_MALLOC
+#endif
 #endif /* SRC_LIBEXT_HINTS_HPP_ */
