@@ -58,7 +58,7 @@ static const std::set<Type> f_builtin_type_array =
 	{ "cc", {".c", ".h", ".xs"} },
 	{ "cfmx", {".cfc", ".cfm", ".cfml"} },
 	{ "clojure", {".clj"} },
-	{ "cmake", {"CMakeLists.txt", ".cmake"} },
+	{ "cmake", {"CMakeLists.txt", "CMakeCache.txt", ".cmake"} },
 	{ "coffeescript", {".coffee"} },
 	{ "cpp", {".cpp", ".cc", ".cxx", ".m", ".hpp", ".hh", ".h", ".hxx"} },
 	{ "csharp", {".cs"} },

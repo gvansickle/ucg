@@ -29,8 +29,8 @@
 
 
 // Declaration here only so we can apply gcc attributes.
-inline uint8_t popcount16(uint16_t bits) noexcept __attribute__((const /* Doesn't access globals, has no side-effects.*/,
-		artificial /* Should appear in debug info even after being inlined. */));
+inline uint8_t popcount16(uint16_t bits) noexcept ATTR_CONST /* Doesn't access globals, has no side-effects.*/
+	ATTR_ARTIFICIAL; /* == Should appear in debug info even after being inlined. */
 
 #if defined(__POPCNT__) && __POPCNT__==1
 
