@@ -34,6 +34,7 @@
 #include <iostream>
 #include <string>
 #include <libext/string.hpp>
+#include <future/string.hpp>
 #include <thread>
 #include <mutex>
 #include <cstring> // For memchr().
@@ -285,6 +286,10 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 	else if(sys_has_sse4_2() && !sys_has_popcnt())
 	{
 		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse4_2_no_popcnt);
+	}
+	else if(sys_has_sse2())
+	{
+		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse2);
 	}
 	else
 	{

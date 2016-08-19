@@ -20,7 +20,11 @@
 #ifndef SRC_LIBEXT_CPUIDEX_HPP_
 #define SRC_LIBEXT_CPUIDEX_HPP_
 
+/// @name x86-64 extensions
+/// @{
+bool sys_has_sse2() noexcept;
 bool sys_has_sse4_2() noexcept;
 bool sys_has_popcnt() noexcept;
+/// @}
 
 #endif /* SRC_LIBEXT_CPUIDEX_HPP_ */

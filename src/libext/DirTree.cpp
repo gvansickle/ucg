@@ -266,7 +266,7 @@ private:
 
 void DirTree::Read(std::vector<std::string> start_paths)
 {
-	int num_entries {0};
+	///int num_entries {0};
 	struct stat statbuf;
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};

@@ -126,6 +126,10 @@ protected:
 	static size_t CountLinesSinceLastMatch_sse4_2_no_popcnt(const char * __restrict__ prev_lineno_search_end,
 				const char * __restrict__ start_of_current_match) noexcept;
 
+	//__attribute__((target("sse2")))
+	static size_t CountLinesSinceLastMatch_sse2(const char * __restrict__ prev_lineno_search_end,
+					const char * __restrict__ start_of_current_match) noexcept;
+
 	///@}
 
 	std::tuple<const char *, size_t> GetEOL(const char *search_start, const char * buff_one_past_end);

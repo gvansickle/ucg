@@ -24,6 +24,8 @@
 #ifndef SRC_LIBEXT_HINTS_HPP_
 #define SRC_LIBEXT_HINTS_HPP_
 
+#include "static_diagnostics.hpp"
+
 /// Hint to the compiler that #exp is unconditionally true.
 ///
 /// GCC and Clang don't have an explicit intrinsic for this, but __builtin_unreachable() coupled with
@@ -50,8 +52,51 @@
 
 #define assume_aligned(ptr, align)  (ptr) = static_cast<decltype(ptr)>(__builtin_assume_aligned((ptr), align))
 
-/// Use this after a variable's declaration to indicate that it might be unused.
-/// @note In C++17, [[maybe_unused]] is part of the standard.  We may have to revisit the name of this macro.
-#define maybe_unused	__attribute__((unused))
+/// @todo Come up with a way to report the STATIC_MSG_WARN()s below without having them printed on each include.
+
+/// Check for support of the __has_cpp_attribute() macro.
+/// Stub in an always-unsupported replacement if it doesn't exist.
+/// Clang introduced __has_cpp_attribute() support in version 3.6.
+#if !defined(__has_cpp_attribute)
+	//STATIC_MSG_WARN("Compiler does not have __has_cpp_attribute() support, will not use C++11 attributes.")
+#	define __has_cpp_attribute(x)  0
+#endif
+
+/// Check for support of the __has_attribute() macro.
+/// GCC uses this for detection of its own __attribute__()'s.
+#if !defined(__has_attribute)
+	//STATIC_MSG_WARN("Compiler does not have __has_attribute() support, will not use GCC attributes.")
+#	define __has_attribute(x)  0
+#endif
+
+/// Use [[maybe_unused]] after a variable's declaration to indicate that it might be unused.
+#if __has_cpp_attribute(maybe_unused)
+	// Have the C++17 spelling.
+	//STATIC_MSG("Have C++17 [[maybe_unused]]")
+#	define maybe_unused	maybe_unused
+#elif __has_cpp_attribute(gnu::unused)
+	// Have the GCC extension spelling.
+	//STATIC_MSG("Have G++ extenstion [[gnu::unused]], using for [[maybe_unused]]")
+#	define maybe_unused gnu::unused
+#else
+	// Not supported.
+	//STATIC_MSG("C++17 attribute [[maybe_unused]] not supported")
+#	define maybe_unused
+#endif
+
+
+/// Check for GCC __attributes__() we can use.
+#if __has_attribute(artificial)
+	/// Function should appear in debug info as a unit.
+#	define ATTR_ARTIFICIAL __attribute__((artificial))
+#else
+#	define ATTR_ARTIFICIAL
+#endif
+#if __has_attribute(const)
+	/// Function doesn't access globals, has no side-effects.
+#	define ATTR_CONST __attribute__((const))
+#else
+#	define ATTR_CONST
+#endif
 
 #endif /* SRC_LIBEXT_HINTS_HPP_ */

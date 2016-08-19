@@ -21,20 +21,48 @@
 
 #include "FileID.h"
 
+#include <sys/stat.h>
 #include <fts.h>
 
-FileID::FileID(const FTSENT *ftsent): m_path(ftsent->fts_path, ftsent->fts_pathlen),
-	m_stat_info_valid(true),
-	m_unique_file_identifier(ftsent->fts_statp->st_dev, ftsent->fts_statp->st_ino),
-	m_size(ftsent->fts_statp->st_size),
-	m_block_size(ftsent->fts_statp->st_blksize),
-	m_blocks(ftsent->fts_statp->st_blocks)
+FileID::FileID(const FTSENT *ftsent): m_path(ftsent->fts_path, ftsent->fts_pathlen)
 {
-
+	// Initialize the stat fields if possible.
+	if(ftsent->fts_statp != nullptr)
+	{
+		m_stat_info_valid = true;
+		m_unique_file_identifier = dev_ino_pair(ftsent->fts_statp->st_dev, ftsent->fts_statp->st_ino);
+		m_size = ftsent->fts_statp->st_size;
+		m_block_size = ftsent->fts_statp->st_blksize;
+		m_blocks = ftsent->fts_statp->st_blocks;
+	}
 }
 
 FileID::~FileID()
 {
-	// TODO Auto-generated destructor stub
 }
 
+void FileID::LazyLoadStatInfo() const
+{
+	if(IsStatInfoValid())
+	{
+		// Already set.
+		return;
+	}
+
+	// We don't have stat info and now we need it.
+	// Get it from the filename.
+	struct stat stat_buf;
+	if(stat(m_path.c_str(), &stat_buf) != 0)
+	{
+		// Error.
+		/// @todo
+	}
+	else
+	{
+		m_stat_info_valid = true;
+		m_unique_file_identifier = dev_ino_pair(stat_buf.st_dev, stat_buf.st_ino);
+		m_size = stat_buf.st_size;
+		m_block_size = stat_buf.st_blksize;
+		m_blocks = stat_buf.st_blocks;
+	}
+}

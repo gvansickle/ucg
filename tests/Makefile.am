@@ -17,7 +17,8 @@
 
 ## Process this file with automake to produce Makefile.in.
 
-EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in
+EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in \
+	performance_test_gen.awk performance_test_summarizer.awk
 CLEANFILES = perf_test_results.txt
 DISTCLEANFILES = atconfig
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
@@ -27,7 +28,7 @@ MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
 ### Only built during a "make check", and not installed.
 ###
 check_PROGRAMS = dummy-file-gen
-dummy_file_gen_SOURCES = dummy-file-gen.cpp
+dummy_file_gen_SOURCES = dummy-file-gen.cpp lorem_ipsum.hpp
 dummy_file_gen_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
 dummy_file_gen_CFLAGS = $(AM_CFLAGS)
 dummy_file_gen_CXXFLAGS = $(AM_CXXFLAGS)

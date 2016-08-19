@@ -82,6 +82,28 @@ get_system_info()
 {
 	# Collects and returns information regarding the test system.
 	
+	# Distro, using /etc/os-release.
+	# This is a file specified by freedesktop.  See https://www.freedesktop.org/software/systemd/man/os-release.html
+	echo "";
+	echo "START /etc/os-release info.";
+	if [ -e /etc/os-release ];
+	then
+		cat /etc/os-release;
+	fi
+	echo "END /etc/os-release info.";
+	echo "";
+	
+	# Distro, using  /usr/bin/sw_vers
+	# This is for OSX.
+	echo "";
+	echo "START sw_vers info."
+	if [ -x /usr/bin/sw_vers ];
+	then
+		sw_vers;
+	fi
+	echo "END sw_vers info."
+	echo "";
+	
 	# Using uname.
 	#
 	# OSX: Note that on a VMWare box running on a Xeon, we get the following:
@@ -107,7 +129,11 @@ get_system_info()
 	then
 		echo "# Found sysctl: PROG_SYSCTL=$PROG_SYSCTL";
 		#
-		# For *BSD: hw.ncpu, kern.smp.cpus, hw.physmem, hw.usermem
+		# For *BSD:
+		#   hw.ncpu, kern.smp.cpus, hw.physmem, hw.usermem
+		#   kern.ostype: FreeBSD
+		#   kern.version: FreeBSD 10.3-RELEASE-p5 #0: Thu Jun 30 03:52:15 UTC 2016
+        #        root@amd64-builder.pcbsd.org:/usr/obj/usr/src/sys/GENERIC
 		#
 		# For OSX:
 		#   hw.physicalcpu ==> Number of cores

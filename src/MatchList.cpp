@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <future/string.hpp>
 
 MatchList::MatchList(const std::string &filename) : m_filename(filename)
 {

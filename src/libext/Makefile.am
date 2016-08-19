@@ -23,6 +23,7 @@ libext_a_SOURCES = \
 	hints.hpp \
 	integer.hpp \
 	multiversioning.hpp multiversioning.cpp \
+	static_diagnostics.hpp \
 	string.hpp
 
 libext_a_CPPFLAGS = $(AM_CPPFLAGS)
