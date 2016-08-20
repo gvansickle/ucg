@@ -36,17 +36,21 @@
 /// See http://infocenter.arm.com/help/topic/com.arm.doc.dui0472m/chr1359124207681.html.
 /// @note The ARM tools apparently define __promise() in <assert.h>, though it's documented as an intrinsic.
 ///
-#define assume(exp)  if(exp) {} else { __builtin_unreachable(); }
+#if defined(HAVE___BUILTIN_UNREACHABLE)
+#	define assume(exp)  if(exp) {} else { __builtin_unreachable(); }
+#else
+#	define assume(expr)  /* empty */
+#endif
 
 /// @name Linux-like likely() and unlikely() macros.
 /// @{
 /// Only define here if they haven't already been defined.  On Linux, they're defined
 /// in include/linux/compiler.h.
 #if !defined(likely)
-#define likely(exp) __builtin_expect(!!(exp), true)
+#	define likely(exp) __builtin_expect(!!(exp), true)
 #endif
 #if !defined(unlikely)
-#define unlikely(exp) __builtin_expect(!!(exp), false)
+#	define unlikely(exp) __builtin_expect(!!(exp), false)
 #endif
 /// @}
 
