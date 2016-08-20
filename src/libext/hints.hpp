@@ -50,6 +50,7 @@
 #endif
 /// @}
 
+/// @todo Doesn't seem to have any affect on GCC 6.1.
 #define assume_aligned(ptr, align)  (ptr) = static_cast<decltype(ptr)>(__builtin_assume_aligned((ptr), align))
 
 /// @todo Come up with a way to report the STATIC_MSG_WARN()s below without having them printed on each include.
@@ -93,10 +94,26 @@
 #	define ATTR_ARTIFICIAL
 #endif
 #if __has_attribute(const)
-	/// Function doesn't access globals, has no side-effects.
+	/// Function doesn't access globals, only its args, and has no side-effects.
 #	define ATTR_CONST __attribute__((const))
 #else
 #	define ATTR_CONST
 #endif
-
+#if __has_attribute(pure)
+	/// Function may access globals in addition to its args, and has no side-effects.
+#	define ATTR_PURE __attribute__((pure))
+#else
+#	define ATTR_PURE
+#endif
+#if __has_attribute(alloc_size)
+#	define ATTR_ALLOC_SIZE(size_of_element)  __attribute__((alloc_size(size_of_element)))
+#else
+#	define ATTR_ALLOC_SIZE(size_of_element)
+#endif
+/// @todo two-param version of alloc_size().
+#if __has_attribute(malloc)
+#	define ATTR_MALLOC	__attribute__((malloc))
+#else
+#	define ATTR_MALLOC
+#endif
 #endif /* SRC_LIBEXT_HINTS_HPP_ */

@@ -20,12 +20,14 @@
 
 #include "config.h"
 
+#include <libext/hints.hpp>
+
 #include <cstdlib>
 #ifdef HAVE_ALIGNED_ALLOC
 // Nothing to do.
 #elif HAVE_POSIX_MEMALIGN
 // Create a thin wrapper around posix_memalign().
-inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign(&p, algn, size); return p; };
+inline void* aligned_alloc(size_t algn, size_t size) ATTR_ALLOC_SIZE(2) ATTR_MALLOC { void *p=0; posix_memalign(&p, algn, size); return p; };
 #else
 #error "Could not find aligned memory allocator."
 #endif
@@ -43,23 +45,14 @@ inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign
 template<typename T>
 class ResizableArray
 {
-	// Would pass this in as a defaulted template param, but gcc complains that "error: requested alignment is not an integer constant"
-	// no matter what I do (including initializing this var to the template param).
-	// Also can't make it a "static constexpr int alignment {32}", since that's broken on gcc ~4.8.4.
-#define alignment 4096
-
 public:
 
-	/// @todo alignas() isn't really correct in an alias, but it works under various versions of GCC.  Clang rejects it.
-	/// The attribute seems to be acceptable to everyone, though how well it works is an open question.
-	using element_type /*alignas(alignment)*/ __attribute__((aligned(alignment))) = T;
+	using element_type = T;
 
 	using pointer = element_type *;
 
 	using const_pointer = const element_type *;
 
-	/// @todo This static assert just doesn't work under clang 3.5.
-	//static_assert(alignof(decltype(*std::declval<const_pointer>())) == alignment, "alignment isn't working"); //__attribute__((aligned(alignment)))
 
 	ResizableArray() noexcept = default;
 	~ResizableArray() noexcept
@@ -70,9 +63,9 @@ public:
 		}
 	};
 
-	const_pointer data() const noexcept __attribute__((malloc)) { return m_current_buffer; };
+	const_pointer data() const noexcept ATTR_MALLOC ATTR_PURE { return m_current_buffer; };
 
-	void reserve_no_copy(std::size_t needed_size, std::size_t needed_alignment)
+	void reserve_no_copy(std::size_t needed_size, std::size_t needed_alignment)  ATTR_ALLOC_SIZE(1)
 	{
 		if(m_current_buffer==nullptr || m_current_buffer_size < needed_size || m_current_buffer_alignment < needed_alignment)
 		{
@@ -109,7 +102,6 @@ private:
 	std::size_t m_current_buffer_size { 0 };
 	std::size_t m_current_buffer_alignment { 0 };
 	pointer m_current_buffer { nullptr };
-#undef alignment
 };
 
 #endif /* SRC_RESIZABLEARRAY_H_ */
