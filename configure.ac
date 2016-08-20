@@ -264,8 +264,12 @@ AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-ftree-vectorize]) # -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
-AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
-AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])
+AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security], [AM_CXXFLAGS])
+AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'], [AM_CXXFLAGS], [-Wformat -Wformat-security])
+
+# Check for built-ins we can use.
+AX_C___ATTRIBUTE__	# Defines "HAVE___ATTRIBUTE__" if the compiler supports __attribute__(()) syntax.  The macro specifically checks for
+					# the function attribute __attribute__((unused))
 
 # Check for instruction set extensions we can make use of.
 AX_APPEND_COMPILE_FLAGS([-msse4.2], [UCG_CXXFLAGS_SSE4_2]) 
@@ -282,9 +286,9 @@ AS_IF(
 	[AC_MSG_RESULT([yes])]
 )
 
-# Check for pthreads.  Note that we don't necessarily require pthreads; we require and use C++11 std::thread<>,
-# whatever it uses under-the-hood we don't really care about.  If in fact C++11 is using pthreads, we can
-# optionally use some of its functionality, e.g. naming threads for diagnostic, logging, and other purposes.
+# Check if the implementation underlying C++11's std::thread<> is pthreads.  Note that we don't actually require pthreads,
+# we require and use C++11's std::thread<>, whatever its implementation details.  However, if C++11 is using pthreads, we can
+# optionally use some pthreads functionality, e.g. naming threads for diagnostic, logging, and other purposes.
 # Macro docs: http://www.gnu.org/software/autoconf-archive/ax_pthread.html#ax_pthread
 AX_PTHREAD
 AS_IF([test "x$ax_pthread_ok" == xyes],

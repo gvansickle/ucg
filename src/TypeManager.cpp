@@ -41,7 +41,7 @@ struct Type
 	std::vector<std::string> m_type_extensions;
 
 	/// less-than operator, so that Types are sortable by key (m_type_name).
-	bool operator<(const Type &other) const { return m_type_name < other.m_type_name; };
+	bool operator<(const Type &other) const noexcept { return m_type_name < other.m_type_name; };
 };
 
 static const std::set<Type> f_builtin_type_array =
@@ -58,7 +58,7 @@ static const std::set<Type> f_builtin_type_array =
 	{ "cc", {".c", ".h", ".xs"} },
 	{ "cfmx", {".cfc", ".cfm", ".cfml"} },
 	{ "clojure", {".clj"} },
-	{ "cmake", {"CMakeLists.txt", "CMakeCache.txt", ".cmake"} },
+	{ "cmake", {"CMakeLists.txt", ".cmake"} },
 	{ "coffeescript", {".coffee"} },
 	{ "cpp", {".cpp", ".cc", ".cxx", ".m", ".hpp", ".hh", ".h", ".hxx"} },
 	{ "csharp", {".cs"} },
