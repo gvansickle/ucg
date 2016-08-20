@@ -271,6 +271,7 @@ AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'], [AM_CXXFLAGS], [-Wformat -W
 AX_C___ATTRIBUTE__	# Defines "HAVE___ATTRIBUTE__" if the compiler supports __attribute__(()) syntax.  The macro specifically checks for
 					# the function attribute __attribute__((unused))
 AX_GCC_BUILTIN(__builtin_unreachable)
+AX_GCC_BUILTIN(__builtin_expect)
 
 # Check for instruction set extensions we can make use of.
 AX_APPEND_COMPILE_FLAGS([-msse4.2], [UCG_CXXFLAGS_SSE4_2]) 

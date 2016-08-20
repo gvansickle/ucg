@@ -47,10 +47,18 @@
 /// Only define here if they haven't already been defined.  On Linux, they're defined
 /// in include/linux/compiler.h.
 #if !defined(likely)
-#	define likely(exp) __builtin_expect(!!(exp), true)
+#	if defined(HAVE___BUILTIN_EXPECT)
+#		define likely(exp) __builtin_expect(!!(exp), true)
+#	else
+#		define likely(exp) /* empty */
+#	endif
 #endif
 #if !defined(unlikely)
-#	define unlikely(exp) __builtin_expect(!!(exp), false)
+#	if defined(HAVE___BUILTIN_EXPECT)
+#		define unlikely(exp) __builtin_expect(!!(exp), false)
+#	else
+#		define unlikely(exp) /* empty */
+#	endif
 #endif
 /// @}
 
