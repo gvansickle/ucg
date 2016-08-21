@@ -151,9 +151,9 @@ AT_CHECK([$AWK -v NUM_ITERATIONS=$1 -f $srcdir/performance_test_summarizer.awk -
 ])
 
 ###
-### ucg vs. grep, 'BOOST.*HPP' on Boost source.
+### ucg vs. others, 'BOOST.*HPP' on Boost source.
 ###
-AT_SETUP([ucg vs. grep, 'BOOST.*HPP' on Boost source])
+AT_SETUP([ucg vs. others, 'BOOST.*HPP' on Boost source])
 AT_KEYWORDS([performance long])
 
 # Skip this test if we can't find the Boost source tree.
@@ -174,9 +174,9 @@ AT_CLEANUP
 
 
 ###
-### ucg vs. grep, literal string on Boost source.
+### ucg vs. others, literal string on Boost source.
 ###
-AT_SETUP([ucg vs. grep, literal string on Boost source])
+AT_SETUP([ucg vs. others, literal string on Boost source])
 AT_KEYWORDS([performance])
 
 # Skip this test if we can't find the Boost source tree.
@@ -209,9 +209,9 @@ AT_CHECK([echo "iudicemaequumputo" >> UCG_TEST_FILE_NAME_LARGE_FILE_1], [0], [st
 AT_CLEANUP
 
 ###
-### ucg vs. grep, regex 'iudice[\w]*umputo' on single ~500MB file.
+### ucg vs. others, regex 'iudice[\w]*umputo' on single ~500MB file.
 ###
-AT_SETUP([ucg vs. grep, regex on 500MB file, match at end])
+AT_SETUP([ucg vs. others, regex on 500MB file, match at end])
 AT_KEYWORDS([performance])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
@@ -231,7 +231,7 @@ AT_CLEANUP
 ###
 ### ucg vs. grep, literal string on single ~500MB file.
 ###
-AT_SETUP([ucg vs. grep, literal string on 500MB file, match at end])
+AT_SETUP([ucg vs. others, literal string on 500MB file, match at end])
 AT_KEYWORDS([performance])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
@@ -257,24 +257,25 @@ AT_CHECK([test -f "UCG_TEST_FILE_NAME_LARGE_FILE_1" && rm "UCG_TEST_FILE_NAME_LA
 AT_CLEANUP
 
 
-#
-# Search on literal string.
-#
-AT_SETUP([Boost: find all '#endif's])
+###
+### ucg vs. others, find "" includes in Boost source.
+###
+AT_SETUP([ucg vs. others, '#include\s+".*"' on Boost source])
 AT_KEYWORDS([performance])
 
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 
-AS_ECHO([""]) >> UCG_PERF_RESULTS_FILE
-AS_ECHO(["Perf Test Results: $at_desc"]) >> UCG_PERF_RESULTS_FILE
-AS_ECHO(["| Command | Time | Matching Lines |"]) >> UCG_PERF_RESULTS_FILE;
-AS_ECHO(["|---------|------|----------------|"]) >> UCG_PERF_RESULTS_FILE;
+AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-# Loop through the programs we're comparing performance with.
-for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
-	TIME_ONE_PROG(["${PROGNAME}"], ['#endif'])
-done
+# Generate the test script.
+UCG_GEN_PERFTEST([${PROGLIST}],['include\s+\".*\"'],[UCG_BOOST_PATH],[3],[0])
+# Run the test script.
+AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
+# Summarize the test results.
+UCG_SUMMARIZE_PERFTEST([3])
+
+AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
 
