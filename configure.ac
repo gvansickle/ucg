@@ -280,9 +280,9 @@ AX_GCC_BUILTIN(__builtin_expect)
 # $2 == Compile flag to check.
 m4_define([GRVS_CHECK_COMPILE_FLAG],
 [
-	AS_VAR_PUSHDEF([ac_var], [grvs_cv_have_$1_$2])dnl
-	AS_VAR_PUSHDEF([sh_var_postfix], [m4_substr(m4_toupper($2), 2)])dnl
-	AS_VAR_PUSHDEF([flags_var_name], [CXXFLAGS_EXT_$1_]sh_var_postfix)dnl
+	AS_VAR_PUSHDEF([ac_var], [grvs_cv_have_$1_$2])[]dnl
+	AS_VAR_PUSHDEF([sh_var_postfix], [m4_substr(m4_toupper($2), 2)])[]dnl
+	AS_VAR_PUSHDEF([flags_var_name], [CXXFLAGS_EXT_$1_]sh_var_postfix)[]dnl
 
 	AX_CHECK_COMPILE_FLAG([$2],
 		[AS_VAR_SET([ac_var], [yes])],
@@ -290,15 +290,19 @@ m4_define([GRVS_CHECK_COMPILE_FLAG],
 	
 	AS_VAR_IF([ac_var], [yes],
 		[
-			# Generate a shell var "CXXFLAGS_$1_$2" equal to the given compile flag (i.e. $2). 
-			AC_SUBST([flags_var_name], [$2])],
+			# Generate a shell var "CXXFLAGS_$1_$2" equal to the given compile flag (i.e. $2).
+			# Note: No brackets around "flags_var_name", since it is an Autoconf polymorphic shell variable.
+			# Putting it in brackets prevents it from expanding properly. 
+			AC_SUBST(flags_var_name, [$2])],
 		[echo "FAIL";])
 	##AC_RUN_LOG([: flags_var_name="$flags_var_name"])
 
 	# Generate an automake conditional for this flag.
-	AM_CONDITIONAL([HAVE_]flags_var_name, [test ac_var = yes])
+	AM_CONDITIONAL([BUILD_]flags_var_name, [test AS_VAR_GET(ac_var) = yes])
 	
-	HAVE_$1_ISA_EXT=true;
+	# Set a shell var indicating that we have at least one extension to this ISA.
+	####HAVE_$1_ISA_EXT=true;
+	AC_SUBST([HAVE_$1_ISA_EXTENSIONS],[true])
 	
 	AS_VAR_POPDEF([flags_var_name])
 	AS_VAR_POPDEF([sh_var_postfix])
@@ -307,6 +311,8 @@ m4_define([GRVS_CHECK_COMPILE_FLAG],
 
 GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse2])
 GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse4.2])
+AC_SUBST([TEST_1],[value1])
+AC_SUBST([TEST_1],[value2])
 #### @todo DEBUG echo "CXXFLAGS_EXT_X86_64_SSE2 = $CXXFLAGS_EXT_X86_64_SSE2";
 #AX_CHECK_COMPILE_FLAG([-msse2], [UCG_CXXFLAGS_SSE2=$FIXME && HAVE_X86_64_ISA_EXT=1])
 #AX_APPEND_COMPILE_FLAGS([-msse2], [UCG_CXXFLAGS_SSE2])
@@ -317,7 +323,7 @@ AX_APPEND_COMPILE_FLAGS([-mno-popcnt], [UCG_CXXFLAGS_NO_POPCNT], [$CXXFLAGS_X86_
 AC_SUBST([UCG_CXXFLAGS_POPCNT], [$UCG_CXXFLAGS_POPCNT])
 AC_SUBST([UCG_CXXFLAGS_NO_POPCNT], [$UCG_CXXFLAGS_NO_POPCNT])
 ##AC_MSG_CHECKING([if compiler supports any supported ISA extensions])
-AM_CONDITIONAL([HAVE_X86_64_ISA_EXTENSIONS], [test "x$HAVE_X86_64_ISA_EXT" != "x"])
+AM_CONDITIONAL([BUILD_X86_64_ISA_EXTENSIONS], [test "x$HAVE_X86_64_ISA_EXTENSIONS" != "x"])
 AS_IF(
 	[test "x$CXXFLAGS_EXT_X86_64_SSE4_2" = x], [AC_MSG_ERROR([compiler must support sse4.2 ISA extensions])],
 	[test "x$UCG_CXXFLAGS_POPCNT" = x], [AC_MSG_ERROR([compiler must support sse4.2+popcnt ISA extensions])],
