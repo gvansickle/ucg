@@ -66,7 +66,7 @@ build_info.cpp: FORCE verify-provenance
 	echo "// CXX" >> "$@.tmp";\
 	echo "const char *g_cxx = \"$(CXX)\";" >> "$@.tmp";
 # This is known to work for g++ and clang++.
-	$(AM_V_GEN) CXX_VERSION_STR=$$(if $$($(CXX) --version > /dev/null); then echo "$$($(CXX) --version | tr '\n' ' ' | $(ESED) -n 's/^(.*[0-9]+\.[0-9]+\.[0-9]+.*)$$/\1/p')"; else echo "unknown"; fi;); \
+	$(AM_V_GEN) CXX_VERSION_STR=$$(if $$($(CXX) --version > /dev/null); then echo "$$($(CXX) --version | $(ESED) -n 's/(^Configured.*$$)?^(.*[0-9]+\..*)$$/\2/p')"; else echo "unknown"; fi;); \
 	echo "const char *g_cxx_version_str = \"$${CXX_VERSION_STR}\";" >> "$@.tmp";\
 	mv "$@.tmp" "$@"
 

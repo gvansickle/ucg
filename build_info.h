@@ -36,6 +36,13 @@ extern const char *g_cxx;
 /// This is the first line of the output of "$(CXX) --version".  It will look something like:
 /// - "g++ (GCC) 4.9.3"
 /// - "clang version 3.5.2 (tags/RELEASE_352/final)"
+/// - "Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn)"  ("clang --version" on OSX)
+/// A known exception to the first-line rule is clang masquerading as gcc on OSX.  There, "gcc --version" output
+/// looks like this:
+/// "Configured with: --prefix=/Applications/Xcode.app/Contents/Developer/usr --with-gxx-include-dir=/usr/include/c++/4.2.1
+/// Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn)
+/// Target: x86_64-apple-darwin13.4.0
+/// Thread model: posix"
 extern const char *g_cxx_version_str;
 
 #endif // BUILD_INFO_H

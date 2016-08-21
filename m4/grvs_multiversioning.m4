@@ -35,7 +35,7 @@
 
 #XXXserial 0
 
-# $1 == Base ISA (currently only "x86_64" supported)
+# $1 == Base ISA (currently only "X86_64" supported)
 # $2 == Compile flag to check.
 # $3 == EXTRA-FLAGS
 AC_DEFUN([GRVS_CHECK_COMPILE_FLAG],
