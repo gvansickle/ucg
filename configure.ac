@@ -274,15 +274,52 @@ AX_GCC_BUILTIN(__builtin_unreachable)
 AX_GCC_BUILTIN(__builtin_expect)
 
 # Check for instruction set extensions we can make use of.
-AX_APPEND_COMPILE_FLAGS([-msse4.2], [UCG_CXXFLAGS_SSE4_2]) 
-AX_APPEND_COMPILE_FLAGS([-mpopcnt], [UCG_CXXFLAGS_POPCNT], [$UCG_CXXFLAGS_SSE4_2])
-AX_APPEND_COMPILE_FLAGS([-mno-popcnt], [UCG_CXXFLAGS_NO_POPCNT], [$UCG_CXXFLAGS_SSE4_2])
-AC_SUBST([UCG_CXXFLAGS_SSE4_2], [$UCG_CXXFLAGS_SSE4_2])
+#GRVS_ADD_MULTIVERSIONING_SUPPORT
+
+# $1 == Base ISA (currently only "x86_64" supported)
+# $2 == Compile flag to check.
+m4_define([GRVS_CHECK_COMPILE_FLAG],
+[
+	AS_VAR_PUSHDEF([ac_var], [grvs_cv_have_$1_$2])dnl
+	AS_VAR_PUSHDEF([sh_var_postfix], [m4_substr(m4_toupper($2), 2)])dnl
+	AS_VAR_PUSHDEF([flags_var_name], [CXXFLAGS_EXT_$1_]sh_var_postfix)dnl
+
+	AX_CHECK_COMPILE_FLAG([$2],
+		[AS_VAR_SET([ac_var], [yes])],
+		[AS_VAR_SET([ac_var], [no])])
+	
+	AS_VAR_IF([ac_var], [yes],
+		[
+			# Generate a shell var "CXXFLAGS_$1_$2" equal to the given compile flag (i.e. $2). 
+			AC_SUBST([flags_var_name], [$2])],
+		[echo "FAIL";])
+	AC_RUN_LOG([: flags_var_name="$flags_var_name"])
+
+	# Generate an automake conditional for this flag.
+	AM_CONDITIONAL([HAVE_]flags_var_name, [test ac_var = yes])
+	
+	HAVE_X86_64_ISA_EXT=true;
+	
+	AS_VAR_POPDEF([flags_var_name])
+	AS_VAR_POPDEF([sh_var_postfix])
+	AS_VAR_POPDEF([ac_var])
+])
+
+GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse2])
+GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse4.2])
+#### @todo DEBUG echo "CXXFLAGS_EXT_X86_64_SSE2 = $CXXFLAGS_EXT_X86_64_SSE2";
+#AX_CHECK_COMPILE_FLAG([-msse2], [UCG_CXXFLAGS_SSE2=$FIXME && HAVE_X86_64_ISA_EXT=1])
+#AX_APPEND_COMPILE_FLAGS([-msse2], [UCG_CXXFLAGS_SSE2])
+#AX_APPEND_COMPILE_FLAGS([-msse4.2], [UCG_CXXFLAGS_SSE4_2]) 
+AX_APPEND_COMPILE_FLAGS([-mpopcnt], [UCG_CXXFLAGS_POPCNT], [$CXXFLAGS_X86_64_SSE4_2])
+AX_APPEND_COMPILE_FLAGS([-mno-popcnt], [UCG_CXXFLAGS_NO_POPCNT], [$CXXFLAGS_X86_64_SSE4_2])
+#AC_SUBST([UCG_CXXFLAGS_SSE4_2], [$UCG_CXXFLAGS_SSE4_2])
 AC_SUBST([UCG_CXXFLAGS_POPCNT], [$UCG_CXXFLAGS_POPCNT])
 AC_SUBST([UCG_CXXFLAGS_NO_POPCNT], [$UCG_CXXFLAGS_NO_POPCNT])
-AC_MSG_CHECKING([if compiler supports all required ISA extensions])
+##AC_MSG_CHECKING([if compiler supports any supported ISA extensions])
+AM_CONDITIONAL([HAVE_X86_64_ISA_EXTENSIONS], [test "x$HAVE_X86_64_ISA_EXT" != "x"])
 AS_IF(
-	[test "x$UCG_CXXFLAGS_SSE4_2" = x], [AC_MSG_ERROR([compiler must support sse4.2 ISA extensions])],
+	[test "x$CXXFLAGS_EXT_X86_64_SSE4_2" = x], [AC_MSG_ERROR([compiler must support sse4.2 ISA extensions])],
 	[test "x$UCG_CXXFLAGS_POPCNT" = x], [AC_MSG_ERROR([compiler must support sse4.2+popcnt ISA extensions])],
 	[test "x$UCG_CXXFLAGS_NO_POPCNT" = x], [AC_MSG_ERROR([compiler must support sse4.2+no-popcnt ISA extensions])],
 	[AC_MSG_RESULT([yes])]
