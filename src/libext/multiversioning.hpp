@@ -26,15 +26,20 @@
 ///@{
 #if defined(__SSE2__) || __SSE2__==1
 #define MULTIVERSION_DECORATOR_SSE2		_sse2
+STATIC_MSG("MVD SSE2");
 #endif
 #if defined(__SSE4_2__) && __SSE4_2__==1
 #define MULTIVERSION_DECORATOR_SSE4_2	_sse4_2
+STATIC_MSG("MVD SSE4_2");
 #endif
 #if defined(__POPCNT__) && __POPCNT__==1
 #define MULTIVERSION_DECORATOR_POPCNT	_popcnt
+STATIC_MSG("MVD POPCNT");
 #elif defined(__SSE4_2__) && __SSE4_2__==1
+STATIC_MSG("MVD NO_POPCNT");
 #define MULTIVERSION_DECORATOR_POPCNT	_no_popcnt
 #else
+STATIC_MSG_WARN("MVD EMPTY POPCNT");
 #define MULTIVERSION_DECORATOR_POPCNT	/* empty if not used in conjunction with sse4.2 */
 #endif
 ///@}
