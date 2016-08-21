@@ -20,6 +20,8 @@
 #ifndef SRC_OUTPUTCONTEXT_H_
 #define SRC_OUTPUTCONTEXT_H_
 
+#include <config.h>
+
 #include <string>
 
 /**
@@ -64,10 +66,10 @@ private:
 	// prevents issues with Horizontal Tab not setting the background to the current color.
 	// A more extensive discussion of this topic is available in the GNU grep source (git://git.savannah.gnu.org/grep.git,
 	// see src/grep.c), which is where I got this solution from.
-	std::string m_default_color_filename {"\x1B[32;1m\x1B[K"}; // 32=green, 1=bold
-	std::string m_default_color_match {"\x1B[30;43;1m\x1B[K"}; // 30=black, 43=yellow bkgnd, 1=bold
-	std::string m_default_color_lineno {"\x1B[33;1m\x1B[K"};   // 33=yellow, 1=bold
-	std::string m_default_color_default {"\x1B[0m\x1B[K"};     // Reset/normal (all attributes off).
+	const std::string m_default_color_filename {"\x1B[32;1m\x1B[K"}; // 32=green, 1=bold
+	const std::string m_default_color_match {"\x1B[30;43;1m\x1B[K"}; // 30=black, 43=yellow bkgnd, 1=bold
+	const std::string m_default_color_lineno {"\x1B[33;1m\x1B[K"};   // 33=yellow, 1=bold
+	const std::string m_default_color_default {"\x1B[0m\x1B[K"};     // Reset/normal (all attributes off).
 	/// @}
 };
 

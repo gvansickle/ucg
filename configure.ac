@@ -272,58 +272,13 @@ AX_C___ATTRIBUTE__	# Defines "HAVE___ATTRIBUTE__" if the compiler supports __att
 					# the function attribute __attribute__((unused))
 AX_GCC_BUILTIN(__builtin_unreachable)
 AX_GCC_BUILTIN(__builtin_expect)
+AX_GCC_BUILTIN(__builtin_popcount)
 
-# Check for instruction set extensions we can make use of.
-#GRVS_ADD_MULTIVERSIONING_SUPPORT
-
-# $1 == Base ISA (currently only "x86_64" supported)
-# $2 == Compile flag to check.
-# $3 == EXTRA-FLAGS
-m4_define([GRVS_CHECK_COMPILE_FLAG],
-[
-	AS_VAR_PUSHDEF([ac_var], [grvs_cv_have_$1_$2])[]dnl
-	AS_VAR_PUSHDEF([sh_var_postfix], [m4_substr(m4_toupper($2), 2)])[]dnl
-	AS_VAR_PUSHDEF([flags_var_name], [CXXFLAGS_EXT_$1_]sh_var_postfix)[]dnl
-
-	AX_CHECK_COMPILE_FLAG([$2],
-		[AS_VAR_SET([ac_var], [yes])],
-		[AS_VAR_SET([ac_var], [no])],
-		[$3])
-	
-	AS_VAR_IF([ac_var], [yes],
-		[
-			# Generate a shell var "CXXFLAGS_$1_$2" equal to the given compile flag (i.e. $2).
-			# Note: No brackets around "flags_var_name", since it is an Autoconf polymorphic shell variable.
-			# Putting it in brackets prevents it from expanding properly. 
-			AC_SUBST(flags_var_name, [$2])
-		],
-		[
-			# Flag not supported.
-			# @todo Should we AC_SUBST() the var name to empty here?
-			:
-		])
-	##AC_RUN_LOG([: flags_var_name="$flags_var_name"])
-
-	# Generate an automake conditional for this flag.
-	AM_CONDITIONAL([BUILD_]flags_var_name, [test AS_VAR_GET(ac_var) = yes])
-	
-	# Set a shell var indicating that we have at least one extension to this ISA.
-	AC_SUBST([HAVE_$1_ISA_EXTENSIONS],[true])
-	
-	AS_VAR_POPDEF([flags_var_name])
-	AS_VAR_POPDEF([sh_var_postfix])
-	AS_VAR_POPDEF([ac_var])
-])
-
+# Check for x86-64 ISA extensions we can use for function multiversioning.
 GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse2])
 GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse4.2])
 GRVS_CHECK_COMPILE_FLAG([X86_64], [-mpopcnt], [-msse4.2])
 GRVS_CHECK_COMPILE_FLAG([X86_64], [-mno-popcnt], [-msse4.2])
-#AX_APPEND_COMPILE_FLAGS([-mpopcnt], [UCG_CXXFLAGS_POPCNT], [$CXXFLAGS_X86_64_SSE4_2])
-#AX_APPEND_COMPILE_FLAGS([-mno-popcnt], [UCG_CXXFLAGS_NO_POPCNT], [$CXXFLAGS_X86_64_SSE4_2])
-#AC_SUBST([UCG_CXXFLAGS_POPCNT], [$UCG_CXXFLAGS_POPCNT])
-#AC_SUBST([UCG_CXXFLAGS_NO_POPCNT], [$UCG_CXXFLAGS_NO_POPCNT])
-
 AM_CONDITIONAL([BUILD_X86_64_ISA_EXTENSIONS], [test "x$HAVE_X86_64_ISA_EXTENSIONS" != "x"])
 AM_COND_IF([BUILD_X86_64_ISA_EXTENSIONS],
 	[AC_MSG_NOTICE([Compiler supports x86-64 ISA extensions, will use them.])],

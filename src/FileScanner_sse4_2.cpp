@@ -30,9 +30,9 @@
 
 // Declaration here only so we can apply gcc attributes.
 inline uint8_t popcount16(uint16_t bits) noexcept ATTR_CONST /* Doesn't access globals, has no side-effects.*/
-	ATTR_ARTIFICIAL; /* == Should appear in debug info even after being inlined. */
+	ATTR_ARTIFICIAL; /* Should appear in debug info even after being inlined. */
 
-#if defined(__POPCNT__) && __POPCNT__==1
+#if defined(__POPCNT__) && __POPCNT__==1 && defined(HAVE___BUILTIN_POPCOUNT)
 
 /**
  * For systems that support the POPCNT instruction, we can use it through the gcc/clang builtin __builtin_popcount().
