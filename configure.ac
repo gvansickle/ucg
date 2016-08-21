@@ -293,12 +293,12 @@ m4_define([GRVS_CHECK_COMPILE_FLAG],
 			# Generate a shell var "CXXFLAGS_$1_$2" equal to the given compile flag (i.e. $2). 
 			AC_SUBST([flags_var_name], [$2])],
 		[echo "FAIL";])
-	AC_RUN_LOG([: flags_var_name="$flags_var_name"])
+	##AC_RUN_LOG([: flags_var_name="$flags_var_name"])
 
 	# Generate an automake conditional for this flag.
 	AM_CONDITIONAL([HAVE_]flags_var_name, [test ac_var = yes])
 	
-	HAVE_X86_64_ISA_EXT=true;
+	HAVE_$1_ISA_EXT=true;
 	
 	AS_VAR_POPDEF([flags_var_name])
 	AS_VAR_POPDEF([sh_var_postfix])
