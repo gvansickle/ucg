@@ -64,6 +64,22 @@ function line_count(filename,	cmd_line, retval)
 	return retval;
 }
 
+# Return the number of different characters between the two given output files.
+function pctdiff(filename1, filename2,    cmd_line, retval)
+{
+	retval=0;
+	cmd_line=("tail -n +5 " filename1 " > temp_" filename1 " && \
+	tail -n +5 " filename2 " > temp_" filename2 " && \
+	git diff --no-index --word-diff=porcelain temp_" filename1 " temp_" filename2 " | grep -E '^(\\+[^+])|^(-[^-])' | wc -m");
+	print("cmd_line: " cmd_line);
+	while((cmd_line | getline retval) > 0)
+	{
+		# Keep reading.
+	}
+	close(cmd_line);
+	return retval;
+}
+
 
 BEGIN {
 	if(ARGC != 3)
@@ -81,7 +97,7 @@ BEGIN {
 		exit 1;
 	}
 	
-	print("Starting performance tests, results file is", RESULTS_FILE);
+	print("Summarizing performance test results, results file is", RESULTS_FILE);
 	
 	for(i=1; i<=NUM_RUNS; ++i)
 	{
@@ -154,12 +170,16 @@ BEGIN {
 	{
 		NUM_MATCHED_LINES[i]=line_count(PREP_RUN_FILES[i]);
 	}
-	
-	# Output the results.
-	print("| Program | Avg of", NUM_ITERATIONS, "runs | Sample Stddev | SEM | Num Matched Lines |") >> RESULTS_FILE;
-	print("|---------|----------------|---------------|-----|-------------------|") >> RESULTS_FILE;
 	for(i=1; i<=NUM_RUNS; ++i)
 	{
-		print("|", TEST_PROG_ID[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|", NUM_MATCHED_LINES[i], "|") >> RESULTS_FILE;
+		NUM_DIFF_CHARS[i]=pctdiff(PREP_RUN_FILES[i], GOLD_STD_FILE);
+	}
+	
+	# Output the results.
+	print("| Program | Avg of", NUM_ITERATIONS, "runs | Sample Stddev | SEM | Num Matched Lines | Num Diff Chars |") >> RESULTS_FILE;
+	print("|---------|----------------|---------------|-----|-------------------|---|") >> RESULTS_FILE;
+	for(i=1; i<=NUM_RUNS; ++i)
+	{
+		print("|", TEST_PROG_ID[i], "|", AVG_TIME[i], "|", SAMPLE_STD_DEV[i], "|", SEM[i], "|", NUM_MATCHED_LINES[i], "|", NUM_DIFF_CHARS[i], "|") >> RESULTS_FILE;
 	}
 }
