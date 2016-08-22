@@ -103,16 +103,17 @@ function join_val_range(in_array, out_array, join_on_regex, regex_to_replace, pr
 
 BEGIN {
 
-	if(ARGC != 4)
+	if(ARGC != 5)
 	{
 		print("Incorrect number of args: ", ARGC) | "cat 1>&2"
-		exit 1
+		exit 1;
 	}
 	
 	# Get command line args.
-	REGEX=ARGV[1]
-	TEST_DATA_DIR=ARGV[2]
-	RESULTS_FILE=ARGV[3];
+	PARAMS=ARGV[1]
+	REGEX=ARGV[2]
+	TEST_DATA_DIR=ARGV[3]
+	RESULTS_FILE=ARGV[4];
 	## PARAM: Specify PROGLIST= comma separated list of "TEST_PROG_ID:TEST_PROG_PATH" tuples.
 	## PARAM: Specify the NUM_ITERATIONS value on the command line: awk -v NUM_ITERATIONS=5 -f...
 	## PARAM: Specify the CHARACTERIZE value on the command like: awk -v CHARACTERIZE=1 -f ...
@@ -131,6 +132,7 @@ BEGIN {
 	}
 	
 	print("PROGLIST=" PROGLIST) | "cat 1>&2";
+	print("REGEX=" REGEX) | "cat 1>&2";
 	split(PROGLIST, PROGLIST_ARRAY, ",");
 	for(i=1; i<=alen(PROGLIST_ARRAY); ++i)
 	{
@@ -184,7 +186,7 @@ BEGIN {
 		PROG = TEST_PROG_ID_TO_PATH[j];
 		dirjobs_option = PROG_TO_PARAMS_DIRJOBS[PROG]
 		scanjobs_option = PROG_TO_PARAMS_JOBS[PROG]
-		COMMAND_LINE=(j " ! " PROG " ! { " PROG_TIME " " PROG " " TEST_PROG_ID_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }")
+		COMMAND_LINE=(j " ! " PROG " ! { " PROG_TIME " " PROG " " TEST_PROG_ID_TO_PARAMS_PRE[j] " DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER PARAMS_PLACEHOLDER '" REGEX "' '" TEST_DATA_DIR "'; 1>&3 2>&4; }")
 		
 		# Output the default "number of threads to use for scanning" command-line option (i.e. empty).
 		CL_COPY=COMMAND_LINE
@@ -214,6 +216,12 @@ BEGIN {
 	join_val_range(CLA_COPY, CMD_LINE_ARRAY, " [^[:space:]]*ag ", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["ag"], 4)
 	acopy(CMD_LINE_ARRAY, CLA_COPY)
 	join_val_range(CLA_COPY, CMD_LINE_ARRAY, "[^[:space:]]+grep", "DIRJOBS_PLACEHOLDER", PROG_TO_PARAMS_DIRJOBS["grep"], 4)
+	
+	for(i=1; i<=alen(CMD_LINE_ARRAY); ++i)
+	{
+		sub(/PARAMS_PLACEHOLDER/, PARAMS, CMD_LINE_ARRAY[i])
+	}
+
 	
 	###
 	### Output the test script.
