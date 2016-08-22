@@ -24,6 +24,7 @@
 
 #include <cstdint>
 
+#include "hints.hpp"
 
 // Boost has a template of this nature, but of course more complete.
 template <unsigned char NumBits>
@@ -64,5 +65,28 @@ constexpr
 {
 	return (val > hi) ? hi : ((val < lo) ? lo : val );
 };
+
+// Separate declaration here to avoid "attributes are not allowed on a function-definition" error.
+constexpr inline uint32_t bswap(uint32_t x) ATTR_CONST ATTR_ARTIFICIAL;
+constexpr inline uint32_t bswap(uint32_t x)
+{
+#if defined(HAVE___BUILTIN_BSWAP32)
+	return __builtin_bswap32(x);
+#else
+	/// @todo create a fallback.
+	static_assert(false, "Generic bswap32() not yet implemented.");
+#endif
+}
+
+constexpr inline uintptr_t count_trailing_zeros(uintptr_t x) ATTR_CONST ATTR_ARTIFICIAL;
+constexpr inline uintptr_t count_trailing_zeros(uintptr_t x)
+{
+#if defined(HAVE___BUILTIN_CTZLL)
+	return __builtin_ctzll(x);
+#else
+	/// @todo create a fallback.
+	static_assert(false, "Generic count_trailing_zeros() not yet implemented.");
+#endif
+}
 
 #endif /* SRC_LIBEXT_INTEGER_HPP_ */

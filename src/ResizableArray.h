@@ -87,7 +87,7 @@ public:
 			auto requested_size = (needed_size + needed_alignment) - (needed_size & (needed_alignment-1));
 			m_current_buffer = static_cast<pointer>(aligned_alloc(needed_alignment, requested_size));
 			// We might have gotten a more-aligned block than we requested.
-			m_current_buffer_alignment = 1U << (__builtin_clzll((uintptr_t)m_current_buffer));
+			m_current_buffer_alignment = 1U << count_trailing_zeros((uintptr_t)m_current_buffer);
 			m_current_buffer_size = requested_size;
 
 			LOG(INFO) << "reserve_no_copy() realloc: needed_size=" << needed_size << ", needed_alignment=" << needed_alignment
