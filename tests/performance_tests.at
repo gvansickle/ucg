@@ -129,17 +129,18 @@ AT_CLEANUP
 m4_define([UCG_GEN_PERFTEST],
 [
 # $1 == program name list.
-# $2 == regex.
-# $3 == test file/directory path
-# $4 == NUM_ITERATIONS
-# $5 == CHARACTERIZE
+# $2 == params
+# $3 == regex.
+# $4 == test file/directory path
+# $5 == NUM_ITERATIONS
+# $6 == CHARACTERIZE
 AS_ECHO(["Test description short: $at_desc"]) >> UCG_PERF_RESULTS_FILE
 # Record info on the filesystem where the test data lies.
-TEST_DATA_FS_INFO=`get_dev_and_fs_type $3`
-AS_ECHO(["Test data path: \"$3\""]) >> UCG_PERF_RESULTS_FILE
+TEST_DATA_FS_INFO=`get_dev_and_fs_type $4`
+AS_ECHO(["Test data path: \"$4\""]) >> UCG_PERF_RESULTS_FILE
 AS_ECHO(["Test data filesystem info: $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
 
-AT_CHECK([$AWK -v PROGLIST=$1 -v CHARACTERIZE=$5 -v NUM_ITERATIONS=$4 -f $srcdir/performance_test_gen.awk -- $2 $3 UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
+AT_CHECK([$AWK -v PROGLIST=$1 -v CHARACTERIZE=$6 -v NUM_ITERATIONS=$5 -f $srcdir/performance_test_gen.awk -- m4_default([$2],[""]) m4_escape([$3]) $4 UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
 
 AT_CAPTURE_FILE([./cmdlines.sh])
 ])
@@ -162,7 +163,7 @@ AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}],['BOOST.*HPP'],[UCG_BOOST_PATH],[3],[0])  ### @todo no CHARACTERIZE
+UCG_GEN_PERFTEST([${PROGLIST}], [], ['BOOST.*HPP'],[UCG_BOOST_PATH],[3],[0])  ### @todo no CHARACTERIZE
 # Run the test script.
 AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
 # Summarize the test results.
@@ -185,7 +186,7 @@ AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST],['TEST_BOOST_NO_INTRINSIC_WCHAR_T'],[UCG_BOOST_PATH],[3],[0])
+UCG_GEN_PERFTEST([$PROGLIST], [], ['TEST_BOOST_NO_INTRINSIC_WCHAR_T'],[UCG_BOOST_PATH],[3],[0])
 # Run the test script.
 AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
 # Summarize the test results.
@@ -217,7 +218,7 @@ AT_KEYWORDS([performance])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST],['iudice[\w]*umputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
+UCG_GEN_PERFTEST([$PROGLIST], [], ['iudice[\w]*umputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
 # Run the test script.
 AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
 # Summarize the test results.
@@ -237,7 +238,7 @@ AT_KEYWORDS([performance])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST],['iudicemaequumputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
+UCG_GEN_PERFTEST([$PROGLIST], [], ['iudicemaequumputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
 # Run the test script.
 AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
 # Summarize the test results.
@@ -269,7 +270,7 @@ AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}],['include\s+\".*\"'],[UCG_BOOST_PATH],[3],[0])
+UCG_GEN_PERFTEST([${PROGLIST}], [], ['#include\s+".*"'],[UCG_BOOST_PATH],[3],[0])
 # Run the test script.
 AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
 # Summarize the test results.
@@ -283,20 +284,24 @@ AT_CLEANUP
 #
 # Search with ignore of part of the dir tree.
 #
-AT_SETUP([Boost: search with --ignore-dir=doc])
+AT_SETUP([ucg vs. others, literal '#endif' with --ignore-dir=doc on Boost source])
 AT_KEYWORDS([performance])
 
 # Skip this test if we can't find the Boost source tree.
 AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 
-AS_ECHO([""]) >> UCG_PERF_RESULTS_FILE
-AS_ECHO(["Perf Test Results: $at_desc"]) >> UCG_PERF_RESULTS_FILE
+AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-# Loop through the programs we're comparing performance with.
-for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
-	TIME_ONE_PROG(["${PROGNAME}"], ['#endif'], [--ignore-dir=doc])
-done
+# Generate the test script.
+UCG_GEN_PERFTEST([${PROGLIST}], [--ignore-dir=doc], ['#endif'], [UCG_BOOST_PATH],[3],[0])
+# Run the test script.
+AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
+# Summarize the test results.
+UCG_SUMMARIZE_PERFTEST([3])
+
+AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
+
 
 
