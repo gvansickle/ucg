@@ -1,0 +1,5 @@
+prog_id,exename,pre_options,opt_dirjobs,opt_scanjobs,opt_exclude_dir_literal
+built_ucg,ucg,--noenv,--dirjobs=,-j,--ignore-dir=
+system_ucg,/usr/bin/ucg,--noenv,--dirjobs=,-j,--ignore-dir=
+gnu_egrep,ggrep,-Ern --color,,,--exclude-dir=
+gnu_pgrep,ggrep,-Prn --color,,,--exclude-dir=
