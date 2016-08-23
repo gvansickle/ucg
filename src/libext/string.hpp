@@ -28,6 +28,7 @@
 #include <sstream>
 #include <vector>
 
+#include "hints.hpp"
 
 /**
  * Splits the given string #s on the given #delimiter character.  Returns the resulting strings in a std::vector.
@@ -71,7 +72,7 @@ public:
 	microstring(const char * __restrict__ start, const char * __restrict__ end)
 	{
 		size_t num_chars = end - start;
-		if(__builtin_expect(num_chars > sizeof(underlying_storage_type), 0))
+		if(unlikely(num_chars > sizeof(underlying_storage_type)))
 		{
 			throw std::length_error("Length too long for a microstring");
 		}

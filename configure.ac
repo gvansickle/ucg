@@ -273,6 +273,8 @@ AX_C___ATTRIBUTE__	# Defines "HAVE___ATTRIBUTE__" if the compiler supports __att
 AX_GCC_BUILTIN(__builtin_unreachable)
 AX_GCC_BUILTIN(__builtin_expect)
 AX_GCC_BUILTIN(__builtin_popcount)
+AX_GCC_BUILTIN(__builtin_bswap32)
+AX_GCC_BUILTIN(__builtin_ctzll)
 
 # Check for x86-64 ISA extensions we can use for function multiversioning.
 GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse2])
