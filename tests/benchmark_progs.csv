@@ -1,5 +1,6 @@
-prog_id,exename,pre_options,opt_dirjobs,opt_scanjobs,opt_exclude_dir_literal
-built_ucg,ucg,--noenv,--dirjobs=,-j,--ignore-dir=
-system_ucg,/usr/bin/ucg,--noenv,--dirjobs=,-j,--ignore-dir=
-gnu_egrep,ggrep,-Ern --color,,,--exclude-dir=
-gnu_pgrep,ggrep,-Prn --color,,,--exclude-dir=
+prog_id,exename,pre_options,opt_dirjobs,opt_scanjobs,opt_exclude_dir_literal,opt_only_cpp
+built_ucg,ucg,--noenv,--dirjobs=,-j,--ignore-dir=,--cpp
+system_ucg,/usr/bin/ucg,--noenv,--dirjobs=,-j,--ignore-dir=,--cpp
+system_ag,ag,,,,--ignore-dir=,--cpp
+gnu_egrep,ggrep,-Ern --color,,,--exclude-dir=,--include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx
+gnu_pgrep,ggrep,-Prn --color,,,--exclude-dir=,--include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx
