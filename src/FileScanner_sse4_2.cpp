@@ -78,6 +78,9 @@ static constexpr uintptr_t f_alignment_mask { f_alignment-1 };
 static_assert(is_power_of_2(f_alignment), "alignof(__m128i) should be a power of 2, but isn't");
 static_assert(f_alignment == 16, "alignof(__m128i) should be 16, but isn't");
 
+// Declaration here only so we can apply gcc attributes.
+static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_ptr, uint16_t num_unaligned_bytes, size_t len, const char searchchar) noexcept
+		ATTR_CONST ATTR_ARTIFICIAL;
 
 static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_ptr, uint16_t num_unaligned_bytes, size_t len, const char searchchar) noexcept
 {
