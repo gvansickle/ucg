@@ -26,30 +26,6 @@ XFAILFILE=$abs_builddir/.badversion
 
 trap "test -r $XFAILFILE && cat $XFAILFILE; exit $?" 1 2 13 15
 
-# At testsuite-time, find the programs we wish to compare performance with.
-PROGLIST=built_ucg:ucg
-PERF_PROGRAMS_TO_COMPARE=ucg
-if PROG_SYSTEM_UCG="$(which ucg 2>/dev/null)";
-then
-	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_SYSTEM_UCG;
-	PROGLIST=$PROGLIST,system_ucg:$PROG_SYSTEM_UCG
-fi
-if PROG_AG="$(which ag 2>/dev/null)";
-then
-	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_AG;
-	PROGLIST=$PROGLIST,system_ag:$PROG_AG
-fi
-#if PROG_ACK="$(which ack)";
-#then
-#	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_ACK;
-#fi
-if PROG_SYSTEM_GGREP="$(which ggrep 2>/dev/null)";
-then
-	PROGLIST=$PROGLIST,gnu_grep:$PROG_SYSTEM_GGREP
-fi
-PROGLIST=$PROGLIST,system_grep:grep
-
-
 export PROG_SCRIPT="@PROG_SCRIPT@"
 export PROG_SCRIPT_TYPE="@PROG_SCRIPT_TYPE@"
 export PROG_SCRIPT_PRE_TEXT="@PROG_SCRIPT_PRE_TEXT@"
@@ -61,7 +37,31 @@ export TEST_LN_S="@TEST_LN_S@"
 export PROG_TIME="@PROG_TIME@"
 export FGREP="@FGREP@"
 export EGREP="@EGREP@"
+export PROG_PGREP="@PROG_PGREP@"
 export AWK="@AWK@"
+
+# At testsuite-time, find the programs we wish to compare performance with.
+PROGLIST=built_ucg:ucg
+if PROG_SYSTEM_UCG="$(which ucg 2>/dev/null)";
+then
+	PROGLIST=$PROGLIST,system_ucg:$PROG_SYSTEM_UCG
+fi
+if PROG_AG="$(which ag 2>/dev/null)";
+then
+	PROGLIST=$PROGLIST,system_ag:$PROG_AG
+fi
+#if PROG_ACK="$(which ack)";
+#then
+#fi
+if PROG_SYSTEM_GGREP="$(which ggrep 2>/dev/null)";
+then
+	PROGLIST=$PROGLIST,gnu_grep:$PROG_SYSTEM_GGREP
+fi
+if "x$PROG_PGREP" != "x";
+then
+	PROGLIST=$PROGLIST,pgrep:"$PROG_PGREP";
+fi
+PROGLIST=$PROGLIST,system_grep:grep
 
 ### Functions for use in the testsuite.
 

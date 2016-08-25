@@ -67,7 +67,8 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	echo 'm4_define([AT_PACKAGE_STRING],    [$(PACKAGE_STRING)$(VC_REV)])' && \
 	echo 'm4_define([AT_PACKAGE_BUGREPORT], [$(PACKAGE_BUGREPORT)])' && \
 	echo 'm4_define([AT_PACKAGE_URL],       [$(PACKAGE_URL)])' ; \
-	} > '$(srcdir)/package.m4'
+	} > $@.temp
+	mv $@.temp '$(srcdir)/package.m4'
 
 # The .at files which make up the test suite.
 TESTSUITE_AT = \
