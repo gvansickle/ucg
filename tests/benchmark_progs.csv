@@ -3,4 +3,4 @@ built_ucg,ucg,--noenv,--dirjobs=,-j,--ignore-dir=,--cpp
 system_ucg,/usr/bin/ucg,--noenv,--dirjobs=,-j,--ignore-dir=,--cpp
 system_ag,ag,,,,--ignore-dir=,--cpp
 gnu_egrep,ggrep,-Ern --color,,,--exclude-dir=,--include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx
-gnu_pgrep,ggrep,-Prn --color,,,--exclude-dir=,--include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx
+gnu_grep_p,ggrep,-Prn --color,,,--exclude-dir=,--include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx
