@@ -42,6 +42,9 @@ class TestRunResultsDatabase(object):
         Constructor
         '''
         self.dbconnection = sqlite3.connect(":memory:")
+        # Register a suitable csv dialect.
+        csv.register_dialect('ucg_nonstrict', delimiter=',', doublequote=True, escapechar="\\", quotechar=r'"',
+                             quoting=csv.QUOTE_MINIMAL, skipinitialspace=True)
         
     def _create_tables(self):
         c = self.dbconnection.cursor()
@@ -57,53 +60,44 @@ class TestRunResultsDatabase(object):
                libpcre_jit,
                isa_exts_in_use)''')
         
-        c.execute('''CREATE TABLE test_cases(test_case_id,
-            short_description,
-            description,
-            regex,
-            test_path)''')
+#         c.execute('''CREATE TABLE test_cases(test_case_id,
+#             short_description,
+#             description,
+#             regex,
+#             test_path)''')
         
         self.dbconnection.commit()
         
-    def _insert_data(self):
-        c = self.dbconnection.cursor()
-        
-        test_cases = [('TC1', 'Test case 1', 'This is the long description of Test Case 1', 'BOOST.*HPP', '../../boost_1_58_0'),
-                      ('TC2', 'Test Case 2', 'This is the long description of Test Case 2', 'BOOST.*?HPP', '../../boost_1_58_0')
-                      ]
-        
-        c.executemany('INSERT INTO test_cases VALUES (?,?,?,?,?)', test_cases)
-
-    def _select_data(self):
+    def _select_data(self, output_table_name=None):
         
         # Use a Row object.
         self.dbconnection.row_factory = sqlite3.Row
         c = self.dbconnection.cursor()
                 
         # Do a cartesian join.
-        c.execute("""SELECT test_cases.test_case_id, progsundertest.prog_id, progsundertest.exename, progsundertest.pre_options,
-                coalesce(progsundertest.opt_dirjobs, '') as opt_dirjobs, coalesce(test_cases.regex,'') || "   " || coalesce(test_cases.test_path,'') AS CombinedColumnsTest
+        c.execute("""CREATE TABLE {} AS SELECT test_cases.test_case_id, progsundertest.prog_id, progsundertest.exename, progsundertest.pre_options,
+                coalesce(progsundertest.opt_dirjobs, '') as opt_dirjobs, coalesce(test_cases.regex,'') || "   " || coalesce(test_cases.corpus,'') AS CombinedColumnsTest
             FROM test_cases
             CROSS JOIN progsundertest
-            """)
+            """.format(output_table_name))
         r = c.fetchall()
         
         # Print the column headers.
-        print(", ".join(r[0].keys()))
+        #print(", ".join(r[0].keys()))
         # Print the rows.
-        for row in r:
-            print("{}".format(", ".join(row)))
+        #for row in r:
+        #    print("{}".format(", ".join(row)))
             
     def read_csv_into_table(self, table_name=None, filename=None):
         c = self.dbconnection.cursor()
         with open(filename) as csvfile:
-            reader = csv.DictReader(csvfile)
+            reader = csv.DictReader(csvfile, dialect='ucg_nonstrict')
             headers = [fn for fn in reader.fieldnames]
             qmark = "?"
             for col in range(1,len(headers)):
                 qmark += ",?"
-            print(headers)
-            print(qmark)
+            #print(headers)
+            #print(qmark)
             sql_str = "CREATE TABLE {} ({})".format(table_name, ", ".join(headers))
             print(sql_str)
             c.execute(sql_str)
@@ -133,9 +127,10 @@ class TestRunResultsDatabase(object):
     def test(self):
         self._create_tables()
         self.read_csv_into_table(table_name="progsundertest", filename='benchmark_progs.csv')
-        self._insert_data()
-        self._select_data()
         self.PrintTable("progsundertest")
+        self.read_csv_into_table(table_name="test_cases", filename='test_cases.csv')
+        self._select_data("benchmark_1")
+        self.PrintTable("benchmark_1")
         self.dbconnection.close()
         pass
 
