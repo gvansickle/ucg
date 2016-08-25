@@ -1,4 +1,10 @@
-#
+#!/usr/bin/python2.7
+# encoding: utf-8
+
+from __future__ import print_function
+
+copyright_notice=\
+'''
 # Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
@@ -13,6 +19,12 @@
 # 
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+import sys
+import os
+from argparse import ArgumentParser
+from argparse import RawDescriptionHelpFormatter
 
 import sqlite3
 import csv
@@ -90,12 +102,12 @@ class TestRunResultsDatabase(object):
         r = c.fetchall()
         
         # Print the column headers.
-        print ", ".join(r[0].keys())
+        print(", ".join(r[0].keys()))
         # Print the rows.
         for row in r:
             print("{}".format(", ".join(row)))
             
-    def _read_csv(self, filename=None):
+    def read_csv_into_table(self, table_name=None, filename=None):
         c = self.dbconnection.cursor()
         with open(filename) as csvfile:
             reader = csv.DictReader(csvfile)
@@ -131,12 +143,65 @@ class TestRunResultsDatabase(object):
         for row in rows:
             print("Row        : " + ", ".join(row))
         
-        
     def test(self):
         self._create_tables()
         self._insert_data()
         self._select_data()
-        self._read_csv('benchmark_progs.csv')
+        self.read_csv_into_table(table_name="csv_test", filename='benchmark_progs.csv')
         self.PrintTable("csv_test")
         self.dbconnection.close()
         pass
+
+
+def main(argv=None): # IGNORE:C0111
+    '''Command line options.'''
+
+    if argv is None:
+        argv = sys.argv
+    else:
+        sys.argv.extend(argv)
+
+    program_name = os.path.basename(sys.argv[0])
+    #program_version = "v%s" % __version__
+    #program_build_date = str(__updated__)
+    #program_version_message = '%%(prog)s %s (%s)' % (program_version, program_build_date)
+    program_version_message = "<unknown>"
+    #program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
+    program_license = copyright_notice # % (program_shortdesc)
+
+    try:
+        # Setup argument parser
+        parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
+        parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
+        parser.add_argument("-i", "--include", dest="include", help="only include paths matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
+        parser.add_argument("-e", "--exclude", dest="exclude", help="exclude paths matching this regex pattern. [default: %(default)s]", metavar="RE" )
+        parser.add_argument('-V', '--version', action='version', version=program_version_message)
+        parser.add_argument(dest="paths", help="paths to folder(s) with source file(s) [default: %(default)s]", metavar="path", nargs='?')
+
+        # Process arguments
+        args = parser.parse_args()
+
+        paths = args.paths
+        verbose = args.verbose
+        inpat = args.include
+        expat = args.exclude
+
+        if verbose > 0:
+            print("Verbose mode on")
+
+        if inpat and expat and inpat == expat:
+            raise CLIError("include and exclude pattern are equal! Nothing will be processed.")
+
+        #inpath = paths[0]
+        #outdir = paths[1] 
+        
+        results_db = TestRunResultsDatabase()
+        results_db.test()
+            
+        return 0
+    except KeyboardInterrupt:
+        ### handle keyboard interrupt ###
+        return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
