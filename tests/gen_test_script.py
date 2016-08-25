@@ -57,12 +57,6 @@ class TestRunResultsDatabase(object):
                libpcre_jit,
                isa_exts_in_use)''')
         
-        c.execute('''CREATE TABLE progsundertest (prog_id,
-            exename,
-            pre_options,
-            dirjobs_option,
-            scanjobs_option)''')
-        
         c.execute('''CREATE TABLE test_cases(test_case_id,
             short_description,
             description,
@@ -73,13 +67,6 @@ class TestRunResultsDatabase(object):
         
     def _insert_data(self):
         c = self.dbconnection.cursor()
-        
-        progsundertest = [('built_ucg', 'ucg', '--noenv', '--dirjobs=N', '-jN'),
-                          ('system_ucg', '/usr/bin/ucg', '--noenv', '--dirjobs=N', '-jN'),
-                          ('gnu_grep', 'ggrep', '-Ern --color', '', '')
-                          ]
-        
-        c.executemany('INSERT INTO progsundertest VALUES (?,?,?,?,?)', progsundertest)
         
         test_cases = [('TC1', 'Test case 1', 'This is the long description of Test Case 1', 'BOOST.*HPP', '../../boost_1_58_0'),
                       ('TC2', 'Test Case 2', 'This is the long description of Test Case 2', 'BOOST.*?HPP', '../../boost_1_58_0')
@@ -95,7 +82,7 @@ class TestRunResultsDatabase(object):
                 
         # Do a cartesian join.
         c.execute("""SELECT test_cases.test_case_id, progsundertest.prog_id, progsundertest.exename, progsundertest.pre_options,
-                coalesce(progsundertest.dirjobs_option, '') as dirjobs_option, coalesce(test_cases.regex,'') || "   " || coalesce(test_cases.test_path,'') AS CombinedColumnsTest
+                coalesce(progsundertest.opt_dirjobs, '') as opt_dirjobs, coalesce(test_cases.regex,'') || "   " || coalesce(test_cases.test_path,'') AS CombinedColumnsTest
             FROM test_cases
             CROSS JOIN progsundertest
             """)
@@ -117,7 +104,7 @@ class TestRunResultsDatabase(object):
                 qmark += ",?"
             print(headers)
             print(qmark)
-            sql_str = "CREATE TABLE csv_test ({})".format(", ".join(headers))
+            sql_str = "CREATE TABLE {} ({})".format(table_name, ", ".join(headers))
             print(sql_str)
             c.execute(sql_str)
             self.dbconnection.commit()
@@ -126,16 +113,16 @@ class TestRunResultsDatabase(object):
                 to_db = []
                 for h in headers:
                     to_db.append(row[h])
-                c.execute('''INSERT INTO csv_test VALUES ({})'''.format(qmark), to_db)
+                c.execute('''INSERT INTO {} VALUES ({})'''.format(table_name, qmark), to_db)
         self.dbconnection.commit()
-        c.execute('SELECT * from csv_test')
-        print(c.fetchall())
+        #c.execute('SELECT * from csv_test')
+        #print(c.fetchall())
        
     def PrintTable(self, table_name=None):
         # Use a Row object.
         self.dbconnection.row_factory = sqlite3.Row
         c = self.dbconnection.cursor()
-        c.execute('SELECT * from csv_test')
+        c.execute('SELECT * from {}'.format(table_name))
         rows = c.fetchall()
         #print("Type: {}".format(type(rows[0])))
         print("TABLE NAME : {}".format(table_name))
@@ -145,10 +132,10 @@ class TestRunResultsDatabase(object):
         
     def test(self):
         self._create_tables()
+        self.read_csv_into_table(table_name="progsundertest", filename='benchmark_progs.csv')
         self._insert_data()
         self._select_data()
-        self.read_csv_into_table(table_name="csv_test", filename='benchmark_progs.csv')
-        self.PrintTable("csv_test")
+        self.PrintTable("progsundertest")
         self.dbconnection.close()
         pass
 
