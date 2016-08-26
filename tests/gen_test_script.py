@@ -139,6 +139,7 @@ class TestRunResultsDatabase(object):
     def test(self):
         self._create_tables()
         self.read_csv_into_table(table_name="progsundertest", filename='benchmark_progs.csv')
+        self.raed_csv_into_table(table_name="opts_defs", filename='opts_defs.csv')
         self.PrintTable("progsundertest")
         self.read_csv_into_table(table_name="test_cases", filename='test_cases.csv')
         self._select_data("benchmark_1")
