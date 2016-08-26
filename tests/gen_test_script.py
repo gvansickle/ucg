@@ -46,6 +46,16 @@ class TestRunResultsDatabase(object):
         csv.register_dialect('ucg_nonstrict', delimiter=',', doublequote=True, escapechar="\\", quotechar=r'"',
                              quoting=csv.QUOTE_MINIMAL, skipinitialspace=True)
         
+    def _placeholders(self, num):
+        """
+        Helper function which generates a string of num placeholders (e.g. for num==5, returns "?,?,?,?,?").
+        :param:
+        """
+        qmarks = "?"
+        for col in range(1,num):
+            qmarks += ",?"
+        return qmarks
+        
     def _create_tables(self):
         c = self.dbconnection.cursor()
         
@@ -59,12 +69,6 @@ class TestRunResultsDatabase(object):
                libpcre_version,
                libpcre_jit,
                isa_exts_in_use)''')
-        
-#         c.execute('''CREATE TABLE test_cases(test_case_id,
-#             short_description,
-#             description,
-#             regex,
-#             test_path)''')
         
         self.dbconnection.commit()
         
@@ -80,9 +84,9 @@ class TestRunResultsDatabase(object):
             FROM test_cases
             CROSS JOIN progsundertest
             """.format(output_table_name))
-        r = c.fetchall()
         
         # Print the column headers.
+        #r = c.fetchall()
         #print(", ".join(r[0].keys()))
         # Print the rows.
         #for row in r:

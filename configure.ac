@@ -159,17 +159,17 @@ AC_CACHE_CHECK([for suitable time command], [ac_cv_path_PROG_TIME],
 AC_SUBST([PROG_TIME], [$ac_cv_path_PROG_TIME])
 
 # Try to find a grep which supports -P (PCRE regexes).  Should be GNU grep.
-AC_CACHE_CHECK([for a grep which supports PCREs], [ac_cv_path_PROG_PGREP],
+AC_CACHE_CHECK([for a grep which supports PCREs], [ac_cv_path_PROG_GREP_P],
 [
-	AC_PATH_PROGS_FEATURE_CHECK([PROG_PGREP], [ggrep grep],
+	AC_PATH_PROGS_FEATURE_CHECK([PROG_GREP_P], [ggrep grep],
 	[
-		grep_out=`echo abcfdef | $ac_path_PROG_PGREP -Po 'a.*?f'`
+		grep_out=`echo abcfdef | $ac_path_PROG_GREP_P -Po 'a.*?f'`
 		test "x$grep_out" = xabcf \
-		&& ac_cv_path_PROG_PGREP="$ac_path_PROG_PGREP -P" ac_path_PROG_PGREP_found=:
+		&& ac_cv_path_PROG_GREP_P="$ac_path_PROG_GREP_P -P" ac_path_PROG_GREP_P_found=:
 	],
 	[AC_MSG_WARN([could not find a grep with PCRE support])])
 ])
-AC_SUBST([PROG_PGREP], [$ac_cv_path_PROG_PGREP])
+AC_SUBST([PROG_GREP_P], [$ac_cv_path_PROG_GREP_P])
 
 ## Checks for maintainer tools.
 

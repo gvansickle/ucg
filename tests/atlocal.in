@@ -194,7 +194,10 @@ get_system_info()
 	echo "";
 	echo "START virtual environment info.";
 	### See <https://www.freedesktop.org/software/systemd/man/systemd-detect-virt.html> for possible results.
-	echo -n "systemd-detect-virt: " && (systemd-detect-virt || echo "unknown" );
+	if PROG_SYSD_DETECT_VIRT=$(which systemd-detect-virt 2>/dev/null);
+	then
+		echo "systemd-detect-virt: $(systemd-detect-virt)";
+	fi;
 	echo "END virtual environment info.";
 	echo "";
 }
