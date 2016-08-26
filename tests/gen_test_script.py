@@ -49,7 +49,7 @@ class TestRunResultsDatabase(object):
     def _placeholders(self, num):
         """
         Helper function which generates a string of num placeholders (e.g. for num==5, returns "?,?,?,?,?").
-        :param:
+        :param num: Number of placeholders to generate.
         """
         qmarks = "?"
         for col in range(1,num):
@@ -91,15 +91,23 @@ class TestRunResultsDatabase(object):
         # Print the rows.
         #for row in r:
         #    print("{}".format(", ".join(row)))
+        
+    def generate_tests_type_1(self, output_table_name=None):
+        # Use a Row object.
+        self.dbconnection.row_factory = sqlite3.Row
+        c = self.dbconnection.cursor()
+        c.execute("""CREATE TABLE {} AS
+        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, p.opt_only_cpp, t.regex, t.corpus
+        FROM test_cases AS t
+        CROSS JOIN progsundertest as p
+        """.format(output_table_name))
             
     def read_csv_into_table(self, table_name=None, filename=None):
         c = self.dbconnection.cursor()
         with open(filename) as csvfile:
             reader = csv.DictReader(csvfile, dialect='ucg_nonstrict')
             headers = [fn for fn in reader.fieldnames]
-            qmark = "?"
-            for col in range(1,len(headers)):
-                qmark += ",?"
+            qmarks = self._placeholders(len(headers))
             #print(headers)
             #print(qmark)
             sql_str = "CREATE TABLE {} ({})".format(table_name, ", ".join(headers))
@@ -111,7 +119,7 @@ class TestRunResultsDatabase(object):
                 to_db = []
                 for h in headers:
                     to_db.append(row[h])
-                c.execute('''INSERT INTO {} VALUES ({})'''.format(table_name, qmark), to_db)
+                c.execute('''INSERT INTO {} VALUES ({})'''.format(table_name, qmarks), to_db)
         self.dbconnection.commit()
         #c.execute('SELECT * from csv_test')
         #print(c.fetchall())
@@ -135,6 +143,8 @@ class TestRunResultsDatabase(object):
         self.read_csv_into_table(table_name="test_cases", filename='test_cases.csv')
         self._select_data("benchmark_1")
         self.PrintTable("benchmark_1")
+        self.generate_tests_type_1("benchmark1")
+        self.PrintTable("benchmark1")
         self.dbconnection.close()
         pass
 
