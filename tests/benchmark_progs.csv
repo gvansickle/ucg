@@ -1,6 +1,6 @@
 prog_id,exename,supports_pcre,pre_options,opt_dirjobs,opt_scanjobs,opt_exclude_dir_literal,opt_only_cpp
 built_ucg,ucg,true,--noenv,--dirjobs=,-j,--ignore-dir=,--cpp
-system_ucg,/usr/bin/ucg,true,--noenv,--dirjobs=,-j,--ignore-dir=,--cpp
-system_ag,ag,true,,,,--ignore-dir=,--cpp
+inst_ucg,/usr/bin/ucg,true,--noenv,--dirjobs=,-j,--ignore-dir=,--cpp
+inst_ag,ag,true,,,,--ignore-dir=,--cpp
 gnu_grep_e,ggrep,false,-Ern --color,,,--exclude-dir=,--include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx
 gnu_grep_p,ggrep,true,-Prn --color,,,--exclude-dir=,--include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx
