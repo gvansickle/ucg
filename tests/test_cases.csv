@@ -1,0 +1,4 @@
+test_case_id, desc_short, desc_long, regex, corpus
+TC1, Test case 1, "ucg vs. others, 'BOOST.*HPP' on Boost source.", BOOST.*HPP, ../../boost_1_58_0
+TC2, Test Case 2, "ucg vs. others, literal string on Boost source.", TEST_BOOST_NO_INTRINSIC_WCHAR_T, ../../boost_1_58_0
+
