@@ -57,10 +57,10 @@ if PROG_SYSTEM_GGREP="$(which ggrep 2>/dev/null)";
 then
 	PROGLIST=$PROGLIST,gnu_grep:$PROG_SYSTEM_GGREP
 fi
-if "x$PROG_PGREP" != "x";
-then
-	PROGLIST=$PROGLIST,pgrep:"$PROG_PGREP";
-fi
+#if "x$PROG_PGREP" != "x";
+#then
+#	PROGLIST=$PROGLIST,pgrep:"$PROG_PGREP";
+#fi
 PROGLIST=$PROGLIST,system_grep:grep
 
 ### Functions for use in the testsuite.
@@ -188,6 +188,14 @@ get_system_info()
 	echo "START /proc/cpuinfo info.";
 	cat /proc/cpuinfo 2>/dev/null || echo "ERROR: Could not cat /proc/cpuinfo."
 	echo "END /proc/cpuinfo info.";
+	echo "";
+	
+	# Checking for specific virtualization environment.
+	echo "";
+	echo "START virtual environment info.";
+	### See <https://www.freedesktop.org/software/systemd/man/systemd-detect-virt.html> for possible results.
+	echo -n "systemd-detect-virt: " && (systemd-detect-virt || echo "unknown" );
+	echo "END virtual environment info.";
 	echo "";
 }
 
