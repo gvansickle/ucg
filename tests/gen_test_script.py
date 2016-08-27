@@ -28,6 +28,27 @@ from argparse import RawDescriptionHelpFormatter
 
 import sqlite3
 import csv
+from string import Template
+
+test_script_template_1 = Template("""#!/bin/sh
+# GENERATED FILE, DO NOT EDIT
+NUM_ITERATIONS=${num_iterations};
+echo "Starting performance tests, results file is '${results_file}'";
+
+${test_cases}
+
+""")
+
+prep_run_template = Template("""
+# Prep run, to eliminate disk cache variability and capture the matches.")
+# We pipe the results through sort so we can diff these later.")
+echo "Timing: \"${cmd_line}\" >> ${results_file}
+PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
+wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
+echo "Prep run for wrapped command line: '" ${wrapped_cmd_line} "'\" > " PREP_RUN_FILES[i]);
+${wrapped_cmd_line}
+
+""")
 
 class TestRunResultsDatabase(object):
     '''
@@ -146,6 +167,60 @@ class TestRunResultsDatabase(object):
         print("Header     : " + ", ".join(rows[0].keys()))
         for row in rows:
             print("Row        : " + ", ".join(row))
+    
+    def GenerateTestScript(self):
+        ###
+        ### Output the test script.
+        ###
+        test_cases = ""
+        for tc in range(6): ### @todo Num test cases.
+            test_case = prep_run_template.substitute(
+                results_file='/dev/null',
+                cmd_line='gfadsgfajkgkajsgfjgs',
+                wrapped_cmd_line="{{{ }}}"
+                )
+            test_cases += test_case + "\n"
+        script = test_script_template_1.substitute(
+            num_iterations=3,
+            results_file='/dev/null',
+            test_cases=test_cases
+            )
+        print(script)
+        #with open(dir_out + "/report.html", "w") as f: 
+        #    print(page, file=f)
+            
+        
+#         cla_alen = alen(CMD_LINE_ARRAY)
+#         for ( i = 1; i <= cla_alen; i++ )
+#         {
+#             acopy(CMD_LINE_ARRAY, CLA_COPY)
+#             #print(">>1 :", CMD_LINE_ARRAY[i]);
+#             split(CMD_LINE_ARRAY[i], CMD_LINE_ARRAY_2, "[[:space:]]+![[:space:]]+");
+#             #print(">>1 :", CMD_LINE_ARRAY_2[1], CMD_LINE_ARRAY_2[2], CMD_LINE_ARRAY_2[3])
+#             PROG_ID=CMD_LINE_ARRAY_2[1]
+#             PROG_PATH=CMD_LINE_ARRAY_2[2]
+#             COMMAND_LINE=CMD_LINE_ARRAY_2[3]
+#             
+#             print("")
+#             print("# Prep run, to eliminate disk cache variability and capture the matches.")
+#             print("# We pipe the results through sort so we can diff these later.")
+#             print("echo \"Timing: " COMMAND_LINE "\" >>", RESULTS_FILE);
+#             PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
+#             wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
+#             print("echo \"Prep run for wrapped command line: '" wrapped_cmd_line "'\" > " PREP_RUN_FILES[i]);
+#             print(wrapped_cmd_line);
+#             print("");
+#             print("# Timing runs.");
+#             TIME_RESULTS_FILE=("./time_results_" i ".txt");
+#             wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
+#             print("echo \"Timing run for wrapped command line: '" wrapped_cmd_line "'\" > " TIME_RESULTS_FILE);
+#             print("echo \"TEST_PROG_ID: " PROG_ID "\" >> " TIME_RESULTS_FILE);
+#             print("echo \"TEST_PROG_PATH: " PROG_PATH "\" >> " TIME_RESULTS_FILE);
+#             print("for ITER in $(seq 0 $(expr $NUM_ITERATIONS - 1));\ndo")
+#             print("    # Do a single run.")
+#             print("    " wrapped_cmd_line);
+#             print("done;");
+#         }
         
     def test(self):
         print("sqlite3 lib version: {}".format(sqlite3.sqlite_version))
@@ -159,6 +234,9 @@ class TestRunResultsDatabase(object):
         self.PrintTable("benchmark_1")
         self.generate_tests_type_1("benchmark1")
         self.PrintTable("benchmark1")
+        
+        self.GenerateTestScript()
+        
         self.dbconnection.close()
         pass
 
