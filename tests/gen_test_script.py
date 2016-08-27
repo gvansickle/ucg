@@ -30,7 +30,8 @@ import sqlite3
 import csv
 from string import Template
 
-test_script_template_1 = Template("""#!/bin/sh
+test_script_template_1 = Template("""\
+#!/bin/sh
 # GENERATED FILE, DO NOT EDIT
 NUM_ITERATIONS=${num_iterations};
 echo "Starting performance tests, results file is '${results_file}'";
@@ -39,15 +40,28 @@ ${test_cases}
 
 """)
 
-prep_run_template = Template("""
-# Prep run, to eliminate disk cache variability and capture the matches.")
-# We pipe the results through sort so we can diff these later.")
-echo "Timing: \"${cmd_line}\" >> ${results_file}
-PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
-wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
-echo "Prep run for wrapped command line: '" ${wrapped_cmd_line} "'\" > " PREP_RUN_FILES[i]);
+prep_run_template = Template("""\
+# Prep run.
+# We do a prep run before each group of timing runs to eliminate disk cache variability and capture the matches.
+# We pipe the results through sort so we can diff these later.
+echo "Timing: \\"${cmd_line}\\"" >> ${results_file}
+echo "Prep run for wrapped command line: ${wrapped_cmd_line}" > ${search_results_file}
 ${wrapped_cmd_line}
 
+""")
+
+timing_run_template = Template("""\
+# Timing runs.
+TIME_RESULTS_FILE=("./time_results_" i ".txt");
+wrapped_cmd_line=("{{ " COMMAND_LINE " 2>> " TIME_RESULTS_FILE " ; }} 3>&1 4>&2;");
+echo \"Timing run for wrapped command line: '" wrapped_cmd_line "'\" > " TIME_RESULTS_FILE);
+echo \"TEST_PROG_ID: " PROG_ID "\" >> " TIME_RESULTS_FILE);
+echo \"TEST_PROG_PATH: " PROG_PATH "\" >> " TIME_RESULTS_FILE);
+for ITER in $$(seq 0 $$(expr $$NUM_ITERATIONS - 1));
+do
+    # Do a single run.
+    wrapped_cmd_line
+done;
 """)
 
 class TestRunResultsDatabase(object):
@@ -174,11 +188,16 @@ class TestRunResultsDatabase(object):
         ###
         test_cases = ""
         for tc in range(6): ### @todo Num test cases.
+            cmd_line="gfadsgfajkgkajsgfjgs"
+            wrapped_cmd_line='''"{{ {cmd_line} 2>> {search_results_file} ; }} 3>&1 4>&2 | sort >> {search_results_file} ;"'''.format(cmd_line=cmd_line, search_results_file="SearchResults_{}.txt".format(tc))
             test_case = prep_run_template.substitute(
                 results_file='/dev/null',
-                cmd_line='gfadsgfajkgkajsgfjgs',
-                wrapped_cmd_line="{{{ }}}"
-                )
+                search_results_file="SearchResults_{}.txt".format(tc),
+                cmd_line=cmd_line,
+                wrapped_cmd_line=wrapped_cmd_line
+                ) + "\n" +\
+                timing_run_template.substitute(
+                    )
             test_cases += test_case + "\n"
         script = test_script_template_1.substitute(
             num_iterations=3,
