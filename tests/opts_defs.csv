@@ -1,3 +1,4 @@
 opt_id,opt_expansion
 only_cpp_ack,--cpp
 only_cpp_grep,--include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx
+only_cpp_pcre2grep,'--exclude=^.*(?<!\.cpp|\.hpp|\.h|\.cc|\.cxx)$'

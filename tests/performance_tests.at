@@ -163,9 +163,12 @@ AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}], [], ['BOOST.*HPP'],[UCG_BOOST_PATH],[3],[0])  ### @todo no CHARACTERIZE
+### UCG_GEN_PERFTEST([${PROGLIST}], [], ['BOOST.*HPP'],[UCG_BOOST_PATH],[3],[0])  ### @todo no CHARACTERIZE
+
+AT_CHECK([${srcdir}/gen_test_script.py --csv-dir=${srcdir} -r "${builddir}/perf_test_results.txt" && chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
+
 # Run the test script.
-AT_CHECK([./cmdlines.sh], [0], [stdout], [stderr])
+AT_CHECK([source ./cmdlines.sh], [0], [stdout], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST([3])
 

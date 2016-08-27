@@ -111,7 +111,9 @@ AS_IF([ test "x$ac_path_ESED_found" = "x:" ],
 	[AC_SUBST([ESED], [$ac_cv_path_ESED])], # Note: AC_CACHE_CHECK handles the AC_MSG_RESULT() in the success case.
 	[AC_MSG_ERROR([could not find $SED option that supports extended regexes])])
 
+##
 ## Checks for programs needed to run the testsuite.
+##
 
 # The testsuite needs a way to invoke "script", to fool ucg into thinking it's outputting to a tty.
 # Of course, Linux and *BSD (including OSX) "script"'s take different options and parameters, so we
@@ -158,6 +160,21 @@ AC_CACHE_CHECK([for suitable time command], [ac_cv_path_PROG_TIME],
 	])
 AC_SUBST([PROG_TIME], [$ac_cv_path_PROG_TIME])
 
+# Try to find GNU grep.
+AC_CACHE_CHECK([for GNU grep], [ac_cv_path_PROG_GNU_GREP],
+[
+	AC_PATH_PROGS_FEATURE_CHECK([PROG_GNU_GREP], [ggrep grep],
+	[
+		case `"$ac_path_PROG_GNU_GREP" --version 2>&1` in
+		*GNU*)
+		  ac_cv_path_PROG_GNU_GREP="$ac_path_PROG_GNU_GREP" ac_path_PROG_GNU_GREP_found=:;;
+		*);;
+		esac
+	],
+	[AC_MSG_WARN([could not find GNU grep])])
+])
+AC_SUBST([PROG_GNU_GREP], [$ac_path_PROG_GNU_GREP])
+
 # Try to find a grep which supports -P (PCRE regexes).  Should be GNU grep.
 AC_CACHE_CHECK([for a grep which supports PCREs], [ac_cv_path_PROG_GREP_P],
 [
@@ -170,6 +187,9 @@ AC_CACHE_CHECK([for a grep which supports PCREs], [ac_cv_path_PROG_GREP_P],
 	[AC_MSG_WARN([could not find a grep with PCRE support])])
 ])
 AC_SUBST([PROG_GREP_P], [$ac_cv_path_PROG_GREP_P])
+
+# See if we have a pcre2grep.
+AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep])
 
 ## Checks for maintainer tools.
 

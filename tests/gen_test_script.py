@@ -256,17 +256,17 @@ class TestGenDatabase(object):
 #             print("done;");
 #         }
         
-    def LoadDatabaseFiles(self):
+    def LoadDatabaseFiles(self, csv_dir=None):
         print("sqlite3 lib version: {}".format(sqlite3.sqlite_version))
-        self.read_csv_into_table(table_name="opts_defs", filename='opts_defs.csv', prim_key='opt_id')
-        self.read_csv_into_table(table_name="progsundertest", filename='benchmark_progs.csv',
+        self.read_csv_into_table(table_name="opts_defs", filename=csv_dir+'/opts_defs.csv', prim_key='opt_id')
+        self.read_csv_into_table(table_name="progsundertest", filename=csv_dir+'/benchmark_progs.csv',
                                  foreign_key_tuples=[("opt_only_cpp", "opts_defs(opt_id)")])
-        self.PrintTable("progsundertest")
-        self.read_csv_into_table(table_name="test_cases", filename='test_cases.csv')
+        #self.PrintTable("progsundertest")
+        self.read_csv_into_table(table_name="test_cases", filename=csv_dir+'/test_cases.csv')
         self._select_data("benchmark_1")
-        self.PrintTable("benchmark_1")
+        #self.PrintTable("benchmark_1")
         self.generate_tests_type_1("benchmark1")
-        self.PrintTable("benchmark1")
+        #self.PrintTable("benchmark1")
 
 
 class CLIError(Exception):
@@ -298,6 +298,7 @@ def main(argv=None): # IGNORE:C0111
     try:
         # Setup argument parser
         parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
+        parser.add_argument("-d", "--csv-dir", dest="csv_dir", help="Directory where the source csv files can be found.")
         parser.add_argument("-r", "--test-output", dest="test_output_filename", help="Test results combined output filename.")
         parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
         parser.add_argument("-i", "--include", dest="include", help="only include paths matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
@@ -307,7 +308,8 @@ def main(argv=None): # IGNORE:C0111
 
         # Process arguments
         args = parser.parse_args()
-
+        
+        csv_dir = args.csv_dir
         test_output_filename = args.test_output_filename
         paths = args.paths
         verbose = args.verbose
@@ -322,14 +324,16 @@ def main(argv=None): # IGNORE:C0111
 
         if test_output_filename is None:
             raise CLIError("Must specify test results combined output filename (-r).")
+        if csv_dir is None:
+            raise CLIError("Must specify csv directory (--csv-dir).")
 
         #inpath = paths[0]
         #outdir = paths[1] 
         
         with TestGenDatabase() as results_db:
-            results_db.LoadDatabaseFiles()
+            results_db.LoadDatabaseFiles(csv_dir=csv_dir)
             
-            with open('cmdlines-py.sh', 'w') as outfh:
+            with open('cmdlines.sh', 'w') as outfh:
                 results_db.GenerateTestScript(test_case_id="TC1", test_output_filename=test_output_filename, fh=outfh)
             
         return 0
