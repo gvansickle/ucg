@@ -147,16 +147,26 @@ BEGIN {
 			ELAPSED=REAL_TIME[j];
 			AVG_TIME[i]=(AVG_TIME[i] + ELAPSED);
 		}
-		AVG_TIME[i]=(AVG_TIME[i] / NUM_ITERATIONS);
-		# Calculate the sample std deviation and the standard error of the mean (SEM).
-		# https://en.wikipedia.org/wiki/Standard_error#Standard_error_of_the_mean
-		for(j=1; j <= alen(REAL_TIME); ++j)
+		if(NUM_TIMES > 0)
 		{
-			# sample std dev is sqrt((sum of squared deviations from mean)/(N-1))
-			SAMPLE_STD_DEV[i] += (AVG_TIME[i] - REAL_TIME[j])^2;
+			AVG_TIME[i]=(AVG_TIME[i] / NUM_TIMES);
+			# Calculate the sample std deviation and the standard error of the mean (SEM).
+			# https://en.wikipedia.org/wiki/Standard_error#Standard_error_of_the_mean
+			for(j=1; j <= alen(REAL_TIME); ++j)
+			{
+				# sample std dev is sqrt((sum of squared deviations from mean)/(N-1))
+				SAMPLE_STD_DEV[i] += (AVG_TIME[i] - REAL_TIME[j])^2;
+			}
+			SAMPLE_STD_DEV[i] = sqrt(SAMPLE_STD_DEV[i]/(NUM_TIMES-1));
+			SEM[i] = SAMPLE_STD_DEV[i]/sqrt(NUM_TIMES);
 		}
-		SAMPLE_STD_DEV[i] = sqrt(SAMPLE_STD_DEV[i]/(NUM_TIMES-1));
-		SEM[i] = SAMPLE_STD_DEV[i]/sqrt(NUM_TIMES);
+		else
+		{
+			# Something went wrong, not enough samples.
+			AVG_TIME[i]=0;
+			SAMPLE_STD_DEV[i]=0;
+			SEM[i]=0;
+		}
 		print("Average elapsed time      :", AVG_TIME[i]) >> RESULTS_FILE;
 		print("Sample stddev             :", SAMPLE_STD_DEV[i]) >> RESULTS_FILE;
 		print("Standard Error of the Mean:", SEM[i]) >> RESULTS_FILE;

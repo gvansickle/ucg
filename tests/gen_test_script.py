@@ -154,11 +154,11 @@ class TestGenDatabase(object):
             for (col, other_col) in foreign_key_tuples:
                 foreign_key_strs.append("FOREIGN KEY({}) REFERENCES {}".format(col, other_col))
             sql_str = "CREATE TABLE {} ({})".format(table_name, ", ".join(decorated_headers+foreign_key_strs))
-            print(sql_str)
+            #print(sql_str)
             c.execute(sql_str)
             self.dbconnection.commit()
             for row in reader:
-                print("row: {}".format(row))
+                #print("row: {}".format(row))
                 to_db = []
                 for h in headers:
                     to_db.append(row[h])
