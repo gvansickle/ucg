@@ -23,6 +23,7 @@ copyright_notice=\
 
 import sys
 import os
+import contextlib
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
@@ -68,7 +69,7 @@ cmd_line_template = Template("""\
 { ${prog_time} ${prog} ${pre_params} DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER PARAMS_PLACEHOLDER 'REGEX' "TEST_DATA_DIR"; 1>&3 2>&4; }""")
 
 
-class TestRunResultsDatabase(object):
+class TestGenDatabase(object):
     '''
     classdocs
     '''
@@ -87,6 +88,21 @@ class TestRunResultsDatabase(object):
         # Register a suitable csv dialect.
         csv.register_dialect('ucg_nonstrict', delimiter=',', doublequote=True, escapechar="\\", quotechar=r'"',
                              quoting=csv.QUOTE_MINIMAL, skipinitialspace=True)
+        
+    def __new__(cls, *args, **kwargs):
+        """
+        Override of class's __new__ to give us a real C++-style destructor.
+        """
+        instance = super(TestGenDatabase, cls).__new__(cls)
+        instance.__init__(*args, **kwargs)
+        return contextlib.closing(instance)
+        
+    def close(self):
+        """
+        Cleanup function for contextlib.closing()'s use.
+        """
+        self.dbconnection.close()
+
         
     def _placeholders(self, num):
         """
@@ -126,14 +142,7 @@ class TestRunResultsDatabase(object):
             FROM test_cases
             CROSS JOIN progsundertest
             """.format(output_table_name))
-        
-        # Print the column headers.
-        #r = c.fetchall()
-        #print(", ".join(r[0].keys()))
-        # Print the rows.
-        #for row in r:
-        #    print("{}".format(", ".join(row)))
-        
+
     def generate_tests_type_1(self, output_table_name=None):
         # Use a Row object.
         self.dbconnection.row_factory = sqlite3.Row
@@ -186,12 +195,12 @@ class TestRunResultsDatabase(object):
         for row in rows:
             print("Row        : " + ", ".join(row))
     
-    def GenerateTestScript(self, fh=sys.stdout):
+    def GenerateTestScript(self, test_output_filename, fh=sys.stdout):
         ###
-        ### Output the test script.
+        ### Output the LoadDatabaseFiles script.
         ###
         test_cases = ""
-        for tc in range(6): ### @todo Num test cases.
+        for tc in range(6): ### @todo Num LoadDatabaseFiles cases.
             test_case_num=tc+1
             search_results_filename="SearchResults_{}.txt".format(test_case_num)
             time_run_results_filename='./time_results_{}.txt'.format(test_case_num)
@@ -209,7 +218,7 @@ class TestRunResultsDatabase(object):
                 time_run_results_file=time_run_results_filename
                 )
             test_case = prep_run_template.substitute(
-                results_file='/dev/null',
+                results_file=test_output_filename,
                 search_results_file=search_results_filename,
                 cmd_line=cmd_line,
                 wrapped_cmd_line=wrapped_cmd_line_prep
@@ -221,7 +230,7 @@ class TestRunResultsDatabase(object):
             test_cases += test_case + "\n"
         script = test_script_template_1.substitute(
             num_iterations=3,
-            results_file='/dev/null',
+            results_file=test_output_filename,
             test_cases=test_cases
             )
         
@@ -260,7 +269,7 @@ class TestRunResultsDatabase(object):
 #             print("done;");
 #         }
         
-    def test(self):
+    def LoadDatabaseFiles(self):
         print("sqlite3 lib version: {}".format(sqlite3.sqlite_version))
         self._create_tables()
         self.read_csv_into_table(table_name="opts_defs", filename='opts_defs.csv', prim_key='opt_id')
@@ -272,14 +281,18 @@ class TestRunResultsDatabase(object):
         self.PrintTable("benchmark_1")
         self.generate_tests_type_1("benchmark1")
         self.PrintTable("benchmark1")
-        
-        with open("cmdlines-py.sh", 'w') as outfh:
-            self.GenerateTestScript(fh=outfh)
-        
-        self.dbconnection.close()
-        pass
 
 
+class CLIError(Exception):
+    '''Generic exception to raise and log different fatal errors.'''
+    def __init__(self, msg):
+        super(CLIError).__init__(type(self))
+        self.msg = "E: %s" % msg
+    def __str__(self):
+        return self.msg
+    def __unicode__(self):
+        return self.msg
+    
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
 
@@ -299,6 +312,7 @@ def main(argv=None): # IGNORE:C0111
     try:
         # Setup argument parser
         parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
+        parser.add_argument("-r", "--test-output", dest="test_output_filename", help="Test results combined output filename.")
         parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
         parser.add_argument("-i", "--include", dest="include", help="only include paths matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
         parser.add_argument("-e", "--exclude", dest="exclude", help="exclude paths matching this regex pattern. [default: %(default)s]", metavar="RE" )
@@ -308,6 +322,7 @@ def main(argv=None): # IGNORE:C0111
         # Process arguments
         args = parser.parse_args()
 
+        test_output_filename = args.test_output_filename
         paths = args.paths
         verbose = args.verbose
         inpat = args.include
@@ -319,11 +334,17 @@ def main(argv=None): # IGNORE:C0111
         if inpat and expat and inpat == expat:
             raise CLIError("include and exclude pattern are equal! Nothing will be processed.")
 
+        if test_output_filename is None:
+            raise CLIError("Must specify test results combined output filename (-r).")
+
         #inpath = paths[0]
         #outdir = paths[1] 
         
-        results_db = TestRunResultsDatabase()
-        results_db.test()
+        with TestGenDatabase() as results_db:
+            results_db.LoadDatabaseFiles()
+            
+            with open('cmdlines-py.sh', 'w') as outfh:
+                results_db.GenerateTestScript(test_output_filename, fh=outfh)
             
         return 0
     except KeyboardInterrupt:
