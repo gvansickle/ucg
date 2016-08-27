@@ -3,5 +3,5 @@ built_ucg,ucg,true,--noenv,--dirjobs=,-j,--ignore-dir=,only_cpp_ack
 inst_ucg,/usr/bin/ucg,true,--noenv,--dirjobs=,-j,--ignore-dir=,only_cpp_ack
 inst_ag,ag,true,,,,--ignore-dir=,only_cpp_ack
 inst_pcre2grep,pcre2grep,true,-Hxrn --color,,,--exclude-dir=,only_cpp_grep
-gnu_grep_e,ggrep,false,-Ern --color,,,--exclude-dir=,only_cpp_grep
-gnu_grep_p,ggrep,true,-Prn --color,,,--exclude-dir=,only_cpp_grep
+inst_gnu_grep_e,ggrep,false,-Ern --color,,,--exclude-dir=,only_cpp_grep
+inst_gnu_grep_p,ggrep,true,-Prn --color,,,--exclude-dir=,only_cpp_grep

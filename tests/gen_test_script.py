@@ -42,6 +42,9 @@ class TestRunResultsDatabase(object):
         Constructor
         '''
         self.dbconnection = sqlite3.connect(":memory:")
+        # Turn on foreign key support.
+        self.dbconnection.execute("PRAGMA foreign_keys = ON")
+        
         # Register a suitable csv dialect.
         csv.register_dialect('ucg_nonstrict', delimiter=',', doublequote=True, escapechar="\\", quotechar=r'"',
                              quoting=csv.QUOTE_MINIMAL, skipinitialspace=True)
@@ -97,20 +100,28 @@ class TestRunResultsDatabase(object):
         self.dbconnection.row_factory = sqlite3.Row
         c = self.dbconnection.cursor()
         c.execute("""CREATE TABLE {} AS
-        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, p.opt_only_cpp, t.regex, t.corpus
-        FROM test_cases AS t
-        CROSS JOIN progsundertest as p
+        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, o.opt_expansion, t.regex, t.corpus
+        FROM test_cases AS t CROSS JOIN progsundertest as p
+        INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
         """.format(output_table_name))
             
-    def read_csv_into_table(self, table_name=None, filename=None):
+    def read_csv_into_table(self, table_name=None, filename=None, prim_key=None, foreign_key_tuples=None):
         c = self.dbconnection.cursor()
+        if not foreign_key_tuples: foreign_key_tuples = []
         with open(filename) as csvfile:
             reader = csv.DictReader(csvfile, dialect='ucg_nonstrict')
             headers = [fn for fn in reader.fieldnames]
+            decorated_headers = headers
+            if prim_key:
+                if prim_key not in headers:
+                    raise Exception("Primary key '{}' not in csv file.")
+                else:
+                    decorated_headers = [ h.replace(prim_key, prim_key + " PRIMARY KEY ") for h in decorated_headers]
             qmarks = self._placeholders(len(headers))
-            #print(headers)
-            #print(qmark)
-            sql_str = "CREATE TABLE {} ({})".format(table_name, ", ".join(headers))
+            foreign_key_strs = []
+            for (col, other_col) in foreign_key_tuples:
+                foreign_key_strs.append("FOREIGN KEY({}) REFERENCES {}".format(col, other_col))
+            sql_str = "CREATE TABLE {} ({})".format(table_name, ", ".join(decorated_headers+foreign_key_strs))
             print(sql_str)
             c.execute(sql_str)
             self.dbconnection.commit()
@@ -137,9 +148,11 @@ class TestRunResultsDatabase(object):
             print("Row        : " + ", ".join(row))
         
     def test(self):
+        print("sqlite3 lib version: {}".format(sqlite3.sqlite_version))
         self._create_tables()
-        self.read_csv_into_table(table_name="progsundertest", filename='benchmark_progs.csv')
-        self.raed_csv_into_table(table_name="opts_defs", filename='opts_defs.csv')
+        self.read_csv_into_table(table_name="opts_defs", filename='opts_defs.csv', prim_key='opt_id')
+        self.read_csv_into_table(table_name="progsundertest", filename='benchmark_progs.csv',
+                                 foreign_key_tuples=[("opt_only_cpp", "opts_defs(opt_id)")])
         self.PrintTable("progsundertest")
         self.read_csv_into_table(table_name="test_cases", filename='test_cases.csv')
         self._select_data("benchmark_1")
