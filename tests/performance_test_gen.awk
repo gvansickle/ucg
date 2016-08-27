@@ -146,9 +146,10 @@ BEGIN {
 	}
 
 	TEST_PROG_ID_TO_PARAMS_PRE["built_ucg"]="--noenv --cpp"
-	TEST_PROG_ID_TO_PARAMS_PRE["system_ucg"]="--noenv --cpp"
-	TEST_PROG_ID_TO_PARAMS_PRE["system_ag"]="--cpp"
-	TEST_PROG_ID_TO_PARAMS_PRE["gnu_grep"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
+	TEST_PROG_ID_TO_PARAMS_PRE["inst_ucg"]="--noenv --cpp"
+	TEST_PROG_ID_TO_PARAMS_PRE["inst_ag"]="--cpp"
+	TEST_PROG_ID_TO_PARAMS_PRE["inst_gnu_grep_e"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
+	TEST_PROG_ID_TO_PARAMS_PRE["inst_gnu_grep_p"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
 	TEST_PROG_ID_TO_PARAMS_PRE["system_grep"]="-ERn --color --include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx"
 	
 	if(CHARACTERIZE == 0)

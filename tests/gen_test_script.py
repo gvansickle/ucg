@@ -178,9 +178,9 @@ class TestGenDatabase(object):
             print("Row        : " + ", ".join(row))
     
     def GenerateTestScript(self, test_case_id, test_output_filename, fh=sys.stdout):
-        ###
-        ### Output the test script.
-        ###
+        """
+        Generate and output the test script.
+        """
         test_cases = ""
         test_inst_num=0
         rows = self.dbconnection.execute('SELECT * FROM benchmark1 WHERE test_case_id == "{}"'.format(test_case_id))
@@ -224,38 +224,6 @@ class TestGenDatabase(object):
         # Print it to the given file.
         print(script, file=fh)
         
-#         cla_alen = alen(CMD_LINE_ARRAY)
-#         for ( i = 1; i <= cla_alen; i++ )
-#         {
-#             acopy(CMD_LINE_ARRAY, CLA_COPY)
-#             #print(">>1 :", CMD_LINE_ARRAY[i]);
-#             split(CMD_LINE_ARRAY[i], CMD_LINE_ARRAY_2, "[[:space:]]+![[:space:]]+");
-#             #print(">>1 :", CMD_LINE_ARRAY_2[1], CMD_LINE_ARRAY_2[2], CMD_LINE_ARRAY_2[3])
-#             PROG_ID=CMD_LINE_ARRAY_2[1]
-#             PROG_PATH=CMD_LINE_ARRAY_2[2]
-#             COMMAND_LINE=CMD_LINE_ARRAY_2[3]
-#             
-#             print("")
-#             print("# Prep run, to eliminate disk cache variability and capture the matches.")
-#             print("# We pipe the results through sort so we can diff these later.")
-#             print("echo \"Timing: " COMMAND_LINE "\" >>", RESULTS_FILE);
-#             PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
-#             wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " PREP_RUN_FILES[i] " ; } 3>&1 4>&2 | sort >> " PREP_RUN_FILES[i] ";");
-#             print("echo \"Prep run for wrapped command line: '" wrapped_cmd_line "'\" > " PREP_RUN_FILES[i]);
-#             print(wrapped_cmd_line);
-#             print("");
-#             print("# Timing runs.");
-#             TIME_RESULTS_FILE=("./time_results_" i ".txt");
-#             wrapped_cmd_line=("{ " COMMAND_LINE " 2>> " TIME_RESULTS_FILE " ; } 3>&1 4>&2;");
-#             print("echo \"Timing run for wrapped command line: '" wrapped_cmd_line "'\" > " TIME_RESULTS_FILE);
-#             print("echo \"TEST_PROG_ID: " PROG_ID "\" >> " TIME_RESULTS_FILE);
-#             print("echo \"TEST_PROG_PATH: " PROG_PATH "\" >> " TIME_RESULTS_FILE);
-#             print("for ITER in $(seq 0 $(expr $NUM_ITERATIONS - 1));\ndo")
-#             print("    # Do a single run.")
-#             print("    " wrapped_cmd_line);
-#             print("done;");
-#         }
-        
     def LoadDatabaseFiles(self, csv_dir=None):
         print("sqlite3 lib version: {}".format(sqlite3.sqlite_version))
         self.read_csv_into_table(table_name="opts_defs", filename=csv_dir+'/opts_defs.csv', prim_key='opt_id')
@@ -298,6 +266,7 @@ def main(argv=None): # IGNORE:C0111
     try:
         # Setup argument parser
         parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
+        parser.add_argument("-c", "--test-case", dest="test_case", help="The test case id to generate the shell script for.")
         parser.add_argument("-d", "--csv-dir", dest="csv_dir", help="Directory where the source csv files can be found.")
         parser.add_argument("-r", "--test-output", dest="test_output_filename", help="Test results combined output filename.")
         parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
@@ -309,6 +278,7 @@ def main(argv=None): # IGNORE:C0111
         # Process arguments
         args = parser.parse_args()
         
+        test_case = args.test_case
         csv_dir = args.csv_dir
         test_output_filename = args.test_output_filename
         paths = args.paths
@@ -334,7 +304,7 @@ def main(argv=None): # IGNORE:C0111
             results_db.LoadDatabaseFiles(csv_dir=csv_dir)
             
             with open('cmdlines.sh', 'w') as outfh:
-                results_db.GenerateTestScript(test_case_id="TC1", test_output_filename=test_output_filename, fh=outfh)
+                results_db.GenerateTestScript(test_case_id=test_case, test_output_filename=test_output_filename, fh=outfh)
             
         return 0
     except KeyboardInterrupt:
