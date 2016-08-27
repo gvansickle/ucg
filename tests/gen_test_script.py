@@ -44,20 +44,18 @@ ${test_cases}
 
 """)
 
-prep_run_template = Template("""\
+prog_run_template = Template("""\
 # Prep run.
 # We do a prep run before each group of timing runs to eliminate disk cache variability and capture the matches.
 # We pipe the results through sort so we can diff these later.
 echo "Timing: ${cmd_line}" >> ${results_file}
 echo "Prep run for wrapped command line: '${wrapped_cmd_line}'" > ${search_results_file}
 ${wrapped_cmd_line}
-""")
 
-timing_run_template = Template("""\
 # Timing runs.
 echo "Timing run for wrapped command line: '${wrapped_cmd_line_timing}'" > ${time_run_results_file}
-echo "TEST_PROG_ID: PROG_ID" >> ${time_run_results_file}
-echo "TEST_PROG_PATH: PROG_PATH" >> ${time_run_results_file}
+echo "TEST_PROG_ID: ${prog_id}" >> ${time_run_results_file}
+echo "TEST_PROG_PATH: ${prog_path}" >> ${time_run_results_file}
 for ITER in $$(seq 0 $$(expr $$NUM_ITERATIONS - 1));
 do
     # Do a single run.
@@ -66,7 +64,7 @@ done;
 """)
 
 cmd_line_template = Template("""\
-{ ${prog_time} ${prog} ${pre_params} DIRJOBS_PLACEHOLDER SCANJOBS_PLACEHOLDER PARAMS_PLACEHOLDER 'REGEX' "TEST_DATA_DIR"; 1>&3 2>&4; }""")
+{ ${prog_time} ${prog} ${pre_params} ${opt_only_type} '${regex}' "${corpus}"; 1>&3 2>&4; }""")
 
 
 class TestGenDatabase(object):
@@ -81,9 +79,12 @@ class TestGenDatabase(object):
         '''
         Constructor
         '''
+        # Connect to an in-memory SQLite3 database.
         self.dbconnection = sqlite3.connect(":memory:")
         # Turn on foreign key support.
         self.dbconnection.execute("PRAGMA foreign_keys = ON")
+        # Use a Row object.
+        self.dbconnection.row_factory = sqlite3.Row
         
         # Register a suitable csv dialect.
         csv.register_dialect('ucg_nonstrict', delimiter=',', doublequote=True, escapechar="\\", quotechar=r'"',
@@ -114,22 +115,6 @@ class TestGenDatabase(object):
             qmarks += ",?"
         return qmarks
         
-    def _create_tables(self):
-        c = self.dbconnection.cursor()
-        
-        c.execute('''CREATE TABLE prog_info (prog_id,
-            version_line,
-             name,
-              version,
-               package_name,
-               pathname,
-               libpcre_major_ver,
-               libpcre_version,
-               libpcre_jit,
-               isa_exts_in_use)''')
-        
-        self.dbconnection.commit()
-        
     def _select_data(self, output_table_name=None):
         
         # Use a Row object.
@@ -144,14 +129,13 @@ class TestGenDatabase(object):
             """.format(output_table_name))
 
     def generate_tests_type_1(self, output_table_name=None):
-        # Use a Row object.
-        self.dbconnection.row_factory = sqlite3.Row
         c = self.dbconnection.cursor()
         c.execute("""CREATE TABLE {} AS
         SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, o.opt_expansion, t.regex, t.corpus
         FROM test_cases AS t CROSS JOIN progsundertest as p
         INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
         """.format(output_table_name))
+        return c
             
     def read_csv_into_table(self, table_name=None, filename=None, prim_key=None, foreign_key_tuples=None):
         c = self.dbconnection.cursor()
@@ -184,8 +168,6 @@ class TestGenDatabase(object):
         #print(c.fetchall())
        
     def PrintTable(self, table_name=None):
-        # Use a Row object.
-        self.dbconnection.row_factory = sqlite3.Row
         c = self.dbconnection.cursor()
         c.execute('SELECT * from {}'.format(table_name))
         rows = c.fetchall()
@@ -195,19 +177,24 @@ class TestGenDatabase(object):
         for row in rows:
             print("Row        : " + ", ".join(row))
     
-    def GenerateTestScript(self, test_output_filename, fh=sys.stdout):
+    def GenerateTestScript(self, test_case_id, test_output_filename, fh=sys.stdout):
         ###
-        ### Output the LoadDatabaseFiles script.
+        ### Output the test script.
         ###
         test_cases = ""
-        for tc in range(6): ### @todo Num LoadDatabaseFiles cases.
-            test_case_num=tc+1
-            search_results_filename="SearchResults_{}.txt".format(test_case_num)
-            time_run_results_filename='./time_results_{}.txt'.format(test_case_num)
+        test_inst_num=0
+        rows = self.dbconnection.execute('SELECT * FROM benchmark1 WHERE test_case_id == "{}"'.format(test_case_id))
+        for row in rows:
+            test_inst_num += 1
+            search_results_filename="SearchResults_{}.txt".format(test_inst_num)
+            time_run_results_filename='./time_results_{}.txt'.format(test_inst_num)
             cmd_line=cmd_line_template.substitute(
                 prog_time='/usr/bin/time -p',
-                prog='ucg',
-                pre_params='--noenv',
+                prog=row['exename'],
+                pre_params=row['pre_options'],
+                opt_only_type=row['opt_expansion'],
+                regex=row['regex'],
+                corpus=row['corpus']
                 )
             wrapped_cmd_line_prep='''{{ {cmd_line} 2>> {search_results_file} ; }} 3>&1 4>&2 | sort >> {search_results_file};'''.format(
                 cmd_line=cmd_line,
@@ -217,16 +204,16 @@ class TestGenDatabase(object):
                 cmd_line=cmd_line,
                 time_run_results_file=time_run_results_filename
                 )
-            test_case = prep_run_template.substitute(
+            test_case = prog_run_template.substitute(
                 results_file=test_output_filename,
                 search_results_file=search_results_filename,
                 cmd_line=cmd_line,
-                wrapped_cmd_line=wrapped_cmd_line_prep
-                ) + "\n" +\
-                timing_run_template.substitute(
-                    time_run_results_file=time_run_results_filename,
-                    wrapped_cmd_line_timing=wrapped_cmd_line_timing
-                    )
+                wrapped_cmd_line=wrapped_cmd_line_prep,
+                prog_id=row['prog_id'],
+                prog_path=row['exename'],  ### @todo
+                time_run_results_file=time_run_results_filename,
+                wrapped_cmd_line_timing=wrapped_cmd_line_timing
+                )
             test_cases += test_case + "\n"
         script = test_script_template_1.substitute(
             num_iterations=3,
@@ -271,7 +258,6 @@ class TestGenDatabase(object):
         
     def LoadDatabaseFiles(self):
         print("sqlite3 lib version: {}".format(sqlite3.sqlite_version))
-        self._create_tables()
         self.read_csv_into_table(table_name="opts_defs", filename='opts_defs.csv', prim_key='opt_id')
         self.read_csv_into_table(table_name="progsundertest", filename='benchmark_progs.csv',
                                  foreign_key_tuples=[("opt_only_cpp", "opts_defs(opt_id)")])
@@ -344,7 +330,7 @@ def main(argv=None): # IGNORE:C0111
             results_db.LoadDatabaseFiles()
             
             with open('cmdlines-py.sh', 'w') as outfh:
-                results_db.GenerateTestScript(test_output_filename, fh=outfh)
+                results_db.GenerateTestScript(test_case_id="TC1", test_output_filename=test_output_filename, fh=outfh)
             
         return 0
     except KeyboardInterrupt:
