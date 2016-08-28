@@ -62,6 +62,9 @@ then
 # We pipe the results through sort so we can diff these later.
 echo "Timing: ${cmd_line}" >> ${results_file}
 echo "Prep run for wrapped command line: '${wrapped_cmd_line}'" > ${search_results_file}
+echo "TEST_PROG_ID: ${prog_id}" >> ${search_results_file}
+echo "TEST_PROG_PATH: ${prog_path}" >> ${search_results_file}
+echo "END OF HEADER" >> ${search_results_file}
 ${wrapped_cmd_line}
 
 # Timing runs.
@@ -226,7 +229,7 @@ class TestGenDatabase(object):
                 cmd_line=cmd_line,
                 wrapped_cmd_line=wrapped_cmd_line_prep,
                 prog_id=row['prog_id'],
-                prog_path=row['exename'],  ### @todo
+                prog_path=row['exename'],
                 time_run_results_file=time_run_results_filename,
                 wrapped_cmd_line_timing=wrapped_cmd_line_timing
                 )
