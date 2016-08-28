@@ -38,6 +38,12 @@ test_script_template_1 = Template("""\
 
 NUM_ITERATIONS=${num_iterations};
 
+# Make sure we have a time program.
+if test "x$$PROG_TIME" == "x";
+then
+    PROG_TIME='time -p'
+fi;
+
 echo "Starting performance tests, results file is '${results_file}'";
 
 ${test_cases}
@@ -56,6 +62,9 @@ then
 # We pipe the results through sort so we can diff these later.
 echo "Timing: ${cmd_line}" >> ${results_file}
 echo "Prep run for wrapped command line: '${wrapped_cmd_line}'" > ${search_results_file}
+echo "TEST_PROG_ID: ${prog_id}" >> ${search_results_file}
+echo "TEST_PROG_PATH: ${prog_path}" >> ${search_results_file}
+echo "END OF HEADER" >> ${search_results_file}
 ${wrapped_cmd_line}
 
 # Timing runs.
@@ -75,7 +84,7 @@ fi
 """)
 
 cmd_line_template = Template("""\
-{ ${prog_time} ${prog} ${pre_params} ${opt_only_type} '${regex}' "${corpus}"; 1>&3 2>&4; }""")
+{ $${PROG_TIME} ${prog} ${pre_params} ${opt_only_type} '${regex}' "${corpus}"; 1>&3 2>&4; }""")
 
 
 class TestGenDatabase(object):
@@ -200,7 +209,6 @@ class TestGenDatabase(object):
             search_results_filename="SearchResults_{}.txt".format(test_inst_num)
             time_run_results_filename='./time_results_{}.txt'.format(test_inst_num)
             cmd_line=cmd_line_template.substitute(
-                prog_time='/usr/bin/time -p',
                 prog=row['exename'],
                 pre_params=row['pre_options'],
                 opt_only_type=row['opt_expansion'],
@@ -221,7 +229,7 @@ class TestGenDatabase(object):
                 cmd_line=cmd_line,
                 wrapped_cmd_line=wrapped_cmd_line_prep,
                 prog_id=row['prog_id'],
-                prog_path=row['exename'],  ### @todo
+                prog_path=row['exename'],
                 time_run_results_file=time_run_results_filename,
                 wrapped_cmd_line_timing=wrapped_cmd_line_timing
                 )

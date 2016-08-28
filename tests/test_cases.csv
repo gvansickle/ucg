@@ -1,7 +1,7 @@
 test_case_id, desc_short, desc_long, regex, corpus
 TC1, Test case 1, "ucg vs. others, 'BOOST.*HPP' on Boost source.", BOOST.*HPP, "${top_srcdir}/../boost_1_58_0"
 TC2, Test Case 2, "ucg vs. others, literal string on Boost source.", TEST_BOOST_NO_INTRINSIC_WCHAR_T, "${top_srcdir}/../boost_1_58_0"
-TC3, Test Case 3, "ucg vs. others, regex 'iudice[\w]*umputo' on single ~500MB file.", 'iudice[\w]*umputo', "${builddir}/500MBLoremIpsum.cpp"
-TC4, Test Case 4, "ucg vs. others, literal string on 500MB file, match at end.", 'iudicemaequumputo', "${builddir}/500MBLoremIpsum.cpp"
-TC5, Test Case 5, "ucg vs. others, '#include\s+".*"' on Boost source", '#include\s+".*"', "${top_srcdir}/../boost_1_58_0"
-TC6, Test Case 6, "ucg vs. others, literal '#endif' with --ignore-dir=doc on Boost source.", '#endif', "${top_srcdir}/../boost_1_58_0"
+TC3, Test Case 3, "ucg vs. others, regex 'iudice[\\w]*umputo' on single ~500MB file.", iudice[\\w]*umputo, "${builddir}/500MBLoremIpsum.cpp"
+TC4, Test Case 4, "ucg vs. others, literal string on 500MB file, match at end.", iudicemaequumputo, "${builddir}/500MBLoremIpsum.cpp"
+TC5, Test Case 5, "ucg vs. others, '#include\\s+".*"' on Boost source", #include\\s+".*", "${top_srcdir}/../boost_1_58_0"
+TC6, Test Case 6, "ucg vs. others, literal '#endif' with --ignore-dir=doc on Boost source.", #endif, "${top_srcdir}/../boost_1_58_0"
