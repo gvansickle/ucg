@@ -45,6 +45,12 @@ ${test_cases}
 """)
 
 prog_run_template = Template("""\
+# Start of test run for ${prog_id}/${prog_path}.
+
+# First check to make sure this program is available on the system.
+if command -v "${prog_path}" >/dev/null 2>&1;
+then
+
 # Prep run.
 # We do a prep run before each group of timing runs to eliminate disk cache variability and capture the matches.
 # We pipe the results through sort so we can diff these later.
@@ -61,6 +67,11 @@ do
     # Do a single run.
     ${wrapped_cmd_line_timing}
 done;
+
+else
+    echo "WARNING: Program \"${prog_path}\" not found or is not executable." 1>&2;
+fi
+
 """)
 
 cmd_line_template = Template("""\

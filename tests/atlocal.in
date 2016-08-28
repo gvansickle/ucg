@@ -59,12 +59,12 @@ if test -x $PROG_PCRE2GREP;
 then
 	PROGLIST=$PROGLIST,inst_pcre2grep:$PROG_PCRE2GREP
 fi
+PROGLIST=$PROGLIST,inst_system_grep:grep
 if test -x $PROG_GNU_GREP;
 then
 	PROGLIST=$PROGLIST,inst_gnu_grep_e:$PROG_GNU_GREP
 	PROGLIST=$PROGLIST,inst_gnu_grep_p:$PROG_GNU_GREP
 fi
-PROGLIST=$PROGLIST,system_grep:grep
 
 ### Functions for use in the testsuite.
 
