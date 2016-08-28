@@ -41,43 +41,6 @@ m4_define([UCG_BOOST_PATH], ["${top_srcdir}/../boost_1_58_0"])
 m4_define([UCG_PERF_RESULTS_FILE], [${builddir}/perf_test_results.txt])
 
 
-m4_define([EXTRACT_AND_APPEND_TIME],[
-		# $1 == program name.
-		AS_ECHO_N(["| $1 | "]) >> UCG_PERF_RESULTS_FILE;
-		cat stderr | $EGREP "real[[[:space:]]]+" | $ESED 's/real[[[:space:]]]+(.*)/\1/' | tr -d '\n' >> UCG_PERF_RESULTS_FILE;
-		AS_ECHO_N(" | ") >> UCG_PERF_RESULTS_FILE;
-		cat stdout | LCT >> UCG_PERF_RESULTS_FILE;
-		AS_ECHO([" |"]) >> UCG_PERF_RESULTS_FILE;
-])
-
-m4_define([PREP_ONE_PROG],[
-# $1 == program name.
-# $2 == search pattern.
-AT_CHECK([$PROG_TIME $1 $2 ]UCG_BOOST_PATH[],
-	0,
-	ignore,
-	ignore)
-])
-
-m4_define([TIME_ONE_PROG],[
-# $1 == program name.
-# $2 == search pattern.
-# $3 == params
-NOENV=$(if $(echo $1 | egrep -q 'ucg|ack'); then echo --noenv; else echo ""; fi)
-PREP_ONE_PROG([$1 ${NOENV}], [$2], [$3])
-AT_CHECK([$PROG_TIME $1 ${NOENV} $2 ]UCG_BOOST_PATH[ $3],
-	0,
-	stdout,
-	stderr,
-	[],
-	[
-		EXTRACT_AND_APPEND_TIME([$1 ${NOENV}])
-	])
-])
-
-
-
-
 
 ###
 ### Start of the performance tests.
@@ -140,7 +103,8 @@ TEST_DATA_FS_INFO=`get_dev_and_fs_type $4`
 AS_ECHO(["Test data path: \"$4\""]) >> UCG_PERF_RESULTS_FILE
 AS_ECHO(["Test data filesystem info: $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
 
-AT_CHECK([$AWK -v PROGLIST=$1 -v CHARACTERIZE=$6 -v NUM_ITERATIONS=$5 -f $srcdir/performance_test_gen.awk -- m4_default([$2],[""]) m4_escape([$3]) $4 UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
+#AT_CHECK([$AWK -v PROGLIST=$1 -v CHARACTERIZE=$6 -v NUM_ITERATIONS=$5 -f $srcdir/performance_test_gen.awk -- m4_default([$2],[""]) m4_escape([$3]) $4 UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
+AT_CHECK([${srcdir}/gen_test_script.py --csv-dir=${srcdir} --test-case=$2 -r "${builddir}/perf_test_results.txt" && chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
 
 AT_CAPTURE_FILE([./cmdlines.sh])
 ])
@@ -148,7 +112,14 @@ AT_CAPTURE_FILE([./cmdlines.sh])
 m4_define([UCG_SUMMARIZE_PERFTEST],
 [
 # $1 == NUM_ITERATIONS  ### @todo GRVS: eventually won't need this.
-AT_CHECK([$AWK -v NUM_ITERATIONS=$1 -f $srcdir/performance_test_summarizer.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
+#AT_CHECK([$AWK -v NUM_ITERATIONS=$1 -f $srcdir/performance_test_summarizer.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
+
+# Output the results.
+AS_ECHO "| Program | Avg of @todo runs | Sample Stddev | SEM | Num Matched Lines | Num Diff Chars |" >> UCG_PERF_RESULTS_FILE;
+AS_ECHO "|---------|----------------|---------------|-----|-------------------|---|" >> UCG_PERF_RESULTS_FILE;
+for fn in $(ls -1 time_results_*.txt); do
+	AT_CHECK([${srcdir}/stats.awk $fn >> UCG_PERF_RESULTS_FILE], [0], [stdout], [stderr])
+done;
 ])
 
 ###
@@ -163,9 +134,7 @@ AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-### UCG_GEN_PERFTEST([${PROGLIST}], [], ['BOOST.*HPP'],[UCG_BOOST_PATH],[3],[0])  ### @todo no CHARACTERIZE
-
-AT_CHECK([${srcdir}/gen_test_script.py --csv-dir=${srcdir} --test-case=TC1 -r "${builddir}/perf_test_results.txt" && chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
+UCG_GEN_PERFTEST([${PROGLIST}], [TC1], ['BOOST.*HPP'],[UCG_BOOST_PATH],[3],[0])  ### @todo no CHARACTERIZE
 
 # Run the test script.
 AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
@@ -189,9 +158,9 @@ AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST], [], ['TEST_BOOST_NO_INTRINSIC_WCHAR_T'],[UCG_BOOST_PATH],[3],[0])
+UCG_GEN_PERFTEST([$PROGLIST], [TC2], ['TEST_BOOST_NO_INTRINSIC_WCHAR_T'],[UCG_BOOST_PATH],[3],[0])
 # Run the test script.
-AT_CHECK([./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST([3])
 
@@ -221,9 +190,9 @@ AT_KEYWORDS([performance])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST], [], ['iudice[\w]*umputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
+UCG_GEN_PERFTEST([$PROGLIST], [TC3], ['iudice[\w]*umputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
 # Run the test script.
-AT_CHECK([./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST([3])
 
@@ -241,9 +210,9 @@ AT_KEYWORDS([performance])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST], [], ['iudicemaequumputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
+UCG_GEN_PERFTEST([$PROGLIST], [TC4], ['iudicemaequumputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
 # Run the test script.
-AT_CHECK([./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST([3])
 
@@ -273,9 +242,9 @@ AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}], [], ['#include\s+".*"'],[UCG_BOOST_PATH],[3],[0])
+UCG_GEN_PERFTEST([${PROGLIST}], [TC5], ['#include\s+".*"'],[UCG_BOOST_PATH],[3],[0])
 # Run the test script.
-AT_CHECK([./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST([3])
 
@@ -296,9 +265,9 @@ AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}], [--ignore-dir=doc], ['#endif'], [UCG_BOOST_PATH],[3],[0])
+UCG_GEN_PERFTEST([${PROGLIST}], [TC6], ['#endif'], [UCG_BOOST_PATH],[3],[0])
 # Run the test script.
-AT_CHECK([./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST([3])
 
