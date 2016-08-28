@@ -37,31 +37,34 @@ export TEST_LN_S="@TEST_LN_S@"
 export PROG_TIME="@PROG_TIME@"
 export FGREP="@FGREP@"
 export EGREP="@EGREP@"
-export PROG_PGREP="@PROG_PGREP@"
+export PROG_GREP_P="@PROG_GREP_P@"
+export PROG_PCRE2GREP="@PROG_PCRE2GREP@"
+export PROG_GNU_GREP="@PROG_GNU_GREP@"
 export AWK="@AWK@"
 
 # At testsuite-time, find the programs we wish to compare performance with.
 PROGLIST=built_ucg:ucg
-if PROG_SYSTEM_UCG="$(which ucg 2>/dev/null)";
+if PROG_INST_UCG="$(which ucg 2>/dev/null)";
 then
-	PROGLIST=$PROGLIST,system_ucg:$PROG_SYSTEM_UCG
+	PROGLIST=$PROGLIST,inst_ucg:$PROG_INST_UCG
 fi
-if PROG_AG="$(which ag 2>/dev/null)";
+if PROG_INST_AG="$(which ag 2>/dev/null)";
 then
-	PROGLIST=$PROGLIST,system_ag:$PROG_AG
+	PROGLIST=$PROGLIST,inst_ag:$PROG_INST_AG
 fi
 #if PROG_ACK="$(which ack)";
 #then
 #fi
-if PROG_SYSTEM_GGREP="$(which ggrep 2>/dev/null)";
+if test -x $PROG_PCRE2GREP;
 then
-	PROGLIST=$PROGLIST,gnu_grep:$PROG_SYSTEM_GGREP
+	PROGLIST=$PROGLIST,inst_pcre2grep:$PROG_PCRE2GREP
 fi
-#if "x$PROG_PGREP" != "x";
-#then
-#	PROGLIST=$PROGLIST,pgrep:"$PROG_PGREP";
-#fi
-PROGLIST=$PROGLIST,system_grep:grep
+PROGLIST=$PROGLIST,inst_system_grep:grep
+if test -x $PROG_GNU_GREP;
+then
+	PROGLIST=$PROGLIST,inst_gnu_grep_e:$PROG_GNU_GREP
+	PROGLIST=$PROGLIST,inst_gnu_grep_p:$PROG_GNU_GREP
+fi
 
 ### Functions for use in the testsuite.
 
