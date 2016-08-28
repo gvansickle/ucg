@@ -91,12 +91,14 @@ AT_CLEANUP
 
 m4_define([UCG_GEN_PERFTEST],
 [
-# $1 == program name list.
-# $2 == params
+# $1 == ## program name list.
+# $2 == test_case_id from 
 # $3 == regex.
 # $4 == test file/directory path
 # $5 == NUM_ITERATIONS
 # $6 == CHARACTERIZE
+m4_pushdef([test_case_id], $2)
+
 AS_ECHO(["Test description short: $at_desc"]) >> UCG_PERF_RESULTS_FILE
 # Record info on the filesystem where the test data lies.
 TEST_DATA_FS_INFO=`get_dev_and_fs_type $4`
@@ -104,9 +106,11 @@ AS_ECHO(["Test data path: \"$4\""]) >> UCG_PERF_RESULTS_FILE
 AS_ECHO(["Test data filesystem info: $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
 
 #AT_CHECK([$AWK -v PROGLIST=$1 -v CHARACTERIZE=$6 -v NUM_ITERATIONS=$5 -f $srcdir/performance_test_gen.awk -- m4_default([$2],[""]) m4_escape([$3]) $4 UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
-AT_CHECK([${srcdir}/gen_test_script.py --csv-dir=${srcdir} --test-case=$2 -r "${builddir}/perf_test_results.txt" && chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
+AT_CHECK([${srcdir}/gen_test_script.py --csv-dir=${srcdir} --test-case=test_case_id -r "${builddir}/perf_test_results.txt" && chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
 
 AT_CAPTURE_FILE([./cmdlines.sh])
+
+m4_popdef([test_case_id])
 ])
 
 m4_define([UCG_SUMMARIZE_PERFTEST],
