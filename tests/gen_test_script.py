@@ -38,6 +38,12 @@ test_script_template_1 = Template("""\
 
 NUM_ITERATIONS=${num_iterations};
 
+# Make sure we have a time program.
+if test "x$$PROG_TIME" == "x";
+then
+    PROG_TIME='time -p'
+fi;
+
 echo "Starting performance tests, results file is '${results_file}'";
 
 ${test_cases}
@@ -75,7 +81,7 @@ fi
 """)
 
 cmd_line_template = Template("""\
-{ ${prog_time} ${prog} ${pre_params} ${opt_only_type} '${regex}' "${corpus}"; 1>&3 2>&4; }""")
+{ $${PROG_TIME} ${prog} ${pre_params} ${opt_only_type} '${regex}' "${corpus}"; 1>&3 2>&4; }""")
 
 
 class TestGenDatabase(object):
@@ -200,7 +206,6 @@ class TestGenDatabase(object):
             search_results_filename="SearchResults_{}.txt".format(test_inst_num)
             time_run_results_filename='./time_results_{}.txt'.format(test_inst_num)
             cmd_line=cmd_line_template.substitute(
-                prog_time='/usr/bin/time -p',
                 prog=row['exename'],
                 pre_params=row['pre_options'],
                 opt_only_type=row['opt_expansion'],
