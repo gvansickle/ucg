@@ -69,7 +69,7 @@ do
 done;
 
 else
-    echo "WARNING: Program \"${prog_path}\" not found or is not executable." 1>&2;
+    echo "WARNING: Program \\"${prog_path}\\" not found or is not executable." 1>&2;
 fi
 
 """)
