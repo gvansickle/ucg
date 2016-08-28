@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -99,7 +99,8 @@ BEGIN {
 	
 	print("Summarizing performance test results, results file is", RESULTS_FILE);
 	
-	for(i=1; i<=NUM_RUNS; ++i)
+	### @todo Need to change how this NUM_RUNS loop is done, it results in "unknown"s in the table.
+	for(i=1; i<=NUM_RUNS*2; ++i)
 	{
 		COMMAND_LINE=CMD_LINE_ARRAY[i];
 		PREP_RUN_FILES[i]=("SearchResults_" i ".txt");
