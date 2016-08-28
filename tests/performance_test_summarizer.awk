@@ -139,8 +139,7 @@ BEGIN {
 		close(TIME_RESULTS_FILE);
 		if(NUM_TIMES == 0)
 		{
-			print("ERROR: No time entries: " NUM_TIMES);
-			exit 1;
+			print("WARNING: No time entries: " NUM_TIMES);
 		}
 	
 		# Determine the average.
