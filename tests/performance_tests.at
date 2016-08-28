@@ -112,7 +112,14 @@ AT_CAPTURE_FILE([./cmdlines.sh])
 m4_define([UCG_SUMMARIZE_PERFTEST],
 [
 # $1 == NUM_ITERATIONS  ### @todo GRVS: eventually won't need this.
-AT_CHECK([$AWK -v NUM_ITERATIONS=$1 -f $srcdir/performance_test_summarizer.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
+#AT_CHECK([$AWK -v NUM_ITERATIONS=$1 -f $srcdir/performance_test_summarizer.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
+
+# Output the results.
+AS_ECHO "| Program | Avg of @todo runs | Sample Stddev | SEM | Num Matched Lines | Num Diff Chars |" >> UCG_PERF_RESULTS_FILE;
+AS_ECHO "|---------|----------------|---------------|-----|-------------------|---|" >> UCG_PERF_RESULTS_FILE;
+for fn in $(ls -1 time_results_*.txt); do
+	AT_CHECK([${srcdir}/stats.awk $fn >> UCG_PERF_RESULTS_FILE], [0], [stdout], [stderr])
+done;
 ])
 
 ###
