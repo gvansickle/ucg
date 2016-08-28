@@ -137,6 +137,11 @@ BEGIN {
 			exit 1;
 		}
 		close(TIME_RESULTS_FILE);
+		if(NUM_TIMES == 0)
+		{
+			print("ERROR: No time entries: " NUM_TIMES);
+			exit 1;
+		}
 	
 		# Determine the average.
 		AVG_TIME[i]=0;
