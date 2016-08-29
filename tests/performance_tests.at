@@ -132,7 +132,7 @@ PREF_LIST="UCG_PREF_LIST";
 pref_index()
 {
 	retval=$(AS_ECHO "${PREF_LIST}" | $ESED -n "/$[1]/=");
-	if "x$retval" = "x"; then retval=0; fi;
+	if test "x$retval" = "x"; then retval=0; fi;
 	AS_ECHO $retval;
 }
 
@@ -157,8 +157,8 @@ for fn in $(ls SearchResults_*.txt); do
 	THIS_PROG_ID=$($AWK '$[1] ~ /^TEST_PROG_ID:/ { print $[2]; }' $fn);
 	THIS_PREF_VAL=$(pref_index $THIS_PROG_ID);
 	AS_ECHO "PREF_INDEX for $THIS_PROG_ID: $(pref_index $THIS_PROG_ID)" >> UCG_PERF_RESULTS_FILE
-	if test $THIS_PREF_VAL -ge $MAX_PREF_VAL; then
-		if test $LINECT -ge $MAX_LINECT; then
+	if test "$THIS_PREF_VAL" -ge "$MAX_PREF_VAL"; then
+		if test "$LINECT" -ge "$MAX_LINECT"; then
 			MAX_LINECT=$LINECT;
 			MAX_LINE_FN=$fn;
 			MAX_PROG_ID=$THIS_PROG_ID;
@@ -174,7 +174,7 @@ for fn in $(ls temp_SearchResults_*.txt); do
 	WILDCARD=$(AS_ECHO $fn | $ESED -n 's/temp_SearchResults_(.*)\.txt/\1/p');
 	
 	# Diff against the file selected above.
-	NUM_CHARS_DIFF=$(git diff --no-index --word-diff=porcelain $fn $MAX_LINE_FN | $EGREP '^(\\+[^+])|^(-[^-])' | wc -m);
+	NUM_CHARS_DIFF=$(git diff --no-index --word-diff=porcelain $fn $MAX_LINE_FN | $EGREP '^(\\+[[^+]])|^(-[[^-]])' | wc -m);
 	
 	# Tack the line count onto the associated timing results list.
 	AS_ECHO "NUM_CHARS_DIFF: ${NUM_CHARS_DIFF}" >> time_results_${WILDCARD}.txt;
