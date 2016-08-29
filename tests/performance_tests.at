@@ -39,6 +39,11 @@ m4_define([UCG_BOOST_PATH], ["${top_srcdir}/../boost_1_58_0"])
 # The file where we'll put the results of the performance tests.
 # This file will be created in performance_tests.at.
 m4_define([UCG_PERF_RESULTS_FILE], [${builddir}/perf_test_results.txt])
+# Preference list for choosing a prep run output file to use as the standard.
+# Find the one with the most lines, preferring GNU grep then the system grep.
+m4_define([UCG_PREF_LIST], [inst_system_grep
+inst_gnu_grep_e
+inst_gnu_grep_p])
 
 
 
@@ -120,24 +125,60 @@ m4_define([UCG_SUMMARIZE_PERFTEST],
 # $1 == NUM_ITERATIONS  ### @todo GRVS: eventually won't need this.
 #AT_CHECK([$AWK -v NUM_ITERATIONS=$1 -f $srcdir/performance_test_summarizer.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
 
-# Find the prep run output file with the most lines to use as the standard.
+# Choose a prep run output file to use as the standard.
+# Find the one with the most lines, preferring GNU grep then the system grep.
+PREF_LIST="UCG_PREF_LIST";
+
+pref_index()
+{
+	retval=$(AS_ECHO "${PREF_LIST}" | $ESED -n "/$[1]/=");
+	if test "x$retval" = "x"; then retval=0; fi;
+	AS_ECHO $retval;
+}
+
 MAX_LINE_FN="";
 MAX_LINECT=0;
+MAX_PROG_ID="";
+MAX_PREF_VAL=0;
 for fn in $(ls SearchResults_*.txt); do
 	# Get the '*' we matched on.
-	WILDCARD=$(echo $fn | $ESED -n 's/SearchResults_(.*)\.txt/\1/p');
-	LINECT=$(cat $fn | LCT)
+	WILDCARD=$(AS_ECHO $fn | $ESED -n 's/SearchResults_(.*)\.txt/\1/p');
+	
+	# Create a temp match file with the header and time triplet cut off.
+	cat $fn | $ESED -n '1,/END OF HEADER/! p' | tail -n +4 > temp_$fn;
+	
+	# Count the number of lines matched.
+	LINECT=$(cat temp_$fn | LCT)
 	
 	# Tack the line count onto the associated timing results list.
 	AS_ECHO "NUM_MATCHED_LINES: ${LINECT}" >> time_results_${WILDCARD}.txt;
 	
-	if expr $LINECT \>= $MAX_LINECT >/dev/null;
-	then
-		MAX_LINECT=$LINECT;
-		MAX_LINE_FN=$fn;
+	# Find the prog_id which generated these results.
+	THIS_PROG_ID=$($AWK '$[1] ~ /^TEST_PROG_ID:/ { print $[2]; }' $fn);
+	THIS_PREF_VAL=$(pref_index $THIS_PROG_ID);
+	AS_ECHO "PREF_INDEX for $THIS_PROG_ID: $(pref_index $THIS_PROG_ID)" >> UCG_PERF_RESULTS_FILE
+	if test \( "$THIS_PREF_VAL" -gt 0 \) -a \( "$THIS_PREF_VAL" -ge "$MAX_PREF_VAL" \); then
+		if test "$LINECT" -ge "$MAX_LINECT"; then
+			MAX_LINECT=$LINECT;
+			MAX_LINE_FN=$fn;
+			MAX_PROG_ID=$THIS_PROG_ID;
+			MAX_PREF_VAL=$THIS_PREF_VAL;
+		fi;
 	fi; 
 done;
-AS_ECHO "Note: Max lines in file \"$MAX_LINE_FN\": $MAX_LINECT" >> UCG_PERF_RESULTS_FILE;
+AS_ECHO "Note: Max lines in file \"$MAX_LINE_FN\" from $MAX_PROG_ID: $MAX_LINECT" >> UCG_PERF_RESULTS_FILE;
+
+# Now, diff the results files.
+for fn in $(ls temp_SearchResults_*.txt); do
+	# Get the '*' we matched on.
+	WILDCARD=$(AS_ECHO $fn | $ESED -n 's/temp_SearchResults_(.*)\.txt/\1/p');
+	
+	# Diff against the file selected above.
+	NUM_CHARS_DIFF=$(git diff --no-index --word-diff=porcelain $fn $MAX_LINE_FN | $EGREP '^(\\+[[^+]])|^(-[[^-]])' | wc -m);
+	
+	# Tack the line count onto the associated timing results list.
+	AS_ECHO "NUM_CHARS_DIFF: ${NUM_CHARS_DIFF}" >> time_results_${WILDCARD}.txt;
+done;
 
 # Output the results.
 AS_ECHO "| Program | Avg of @todo runs | Sample Stddev | SEM | Num Matched Lines | Num Diff Chars |" >> UCG_PERF_RESULTS_FILE;
