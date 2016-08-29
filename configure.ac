@@ -303,6 +303,11 @@ AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'], [AM_CXXFLAGS], [-Wformat -W
 # Check for built-ins we can use.
 AX_C___ATTRIBUTE__	# Defines "HAVE___ATTRIBUTE__" if the compiler supports __attribute__(()) syntax.  The macro specifically checks for
 					# the function attribute __attribute__((unused))
+AX_GCC_FUNC_ATTRIBUTE([artificial])
+AX_GCC_FUNC_ATTRIBUTE([const])
+AX_GCC_FUNC_ATTRIBUTE([pure])
+AX_GCC_FUNC_ATTRIBUTE([alloc_size])
+AX_GCC_FUNC_ATTRIBUTE([malloc])
 AX_GCC_BUILTIN(__builtin_unreachable)
 AX_GCC_BUILTIN(__builtin_expect)
 AX_GCC_BUILTIN(__builtin_popcount)

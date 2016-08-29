@@ -99,31 +99,31 @@
 
 
 /// Check for GCC __attributes__() we can use.
-#if __has_attribute(artificial)
+#if __has_attribute(artificial) || defined(HAVE_FUNC_ATTRIBUTE_ARTIFICIAL)
 	/// Function should appear in debug info as a unit.
 #	define ATTR_ARTIFICIAL __attribute__((artificial))
 #else
 #	define ATTR_ARTIFICIAL
 #endif
-#if __has_attribute(const)
+#if __has_attribute(const) || defined(HAVE_FUNC_ATTRIBUTE_CONST)
 	/// Function doesn't access globals, only its args, and has no side-effects.
 #	define ATTR_CONST __attribute__((const))
 #else
 #	define ATTR_CONST
 #endif
-#if __has_attribute(pure)
+#if __has_attribute(pure) || defined(HAVE_FUNC_ATTRIBUTE_PURE)
 	/// Function may access globals in addition to its args, and has no side-effects.
 #	define ATTR_PURE __attribute__((pure))
 #else
 #	define ATTR_PURE
 #endif
-#if __has_attribute(alloc_size)
+#if __has_attribute(alloc_size) || defined(HAVE_FUNC_ATTRIBUTE_ALLOC_SIZE)
 #	define ATTR_ALLOC_SIZE(size_of_element)  __attribute__((alloc_size(size_of_element)))
 #else
 #	define ATTR_ALLOC_SIZE(size_of_element)
 #endif
 /// @todo two-param version of alloc_size().
-#if __has_attribute(malloc)
+#if __has_attribute(malloc) || defined(HAVE_FUNC_ATTRIBUTE_MALLOC)
 #	define ATTR_MALLOC	__attribute__((malloc))
 #else
 #	define ATTR_MALLOC
