@@ -155,7 +155,6 @@ for fn in $(ls SearchResults_*.txt); do
 	
 	# Find the prog_id which generated these results.
 	THIS_PROG_ID=$($AWK '$[1] ~ /^TEST_PROG_ID:/ { print $[2]; }' $fn);
-	#AS_ECHO "PREF_LIST: $PREF_LIST" >> UCG_PERF_RESULTS_FILE;
 	THIS_PREF_VAL=$(pref_index $THIS_PROG_ID);
 	AS_ECHO "PREF_INDEX for $THIS_PROG_ID: $(pref_index $THIS_PROG_ID)" >> UCG_PERF_RESULTS_FILE
 	if test $THIS_PREF_VAL -ge $MAX_PREF_VAL; then
@@ -168,6 +167,18 @@ for fn in $(ls SearchResults_*.txt); do
 	fi; 
 done;
 AS_ECHO "Note: Max lines in file \"$MAX_LINE_FN\" from $MAX_PROG_ID: $MAX_LINECT" >> UCG_PERF_RESULTS_FILE;
+
+# Now, diff the results files.
+for fn in $(ls temp_SearchResults_*.txt); do
+	# Get the '*' we matched on.
+	WILDCARD=$(AS_ECHO $fn | $ESED -n 's/temp_SearchResults_(.*)\.txt/\1/p');
+	
+	# Diff against the file selected above.
+	NUM_CHARS_DIFF=$(git diff --no-index --word-diff=porcelain $fn $MAX_LINE_FN | $EGREP '^(\\+[^+])|^(-[^-])' | wc -m);
+	
+	# Tack the line count onto the associated timing results list.
+	AS_ECHO "NUM_CHARS_DIFF: ${NUM_CHARS_DIFF}" >> time_results_${WILDCARD}.txt;
+done;
 
 # Output the results.
 AS_ECHO "| Program | Avg of @todo runs | Sample Stddev | SEM | Num Matched Lines | Num Diff Chars |" >> UCG_PERF_RESULTS_FILE;
