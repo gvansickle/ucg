@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 from __future__ import print_function
+import argparse
 
 copyright_notice=\
 '''
@@ -39,7 +40,7 @@ test_script_template_1 = Template("""\
 NUM_ITERATIONS=${num_iterations};
 
 # Make sure we have a time program.
-if test "x$$PROG_TIME" == "x";
+if test "x$$PROG_TIME" = "x";
 then
     PROG_TIME='time -p'
 fi;
@@ -79,8 +80,7 @@ done;
 
 else
     echo "WARNING: Program \\"${prog_path}\\" not found or is not executable." 1>&2;
-fi
-
+fi;
 """)
 
 cmd_line_template = Template("""\
@@ -244,7 +244,7 @@ class TestGenDatabase(object):
         print(script, file=fh)
         
     def LoadDatabaseFiles(self, csv_dir=None):
-        print("sqlite3 lib version: {}".format(sqlite3.sqlite_version))
+        print("sqlite3 lib version: {}".format(sqlite3.sqlite_version), file=sys.stderr)
         self.read_csv_into_table(table_name="opts_defs", filename=csv_dir+'/opts_defs.csv', prim_key='opt_id')
         self.read_csv_into_table(table_name="progsundertest", filename=csv_dir+'/benchmark_progs.csv',
                                  foreign_key_tuples=[("opt_only_cpp", "opts_defs(opt_id)")])
@@ -285,9 +285,11 @@ def main(argv=None): # IGNORE:C0111
     try:
         # Setup argument parser
         parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
-        parser.add_argument("-c", "--test-case", dest="test_case", help="The test case id to generate the shell script for.")
-        parser.add_argument("-d", "--csv-dir", dest="csv_dir", help="Directory where the source csv files can be found.")
-        parser.add_argument("-r", "--test-output", dest="test_output_filename", help="Test results combined output filename.")
+        parser.add_argument("-o", "--output-file", dest="outfile_name", help="Filename of the generated file [default: stdout]",
+                            type=argparse.FileType('w'), default=sys.stdout)
+        parser.add_argument("-c", "--test-case", dest="test_case", help="The test case id to generate the shell script for.", required=True)
+        parser.add_argument("-d", "--csv-dir", dest="csv_dir", help="Directory where the source csv files can be found.", required=True)
+        parser.add_argument("-r", "--test-output", dest="test_output_filename", help="Test results combined output filename.", required=True)
         parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
         parser.add_argument("-i", "--include", dest="include", help="only include paths matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
         parser.add_argument("-e", "--exclude", dest="exclude", help="exclude paths matching this regex pattern. [default: %(default)s]", metavar="RE" )
@@ -297,6 +299,7 @@ def main(argv=None): # IGNORE:C0111
         # Process arguments
         args = parser.parse_args()
         
+        outfile_name = args.outfile_name
         test_case = args.test_case
         csv_dir = args.csv_dir
         test_output_filename = args.test_output_filename
@@ -311,19 +314,15 @@ def main(argv=None): # IGNORE:C0111
         if inpat and expat and inpat == expat:
             raise CLIError("include and exclude pattern are equal! Nothing will be processed.")
 
-        if test_output_filename is None:
-            raise CLIError("Must specify test results combined output filename (-r).")
-        if csv_dir is None:
-            raise CLIError("Must specify csv directory (--csv-dir).")
-
         #inpath = paths[0]
         #outdir = paths[1] 
         
         with TestGenDatabase() as results_db:
+            # Load the csv files into the database as tables.
             results_db.LoadDatabaseFiles(csv_dir=csv_dir)
             
-            with open('cmdlines.sh', 'w') as outfh:
-                results_db.GenerateTestScript(test_case_id=test_case, test_output_filename=test_output_filename, fh=outfh)
+            # Generate the shell script, writing it to outfile.
+            results_db.GenerateTestScript(test_case_id=test_case, test_output_filename=test_output_filename, fh=outfile_name)
             
         return 0
     except KeyboardInterrupt:
