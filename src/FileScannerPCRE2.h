@@ -55,6 +55,7 @@ private:
 
 #ifdef HAVE_LIBPCRE2
 	/// The compiled libpcre2 regex.
+	/// @todo Make this a unique_ptr<>.
 	pcre2_code *m_pcre2_regex;
 #endif
 };

@@ -61,6 +61,25 @@ static int callout_handler(pcre2_callout_block *cob, void *ctx)
 		return 1;
 	}
 }
+
+static int count_callouts_callback(pcre2_callout_enumerate_block *ceb, void *ctx)
+{
+	size_t * ctr { reinterpret_cast<size_t*>(ctx) };
+
+	*ctr = *ctr + 1;
+
+	return 0;
+}
+
+static size_t pattern_num_callouts(const pcre2_code *code)
+{
+	size_t num_callouts {0};
+
+	pcre2_callout_enumerate(code, count_callouts_callback, &num_callouts);
+
+	return num_callouts;
+}
+
 #endif
 
 FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
@@ -117,6 +136,13 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 		// JIT compilation error.
 		pcre2_code_free(m_pcre2_regex);
 		throw FileScannerException(std::string("PCRE2 JIT compilation error: ") + PCRE2ErrorCodeToErrorString(jit_retval));
+	}
+
+	// Only allow the one callout we use internally, no user callouts.
+	if(pattern_num_callouts(m_pcre2_regex) > 1)
+	{
+		pcre2_code_free(m_pcre2_regex);
+		throw FileScannerException(std::string("Callouts not supported."));
 	}
 #endif
 }
