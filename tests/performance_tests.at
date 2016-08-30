@@ -21,10 +21,14 @@
 ### testcases are run in ./tests/testsuite.dir/NN/, but outside a test case, e.g. ${builddir} is ".", not
 ### the "../.." that we really want.
 ###
-### Directories during test time.
+### Directories during test time:
 ### 
 ### AS_ECHO([Dirs: pwd=$(pwd) , srcdir=$srcdir , at_top_srcdir=$at_top_srcdir , top_srcdir=$top_srcdir , abs_builddir=$abs_builddir builddir=$builddir,$(realpath $builddir)]) >> UCG_PERF_RESULTS_FILE
-### 
+### AT_CHECK([AS_ECHO "srcdir: ${srcdir} == $(realpath ${srcdir})" > diags.txt], [0])
+### AT_CHECK([AS_ECHO "at_srcdir: ${at_srcdir} == $(realpath ${at_srcdir})" >> diags.txt], [0])
+### AT_CHECK([AS_ECHO "builddir: ${builddir} == $(realpath ${builddir})" >> diags.txt], [0])
+### AT_CAPTURE_FILE([diags.txt])
+###
 ### pwd=/<...>/UCGTopSrcDir/build/tests/testsuite.dir/39
 ### srcdir=../../../../tests <== This will get you to the srcdir of the test's *.at file at test run time.
 ### top_srcdir=../../../.. <== This will get you to the real top_srcdir relative to the test's CWD at test runtime.
@@ -97,7 +101,7 @@ AT_CLEANUP
 m4_define([UCG_GEN_PERFTEST],
 [
 # $1 == ## program name list.
-# $2 == test_case_id from 
+# $2 == test_case_id from test_cases.csv.
 # $3 == ## regex.
 # $4 == ## test file/directory path
 # $5 == ## NUM_ITERATIONS
@@ -110,14 +114,6 @@ TEST_DATA_FS_INFO=`get_dev_and_fs_type $4`
 AS_ECHO(["Test data path: \"$4\""]) >> UCG_PERF_RESULTS_FILE
 AS_ECHO(["Test data filesystem info: $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
 
-# "${builddir}/perf_test_results.txt"
-
-AT_CHECK([AS_ECHO "srcdir: ${srcdir} == $(realpath ${srcdir})" > diags.txt], [0])
-AT_CHECK([AS_ECHO "at_srcdir: ${at_srcdir} == $(realpath ${at_srcdir})" >> diags.txt], [0])
-AT_CHECK([AS_ECHO "builddir: ${builddir} == $(realpath ${builddir})" >> diags.txt], [0])
-AT_CAPTURE_FILE([diags.txt])
-
-#AT_CHECK([$AWK -v PROGLIST=$1 -v CHARACTERIZE=$6 -v NUM_ITERATIONS=$5 -f $srcdir/performance_test_gen.awk -- m4_default([$2],[""]) m4_escape([$3]) $4 UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
 AT_CHECK([${srcdir}/gen_test_script.py --csv-dir=${srcdir} --test-case=test_case_id -r UCG_PERF_RESULTS_FILE -o ./cmdlines.sh && chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
 
 AT_CAPTURE_FILE([./cmdlines.sh])
@@ -127,9 +123,6 @@ m4_popdef([test_case_id])
 
 m4_define([UCG_SUMMARIZE_PERFTEST],
 [
-# $1 == NUM_ITERATIONS  ### @todo GRVS: eventually won't need this.
-#AT_CHECK([$AWK -v NUM_ITERATIONS=$1 -f $srcdir/performance_test_summarizer.awk -- $(ls -1 time_results_*.txt | wc -l) UCG_PERF_RESULTS_FILE], [0], [stdout-nolog], [stderr])
-
 # Choose a prep run output file to use as the standard.
 # Find the one with the most lines, preferring GNU grep then the system grep.
 PREF_LIST="UCG_PREF_LIST";
