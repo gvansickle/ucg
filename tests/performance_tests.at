@@ -16,7 +16,7 @@
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
 
-### Filenames.  We do this with m4 defines so that ${builddir} etc. don't get expanded
+### Filenames.  We do this with m4_defines so that ${builddir} etc. don't get expanded
 ### outside of the testcase, which would result in the path being incorrect.  Remember that the
 ### testcases are run in ./tests/testsuite.dir/NN/, but outside a test case, e.g. ${builddir} is ".", not
 ### the "../.." that we really want.
@@ -113,7 +113,7 @@ AS_ECHO(["Test data filesystem info: $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_F
 # "${builddir}/perf_test_results.txt"
 
 #AT_CHECK([$AWK -v PROGLIST=$1 -v CHARACTERIZE=$6 -v NUM_ITERATIONS=$5 -f $srcdir/performance_test_gen.awk -- m4_default([$2],[""]) m4_escape([$3]) $4 UCG_PERF_RESULTS_FILE > ./cmdlines.sh ; chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
-AT_CHECK([${srcdir}/gen_test_script.py --csv-dir=${srcdir} --test-case=test_case_id -r UCG_PERF_RESULTS_FILE && chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
+AT_CHECK([${srcdir}/gen_test_script.py --csv-dir=${srcdir} --test-case=test_case_id -r UCG_PERF_RESULTS_FILE -o ./cmdlines.sh && chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
 
 AT_CAPTURE_FILE([./cmdlines.sh])
 
