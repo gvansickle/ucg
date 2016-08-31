@@ -55,7 +55,8 @@ private:
 
 #ifdef HAVE_LIBPCRE2
 	/// The compiled libpcre2 regex.
-	/// @todo Make this a unique_ptr<>.
+	/// @todo Make this a unique_ptr<>, RAII-ify it.
+	//std::unique_ptr<pcre2_code, void(*)(pcre2_code*)> m_pcre2_regex;
 	pcre2_code *m_pcre2_regex;
 #endif
 };
