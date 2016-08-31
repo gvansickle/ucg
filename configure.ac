@@ -191,7 +191,14 @@ AC_SUBST([PROG_GREP_P], [$ac_cv_path_PROG_GREP_P])
 # See if we have a pcre2grep.
 AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep])
 
-## Checks for maintainer tools.
+###
+### Checks for maintainer tools.
+###
+
+# Python, for generation of test suite.
+### @note Python >= 2.7 is actually required to run the testsuite at the moment, but my hope is that
+### this will soon become a pre-"make distcheck" requirement.
+AM_PATH_PYTHON([2.7])
 
 # Autotest needs autom4te, or 'missing's stub for it. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
@@ -300,7 +307,7 @@ AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'], [AM_CXXFLAGS], [-Wformat -Wformat-security])
 
-# Check for built-ins we can use.
+# Check for GCC-style built-ins and attributes we can use.
 AX_C___ATTRIBUTE__	# Defines "HAVE___ATTRIBUTE__" if the compiler supports __attribute__(()) syntax.  The macro specifically checks for
 					# the function attribute __attribute__((unused))
 AX_GCC_FUNC_ATTRIBUTE([artificial])

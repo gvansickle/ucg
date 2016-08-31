@@ -41,6 +41,7 @@ export PROG_GREP_P="@PROG_GREP_P@"
 export PROG_PCRE2GREP="@PROG_PCRE2GREP@"
 export PROG_GNU_GREP="@PROG_GNU_GREP@"
 export AWK="@AWK@"
+export PYTHON="@PYTHON@"
 
 # At testsuite-time, find the programs we wish to compare performance with.
 PROGLIST=built_ucg:ucg
