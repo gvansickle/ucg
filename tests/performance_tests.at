@@ -155,7 +155,7 @@ for fn in $(ls SearchResults_*.txt); do
 	THIS_PROG_ID=$($AWK '$[1] ~ /^TEST_PROG_ID:/ { print $[2]; }' $fn);
 	THIS_PREF_VAL=$(pref_index $THIS_PROG_ID);
 	AS_ECHO "PREF_INDEX for $THIS_PROG_ID: $(pref_index $THIS_PROG_ID)" >> UCG_PERF_RESULTS_FILE
-	AS_IF([test "$THIS_PREF_VAL" -gt 0 && {test "$THIS_PREF_VAL" -ge "$MAX_PREF_VAL" }],
+	AS_IF([test "$THIS_PREF_VAL" -gt 0 && test "$THIS_PREF_VAL" -ge "$MAX_PREF_VAL"],
 		[
 		AS_IF([test "$LINECT" -ge "$MAX_LINECT"],
 			[
