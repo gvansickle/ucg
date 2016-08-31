@@ -155,14 +155,16 @@ for fn in $(ls SearchResults_*.txt); do
 	THIS_PROG_ID=$($AWK '$[1] ~ /^TEST_PROG_ID:/ { print $[2]; }' $fn);
 	THIS_PREF_VAL=$(pref_index $THIS_PROG_ID);
 	AS_ECHO "PREF_INDEX for $THIS_PROG_ID: $(pref_index $THIS_PROG_ID)" >> UCG_PERF_RESULTS_FILE
-	if test \( "$THIS_PREF_VAL" -gt 0 \) -a \( "$THIS_PREF_VAL" -ge "$MAX_PREF_VAL" \); then
-		if test "$LINECT" -ge "$MAX_LINECT"; then
-			MAX_LINECT=$LINECT;
-			MAX_LINE_FN=$fn;
-			MAX_PROG_ID=$THIS_PROG_ID;
-			MAX_PREF_VAL=$THIS_PREF_VAL;
-		fi;
-	fi; 
+	AS_IF([test "$THIS_PREF_VAL" -gt 0 && {test "$THIS_PREF_VAL" -ge "$MAX_PREF_VAL" }],
+		[
+		AS_IF([test "$LINECT" -ge "$MAX_LINECT"],
+			[
+				MAX_LINECT=$LINECT;
+				MAX_LINE_FN=$fn;
+				MAX_PROG_ID=$THIS_PROG_ID;
+				MAX_PREF_VAL=$THIS_PREF_VAL;
+			])
+		])
 done;
 AS_ECHO "Note: Max lines in file \"$MAX_LINE_FN\" from $MAX_PROG_ID: $MAX_LINECT" >> UCG_PERF_RESULTS_FILE;
 
@@ -201,9 +203,9 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 UCG_GEN_PERFTEST([${PROGLIST}], [TC1], ['BOOST.*HPP'],[UCG_BOOST_PATH],[3],[0])  ### @todo no CHARACTERIZE
 
 # Run the test script.
-AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
-UCG_SUMMARIZE_PERFTEST([3])
+UCG_SUMMARIZE_PERFTEST
 
 AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
@@ -224,9 +226,9 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 # Generate the test script.
 UCG_GEN_PERFTEST([$PROGLIST], [TC2], ['TEST_BOOST_NO_INTRINSIC_WCHAR_T'],[UCG_BOOST_PATH],[3],[0])
 # Run the test script.
-AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
-UCG_SUMMARIZE_PERFTEST([3])
+UCG_SUMMARIZE_PERFTEST
 
 AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
@@ -256,9 +258,9 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 # Generate the test script.
 UCG_GEN_PERFTEST([$PROGLIST], [TC3], ['iudice[\w]*umputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
 # Run the test script.
-AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
-UCG_SUMMARIZE_PERFTEST([3])
+UCG_SUMMARIZE_PERFTEST
 
 AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
@@ -276,9 +278,9 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 # Generate the test script.
 UCG_GEN_PERFTEST([$PROGLIST], [TC4], ['iudicemaequumputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
 # Run the test script.
-AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
-UCG_SUMMARIZE_PERFTEST([3])
+UCG_SUMMARIZE_PERFTEST
 
 AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
@@ -308,9 +310,9 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 # Generate the test script.
 UCG_GEN_PERFTEST([${PROGLIST}], [TC5], ['#include\s+".*"'],[UCG_BOOST_PATH],[3],[0])
 # Run the test script.
-AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
-UCG_SUMMARIZE_PERFTEST([3])
+UCG_SUMMARIZE_PERFTEST
 
 AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
@@ -331,9 +333,9 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 # Generate the test script.
 UCG_GEN_PERFTEST([${PROGLIST}], [TC6], ['#endif'], [UCG_BOOST_PATH],[3],[0])
 # Run the test script.
-AT_CHECK([source ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
-UCG_SUMMARIZE_PERFTEST([3])
+UCG_SUMMARIZE_PERFTEST
 
 AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
