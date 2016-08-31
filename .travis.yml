@@ -23,6 +23,8 @@ before_script:
  - # lscpu = Doesn't exist on OSX or Cygwin
  - # free -ht = Doesn't exist on OSX or Cygwin
  - # df main.cpp # df does exist on Cygwin.  Also on OSX, but params are different, no --output, -T is different.
+ - python --version
+ - python2 --version
  - mount | fgrep -w "`df . | grep '%' | sed -e 's/.*% *//'`"
  - git fetch --unshallow  # Travis limits its pull by default to 50 revs.  The build then can't do a proper "git describe".
 
