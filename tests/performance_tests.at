@@ -15,39 +15,41 @@
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
-m4_define([EXTRACT_AND_APPEND_TIME],[
-		# $1 == program name.
-		AS_ECHO_N(["| $1 | "]) >> $PERF_RESULTS_FILE;
-		cat stderr | egrep "real[[[:space:]]]+" | $ESED 's/real[[[:space:]]]+(.*)/\1/' | tr -d '\n' >> $PERF_RESULTS_FILE;
-		AS_ECHO_N(" | ") >> $PERF_RESULTS_FILE;
-		cat stdout | LCT >> $PERF_RESULTS_FILE;
-		AS_ECHO([" |"]) >> $PERF_RESULTS_FILE;
-])
 
-m4_define([PREP_ONE_PROG],[
-# $1 == program name.
-# $2 == search pattern.
-AT_CHECK([$PROG_TIME $1 $2 ${BOOST_PATH}],
-	0,
-	ignore,
-	ignore)
-])
+### Filenames.  We do this with m4_defines so that ${builddir} etc. don't get expanded
+### outside of the testcase, which would result in the path being incorrect.  Remember that the
+### testcases are run in ./tests/testsuite.dir/NN/, but outside a test case, e.g. ${builddir} is ".", not
+### the "../.." that we really want.
+###
+### Directories during test time:
+### 
+### AS_ECHO([Dirs: pwd=$(pwd) , srcdir=$srcdir , at_top_srcdir=$at_top_srcdir , top_srcdir=$top_srcdir , abs_builddir=$abs_builddir builddir=$builddir,$(realpath $builddir)]) >> UCG_PERF_RESULTS_FILE
+### AT_CHECK([AS_ECHO "srcdir: ${srcdir} == $(realpath ${srcdir})" > diags.txt], [0])
+### AT_CHECK([AS_ECHO "at_srcdir: ${at_srcdir} == $(realpath ${at_srcdir})" >> diags.txt], [0])
+### AT_CHECK([AS_ECHO "builddir: ${builddir} == $(realpath ${builddir})" >> diags.txt], [0])
+### AT_CAPTURE_FILE([diags.txt])
+###
+### pwd=/<...>/UCGTopSrcDir/build/tests/testsuite.dir/39
+### srcdir=../../../../tests <== This will get you to the srcdir of the test's *.at file at test run time.
+### top_srcdir=../../../.. <== This will get you to the real top_srcdir relative to the test's CWD at test runtime.
+### builddir=../.. <== This will get you to /<..>/UCGTopBuildDir/tests from the CWD at test runtime. 
+### abs_builddir=/<...>/UCGTopSrcDir/build/tests
+### at_top_srcdir=../..
+### 
+# Paths to source that we'll test against.
+# We generate this one.
+m4_define([UCG_TEST_FILE_NAME_LARGE_FILE_1], ["${builddir}/500MBLoremIpsum.cpp"])
+m4_define([UCG_BOOST_PATH], ["${top_srcdir}/../boost_1_58_0"])
+# The file where we'll put the results of the performance tests.
+# This file will be created in performance_tests.at.
+m4_define([UCG_PERF_RESULTS_FILE], [${builddir}/perf_test_results.txt])
+# Preference list for choosing a prep run output file to use as the standard.
+# Find the one with the most lines, preferring GNU grep then the system grep.
+m4_define([UCG_PREF_LIST], [inst_system_grep
+inst_gnu_grep_e
+inst_gnu_grep_p])
 
-m4_define([TIME_ONE_PROG],[
-# $1 == program name.
-# $2 == search pattern.
-# $3 == params
-NOENV=$(if $(echo $1 | egrep -q 'ucg|ack'); then echo --noenv; else echo ""; fi)
-PREP_ONE_PROG([$1 ${NOENV}], [$2], [$3])
-AT_CHECK([$PROG_TIME $1 ${NOENV} $2 ${BOOST_PATH} $3],
-	0,
-	stdout,
-	stderr,
-	[],
-	[
-		EXTRACT_AND_APPEND_TIME([$1 ${NOENV}])
-	])
-])
+
 
 ###
 ### Start of the performance tests.
@@ -58,132 +60,261 @@ AT_BANNER([UniversalCodeGrep performance tests])
 # Create the logfile.
 #
 AT_SETUP([Create report log file])
-echo "ucg Performance Test Results" > $PERF_RESULTS_FILE
+AT_KEYWORDS([performance])
+AS_ECHO(["ucg Performance Test Results"]) > UCG_PERF_RESULTS_FILE
+AS_ECHO(["Test run started at: `date '+%Y-%m-%d %T%z' | sed 's/\(..\)\(..\)$/\1:\2/'`"]) >> UCG_PERF_RESULTS_FILE
 AT_CLEANUP
 
 #
 # Record some system info.
 #
 AT_SETUP([Recording system info])
-AS_ECHO(["START SYSTEM INFO"]) >> $PERF_RESULTS_FILE
-AT_CHECK([get_system_info >> $PERF_RESULTS_FILE], [0], [stdout], [stderr])
-AS_ECHO(["END SYSTEM INFO"]) >> $PERF_RESULTS_FILE
+AT_KEYWORDS([performance])
+AS_ECHO(["START SYSTEM INFO"]) >> UCG_PERF_RESULTS_FILE
+AT_CHECK([get_system_info >> UCG_PERF_RESULTS_FILE], [0], [stdout], [stderr])
+AS_ECHO(["END SYSTEM INFO"]) >> UCG_PERF_RESULTS_FILE
 AT_CLEANUP
 
 #
 # Get the versions of the programs we're comparing to.
 #
 AT_SETUP([Getting program versions])
+AT_KEYWORDS([performance])
 
+AS_ECHO(["START PROGVER INFO"]) >> UCG_PERF_RESULTS_FILE
 # Loop through the programs we're comparing performance with.
-for PROGNAME in $PERF_PROGRAMS_TO_COMPARE grep; do
-	AS_ECHO([--]) >> $PERF_RESULTS_FILE
-	AS_ECHO(["$PROGNAME --version:"]) >> $PERF_RESULTS_FILE
-	AS_ECHO(["$($PROGNAME --version)"]) >> $PERF_RESULTS_FILE
-	AS_ECHO([--]) >> $PERF_RESULTS_FILE
+PROGLIST_TUPLES=$(AS_ECHO(["$PROGLIST"]) | $SED 's/,/ /g')
+for TUPLE in $PROGLIST_TUPLES; do
+	TEST_PROG_ID=$(AS_ECHO(["$TUPLE"]) | $ESED -n 's/(.*):.*$/\1/p')
+	TEST_PROG_PATH=$(AS_ECHO(["$TUPLE"]) | $ESED -n 's/.*:(.*)$/\1/p')
+	AS_ECHO([PROGVER_START]) >> UCG_PERF_RESULTS_FILE
+	AS_ECHO(["TEST_PROG_ID: $TEST_PROG_ID"]) >> UCG_PERF_RESULTS_FILE
+	AS_ECHO(["TEST_PROG_PATH: $TEST_PROG_PATH"]) >> UCG_PERF_RESULTS_FILE
+	AS_ECHO(["$TEST_PROG_PATH --version:"]) >> UCG_PERF_RESULTS_FILE
+	AS_ECHO(["$($TEST_PROG_PATH --version)"]) >> UCG_PERF_RESULTS_FILE
+	AS_ECHO([PROGVER_END]) >> UCG_PERF_RESULTS_FILE
+done;
+AS_ECHO(["END PROGVER INFO"]) >> UCG_PERF_RESULTS_FILE
+
+AT_CLEANUP
+
+m4_define([UCG_GEN_PERFTEST],
+[
+# $1 == ## program name list.
+# $2 == test_case_id from test_cases.csv.
+# $3 == ## regex.
+# $4 == ## test file/directory path
+# $5 == ## NUM_ITERATIONS
+# $6 == ## CHARACTERIZE
+m4_pushdef([test_case_id], $2)
+
+AS_ECHO(["Test description short: $at_desc"]) >> UCG_PERF_RESULTS_FILE
+# Record info on the filesystem where the test data lies.
+TEST_DATA_FS_INFO=`get_dev_and_fs_type $4`
+AS_ECHO(["Test data path: \"$4\""]) >> UCG_PERF_RESULTS_FILE
+AS_ECHO(["Test data filesystem info: $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
+
+AT_CHECK([$PYTHON ${srcdir}/gen_test_script.py --csv-dir=${srcdir} --test-case=test_case_id -r UCG_PERF_RESULTS_FILE -o ./cmdlines.sh && chmod +x ./cmdlines.sh], [0], [stdout], [stderr])
+
+AT_CAPTURE_FILE([./cmdlines.sh])
+
+m4_popdef([test_case_id])
+])
+
+m4_define([UCG_SUMMARIZE_PERFTEST],
+[
+# Choose a prep run output file to use as the standard.
+# Find the one with the most lines, preferring GNU grep then the system grep.
+PREF_LIST="UCG_PREF_LIST";
+
+pref_index()
+{
+	retval=$(AS_ECHO "${PREF_LIST}" | $ESED -n "/$[1]/=");
+	if test "x$retval" = "x"; then retval=0; fi;
+	AS_ECHO $retval;
+}
+
+MAX_LINE_FN="";
+MAX_LINECT=0;
+MAX_PROG_ID="";
+MAX_PREF_VAL=0;
+for fn in $(ls SearchResults_*.txt); do
+	# Get the '*' we matched on.
+	WILDCARD=$(AS_ECHO $fn | $ESED -n 's/SearchResults_(.*)\.txt/\1/p');
+	
+	# Create a temp match file with the header and time triplet cut off.
+	cat $fn | $ESED -n '1,/END OF HEADER/! p' | tail -n +4 > temp_$fn;
+	
+	# Count the number of lines matched.
+	LINECT=$(cat temp_$fn | LCT)
+	
+	# Tack the line count onto the associated timing results list.
+	AS_ECHO "NUM_MATCHED_LINES: ${LINECT}" >> time_results_${WILDCARD}.txt;
+	
+	# Find the prog_id which generated these results.
+	THIS_PROG_ID=$($AWK '$[1] ~ /^TEST_PROG_ID:/ { print $[2]; }' $fn);
+	THIS_PREF_VAL=$(pref_index $THIS_PROG_ID);
+	AS_ECHO "PREF_INDEX for $THIS_PROG_ID: $(pref_index $THIS_PROG_ID)" >> UCG_PERF_RESULTS_FILE
+	AS_IF([test "$THIS_PREF_VAL" -gt 0 && test "$THIS_PREF_VAL" -ge "$MAX_PREF_VAL"],
+		[
+		AS_IF([test "$LINECT" -ge "$MAX_LINECT"],
+			[
+				MAX_LINECT=$LINECT;
+				MAX_LINE_FN=$fn;
+				MAX_PROG_ID=$THIS_PROG_ID;
+				MAX_PREF_VAL=$THIS_PREF_VAL;
+			])
+		])
+done;
+AS_ECHO "Note: Max lines in file \"$MAX_LINE_FN\" from $MAX_PROG_ID: $MAX_LINECT" >> UCG_PERF_RESULTS_FILE;
+
+# Now, diff the results files.
+for fn in $(ls temp_SearchResults_*.txt); do
+	# Get the '*' we matched on.
+	WILDCARD=$(AS_ECHO $fn | $ESED -n 's/temp_SearchResults_(.*)\.txt/\1/p');
+	
+	# Diff against the file selected above.
+	NUM_CHARS_DIFF=$(git diff --no-index --word-diff=porcelain $fn $MAX_LINE_FN | $EGREP '^(\\+[[^+]])|^(-[[^-]])' | wc -m);
+	
+	# Tack the line count onto the associated timing results list.
+	AS_ECHO "NUM_CHARS_DIFF: ${NUM_CHARS_DIFF}" >> time_results_${WILDCARD}.txt;
 done;
 
-
-AT_CLEANUP
+# Output the results.
+AS_ECHO "| Program | Avg of @todo runs | Sample Stddev | SEM | Num Matched Lines | Num Diff Chars |" >> UCG_PERF_RESULTS_FILE;
+AS_ECHO "|---------|----------------|---------------|-----|-------------------|---|" >> UCG_PERF_RESULTS_FILE;
+for fn in $(ls -1 time_results_*.txt); do
+	AT_CHECK([${srcdir}/stats.awk $fn >> UCG_PERF_RESULTS_FILE], [0], [stdout], [stderr])
+done;
+])
 
 ###
-### ucg vs. grep, 'BOOST.*HPP' on Boost source.
+### ucg vs. others, 'BOOST.*HPP' on Boost source.
 ###
-AT_SETUP([ucg vs. grep, 'BOOST.*HPP' on Boost source])
+AT_SETUP([ucg vs. others, 'BOOST.*HPP' on Boost source])
+AT_KEYWORDS([performance long])
 
 # Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 
-###
-### Directories during test time.
-### 
-### AS_ECHO([Dirs: pwd=$(pwd) , srcdir=$srcdir , at_top_srcdir=$at_top_srcdir , top_srcdir=$top_srcdir , abs_builddir=$abs_builddir]) >> $PERF_RESULTS_FILE
-### 
-### pwd=/<...>/UCGTopSrcDir/build/tests/testsuite.dir/39
-### srcdir=../../../../tests <== This will get you to the srcdir of the test's *.at file at test run time.
-### top_srcdir=../../../.. <== This will get you to the real top_srcdir relative to the test's CWD at test runtime.
-### abs_builddir=/<...>/UCGTopSrcDir/build/tests
-### at_top_srcdir=../..
-### 
+AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-AS_ECHO(["START PERFTEST"]) >> $PERF_RESULTS_FILE
+# Generate the test script.
+UCG_GEN_PERFTEST([${PROGLIST}], [TC1], ['BOOST.*HPP'],[UCG_BOOST_PATH],[3],[0])  ### @todo no CHARACTERIZE
 
-# Record info on the filesystem where the test data lies.
-TEST_DATA_FS_INFO=`get_dev_and_fs_type "${BOOST_PATH}"`
-AS_ECHO(["The test data \"${BOOST_PATH}\" is on filesystem $TEST_DATA_FS_INFO"]) >> $PERF_RESULTS_FILE
+# Run the test script.
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+# Summarize the test results.
+UCG_SUMMARIZE_PERFTEST
 
-AT_CHECK([$AWK -f $srcdir/performance_test_gen.awk -- 'BOOST.*HPP' "${BOOST_PATH}" > ./cmdlines.txt], [0], [stdout], [stderr])
-
-AT_CAPTURE_FILE([./cmdlines.txt])
-
-AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt $PERF_RESULTS_FILE "${BOOST_PATH}"], [0], [stdout-nolog], [stderr])
-
-AS_ECHO(["END PERFTEST"]) >> $PERF_RESULTS_FILE
+AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
 
 
 ###
-### ucg vs. grep, literal string on Boost source.
+### ucg vs. others, literal string on Boost source.
 ###
-AT_SETUP([ucg vs. grep, literal string on Boost source])
+AT_SETUP([ucg vs. others, literal string on Boost source])
+AT_KEYWORDS([performance])
 
 # Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 
-AS_ECHO(["START PERFTEST"]) >> $PERF_RESULTS_FILE
+AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-# Record info on the filesystem where the test data lies.
-TEST_DATA_FS_INFO=`get_dev_and_fs_type "${BOOST_PATH}"`
-AS_ECHO(["The test data \"${BOOST_PATH}\" is on filesystem $TEST_DATA_FS_INFO"]) >> $PERF_RESULTS_FILE
+# Generate the test script.
+UCG_GEN_PERFTEST([$PROGLIST], [TC2], ['TEST_BOOST_NO_INTRINSIC_WCHAR_T'],[UCG_BOOST_PATH],[3],[0])
+# Run the test script.
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+# Summarize the test results.
+UCG_SUMMARIZE_PERFTEST
 
-AT_CHECK([$AWK -f $srcdir/performance_test_gen.awk -- "TEST_BOOST_NO_INTRINSIC_WCHAR_T" "${BOOST_PATH}" > ./cmdlines.txt], [0], [stdout], [stderr])
-
-AT_CAPTURE_FILE([./cmdlines.txt])
-
-AT_CHECK([$AWK -f $srcdir/performance_test_runner.awk -- ./cmdlines.txt $PERF_RESULTS_FILE "${BOOST_PATH}"], [0], [stdout-nolog], [stderr])
-
-AS_ECHO(["END PERFTEST"]) >> $PERF_RESULTS_FILE
+AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
 
 
-#
-# Search on literal string.
-#
-AT_SETUP([Boost: find all '#endif's])
 
-# Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+###
+### Generate test files for large file tests.
+###
+AT_SETUP([generating files for large file tests])
+AT_KEYWORDS([performance])
+# Generate the test file UCG_TEST_FILE_NAME_LARGE_FILE_1, which is Lorum ipsum text with one distinct test string at the end.
+AT_CHECK([${builddir}/dummy-file-gen -b 500000000 | fold -s > UCG_TEST_FILE_NAME_LARGE_FILE_1], [0], [stdout], [stderr])
+AT_CHECK([cat stderr | $EGREP 'Number of bytes written:'], [0], [ignore], [ignore])
+AT_CHECK([echo "iudicemaequumputo" >> UCG_TEST_FILE_NAME_LARGE_FILE_1], [0], [stdout], [stderr])
+AT_CLEANUP
 
-AS_ECHO([""]) >> $PERF_RESULTS_FILE
-AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
-AS_ECHO(["| Command | Time | Matching Lines |"]) >> $PERF_RESULTS_FILE;
-AS_ECHO(["|---------|------|----------------|"]) >> $PERF_RESULTS_FILE;
+###
+### ucg vs. others, regex 'iudice[\w]*umputo' on single ~500MB file.
+###
+AT_SETUP([ucg vs. others, regex on 500MB file, match at end])
+AT_KEYWORDS([performance])
 
-# Loop through the programs we're comparing performance with.
-for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
-	TIME_ONE_PROG(["${PROGNAME}"], ['#endif'])
-done
+AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
+
+# Generate the test script.
+UCG_GEN_PERFTEST([$PROGLIST], [TC3], ['iudice[\w]*umputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
+# Run the test script.
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+# Summarize the test results.
+UCG_SUMMARIZE_PERFTEST
+
+AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
 
 
-#
-# Search with regex 'BOOST.*HPP'
-#
-AT_SETUP([Boost: search with regex 'BOOST.*HPP'])
+###
+### ucg vs. grep, literal string on single ~500MB file.
+###
+AT_SETUP([ucg vs. others, literal string on 500MB file, match at end])
+AT_KEYWORDS([performance])
+
+AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
+
+# Generate the test script.
+UCG_GEN_PERFTEST([$PROGLIST], [TC4], ['iudicemaequumputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
+# Run the test script.
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+# Summarize the test results.
+UCG_SUMMARIZE_PERFTEST
+
+AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
+
+AT_CLEANUP
+
+###
+### Delete test files for the large file tests.
+###
+AT_SETUP([deleting files for large file tests])
+AT_KEYWORDS([performance])
+# Delete the test file UCG_TEST_FILE_NAME_LARGE_FILE_1, which is Lorum ipsum text with one distinct test string at the end.
+AT_CHECK([test -f "UCG_TEST_FILE_NAME_LARGE_FILE_1" && rm "UCG_TEST_FILE_NAME_LARGE_FILE_1"], [0], [stdout], [stderr])
+AT_CLEANUP
+
+
+###
+### ucg vs. others, find "" includes in Boost source.
+###
+AT_SETUP([ucg vs. others, '#include\s+".*"' on Boost source])
+AT_KEYWORDS([performance])
 
 # Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 
-AS_ECHO([""]) >> $PERF_RESULTS_FILE
-AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
+AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-# Loop through the programs we're comparing performance with.
-for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
-	TIME_ONE_PROG(["${PROGNAME}"], ['BOOST.*HPP'])
-done
+# Generate the test script.
+UCG_GEN_PERFTEST([${PROGLIST}], [TC5], ['#include\s+".*"'],[UCG_BOOST_PATH],[3],[0])
+# Run the test script.
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+# Summarize the test results.
+UCG_SUMMARIZE_PERFTEST
+
+AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
 
@@ -191,19 +322,24 @@ AT_CLEANUP
 #
 # Search with ignore of part of the dir tree.
 #
-AT_SETUP([Boost: search with --ignore-dir=doc])
+AT_SETUP([ucg vs. others, literal '#endif' with --ignore-dir=doc on Boost source])
+AT_KEYWORDS([performance])
 
 # Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d "${BOOST_PATH}"])
+AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
 
-AS_ECHO([""]) >> $PERF_RESULTS_FILE
-AS_ECHO(["Perf Test Results: $at_desc"]) >> $PERF_RESULTS_FILE
+AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-# Loop through the programs we're comparing performance with.
-for PROGNAME in $PERF_PROGRAMS_TO_COMPARE; do
-	TIME_ONE_PROG(["${PROGNAME}"], ['#endif'], [--ignore-dir=doc])
-done
+# Generate the test script.
+UCG_GEN_PERFTEST([${PROGLIST}], [TC6], ['#endif'], [UCG_BOOST_PATH],[3],[0])
+# Run the test script.
+AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+# Summarize the test results.
+UCG_SUMMARIZE_PERFTEST
+
+AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
+
 
 

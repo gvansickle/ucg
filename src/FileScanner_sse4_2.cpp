@@ -29,10 +29,10 @@
 
 
 // Declaration here only so we can apply gcc attributes.
-inline uint8_t popcount16(uint16_t bits) noexcept __attribute__((const /* Doesn't access globals, has no side-effects.*/,
-		artificial /*Should appear in debug info even after being inlined.*/));
+inline uint8_t popcount16(uint16_t bits) noexcept ATTR_CONST /* Doesn't access globals, has no side-effects.*/
+	ATTR_ARTIFICIAL; /* Should appear in debug info even after being inlined. */
 
-#if defined(__POPCNT__) && __POPCNT__==1
+#if defined(__POPCNT__) && __POPCNT__==1 && defined(HAVE___BUILTIN_POPCOUNT)
 
 /**
  * For systems that support the POPCNT instruction, we can use it through the gcc/clang builtin __builtin_popcount().
@@ -78,6 +78,9 @@ static constexpr uintptr_t f_alignment_mask { f_alignment-1 };
 static_assert(is_power_of_2(f_alignment), "alignof(__m128i) should be a power of 2, but isn't");
 static_assert(f_alignment == 16, "alignof(__m128i) should be 16, but isn't");
 
+// Declaration here only so we can apply gcc attributes.
+static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_ptr, uint16_t num_unaligned_bytes, size_t len, const char searchchar) noexcept
+		ATTR_CONST ATTR_ARTIFICIAL;
 
 static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_ptr, uint16_t num_unaligned_bytes, size_t len, const char searchchar) noexcept
 {
@@ -120,7 +123,7 @@ static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_p
 
 }
 
-//__attribute__((target("sse4.2")))
+//__attribute__((target("...")))
 size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ cbegin,
 		const char * __restrict__ cend) noexcept
 {

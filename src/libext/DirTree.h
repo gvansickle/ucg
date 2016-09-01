@@ -15,16 +15,26 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file  Portable CPUID-related functionality. */
+/** @file  */
 
-#ifndef SRC_LIBEXT_CPUIDEX_HPP_
-#define SRC_LIBEXT_CPUIDEX_HPP_
+#ifndef SRC_LIBEXT_DIRTREE_H_
+#define SRC_LIBEXT_DIRTREE_H_
 
-/// @name x86-64 extensions
-/// @{
-bool sys_has_sse2() noexcept;
-bool sys_has_sse4_2() noexcept;
-bool sys_has_popcnt() noexcept;
-/// @}
+#include <config.h>
 
-#endif /* SRC_LIBEXT_CPUIDEX_HPP_ */
+#include <vector>
+#include <string>
+
+/*
+ *
+ */
+class DirTree
+{
+public:
+	DirTree();
+	~DirTree();
+
+	void Read(std::vector<std::string> start_paths);
+};
+
+#endif /* SRC_LIBEXT_DIRTREE_H_ */

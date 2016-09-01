@@ -29,7 +29,9 @@ AS_ECHO(["    ijkl"]) >> file1.cpp
 AS_ECHO(["efgh    ijkl"]) >> file1.cpp
 
 # Compare to grep output with equivalent options.
-AT_CHECK([$EGREP -Hrn 'efgh\s+' file1.cpp > expout], [0], [stdout], [stderr])
+# @note Somewhere between GNU grep versions 2.5.1 and 2.25, '\s' was introduced as a shorthand for '[[:space:]]'.
+# Can't rely on that functionality here, since that old grep is still floating around on systems we want to support.
+AT_CHECK([$EGREP -Hrn 'efgh[[[:space:]]]+' file1.cpp > expout], [0], [stdout], [stderr])
 AT_CHECK([ucg --noenv 'efgh\s+'], [0], [expout], [stderr])
 
 AT_CLEANUP

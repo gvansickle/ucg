@@ -31,6 +31,55 @@
 
 #include "Logger.h"
 
+File::File(FileID file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
+{
+	m_filename = file_id.GetPath();
+	m_file_descriptor = open(m_filename.c_str(), O_RDONLY);
+	if(m_file_descriptor == -1)
+	{
+		// Couldn't open the file, throw exception.
+		throw std::system_error(errno, std::generic_category());
+	}
+
+#if 0 /// @todo
+	if(!file_id.IsStatInfoValid())
+	{
+		throw FileException("FileID stat info should have been valid");
+	}
+#endif
+
+	m_file_size = file_id.GetFileSize();
+
+	// If filesize is 0, skip.
+	if(m_file_size == 0)
+	{
+		close(m_file_descriptor);
+		m_file_descriptor = -1;
+		return;
+	}
+
+	// Read or mmap the file into memory.
+	// Note that this closes the file descriptor.
+	// Note: per info here:
+	// http://stackoverflow.com/questions/34498825/io-blksize-seems-just-return-io-bufsize
+	// https://github.com/coreutils/coreutils/blob/master/src/ioblksize.h#L23-L57
+	// http://unix.stackexchange.com/questions/245499/how-does-cat-know-the-optimum-block-size-to-use
+	// ...it seems that as of ~2014, experiments show the minimum I/O size should be >=128KB.
+	// *stat() seems to return 4096 in all my experiments so far, so we'll clamp it to a min of 128KB and a max of
+	// something not unreasonable, e.g. 1M.
+	auto io_size = clamp(file_id.GetBlockSize(), static_cast<blksize_t>(0x20000), static_cast<blksize_t>(0x100000));
+	m_file_data = GetFileData(m_file_descriptor, m_file_size, io_size);
+	m_file_descriptor = -1;
+
+	if(m_file_data == MAP_FAILED)
+	{
+		// Mapping failed.
+		ERROR() << "Couldn't map file \"" << m_filename << "\"" << std::endl;
+		throw std::system_error(errno, std::system_category());
+	}
+}
+
+
 File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
 {
 	// Save the filename.
@@ -76,7 +125,7 @@ File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> st
 
 	// Read or mmap the file into memory.
 	// Note that this closes the file descriptor.
-	m_file_data = GetFileData(m_file_descriptor, m_file_size);
+	m_file_data = GetFileData(m_file_descriptor, m_file_size, 4096);
 	m_file_descriptor = -1;
 
 	if(m_file_data == MAP_FAILED)
@@ -93,7 +142,7 @@ File::~File()
 	FreeFileData(m_file_data, m_file_size);
 }
 
-const char* File::GetFileData(int file_descriptor, size_t file_size)
+const char* File::GetFileData(int file_descriptor, size_t file_size, size_t preferred_block_size)
 {
 	const char *file_data = static_cast<const char *>(MAP_FAILED);
 
@@ -119,7 +168,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size)
 		posix_fadvise(file_descriptor, 0, 0, POSIX_FADV_SEQUENTIAL | POSIX_FADV_WILLNEED);
 #endif
 
-		m_storage->reserve_no_copy(file_size);
+		m_storage->reserve_no_copy(file_size, preferred_block_size);
 		file_data = m_storage->data();
 
 		// Read in the whole file.

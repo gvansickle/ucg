@@ -41,7 +41,7 @@ struct Type
 	std::vector<std::string> m_type_extensions;
 
 	/// less-than operator, so that Types are sortable by key (m_type_name).
-	bool operator<(const Type &other) const { return m_type_name < other.m_type_name; };
+	bool operator<(const Type &other) const noexcept { return m_type_name < other.m_type_name; };
 };
 
 static const std::set<Type> f_builtin_type_array =
@@ -379,7 +379,7 @@ void TypeManager::TypeAddExt(const std::string& type, const std::string& ext)
 	m_active_type_map[type].push_back("."+ext);
 }
 
-void TypeManager::TypeAddGlobExclude(const std::string& type maybe_unused, const std::string& glob)
+void TypeManager::TypeAddGlobExclude([[maybe_unused]] const std::string& type, const std::string& glob)
 {
 #if 0 /// @todo Does it make any sense at this point to add globs to these maps?
 	m_builtin_and_user_type_map[type].push_back("?"+glob);

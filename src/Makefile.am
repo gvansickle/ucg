@@ -17,7 +17,7 @@
 
 SUBDIRS = future libext
 
-noinst_LIBRARIES = libsrc.a libsrc_sse4_2_no_popcnt.a libsrc_sse4_2_popcnt.a
+noinst_LIBRARIES = libsrc.a
 libsrc_a_SOURCES = \
 	ArgParse.cpp ArgParse.h \
 	DirInclusionManager.cpp DirInclusionManager.h \
@@ -26,10 +26,12 @@ libsrc_a_SOURCES = \
 	Match.cpp Match.h \
 	MatchList.cpp MatchList.h \
 	File.cpp File.h \
+	FileID.cpp FileID.h \
 	FileScanner.cpp FileScanner.h \
 	FileScannerCpp11.cpp FileScannerCpp11.h \
 	FileScannerPCRE.cpp FileScannerPCRE.h \
 	FileScannerPCRE2.cpp FileScannerPCRE2.h \
+	OutputContext.cpp OutputContext.h \
 	OutputTask.cpp OutputTask.h \
 	ResizableArray.h \
 	sync_queue.h \
@@ -44,18 +46,41 @@ libsrc_a_CXXFLAGS = $(AM_CXXFLAGS)
 ### Libs to contain multiversioned functions.
 ###
 
-# SSE4.2 but no POPCNT. 
+# SSE2
+if BUILD_CXXFLAGS_EXT_X86_64_SSE2
+noinst_LIBRARIES += libsrc_sse2.a
+endif
+libsrc_sse2_a_SOURCES = \
+	FileScanner_sse4_2.cpp
+
+libsrc_sse2_a_CPPFLAGS = $(AM_CPPFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
+libsrc_sse2_a_CFLAGS = $(AM_CFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
+libsrc_sse2_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
+#endif
+
+# SSE4.2 but no POPCNT.
+if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
+if BUILD_CXXFLAGS_EXT_X86_64_NO_POPCNT
+noinst_LIBRARIES += libsrc_sse4_2_no_popcnt.a
+endif
+endif
 libsrc_sse4_2_no_popcnt_a_SOURCES = \
 	FileScanner_sse4_2.cpp
 
-libsrc_sse4_2_no_popcnt_a_CPPFLAGS = $(AM_CPPFLAGS) $(UCG_CXXFLAGS_SSE4_2) $(UCG_CXXFLAGS_NO_POPCNT)
-libsrc_sse4_2_no_popcnt_a_CFLAGS = $(AM_CFLAGS) $(UCG_CXXFLAGS_SSE4_2) $(UCG_CXXFLAGS_NO_POPCNT)
-libsrc_sse4_2_no_popcnt_a_CXXFLAGS = $(AM_CXXFLAGS) $(UCG_CXXFLAGS_SSE4_2) $(UCG_CXXFLAGS_NO_POPCNT)
+libsrc_sse4_2_no_popcnt_a_CPPFLAGS = $(AM_CPPFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_NO_POPCNT)
+libsrc_sse4_2_no_popcnt_a_CFLAGS = $(AM_CFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_NO_POPCNT)
+libsrc_sse4_2_no_popcnt_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_NO_POPCNT)
 
 # SSE4.2 with POPCNT
+if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
+if BUILD_CXXFLAGS_EXT_X86_64_POPCNT
+noinst_LIBRARIES += libsrc_sse4_2_popcnt.a
+endif
+endif
 libsrc_sse4_2_popcnt_a_SOURCES = \
 	FileScanner_sse4_2.cpp
 
-libsrc_sse4_2_popcnt_a_CPPFLAGS = $(AM_CPPFLAGS) $(UCG_CXXFLAGS_SSE4_2) $(UCG_CXXFLAGS_POPCNT)
-libsrc_sse4_2_popcnt_a_CFLAGS = $(AM_CFLAGS) $(UCG_CXXFLAGS_SSE4_2) $(UCG_CXXFLAGS_POPCNT)
-libsrc_sse4_2_popcnt_a_CXXFLAGS = $(AM_CXXFLAGS) $(UCG_CXXFLAGS_SSE4_2) $(UCG_CXXFLAGS_POPCNT)
+libsrc_sse4_2_popcnt_a_CPPFLAGS = $(AM_CPPFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
+libsrc_sse4_2_popcnt_a_CFLAGS = $(AM_CFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
+libsrc_sse4_2_popcnt_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
+

@@ -15,16 +15,24 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file  Portable CPUID-related functionality. */
+/** @file  */
 
-#ifndef SRC_LIBEXT_CPUIDEX_HPP_
-#define SRC_LIBEXT_CPUIDEX_HPP_
+#include "OutputContext.h"
 
-/// @name x86-64 extensions
-/// @{
-bool sys_has_sse2() noexcept;
-bool sys_has_sse4_2() noexcept;
-bool sys_has_popcnt() noexcept;
-/// @}
+OutputContext::OutputContext(bool output_is_tty, bool enable_color, bool print_column)
+	: m_output_is_tty(output_is_tty), m_enable_color(enable_color), m_print_column(print_column)
+{
+	if(m_enable_color)
+	{
+		// Set up the active colors to be the defaults.
+		m_color_filename = m_default_color_filename;
+		m_color_match = m_default_color_match;
+		m_color_lineno = m_default_color_lineno;
+		m_color_default = m_default_color_default;
+	}
+}
 
-#endif /* SRC_LIBEXT_CPUIDEX_HPP_ */
+OutputContext::~OutputContext()
+{
+}
+

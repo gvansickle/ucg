@@ -111,7 +111,9 @@ AS_IF([ test "x$ac_path_ESED_found" = "x:" ],
 	[AC_SUBST([ESED], [$ac_cv_path_ESED])], # Note: AC_CACHE_CHECK handles the AC_MSG_RESULT() in the success case.
 	[AC_MSG_ERROR([could not find $SED option that supports extended regexes])])
 
+##
 ## Checks for programs needed to run the testsuite.
+##
 
 # The testsuite needs a way to invoke "script", to fool ucg into thinking it's outputting to a tty.
 # Of course, Linux and *BSD (including OSX) "script"'s take different options and parameters, so we
@@ -158,7 +160,45 @@ AC_CACHE_CHECK([for suitable time command], [ac_cv_path_PROG_TIME],
 	])
 AC_SUBST([PROG_TIME], [$ac_cv_path_PROG_TIME])
 
-## Checks for maintainer tools.
+# Try to find GNU grep.
+AC_CACHE_CHECK([for GNU grep], [ac_cv_path_PROG_GNU_GREP],
+[
+	AC_PATH_PROGS_FEATURE_CHECK([PROG_GNU_GREP], [ggrep grep],
+	[
+		case `"$ac_path_PROG_GNU_GREP" --version 2>&1` in
+		*GNU*)
+		  ac_cv_path_PROG_GNU_GREP="$ac_path_PROG_GNU_GREP" ac_path_PROG_GNU_GREP_found=:;;
+		*);;
+		esac
+	],
+	[AC_MSG_WARN([could not find GNU grep])])
+])
+AC_SUBST([PROG_GNU_GREP], [$ac_path_PROG_GNU_GREP])
+
+# Try to find a grep which supports -P (PCRE regexes).  Should be GNU grep.
+AC_CACHE_CHECK([for a grep which supports PCREs], [ac_cv_path_PROG_GREP_P],
+[
+	AC_PATH_PROGS_FEATURE_CHECK([PROG_GREP_P], [ggrep grep],
+	[
+		grep_out=`echo abcfdef | $ac_path_PROG_GREP_P -Po 'a.*?f'`
+		test "x$grep_out" = xabcf \
+		&& ac_cv_path_PROG_GREP_P="$ac_path_PROG_GREP_P -P" ac_path_PROG_GREP_P_found=:
+	],
+	[AC_MSG_WARN([could not find a grep with PCRE support])])
+])
+AC_SUBST([PROG_GREP_P], [$ac_cv_path_PROG_GREP_P])
+
+# See if we have a pcre2grep.
+AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep])
+
+###
+### Checks for maintainer tools.
+###
+
+# Python, for generation of test suite.
+### @note Python >= 2.7 is actually required to run the testsuite at the moment, but my hope is that
+### this will soon become a pre-"make distcheck" requirement.
+AM_PATH_PYTHON([2.7])
 
 # Autotest needs autom4te, or 'missing's stub for it. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
@@ -258,33 +298,43 @@ AC_LANG_PUSH([C++])
 # Append them to AM_CXXFLAGS if it does.
 
 # Capture the compile command line in the binary.
-#AX_APPEND_COMPILE_FLAGS([-frecord-gcc-switches], [AM_CXXFLAGS])
+AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
 #AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be. @note Doesn't seem to do anything.
 AX_APPEND_COMPILE_FLAGS([-ftree-vectorize]) # -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
-AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security],[AM_CXXFLAGS])
-AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'],[AM_CXXFLAGS],[-Wformat -Wformat-security])
+AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security], [AM_CXXFLAGS])
+AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'], [AM_CXXFLAGS], [-Wformat -Wformat-security])
 
-# Check for instruction set extensions we can make use of.
-AX_APPEND_COMPILE_FLAGS([-msse4.2], [UCG_CXXFLAGS_SSE4_2]) 
-AX_APPEND_COMPILE_FLAGS([-mpopcnt], [UCG_CXXFLAGS_POPCNT], [$UCG_CXXFLAGS_SSE4_2])
-AX_APPEND_COMPILE_FLAGS([-mno-popcnt], [UCG_CXXFLAGS_NO_POPCNT], [$UCG_CXXFLAGS_SSE4_2])
-AC_SUBST([UCG_CXXFLAGS_SSE4_2], [$UCG_CXXFLAGS_SSE4_2])
-AC_SUBST([UCG_CXXFLAGS_POPCNT], [$UCG_CXXFLAGS_POPCNT])
-AC_SUBST([UCG_CXXFLAGS_NO_POPCNT], [$UCG_CXXFLAGS_NO_POPCNT])
-AC_MSG_CHECKING([if compiler supports all required ISA extensions])
-AS_IF(
-	[test "x$UCG_CXXFLAGS_SSE4_2" = x], [AC_MSG_ERROR([compiler must support sse4.2 ISA extensions])],
-	[test "x$UCG_CXXFLAGS_POPCNT" = x], [AC_MSG_ERROR([compiler must support sse4.2+popcnt ISA extensions])],
-	[test "x$UCG_CXXFLAGS_NO_POPCNT" = x], [AC_MSG_ERROR([compiler must support sse4.2+no-popcnt ISA extensions])],
-	[AC_MSG_RESULT([yes])]
-)
+# Check for GCC-style built-ins and attributes we can use.
+AX_C___ATTRIBUTE__	# Defines "HAVE___ATTRIBUTE__" if the compiler supports __attribute__(()) syntax.  The macro specifically checks for
+					# the function attribute __attribute__((unused))
+AX_GCC_FUNC_ATTRIBUTE([artificial])
+AX_GCC_FUNC_ATTRIBUTE([const])
+AX_GCC_FUNC_ATTRIBUTE([pure])
+AX_GCC_FUNC_ATTRIBUTE([alloc_size])
+AX_GCC_FUNC_ATTRIBUTE([malloc])
+AX_GCC_BUILTIN(__builtin_unreachable)
+AX_GCC_BUILTIN(__builtin_expect)
+AX_GCC_BUILTIN(__builtin_popcount)
+AX_GCC_BUILTIN(__builtin_bswap32)
+AX_GCC_BUILTIN(__builtin_ctzll)
 
-# Check for pthreads.  Note that we don't necessarily require pthreads; we require and use C++11 std::thread<>,
-# whatever it uses under-the-hood we don't really care about.  If in fact C++11 is using pthreads, we can
-# optionally use some of its functionality, e.g. naming threads for diagnostic, logging, and other purposes.
+# Check for x86-64 ISA extensions we can use for function multiversioning.
+GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse2])
+GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse4.2])
+GRVS_CHECK_COMPILE_FLAG([X86_64], [-mpopcnt], [-msse4.2])
+GRVS_CHECK_COMPILE_FLAG([X86_64], [-mno-popcnt], [-msse4.2])
+AM_CONDITIONAL([BUILD_X86_64_ISA_EXTENSIONS], [test "x$HAVE_X86_64_ISA_EXTENSIONS" != "x"])
+AM_COND_IF([BUILD_X86_64_ISA_EXTENSIONS],
+	[AC_MSG_NOTICE([Compiler supports x86-64 ISA extensions, will use them.])],
+	[AC_MSG_NOTICE([Compiler does not support x86-64 ISA extensions, will not use them.])])
+
+
+# Check if the implementation underlying C++11's std::thread<> is pthreads.  Note that we don't actually require pthreads,
+# we require and use C++11's std::thread<>, whatever its implementation details.  However, if C++11 is using pthreads, we can
+# optionally use some pthreads functionality, e.g. naming threads for diagnostic, logging, and other purposes.
 # Macro docs: http://www.gnu.org/software/autoconf-archive/ax_pthread.html#ax_pthread
 AX_PTHREAD
 AS_IF([test "x$ax_pthread_ok" == xyes],
@@ -315,10 +365,6 @@ AS_IF([test "x$ax_pthread_ok" == xyes],
 		AC_MSG_NOTICE([no pthreads found])
 	])
 
-
-# Put this in to help with profiling.
-#AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
-
 AC_LANG_POP([C++])
 
 
@@ -343,6 +389,8 @@ AC_CHECK_FUNCS([sched_setaffinity])
 
 AC_CHECK_FUNCS([get_current_dir_name])
 
+AC_CHECK_FUNCS([openat])
+
 AC_CHECK_FUNCS([aligned_alloc posix_memalign])
 AS_IF([test "x$ac_cv_func_aligned_alloc" = xno -a "x$ac_cv_func_posix_memalign" = xno],
 	[AC_MSG_ERROR([cannot find an aligned memory allocator.])],
@@ -364,28 +412,38 @@ AC_COMPILE_IFELSE(
         ])
 
 ### Find a pthread_setname_np() we can use, and #define a macro M_pthread_setname_np() which will call it.
+AC_MSG_CHECKING([how to set pthread names])
+ptsetname=no
 # For Linux.
 AC_CHECK_DECLS([pthread_setname_np(pthread_t, const char *)],
-				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
-				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_setname_np(pthread_self(), (name))],
+				[AC_DEFINE([M_pthread_setname_np(name)], [pthread_setname_np(pthread_self(), (name))],
 					[Macro for Linux to map to the lowest-common-denominator for this functionality, OSX])
+				ptsetname=Linux
 				],
 				[], [#include <pthread.h>])
+if test $ptsetname = no; then
 # For FreeBSD.
 AC_CHECK_DECLS([pthread_set_name_np(pthread_t, const char *)],
-				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
-				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_set_name_np(pthread_self(), (name))],
+				[AC_DEFINE([M_pthread_setname_np(name)], [pthread_set_name_np(pthread_self(), (name))],
 					[Macro for FreeBSD to map to the lowest-common-denominator for this functionality, OSX])
 				 AC_DEFINE([INCLUDE_PTHREAD_NP], [1], [If defined, include the header <pthread_np.h> because we're on BSD])
+				 ptsetname=BSD
 				],
 				[], [#include <pthread_np.h>])
+fi
+if test $ptsetname = no; then
 # For Mac OSX.
 AC_CHECK_DECLS([pthread_setname_np(const char *)],
-				[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro pthread_setname_np() can be used to set the current thread's name])
-				 AC_DEFINE([HAVE_NO_THREAD_LOCAL_SUPPORT], [1], [If defined, we have no C++11 thread_local support (clang on OSX)])
+				[AC_DEFINE([HAVE_NO_THREAD_LOCAL_SUPPORT], [1], [If defined, we have no C++11 thread_local support (clang on OSX)])
 				 AC_DEFINE([M_pthread_setname_np(name)], [pthread_setname_np(name)],
 					[Macro for OSX to map to itself])
+				ptsetname=OSX
 				], [], [#include <pthread.h>])
+fi
+AS_IF([test $ptsetname != no],
+	[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro M_pthread_setname_np() can be used to set the current thread's name])
+	AC_MSG_RESULT([$ptsetname])],
+	[AC_MSG_RESULT([none found])])
 
 AC_LANG_POP([C++])
 

@@ -26,30 +26,10 @@ XFAILFILE=$abs_builddir/.badversion
 
 trap "test -r $XFAILFILE && cat $XFAILFILE; exit $?" 1 2 13 15
 
-# At testsuite-time, find the programs we wish to compare performance with.
-PERF_PROGRAMS_TO_COMPARE=ucg
-if PROG_AG="$(which ag)";
-then
-	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_AG;
-fi
-#if PROG_ACK="$(which ack)";
-#then
-#	PERF_PROGRAMS_TO_COMPARE=$PERF_PROGRAMS_TO_COMPARE" "$PROG_ACK;
-#fi
-
-# Paths to source that we'll test against.
-# @todo Maybe take this in as a parameter?  The only issue is that this doesn't work during a "make distcheck",
-# which arguably is not a big deal.
-BOOST_PATH=${abs_top_srcdir}/../boost_1_58_0
-
-# The file where we'll put the results of the performance tests.
-# This file will be created by testsuite.at.
-PERF_RESULTS_FILE=${abs_top_builddir}/tests/perf_test_results.txt
-
-PROG_SCRIPT="@PROG_SCRIPT@"
-PROG_SCRIPT_TYPE="@PROG_SCRIPT_TYPE@"
-PROG_SCRIPT_PRE_TEXT="@PROG_SCRIPT_PRE_TEXT@"
-PROG_SCRIPT_POST_TEXT="@PROG_SCRIPT_POST_TEXT@"
+export PROG_SCRIPT="@PROG_SCRIPT@"
+export PROG_SCRIPT_TYPE="@PROG_SCRIPT_TYPE@"
+export PROG_SCRIPT_PRE_TEXT="@PROG_SCRIPT_PRE_TEXT@"
+export PROG_SCRIPT_POST_TEXT="@PROG_SCRIPT_POST_TEXT@"
 export SED="@SED@"
 export ESED="@ESED@"
 export MKDIR_P="@MKDIR_P@"
@@ -57,7 +37,35 @@ export TEST_LN_S="@TEST_LN_S@"
 export PROG_TIME="@PROG_TIME@"
 export FGREP="@FGREP@"
 export EGREP="@EGREP@"
+export PROG_GREP_P="@PROG_GREP_P@"
+export PROG_PCRE2GREP="@PROG_PCRE2GREP@"
+export PROG_GNU_GREP="@PROG_GNU_GREP@"
 export AWK="@AWK@"
+export PYTHON="@PYTHON@"
+
+# At testsuite-time, find the programs we wish to compare performance with.
+PROGLIST=built_ucg:ucg
+if PROG_INST_UCG="$(which ucg 2>/dev/null)";
+then
+	PROGLIST=$PROGLIST,inst_ucg:$PROG_INST_UCG
+fi
+if PROG_INST_AG="$(which ag 2>/dev/null)";
+then
+	PROGLIST=$PROGLIST,inst_ag:$PROG_INST_AG
+fi
+#if PROG_ACK="$(which ack)";
+#then
+#fi
+if test -x "${PROG_PCRE2GREP}";
+then
+	PROGLIST=$PROGLIST,inst_pcre2grep:$PROG_PCRE2GREP
+fi
+PROGLIST=$PROGLIST,inst_system_grep:grep
+if test -x "${PROG_GNU_GREP}";
+then
+	PROGLIST=$PROGLIST,inst_gnu_grep_e:$PROG_GNU_GREP
+	PROGLIST=$PROGLIST,inst_gnu_grep_p:$PROG_GNU_GREP
+fi
 
 ### Functions for use in the testsuite.
 
@@ -78,7 +86,34 @@ get_system_info()
 {
 	# Collects and returns information regarding the test system.
 	
+	# Distro, using /etc/os-release.
+	# This is a file specified by freedesktop.  See https://www.freedesktop.org/software/systemd/man/os-release.html
+	echo "";
+	echo "START /etc/os-release info.";
+	if [ -e /etc/os-release ];
+	then
+		cat /etc/os-release;
+	fi
+	echo "END /etc/os-release info.";
+	echo "";
+	
+	# Distro, using  /usr/bin/sw_vers
+	# This is for OSX.
+	echo "";
+	echo "START sw_vers info."
+	if [ -x /usr/bin/sw_vers ];
+	then
+		sw_vers;
+	fi
+	echo "END sw_vers info."
+	echo "";
+	
 	# Using uname.
+	#
+	# OSX: Note that on a VMWare box running on a Xeon, we get the following:
+	# machine_uname_m: x86_64
+	# processor_uname_p: i386
+	#
 	echo "";
 	echo "START uname info.";
 	# POSIX uname options.
@@ -97,8 +132,27 @@ get_system_info()
 	if PROG_SYSCTL=$(which sysctl 2>/dev/null);
 	then
 		echo "# Found sysctl: PROG_SYSCTL=$PROG_SYSCTL";
-		# For *BSD: hw.ncpu, kern.smp.cpus, hw.physmem, hw.usermem
-		for NAME in hw.ncpu hw.physmem hw.usermem hw.activecpu hw.physicalcpu hw.logicalcpu hw.model hw.optional kern.smp.cpus kernel.osrelease kernel.ostype;
+		#
+		# For *BSD:
+		#   hw.ncpu, kern.smp.cpus, hw.physmem, hw.usermem
+		#   kern.ostype: FreeBSD
+		#   kern.version: FreeBSD 10.3-RELEASE-p5 #0: Thu Jun 30 03:52:15 UTC 2016
+        #        root@amd64-builder.pcbsd.org:/usr/obj/usr/src/sys/GENERIC
+		#
+		# For OSX:
+		#   hw.physicalcpu ==> Number of cores
+		#   hw.logicalcpu ==> Number of cores * number of hyperthreads per core
+		#   hw.packages ==> Number of physical CPU packages.
+		#	machdep.cpu.vendor: ==> E.g. "GenuineIntel"
+		#   machdep.cpu.brand_string: ==> E.g. "Intel(R) Xeon(R) CPU           X5570  @ 2.93GHz"
+		#   machdep.cpu.features: ==> Space-separated list of CPU extensions.  E.g.:
+		#		"FPU VME DE PSE TSC MSR PAE MCE CX8 APIC SEP MTRR PGE MCA CMOV PAT PSE36 CLFSH DS MMX FXSR SSE SSE2 SS SSE3 MON SSSE3 CX16 SSE4.1 SSE4.2 x2APIC POPCNT VMM"
+		#   machdep.cpu.extfeatures: ==> More CPU extensions.  E.g.:
+		#		"SYSCALL XD EM64T LAHF RDTSCP TSCI"
+		#
+		for NAME in hw.ncpu hw.physmem hw.usermem \
+		hw.activecpu hw.physicalcpu hw.logicalcpu hw.packages hw.model hw.optional kern.smp.cpus kernel.osrelease kernel.ostype \
+		machdep.cpu.vendor machdep.cpu.brand_string machdep.cpu.features machdep.cpu.extfeatures;
 		do
 			if SYSCTL_STDOUT=$($PROG_SYSCTL $NAME);
 			then
@@ -138,6 +192,17 @@ get_system_info()
 	echo "START /proc/cpuinfo info.";
 	cat /proc/cpuinfo 2>/dev/null || echo "ERROR: Could not cat /proc/cpuinfo."
 	echo "END /proc/cpuinfo info.";
+	echo "";
+	
+	# Checking for specific virtualization environment.
+	echo "";
+	echo "START virtual environment info.";
+	### See <https://www.freedesktop.org/software/systemd/man/systemd-detect-virt.html> for possible results.
+	if PROG_SYSD_DETECT_VIRT=$(which systemd-detect-virt 2>/dev/null);
+	then
+		echo "systemd-detect-virt: $(systemd-detect-virt)";
+	fi;
+	echo "END virtual environment info.";
 	echo "";
 }
 

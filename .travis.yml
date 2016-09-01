@@ -11,7 +11,7 @@ compiler:
   - gcc
 
 before_install:
- - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre argp-standalone the_silver_searcher; fi
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre pcre2 argp-standalone the_silver_searcher; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev && sudo apt-get install -qq silversearcher-ag; fi
 
 before_script:
@@ -24,6 +24,7 @@ before_script:
  - # free -ht = Doesn't exist on OSX or Cygwin
  - # df main.cpp # df does exist on Cygwin.  Also on OSX, but params are different, no --output, -T is different.
  - mount | fgrep -w "`df . | grep '%' | sed -e 's/.*% *//'`"
+ - git fetch --unshallow  # Travis limits its pull by default to 50 revs.  The build then can't do a proper "git describe".
 
 script:
  - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
@@ -38,19 +39,18 @@ script:
  - cd build
  - ../configure
  - make
- - make check
+ - make check 'TESTSUITEFLAGS=--keywords=!performance,!characterize'
  - find . -iname '*.log' -exec cat "{}" \; 
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
 
 after_success:
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew tap homebrew/dupes; brew install grep; fi  # Install gnu grep to test against.
  - cd ../../ && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
  - tar xjf boost_1_58_0.tar.bz2
  - cd ucg/build
  - make check #TESTSUITEFLAGS='-v -d -x'
  - cat tests/testsuite.log
  - cat tests/perf_test_results.txt
- - #./ucg --cpp 'endif' ..
- - #./ucg --cpp 'endif' ../
  - if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then LD_DEBUG=all && ldd -v ucg; fi
  - #find . -iname '*.log' -exec cat "{}" \; 

@@ -18,10 +18,12 @@
 noinst_LIBRARIES = libext.a 
 libext_a_SOURCES = \
 	cpuidex.hpp cpuidex.cpp \
+	DirTree.h DirTree.cpp \
 	filesystem.hpp \
 	hints.hpp \
 	integer.hpp \
 	multiversioning.hpp multiversioning.cpp \
+	static_diagnostics.hpp \
 	string.hpp
 
 libext_a_CPPFLAGS = $(AM_CPPFLAGS)

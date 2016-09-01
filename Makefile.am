@@ -44,7 +44,7 @@ ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS)
 ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.a ./src/libext/libext.a ./src/future/libfuture.a ./src/libsrc_sse4_2_no_popcnt.a ./src/libsrc_sse4_2_popcnt.a ./src/libsrc.a
+ucg_LDADD = ./src/libsrc.a ./src/libext/libext.a ./src/future/libfuture.a ./src/libsrc_sse2.a ./src/libsrc_sse4_2_no_popcnt.a ./src/libsrc_sse4_2_popcnt.a ./src/libsrc.a
 
 # Collect some make-time info. 
 FORCE:
@@ -59,14 +59,14 @@ build_info.cpp: FORCE verify-provenance
 		GIT_DESCRIBE=$$(cat $(top_srcdir)/.tarball-version); \
 	elif (which git > /dev/null && cd $(top_srcdir) && git describe > /dev/null); then \
 		: We are building from a git repo. ; \
-		GIT_DESCRIBE="$$(cd $(top_srcdir) && git describe --long --dirty)"; \
+		GIT_DESCRIBE="$$(cd $(top_srcdir) && git describe --long --dirty --always)"; \
 	else GIT_DESCRIBE="unknown"; \
 	fi; \
 	echo "const char *g_git_describe = \"$${GIT_DESCRIBE}\";" >> "$@.tmp"; \
 	echo "// CXX" >> "$@.tmp";\
 	echo "const char *g_cxx = \"$(CXX)\";" >> "$@.tmp";
 # This is known to work for g++ and clang++.
-	$(AM_V_GEN) CXX_VERSION_STR=$$(if $$($(CXX) --version > /dev/null); then echo "$$($(CXX) --version | tr '\n' ' ' | $(ESED) -n 's/^(.*[0-9]+\.[0-9]+\.[0-9]+.*)$$/\1/p')"; else echo "unknown"; fi;); \
+	$(AM_V_GEN) CXX_VERSION_STR=$$(if $$($(CXX) --version > /dev/null); then echo "$$($(CXX) --version | $(ESED) '/^Configured.*$$/d;' | head -n 1)"; else echo "unknown"; fi;); \
 	echo "const char *g_cxx_version_str = \"$${CXX_VERSION_STR}\";" >> "$@.tmp";\
 	mv "$@.tmp" "$@"
 

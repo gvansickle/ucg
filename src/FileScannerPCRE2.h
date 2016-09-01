@@ -32,7 +32,7 @@
 class FileScannerPCRE2: public FileScanner
 {
 public:
-	FileScannerPCRE2(sync_queue<std::string> &in_queue,
+	FileScannerPCRE2(sync_queue<FileID> &in_queue,
 			sync_queue<MatchList> &output_queue,
 			std::string regex,
 			bool ignore_case,
@@ -55,6 +55,8 @@ private:
 
 #ifdef HAVE_LIBPCRE2
 	/// The compiled libpcre2 regex.
+	/// @todo Make this a unique_ptr<>, RAII-ify it.
+	//std::unique_ptr<pcre2_code, void(*)(pcre2_code*)> m_pcre2_regex;
 	pcre2_code *m_pcre2_regex;
 #endif
 };

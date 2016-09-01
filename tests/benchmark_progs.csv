@@ -1,0 +1,9 @@
+prog_id,exename,supports_pcre,pre_options,opt_dirjobs,opt_scanjobs,opt_exclude_dir_literal,opt_only_cpp
+built_ucg,ucg,true,--noenv,--dirjobs=,-j,--ignore-dir=,only_cpp_ack
+inst_ucg,${PROG_INST_UCG},true,--noenv,--dirjobs=,-j,--ignore-dir=,only_cpp_ack
+fake_for_test,nosuchprog,true,-Abc,,,--exclude-dir=,only_cpp_ack
+inst_ag,${PROG_INST_AG},true,,,,--ignore-dir=,only_cpp_ack
+inst_pcre2grep,${PROG_PCRE2GREP},true,-rn --color,,,--exclude-dir=,only_cpp_pcre2grep
+inst_system_grep,grep,false,-Ern --color,,,--exclude-dir=,only_cpp_grep
+inst_gnu_grep_e,${PROG_GNU_GREP},false,-Ern --color,,,--exclude-dir=,only_cpp_grep
+inst_gnu_grep_p,${PROG_GNU_GREP},true,-Prn --color,,,--exclude-dir=,only_cpp_grep

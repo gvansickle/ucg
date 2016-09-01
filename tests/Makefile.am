@@ -17,10 +17,25 @@
 
 ## Process this file with automake to produce Makefile.in.
 
-EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in
+EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in \
+	gen_test_script.py stats.awk \
+	benchmark_progs.csv opts_defs.csv test_cases.csv \
+	performance_test_gen.awk performance_test_summarizer.awk
 CLEANFILES = perf_test_results.txt
 DISTCLEANFILES = atconfig
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
+
+###
+### Dummy file generator exe.
+### Only built during a "make check", and not installed.
+###
+check_PROGRAMS = dummy-file-gen
+dummy_file_gen_SOURCES = dummy-file-gen.cpp lorem_ipsum.hpp
+dummy_file_gen_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
+dummy_file_gen_CFLAGS = $(AM_CFLAGS)
+dummy_file_gen_CXXFLAGS = $(AM_CXXFLAGS)
+dummy_file_gen_LDFLAGS = $(AM_LDFLAGS)
+
      
 # This line appears in the Autoconf/Autotest manual, but see configure.ac.
 # The "AM_MISSING_PROG([AUTOM4TE], [autom4te])" line there takes care of this,
@@ -54,7 +69,8 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	echo 'm4_define([AT_PACKAGE_STRING],    [$(PACKAGE_STRING)$(VC_REV)])' && \
 	echo 'm4_define([AT_PACKAGE_BUGREPORT], [$(PACKAGE_BUGREPORT)])' && \
 	echo 'm4_define([AT_PACKAGE_URL],       [$(PACKAGE_URL)])' ; \
-	} > '$(srcdir)/package.m4'
+	} > $@.temp
+	mv $@.temp '$(srcdir)/package.m4'
 
 # The .at files which make up the test suite.
 TESTSUITE_AT = \

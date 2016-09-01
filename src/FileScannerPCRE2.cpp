@@ -22,8 +22,10 @@
 #include "FileScannerPCRE2.h"
 
 #include <iostream>
-#include <memory>
-#include <libext/string.hpp>
+#include <future/string.hpp>
+#include <cstring>
+
+#include "libext/hints.hpp"
 
 #include "Logger.h"
 
@@ -61,9 +63,33 @@ static int callout_handler(pcre2_callout_block *cob, void *ctx)
 		return 1;
 	}
 }
+
+static int count_callouts_callback([[maybe_unused]] pcre2_callout_enumerate_block *ceb, void *ctx)
+{
+	size_t * ctr { reinterpret_cast<size_t*>(ctx) };
+
+	*ctr = *ctr + 1;
+
+	return 0;
+}
+
+/**
+ * Returns the number of callouts in the given compiled regex.
+ * @param code  Pointer to the compiled regex.
+ * @return Number of callouts in the regex.
+ */
+static size_t pattern_num_callouts(const pcre2_code *code)
+{
+	size_t num_callouts {0};
+
+	pcre2_callout_enumerate(code, count_callouts_callback, &num_callouts);
+
+	return num_callouts;
+}
+
 #endif
 
-FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
+FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case,
@@ -77,7 +103,8 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 	uint32_t regex_compile_options = 0;
 
 	// For now, we won't support capturing.  () will be treated as (?:).
-	regex_compile_options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE /*| PCRE2_NEVER_BACKSLASH_C*/ | PCRE2_NEVER_UTF | PCRE2_NEVER_UCP;
+	regex_compile_options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE | PCRE2_NEVER_BACKSLASH_C | PCRE2_NEVER_UTF | PCRE2_NEVER_UCP
+			| PCRE2_JIT_COMPLETE;
 
 	if(ignore_case)
 	{
@@ -100,6 +127,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 	// Put in our callout, which essentially exists to make '\s' not match a newline.
 	regex = "(?:" + regex + ")(?=.*?$)(?C1)";
 
+	// Compile the regex.
 	m_pcre2_regex = pcre2_compile(reinterpret_cast<PCRE2_SPTR8>(regex.c_str()), regex.length(), regex_compile_options, &error_code, &error_offset, NULL);
 
 	if (m_pcre2_regex == NULL)
@@ -116,6 +144,13 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::string> &in_queue,
 		// JIT compilation error.
 		pcre2_code_free(m_pcre2_regex);
 		throw FileScannerException(std::string("PCRE2 JIT compilation error: ") + PCRE2ErrorCodeToErrorString(jit_retval));
+	}
+
+	// Only allow the one callout we use internally, no user callouts.
+	if(pattern_num_callouts(m_pcre2_regex) > 1)
+	{
+		pcre2_code_free(m_pcre2_regex);
+		throw FileScannerException(std::string("Callouts not supported."));
 	}
 #endif
 }

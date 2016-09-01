@@ -20,30 +20,30 @@
 #ifndef SRC_LIBEXT_MULTIVERSIONING_HPP_
 #define SRC_LIBEXT_MULTIVERSIONING_HPP_
 
-/// @name Preprocessor token appending helpers.
-/// These two combined allow the expansion of two preprocessor tokens to be token-pasted.
-///@{
-#define TOKEN_APPEND_HELPER(tok1, ...) tok1 ## __VA_ARGS__
-#define TOKEN_APPEND(tok1, ...) TOKEN_APPEND_HELPER(tok1, __VA_ARGS__)
-///@}
-
-
-/// For passing in arguments to macros which may contain commas.
-#define SINGLE_ARG(...)  __VA_ARGS__
+#include "static_diagnostics.hpp"
 
 /// @name MULTIVERSION_DECORATOR_<FEATURE> function definition decorators
 ///@{
+#if defined(__SSE2__) || __SSE2__==1
+#define MULTIVERSION_DECORATOR_SSE2		_sse2
+#endif
 #if defined(__SSE4_2__) && __SSE4_2__==1
 #define MULTIVERSION_DECORATOR_SSE4_2	_sse4_2
 #endif
 #if defined(__POPCNT__) && __POPCNT__==1
 #define MULTIVERSION_DECORATOR_POPCNT	_popcnt
-#else
+#elif defined(__SSE4_2__) && __SSE4_2__==1
 #define MULTIVERSION_DECORATOR_POPCNT	_no_popcnt
+#else
+#define MULTIVERSION_DECORATOR_POPCNT	/* empty if not used in conjunction with sse4.2 */
 #endif
 ///@}
 
+#if defined(MULTIVERSION_DECORATOR_SSE4_2)
 #define MULTIVERSION(funcname) TOKEN_APPEND(TOKEN_APPEND(funcname, MULTIVERSION_DECORATOR_SSE4_2), MULTIVERSION_DECORATOR_POPCNT)
+#elif defined(MULTIVERSION_DECORATOR_SSE2)
+#define MULTIVERSION(funcname) TOKEN_APPEND(funcname, MULTIVERSION_DECORATOR_SSE2)
+#endif
 
 /// This macro would be what expands to the multiversion function definition under gcc.
 /// So something like this in a .c/.cpp file:

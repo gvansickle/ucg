@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <future/string.hpp>
 
 MatchList::MatchList(const std::string &filename) : m_filename(filename)
 {
@@ -34,9 +35,12 @@ void MatchList::AddMatch(Match &&match)
 	m_match_list.push_back(std::move(match));
 }
 
-void MatchList::Print(std::ostream &sstrm, bool istty, bool enable_color, bool print_column) const
+
+void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 {
 	std::string no_dotslash_fn;
+	const std::string empty_color_string {""};
+	bool color = output_context.is_color_enabled();
 
 	// If the file path starts with a "./", chop it off.
 	// This is to match the behavior of ack.
@@ -49,41 +53,61 @@ void MatchList::Print(std::ostream &sstrm, bool istty, bool enable_color, bool p
 		no_dotslash_fn = std::string(m_filename.begin(), m_filename.end());
 	}
 
-	// ANSI SGR parameter setting sequences for setting the color and boldness of the output text.
-	// SGR = Select Graphic Rendition.
-	// A note on the "\x1B[K" at the end of each sequence:
-	// This is the "Erase in Line" sequence, which in this form clears the terminal from the cursor position
-	// to the end of the line.  This is needed after every SGR color sequence to prevent scrolling at the bottom of
-	// the terminal at the wrong time from causing that entire line to have the non-default background color.  It also
-	// prevents issues with Horizontal Tab not setting the background to the current color.
-	// A more extensive discussion of this topic is available in the GNU grep source (git://git.savannah.gnu.org/grep.git,
-	// see src/grep.c), which is where I got this solution from.
-	std::string color_filename("\x1B[32;1m\x1B[K"); // 32=green, 1=bold
-	std::string color_match("\x1B[30;43;1m\x1B[K"); // 30=black, 43=yellow bkgnd, 1=bold
-	std::string color_lineno("\x1B[33;1m\x1B[K");   // 33=yellow, 1=bold
-	std::string color_default("\x1B[0m\x1B[K");     // Reset/normal (all attributes off).
+	const std::string *color_filename { &empty_color_string };
+	const std::string *color_match { &empty_color_string };
+	const std::string *color_lineno { &empty_color_string };
+	const std::string *color_default { &empty_color_string };
 
-	if(!enable_color)
+	if(color)
 	{
-		color_filename = "";
-		color_match = "";
-		color_lineno = "";
-		color_default = "";
+		color_filename = &output_context.m_color_filename;
+		color_match = &output_context.m_color_match;
+		color_lineno = &output_context.m_color_lineno;
+		color_default = &output_context.m_color_default;
 	}
 
-	if(istty)
+	std::string composition_buffer;
+	composition_buffer.reserve(256);
+
+	// The only real difference between TTY vs. non-TTY printing here is that for TTY we print:
+	//   filename
+	//   lineno:column:match
+	//   [...]
+	// while for non-TTY we print:
+	//   filename:lineno:column:match
+	//   [...]
+	if(output_context.is_output_tty())
 	{
 		// Render to a TTY device.
 
-		sstrm << color_filename + no_dotslash_fn + color_default + "\n";
+		// Print file header.
+		if(color) composition_buffer += *color_filename;
+		composition_buffer += no_dotslash_fn;
+		if(color) composition_buffer += *color_default;
+		composition_buffer += '\n';
+		sstrm << composition_buffer;
+
+		// Print the individual matches.
 		for(const Match& it : m_match_list)
 		{
-			sstrm << color_lineno << it.m_line_number << color_default + ":";
-			if(print_column)
+			composition_buffer.clear();
+			if(color) composition_buffer += *color_lineno;
+			composition_buffer += std::to_string(it.m_line_number);
+			if(color) composition_buffer += *color_default;
+			composition_buffer += ':';
+			sstrm << composition_buffer;
+			if(output_context.is_column_print_enabled())
 			{
-				sstrm << it.m_pre_match.length()+1 << ":";
+				sstrm << it.m_pre_match.length()+1 << ':';
 			}
-			sstrm << it.m_pre_match + color_match + it.m_match + color_default + it.m_post_match + "\n";
+			composition_buffer.clear();
+			composition_buffer += it.m_pre_match;
+			if(color) composition_buffer += *color_match;
+			composition_buffer += it.m_match;
+			if(color) composition_buffer += *color_default;
+			composition_buffer += it.m_post_match;
+			composition_buffer += '\n';
+			sstrm << composition_buffer;
 		}
 	}
 	else
@@ -92,13 +116,36 @@ void MatchList::Print(std::ostream &sstrm, bool istty, bool enable_color, bool p
 
 		for(const Match& it : m_match_list)
 		{
-			sstrm << color_filename + no_dotslash_fn + color_default + ":"
-					+ color_lineno << it.m_line_number << color_default + ":";
-			if(print_column)
+			// Print file name at the beginning of each line.
+			composition_buffer.clear();
+			if(color) composition_buffer += *color_filename;
+			composition_buffer += no_dotslash_fn;
+			if(color) composition_buffer += *color_default;
+			composition_buffer += ':';
+
+			// Line number.
+			if(color) composition_buffer += *color_lineno;
+			composition_buffer += std::to_string(it.m_line_number);
+			if(color) composition_buffer += *color_default;
+			composition_buffer += ':';
+
+			sstrm << composition_buffer;
+
+			// The column, if enabled.
+			if(output_context.is_column_print_enabled())
 			{
-				sstrm << it.m_pre_match.length()+1 << ":";
+				sstrm << it.m_pre_match.length()+1 << ':';
 			}
-			sstrm << it.m_pre_match + color_match + it.m_match << color_default + it.m_post_match + "\n";
+
+			// The match text.
+			composition_buffer.clear();
+			composition_buffer += it.m_pre_match;
+			if(color) composition_buffer += *color_match;
+			composition_buffer += it.m_match;
+			if(color) composition_buffer += *color_default;
+			composition_buffer += it.m_post_match;
+			composition_buffer += '\n';
+			sstrm << composition_buffer;
 		}
 	}
 }

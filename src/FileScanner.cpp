@@ -34,10 +34,12 @@
 #include <iostream>
 #include <string>
 #include <libext/string.hpp>
+#include <future/string.hpp>
 #include <thread>
 #include <mutex>
 #include <cstring> // For memchr().
 #include <cstddef> // For ptrdiff_t
+#include <cctype>
 #ifndef HAVE_SCHED_SETAFFINITY
 #else
 	#include <sched.h>
@@ -57,7 +59,7 @@ size_t (*FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_l
 		= reinterpret_cast<decltype(FileScanner::CountLinesSinceLastMatch)>(::resolve_CountLinesSinceLastMatch());
 
 
-std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::string> &in_queue,
+std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<FileID> &in_queue,
 			sync_queue<MatchList> &output_queue,
 			std::string regex,
 			bool ignore_case,
@@ -87,7 +89,7 @@ std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::string> &in_que
 	return retval;
 }
 
-FileScanner::FileScanner(sync_queue<std::string> &in_queue,
+FileScanner::FileScanner(sync_queue<FileID> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case,
@@ -121,26 +123,26 @@ void FileScanner::Run(int thread_index)
 	long long total_bytes_read {0};
 
 	// Pull new filenames off the input queue until it's closed.
-	std::string next_string;
-	while(m_in_queue.wait_pull(std::move(next_string)) != queue_op_status::closed)
+	FileID next_file;
+	while(m_in_queue.wait_pull(std::move(next_file)) != queue_op_status::closed)
 	{
 		try
 		{
 			// Try to open and read the file.  This could throw.
-			LOG(INFO) << "Attempting to scan file \'" << next_string << "\'";
+			LOG(INFO) << "Attempting to scan file \'" << next_file.GetPath() << "\'";
 			//steady_clock::time_point start = steady_clock::now();
-			File f(next_string, file_data_storage);
+			File f(next_file, file_data_storage);
 			//steady_clock::time_point end = steady_clock::now();
 			//accum_elapsed_time += (end - start);
 			total_bytes_read += f.size();
 
 
-			MatchList ml(next_string);
+			MatchList ml(next_file.GetPath());
 
 
 			if(f.size() == 0)
 			{
-				LOG(INFO) << "WARNING: Filesize of \'" << next_string << "\' is 0, skipping.";
+				LOG(INFO) << "WARNING: Filesize of \'" << next_file.GetPath() << "\' is 0, skipping.";
 				continue;
 			}
 
@@ -226,7 +228,52 @@ size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ p
 	return num_lines_since_last_match;
 }
 
+const char * FileScanner::LiteralPrescan(std::string regex, const char * __restrict__ start_of_array, const char * __restrict__ end_of_array) noexcept
+{
+	size_t prefix_literal_len { 0 };
+	bool at_least_one_upper = false;
+	for(auto i : regex)
+	{
+		if(std::isalnum(i))
+		{
+			prefix_literal_len++;
+			if(std::isupper(i))
+			{
+				at_least_one_upper=true;
+			}
+		}
+	}
 
+	if((prefix_literal_len == 0) || (!at_least_one_upper))
+	{
+		return start_of_array;
+	}
+
+	// Search for the literal prefix.
+	const char * __restrict__ possible_match_end { start_of_array+(prefix_literal_len-1) };
+	const char * __restrict__ possible_match_start { start_of_array };
+	do
+	{
+		possible_match_end = (const char*)std::memchr(possible_match_end, regex[prefix_literal_len-1], (end_of_array-possible_match_end));
+		if(possible_match_end != NULL)
+		{
+			// Check if the string matched.
+			possible_match_start = possible_match_end - (prefix_literal_len-1);
+			if(std::memcmp(possible_match_start, regex.c_str(), prefix_literal_len-1) == 0)
+			{
+				// Found the prefix string.
+				return possible_match_start;
+			}
+			else
+			{
+				possible_match_end+=1;
+			}
+		}
+	} while(possible_match_end != nullptr);
+
+	// If we drop out of the while(), we didn't find it.
+	return start_of_array;
+}
 
 extern "C" void * resolve_CountLinesSinceLastMatch(void)
 {
@@ -239,6 +286,10 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 	else if(sys_has_sse4_2() && !sys_has_popcnt())
 	{
 		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse4_2_no_popcnt);
+	}
+	else if(sys_has_sse2())
+	{
+		retval = reinterpret_cast<void*>(&FileScanner::CountLinesSinceLastMatch_sse2);
 	}
 	else
 	{

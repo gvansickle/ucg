@@ -28,6 +28,7 @@
 #include <sstream>
 #include <vector>
 
+#include "hints.hpp"
 
 /**
  * Splits the given string #s on the given #delimiter character.  Returns the resulting strings in a std::vector.
@@ -71,7 +72,7 @@ public:
 	microstring(const char * __restrict__ start, const char * __restrict__ end)
 	{
 		size_t num_chars = end - start;
-		if(__builtin_expect(num_chars > sizeof(underlying_storage_type), 0))
+		if(unlikely(num_chars > sizeof(underlying_storage_type)))
 		{
 			throw std::length_error("Length too long for a microstring");
 		}
@@ -114,7 +115,7 @@ public:
 		return strnlen(ptr, 4);
 	};
 
-	bool operator <(const microstring other) const noexcept { return m_storage < other.m_storage; };
+	inline bool operator <(const microstring other) const noexcept { return m_storage < other.m_storage; };
 
 	/// Implicitly convert to a std::string.
 	operator std::string() const
@@ -126,7 +127,7 @@ public:
 	underlying_storage_type urep() const noexcept { return m_storage; };
 
 private:
-	underlying_storage_type m_storage;
+	underlying_storage_type m_storage;  // No member initializer, would make the class non-trivial.
 };
 
 #ifdef HAVE_IS_TRIVIAL

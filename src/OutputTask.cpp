@@ -47,6 +47,8 @@ OutputTask::OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, syn
 	}
 
 	m_print_column = flag_column;
+
+	m_output_context.reset(new OutputContext(m_output_is_tty, m_enable_color, m_print_column));
 }
 
 OutputTask::~OutputTask()
@@ -66,9 +68,9 @@ void OutputTask::Run()
 		if(first_matchlist_printed && m_output_is_tty)
 		{
 			// Print a blank line between the match lists (i.e. the groups of matches in one file).
-			std::cout << "\n";
+			std::cout << '\n';
 		}
-		ml.Print(sstrm, m_output_is_tty, m_enable_color, m_print_column);
+		ml.Print(sstrm, *m_output_context);
 		std::cout << sstrm.str();
 		std::cout.flush();
 		sstrm.str(std::string());
