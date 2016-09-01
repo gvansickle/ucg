@@ -9,10 +9,10 @@
 	- `grep`-style `--exclude=GLOB`: Files matching GLOB will be ignored.
 	- `ag`-style `--ignore=GLOB`: Files matching GLOB will be ignored.  Note that unlike `ag`'s option, this does not apply to directories).
 - Files and directories specified on the command line (including hidden files) are now scanned regardless of ignore settings, and in the case of files, whether they are recognized as text files.
-- Experimental support for OSX and PC-BSD.
+- OSX and PC-BSD now supported.
 - Now compiles and links with either or both of libpcre and libpcre2, if available.  Defaults to using libpcre2 for matching.
 - Directory tree traversal now uses more than one thread (two by default).  Can be overridden with new "--dirjobs" command-line parameter.  Overall performance improvement on all platforms vs. 0.2.2 (e.g., ~25% on Fedora 23 with hot cache).
-- Line number counting is now done by either a generic or a vectorized (sse4.2 with/without popcount) version of FileScanner::CountLinesSinceLastMatch(), depending on the host system's ISA extension support.  Measurable performance increase; line number counting went from ~6.5% of total cycles to less than 1% on one workload per valgrind/callgrind.
+- Line number counting is now done by either a generic or a vectorized (sse2/sse4.2 with/without popcount) version of FileScanner::CountLinesSinceLastMatch(), depending on the host system's ISA extension support.  Measurable performance increase; line number counting went from ~6.5% of total cycles to less than 1% on one workload per valgrind/callgrind.
 - Added ".awk" as a builtin file type.
 
 ### Changed
@@ -23,7 +23,7 @@
 - Refactored FileScanner to be a base class with derived classes handling the particulars of using libpcre or libpcre2 to do the scanning. 
 - Added a basic diagnostic/debug logging facility.
 - ResizableArray now aligns allocations to 64-byte boundaries to match Core i7 cache line sizes in an effort to prevent false sharing.
-- Performance test expansion and improvements.
+- Performance/Benchmarking infrastructure and test expansion and improvements.
 
 ### Fixed
 - Cygwin now requires AC_USE_SYSTEM_EXTENSIONS for access to get_current_dir_name().  Resolves #76.
