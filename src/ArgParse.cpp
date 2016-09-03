@@ -894,6 +894,8 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 			std::string argtxt(*arg+2);
 
 			// Is this a type specification of the form "--TYPE"?
+			/// @temp
+			m_type_manager.IsTypenameOrPrefix(argtxt);
 			if(m_type_manager.IsType(argtxt))
 			{
 				// Yes, replace it with something digestible by argp: --type=TYPE.

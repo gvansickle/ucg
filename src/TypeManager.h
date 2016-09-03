@@ -23,6 +23,7 @@
 #include <config.h>
 
 #include <iosfwd>
+#include <tuple>
 #include <string>
 #include <vector>
 #include <map>
@@ -76,6 +77,17 @@ public:
 	 * @return true on success, false if no such type.
 	 */
 	bool notype(const std::string &type_name);
+
+	/**
+	 * Determines if the given string #name_or_prefix matches one or more type names.
+	 * Returns a list of the matching complete type name strings.
+	 * Used during argument parsing.  If no matches, arg is unrecognized.  If more than one match,
+	 * arg is ambiguous.
+	 *
+	 * @param name_or_prefix
+	 * @return
+	 */
+	std::vector<std::string> IsTypenameOrPrefix(const std::string &name_or_prefix);
 
 	/**
 	 * Determines if @p type is in the m_active_type_map as a type name.
