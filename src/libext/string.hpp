@@ -60,6 +60,13 @@ inline std::vector<std::string> split(const std::string &s, char delimiter)
 }
 
 
+/**
+ * Joins the strings in #container_of_strings into a single string, optionally separated by #separator.
+ *
+ * @param container_of_strings
+ * @param separator
+ * @return
+ */
 template < typename ContainerType >
 typename ContainerType::value_type join(const ContainerType& container_of_strings,
 		const typename ContainerType::value_type separator = typename ContainerType::value_type())
@@ -79,9 +86,11 @@ typename ContainerType::value_type join(const ContainerType& container_of_string
 				});
 	len += 1; // For any trailing '\0'.
 
+	// Create the return value and allocate the space we'll need.
 	typename ContainerType::value_type retval;
 	retval.reserve(len);
 
+	// Concatenate the strings together.
 	for(auto entry : container_of_strings)
 	{
 		if(retval.length() != 0 && separator.length() != 0)

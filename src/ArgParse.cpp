@@ -905,10 +905,11 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 			else if(type_name_list.size() > 1)
 			{
 				// Ambiguous parameter.
-				/// @todo argp output:
-				/// $ ./ucg --i 'endif' ../
-				/// ./ucg: option '--i' is ambiguous; possibilities: '--ignore-case' '--ignore' '--include' '--ignore-file' '--ignore-directory' '--ignore-dir'
-				/// Try `ucg --help' or `ucg --usage' for more information.
+				// Try to match argp's output in this case as closely as we can.
+				// argp's output in such a case looks like this:
+				//   $ ./ucg --i 'endif' ../
+				//   ./ucg: option '--i' is ambiguous; possibilities: '--ignore-case' '--ignore' '--include' '--ignore-file' '--ignore-directory' '--ignore-dir'
+				//   Try `ucg --help' or `ucg --usage' for more information.
 				std::string possibilities = "'--" + join(type_name_list, "' '--") + "'";
 				throw ArgParseException("option '--" + argtxt + "' is ambiguous; possibilities: " + possibilities);
 			}
