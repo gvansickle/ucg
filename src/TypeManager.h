@@ -87,7 +87,7 @@ public:
 	 * @param name_or_prefix
 	 * @return
 	 */
-	std::vector<std::string> IsTypenameOrPrefix(const std::string &name_or_prefix);
+	std::vector<std::string> GetMatchingTypenameList(const std::string &name_or_prefix);
 
 	/**
 	 * Determines if @p type is in the m_active_type_map as a type name.

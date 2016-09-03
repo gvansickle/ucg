@@ -284,18 +284,17 @@ bool TypeManager::notype(const std::string& type_name)
 	return true;
 }
 
-std::vector<std::string> TypeManager::IsTypenameOrPrefix(const std::string &name_or_prefix)
+std::vector<std::string> TypeManager::GetMatchingTypenameList(const std::string &name_or_prefix)
 {
 	std::vector<std::string> retval;
 
+	// Find the first key in the map that name_or_prefix could possibly match.
 	decltype(m_builtin_and_user_type_map)::const_iterator it = m_builtin_and_user_type_map.lower_bound(name_or_prefix);
 
 	while(it != m_builtin_and_user_type_map.cend())
 	{
-		std::cout << "IT: " << it->first << '\n';
 		if(it->first.find(name_or_prefix, 0) != std::string::npos)
 		{
-			std::cout << "HIT: " << it->first << "\n";
 			retval.push_back(it->first);
 		}
 		else
@@ -311,21 +310,6 @@ std::vector<std::string> TypeManager::IsTypenameOrPrefix(const std::string &name
 		it = std::next(it);
 	}
 
-#if 0
-	std::for_each(range.first, range.second,
-			[](decltype(m_builtin_and_user_type_map)::value_type v){ std::cout << "ENTRY: " << v.first << std::endl; }
-	);
-
-	if (range.first != m_builtin_and_user_type_map.end())
-	{
-		std::cout << "FIRST: " << range.first->first << '\n';
-	}
-
-	if (range.second != m_builtin_and_user_type_map.end())
-	{
-		std::cout << "SECOND: " << range.second->first << '\n';
-	}
-#endif
 	return retval;
 }
 

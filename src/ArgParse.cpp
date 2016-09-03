@@ -894,14 +894,23 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 			std::string argtxt(*arg+2);
 
 			// Is this a type specification of the form "--TYPE"?
-			/// @temp
-			m_type_manager.IsTypenameOrPrefix(argtxt);
-			if(m_type_manager.IsType(argtxt))
+			auto type_name_list = m_type_manager.GetMatchingTypenameList(argtxt);
+			if(type_name_list.size() == 1)
 			{
 				// Yes, replace it with something digestible by argp: --type=TYPE.
-				std::string new_param("--type=" + argtxt);
+				std::string new_param("--type=" + type_name_list[0]);
 				delete [] *arg;
 				*arg = cpp_strdup(new_param.c_str());
+			}
+			else if(type_name_list.size() > 1)
+			{
+				// Ambiguous parameter.
+				/// @todo argp output:
+				/// $ ./ucg --i 'endif' ../
+				/// ./ucg: option '--i' is ambiguous; possibilities: '--ignore-case' '--ignore' '--include' '--ignore-file' '--ignore-directory' '--ignore-dir'
+				/// Try `ucg --help' or `ucg --usage' for more information.
+				std::string possibilities = "'--" + join(type_name_list, "' '--") + "'";
+				throw ArgParseException("option '--" + argtxt + "' is ambiguous; possibilities: " + possibilities);
 			}
 
 			// Is this a type specification of the form '--noTYPE'?
