@@ -915,12 +915,23 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 			}
 
 			// Is this a type specification of the form '--noTYPE'?
-			else if(argtxt.compare(0, 2, "no") == 0 && m_type_manager.IsType(argtxt.substr(2)))
+			else if(argtxt.compare(0, 2, "no") == 0)
 			{
-				// Yes, replace it with something digestible by argp: --type=noTYPE.
-				std::string new_param("--type=" + argtxt);
-				delete [] *arg;
-				*arg = cpp_strdup(new_param.c_str());
+				auto possible_type_name = argtxt.substr(2);
+				auto type_name_list = m_type_manager.GetMatchingTypenameList(possible_type_name);
+				if(type_name_list.size() == 1)
+				{
+					// Yes, replace it with something digestible by argp: --type=noTYPE.
+					std::string new_param("--type=no" + type_name_list[0]);
+					delete [] *arg;
+					*arg = cpp_strdup(new_param.c_str());
+				}
+				else if(type_name_list.size() > 1)
+				{
+					// Ambiguous parameter.
+					std::string possibilities = "'--no" + join(type_name_list, "' '--no") + "'";
+					throw ArgParseException("option '--" + argtxt + "' is ambiguous; possibilities: " + possibilities);
+				}
 			}
 
 			// Otherwise, check if it's one of the file type definition parameters.

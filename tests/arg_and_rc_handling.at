@@ -38,6 +38,73 @@ AT_CLEANUP
 
 
 #
+# Prefix matching for --TYPE options.
+#
+AT_SETUP([prefix matching for --TYPE options])
+
+AT_DATA([file_to_search.py],
+[from somewhere import something
+class whatever(object):
+    pass
+])
+
+# We don't have an explicit '--py' option, but we do have '--python'.
+AT_CHECK([ucg --noenv --py 'class'], [0],
+[file_to_search.py:2:class whatever(object):
+], [stderr])
+
+AT_CLEANUP
+
+#
+# Prefix matching for --noTYPE options.
+#
+AT_SETUP([prefix matching for --noTYPE options])
+
+AT_DATA([file_to_search.py],
+[from somewhere import something
+class whatever(object):
+    pass
+])
+
+AT_DATA([file_to_search.cpp],
+[// Comment
+class whatever : public base
+{
+}
+])
+
+# We don't have an explicit '--nopy' option, but we do have '--nopython'.
+AT_CHECK([ucg --noenv --nopy 'class'], [0],
+[file_to_search.cpp:2:class whatever : public base
+], [stderr])
+
+AT_CLEANUP
+
+#
+# Ambiguous parameters on --TYPE options.
+#
+AT_SETUP([ambiguous option handling, --TYPE options])
+
+# @note 255 is the same as what ack returns in this situation.  ag returns 1.
+AT_CHECK([ucg --noenv --c 'class'], [255], [stdout], [stderr])
+AT_CHECK([$EGREP --ignore-case '^.*ucg.+option.+--c.+ambiguous.+possibilities:.*--c.+--c.+$' stderr], [0], [stdout], [stderr])
+
+AT_CLEANUP
+
+
+#
+# Ambiguous parameters on --noTYPE options.
+#
+AT_SETUP([ambiguous option handling, --noTYPE options])
+
+# @note 255 is the same as what ack returns in this situation.  ag returns 1.
+AT_CHECK([ucg --noenv --nocs 'class'], [255], [stdout], [stderr])
+AT_CHECK([$EGREP --ignore-case '^.*ucg.+option.+--nocs.+ambiguous.+possibilities:.*--nocs.+--nocs.+$' stderr], [0], [stdout], [stderr])
+
+AT_CLEANUP
+
+
+#
 # Check that non-options in the rc files are properly rejected.
 #
 AT_SETUP([Reject non-options in .ucgrc files])
