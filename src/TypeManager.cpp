@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <set>
+#include <iterator>
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -281,6 +282,35 @@ bool TypeManager::notype(const std::string& type_name)
 	m_active_type_map.erase(type_name);
 
 	return true;
+}
+
+std::vector<std::string> TypeManager::GetMatchingTypenameList(const std::string &name_or_prefix)
+{
+	std::vector<std::string> retval;
+
+	// Find the first key in the map that name_or_prefix could possibly match.
+	decltype(m_builtin_and_user_type_map)::const_iterator it = m_builtin_and_user_type_map.lower_bound(name_or_prefix);
+
+	while(it != m_builtin_and_user_type_map.cend())
+	{
+		if(it->first.find(name_or_prefix, 0) != std::string::npos)
+		{
+			retval.push_back(it->first);
+		}
+		else
+		{
+			// No substring found, we've reached the end of any possible matches.
+			break;
+		}
+
+		// Point to the next entry.
+		// Note that we're not using a simple "++it" here.  The reason is that there's no requirement on C++
+		// iterators for that to work, and in some cases it won't.  See the "Notes" section here for further discussion:
+		// <http://en.cppreference.com/w/cpp/iterator/next>.
+		it = std::next(it);
+	}
+
+	return retval;
 }
 
 bool TypeManager::IsType(const std::string& type) const
