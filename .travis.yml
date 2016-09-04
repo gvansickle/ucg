@@ -12,6 +12,7 @@ compiler:
 
 before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre pcre2 argp-standalone the_silver_searcher; fi
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew tap homebrew/dupes; brew install grep; fi  # Install gnu grep to test against. @todo Make things work so this can be installed only after a successful build.
  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev && sudo apt-get install -qq silversearcher-ag; fi
 
 before_script:
@@ -44,7 +45,6 @@ script:
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
 
 after_success:
- - if [ $TRAVIS_OS_NAME == osx ]; then brew tap homebrew/dupes; brew install grep; fi  # Install gnu grep to test against.
  - cd ../../ && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
  - tar xjf boost_1_58_0.tar.bz2
  - cd ucg/build
