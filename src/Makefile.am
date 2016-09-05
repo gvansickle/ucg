@@ -17,6 +17,8 @@
 
 SUBDIRS = future libext
 
+override CXXFLAGS := $(filter-out -march=%,$(CXXFLAGS))
+
 noinst_LIBRARIES = libsrc.a
 libsrc_a_SOURCES = \
 	ArgParse.cpp ArgParse.h \
@@ -48,7 +50,6 @@ libsrc_a_CXXFLAGS = $(AM_CXXFLAGS)
 
 # SSE2
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
-override CXXFLAGS := $(filter-out -march=%,$(CXXFLAGS))
 noinst_LIBRARIES += libsrc_sse2.a
 endif
 libsrc_sse2_a_SOURCES = \
@@ -57,12 +58,10 @@ libsrc_sse2_a_SOURCES = \
 libsrc_sse2_a_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_sse2_a_CFLAGS = $(AM_CFLAGS)
 libsrc_sse2_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
-#endif
 
 # SSE4.2 but no POPCNT.
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
 if BUILD_CXXFLAGS_EXT_X86_64_NO_POPCNT
-override CXXFLAGS := $(filter-out -march=%,$(CXXFLAGS))
 noinst_LIBRARIES += libsrc_sse4_2_no_popcnt.a
 endif
 endif
@@ -76,7 +75,6 @@ libsrc_sse4_2_no_popcnt_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2
 # SSE4.2 with POPCNT
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
 if BUILD_CXXFLAGS_EXT_X86_64_POPCNT
-override CXXFLAGS := $(filter-out -march=%,$(CXXFLAGS))
 noinst_LIBRARIES += libsrc_sse4_2_popcnt.a
 endif
 endif
