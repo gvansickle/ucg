@@ -62,6 +62,7 @@ libsrc_sse2_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
 # SSE4.2 but no POPCNT.
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
 if BUILD_CXXFLAGS_EXT_X86_64_NO_POPCNT
+override CXXFLAGS := $(filter-out -march=%,$(CXXFLAGS))
 noinst_LIBRARIES += libsrc_sse4_2_no_popcnt.a
 endif
 endif
@@ -75,6 +76,7 @@ libsrc_sse4_2_no_popcnt_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2
 # SSE4.2 with POPCNT
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
 if BUILD_CXXFLAGS_EXT_X86_64_POPCNT
+override CXXFLAGS := $(filter-out -march=%,$(CXXFLAGS))
 noinst_LIBRARIES += libsrc_sse4_2_popcnt.a
 endif
 endif
