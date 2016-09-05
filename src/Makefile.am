@@ -48,13 +48,14 @@ libsrc_a_CXXFLAGS = $(AM_CXXFLAGS)
 
 # SSE2
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
+override CXXFLAGS := $(filter-out -march=%,$(CXXFLAGS))
 noinst_LIBRARIES += libsrc_sse2.a
 endif
 libsrc_sse2_a_SOURCES = \
 	FileScanner_sse4_2.cpp
 
-libsrc_sse2_a_CPPFLAGS = $(AM_CPPFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
-libsrc_sse2_a_CFLAGS = $(AM_CFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
+libsrc_sse2_a_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_sse2_a_CFLAGS = $(AM_CFLAGS)
 libsrc_sse2_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
 #endif
 
@@ -67,8 +68,8 @@ endif
 libsrc_sse4_2_no_popcnt_a_SOURCES = \
 	FileScanner_sse4_2.cpp
 
-libsrc_sse4_2_no_popcnt_a_CPPFLAGS = $(AM_CPPFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_NO_POPCNT)
-libsrc_sse4_2_no_popcnt_a_CFLAGS = $(AM_CFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_NO_POPCNT)
+libsrc_sse4_2_no_popcnt_a_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_sse4_2_no_popcnt_a_CFLAGS = $(AM_CFLAGS)
 libsrc_sse4_2_no_popcnt_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_NO_POPCNT)
 
 # SSE4.2 with POPCNT
@@ -80,7 +81,7 @@ endif
 libsrc_sse4_2_popcnt_a_SOURCES = \
 	FileScanner_sse4_2.cpp
 
-libsrc_sse4_2_popcnt_a_CPPFLAGS = $(AM_CPPFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
-libsrc_sse4_2_popcnt_a_CFLAGS = $(AM_CFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
+libsrc_sse4_2_popcnt_a_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_sse4_2_popcnt_a_CFLAGS = $(AM_CFLAGS)
 libsrc_sse4_2_popcnt_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
 

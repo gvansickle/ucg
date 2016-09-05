@@ -49,10 +49,10 @@ AM_INIT_AUTOMAKE([
 	subdir-objects
 	color-tests
 	std-options
-	-Wall
-	-Werror
+	-Wno-override
 ])
-
+	dnl-Wall
+	dnl-Werror
 
 # To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
 # This will do that for us.
@@ -301,7 +301,7 @@ AC_LANG_PUSH([C++])
 AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
 #AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be. @note Doesn't seem to do anything.
-AX_APPEND_COMPILE_FLAGS([-ftree-vectorize]) # -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
+AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CXXFLAGS]) # -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security], [AM_CXXFLAGS])
