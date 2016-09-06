@@ -331,6 +331,14 @@ AM_COND_IF([BUILD_X86_64_ISA_EXTENSIONS],
 	[AC_MSG_NOTICE([Compiler supports x86-64 ISA extensions, will use them.])],
 	[AC_MSG_NOTICE([Compiler does not support x86-64 ISA extensions, will not use them.])])
 
+#----------------------------------------------------
+#
+# @todo Experiments.
+#AC_CONFIG_COMMANDS([src/Makefile.in], [cp ${ac_srcdir}/src/Makefile.in test.in && echo "TIMESTAMP: $(date)" >> ${ac_srcdir}/src/Makefile.in], [SOMEVAR=$SOMEVAR])
+AC_SUBST([CXXFLAGS_NOARCH], [-march=x86-64])
+#
+#----------------------------------------------------
+
 
 # Check if the implementation underlying C++11's std::thread<> is pthreads.  Note that we don't actually require pthreads,
 # we require and use C++11's std::thread<>, whatever its implementation details.  However, if C++11 is using pthreads, we can
@@ -483,6 +491,11 @@ AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 ###
 ### Create the Makefiles for the program.
 ###
+#AC_CONFIG_FILES([src/Makefile], [
+#	echo "PWD: $(pwd)";
+#	echo "{ac_top_srcdir}: ${ac_top_srcdir} // $(realpath ${ac_top_srcdir})";
+#	sed 's/CXXFLAGS/DUMMYTEST/g' ${ac_top_srcdir}/src/Makefile.in > ${ac_tmp}/Makefile.in.tmp && mv ${ac_tmp}/Makefile.in.tmp ${ac_top_srcdir}/src/Makefile.in 
+#	])
 AC_CONFIG_FILES([Makefile
 	src/Makefile
 	src/future/Makefile

@@ -19,6 +19,9 @@
 
 #include <config.h>
 
+//_Pragma("GCC push_options")
+//_Pragma("GCC target (\"arch=x86-64,sse2\")")
+
 #include "FileScanner.h"
 
 #include <libext/multiversioning.hpp>
@@ -27,6 +30,15 @@
 #include <cstdint>
 #include <immintrin.h>
 
+#ifdef __SSE2__
+STATIC_MSG("Have SSE2")
+#endif
+#ifdef __SSE4_2__
+STATIC_MSG("Have SSE4_2")
+#endif
+#ifdef __POPCNT__
+STATIC_MSG("Have POPCNT")
+#endif
 
 // Declaration here only so we can apply gcc attributes.
 inline uint8_t popcount16(uint16_t bits) noexcept ATTR_CONST /* Doesn't access globals, has no side-effects.*/
