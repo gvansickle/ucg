@@ -49,6 +49,13 @@ libsrc_a_CXXFLAGS = $(AM_CXXFLAGS)
 #libsrc_isa_ext_x86_64.a: 
 #	$(MAKE) CXXFLAGS=$(filter-out -march=%,$(CXXFLAGS)) 
 
+#CXXFLAGS_USER:=$(CXXFLAGS)
+#CXXFLAGS_FILT:=$(filter-out -march=%,$(CXXFLAGS_USER))
+#CXXFLAGS:=
+
+@CXXFLAGS_TESTING@
+@CXXFLAGS_TESTING_OBJ@
+
 # SSE2
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
 noinst_LIBRARIES += libsrc_sse2.a

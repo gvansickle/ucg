@@ -335,7 +335,8 @@ AM_COND_IF([BUILD_X86_64_ISA_EXTENSIONS],
 #
 # @todo Experiments.
 #AC_CONFIG_COMMANDS([src/Makefile.in], [cp ${ac_srcdir}/src/Makefile.in test.in && echo "TIMESTAMP: $(date)" >> ${ac_srcdir}/src/Makefile.in], [SOMEVAR=$SOMEVAR])
-AC_SUBST([CXXFLAGS_NOARCH], [-march=x86-64])
+AC_SUBST([CXXFLAGS_TESTING], ['libsrc_sse2_a-FileScanner_sse4_2.o: override CXXFLAGS=-march=x86-64'])
+AC_SUBST([CXXFLAGS_TESTING_OBJ], ['libsrc_sse2_a-FileScanner_sse4_2.obj: override CXXFLAGS=-march=x86-64'])
 #
 #----------------------------------------------------
 
