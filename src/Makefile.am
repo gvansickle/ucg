@@ -17,6 +17,8 @@
 
 SUBDIRS = future libext
 
+EXTRA_LIBRARIES = libsrc_sse2.a
+
 noinst_LIBRARIES = libsrc.a
 libsrc_a_SOURCES = \
 	ArgParse.cpp ArgParse.h \
@@ -45,20 +47,24 @@ libsrc_a_CXXFLAGS = $(AM_CXXFLAGS)
 ###
 ### Libs to contain multiversioned functions.
 ###
-
-#libsrc_isa_ext_x86_64.a: 
-#	$(MAKE) CXXFLAGS=$(filter-out -march=%,$(CXXFLAGS)) 
+libsrc_isa_ext_x86_64.a: libsrc_sse2.a
+#@if [ -f $< ]; then echo "$< already exists, aborting"; exit 1; fi;
+	-rm libsrc_sse2.a libsrc_sse2*.o libsrc_sse2*.obj
+	$(MAKE) CXXFLAGS=$(filter-out -march=%,$(CXXFLAGS)) libsrc_sse2.a
+	echo -e "create libsrc_isa_ext_x86_64.a\naddlib libsrc_sse2.a\nsave\nend" | ar -M
 
 #CXXFLAGS_USER:=$(CXXFLAGS)
 #CXXFLAGS_FILT:=$(filter-out -march=%,$(CXXFLAGS_USER))
 #CXXFLAGS:=
 
-@CXXFLAGS_TESTING@
-@CXXFLAGS_TESTING_OBJ@
+#@CXXFLAGS@
+#@CXXFLAGS_TESTING@
+#@CXXFLAGS_TESTING_OBJ@
 
 # SSE2
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
-noinst_LIBRARIES += libsrc_sse2.a
+noinst_LIBRARIES += libsrc_isa_ext_x86_64.a 
+# libsrc_sse2.a
 endif
 libsrc_sse2_a_SOURCES = \
 	FileScanner_sse4_2.cpp
