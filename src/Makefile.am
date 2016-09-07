@@ -17,9 +17,9 @@
 
 SUBDIRS = future libext
 
-EXTRA_LIBRARIES = libsrc_sse2.a
+EXTRA_LIBRARIES =
 
-noinst_LIBRARIES = libsrc.a
+noinst_LIBRARIES = libsrc.a libsrc_isa_ext_x86_64.a
 libsrc_a_SOURCES = \
 	ArgParse.cpp ArgParse.h \
 	DirInclusionManager.cpp DirInclusionManager.h \
@@ -47,7 +47,7 @@ libsrc_a_CXXFLAGS = $(AM_CXXFLAGS)
 ###
 ### Libs to contain multiversioned functions.
 ###
-libsrc_isa_ext_x86_64.a: libsrc_sse2.a
+libsrc_isa_ext_x86_64.a:
 #@if [ -f $< ]; then echo "$< already exists, aborting"; exit 1; fi;
 	-rm libsrc_sse2.a libsrc_sse2*.o libsrc_sse2*.obj
 	$(MAKE) CXXFLAGS=$(filter-out -march=%,$(CXXFLAGS)) libsrc_sse2.a
@@ -63,7 +63,8 @@ libsrc_isa_ext_x86_64.a: libsrc_sse2.a
 
 # SSE2
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
-noinst_LIBRARIES += libsrc_isa_ext_x86_64.a 
+EXTRA_LIBRARIES += libsrc_sse2.a
+#noinst_LIBRARIES += libsrc_isa_ext_x86_64.a 
 # libsrc_sse2.a
 endif
 libsrc_sse2_a_SOURCES = \
