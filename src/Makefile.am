@@ -17,6 +17,7 @@
 
 SUBDIRS = future libext
 
+MOSTLYCLEANFILES =
 EXTRA_LIBRARIES =
 
 noinst_LIBRARIES = libsrc.a libsrc_isa_ext_x86_64.a
@@ -44,14 +45,16 @@ libsrc_a_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_a_CFLAGS = $(AM_CFLAGS)
 libsrc_a_CXXFLAGS = $(AM_CXXFLAGS)
 
+libsrc_isa_ext_x86_64_a_SOURCES =
+
 ###
 ### Libs to contain multiversioned functions.
 ###
+CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
 libsrc_isa_ext_x86_64.a:
-#@if [ -f $< ]; then echo "$< already exists, aborting"; exit 1; fi;
-	-rm libsrc_sse2.a libsrc_sse2*.o libsrc_sse2*.obj
-	$(MAKE) CXXFLAGS=$(filter-out -march=%,$(CXXFLAGS)) libsrc_sse2.a
-	echo -e "create libsrc_isa_ext_x86_64.a\naddlib libsrc_sse2.a\nsave\nend" | ar -M
+	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.a
+	$(AR) -rcT $@ libsrc_sse2.a
+#echo -e "create libsrc_isa_ext_x86_64.a\naddlib libsrc_sse2.a\nsave\nend" | ar -M
 
 #CXXFLAGS_USER:=$(CXXFLAGS)
 #CXXFLAGS_FILT:=$(filter-out -march=%,$(CXXFLAGS_USER))
@@ -64,6 +67,8 @@ libsrc_isa_ext_x86_64.a:
 # SSE2
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
 EXTRA_LIBRARIES += libsrc_sse2.a
+MOSTLYCLEANFILES += libsrc_sse2.a
+#libsrc_isa_ext_x86_64_a_SOURCES += libsrc_sse2.a 
 #noinst_LIBRARIES += libsrc_isa_ext_x86_64.a 
 # libsrc_sse2.a
 endif
