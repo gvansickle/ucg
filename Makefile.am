@@ -35,6 +35,10 @@ MAINTAINERCLEANFILES =
 # Make sure README.rd and other docs get distributed and installed correctly.
 dist_doc_DATA = README.md NEWS.md COPYING AUTHORS
 
+# Update libtool if it gets out of date.
+libtool: $(LIBTOOL_DEPS)
+	$(SHELL) ./config.status libtool
+
 # The Automake rules for the ucg executable.
 bin_PROGRAMS=ucg
 ucg_SOURCES=main.cpp build_info.h
@@ -44,8 +48,9 @@ ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS)
 ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.a ./src/libext/libext.a ./src/future/libfuture.a ./src/libsrc_isa_ext_x86_64.a \
-	./src/libsrc_sse4_2_no_popcnt.a ./src/libsrc_sse4_2_popcnt.a ./src/libsrc.a
+ucg_LDADD = ./src/libsrc.la ./src/libext/libext.a ./src/future/libfuture.a ./src/libsrc_isa_ext_x86_64.la \
+    ./src/libsrc_sse4_2_no_popcnt.la ./src/libsrc_sse4_2_popcnt.la
+# ./src/libsrc.a
 #./src/libsrc_sse2.a 
 
 # Collect some make-time info. 

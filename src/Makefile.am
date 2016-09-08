@@ -20,8 +20,8 @@ SUBDIRS = future libext
 MOSTLYCLEANFILES =
 EXTRA_LIBRARIES =
 
-noinst_LIBRARIES = libsrc.a libsrc_isa_ext_x86_64.a
-libsrc_a_SOURCES = \
+noinst_LTLIBRARIES = libsrc.la libsrc_isa_ext_x86_64.la
+libsrc_la_SOURCES = \
 	ArgParse.cpp ArgParse.h \
 	DirInclusionManager.cpp DirInclusionManager.h \
 	Globber.cpp Globber.h \
@@ -41,19 +41,21 @@ libsrc_a_SOURCES = \
 	sync_queue_impl_selector.h \
 	TypeManager.cpp TypeManager.h
 
-libsrc_a_CPPFLAGS = $(AM_CPPFLAGS)
-libsrc_a_CFLAGS = $(AM_CFLAGS)
-libsrc_a_CXXFLAGS = $(AM_CXXFLAGS)
+libsrc_la_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_la_CFLAGS = $(AM_CFLAGS)
+libsrc_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libsrc_isa_ext_x86_64_a_SOURCES =
+libsrc_isa_ext_x86_64_la_SOURCES =
+libsrc_isa_ext_x86_64_la_DEPENDENCIES =
 
 ###
 ### Libs to contain multiversioned functions.
 ###
 CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
-libsrc_isa_ext_x86_64.a:
-	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.a
-	$(AR) -rcT $@ libsrc_sse2.a
+libsrc_isa_ext_x86_64.la:
+	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.la
+	libtool --mode=link c++ -static -o $@ libsrc_sse2.la
+#$(AR) -rcT $@ libsrc_sse2.a
 #echo -e "create libsrc_isa_ext_x86_64.a\naddlib libsrc_sse2.a\nsave\nend" | ar -M
 
 #CXXFLAGS_USER:=$(CXXFLAGS)
@@ -68,41 +70,42 @@ libsrc_isa_ext_x86_64.a:
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
 EXTRA_LIBRARIES += libsrc_sse2.a
 MOSTLYCLEANFILES += libsrc_sse2.a
-#libsrc_isa_ext_x86_64_a_SOURCES += libsrc_sse2.a 
-#noinst_LIBRARIES += libsrc_isa_ext_x86_64.a 
-# libsrc_sse2.a
+libsrc_isa_ext_x86_64_la_DEPENDENCIES += libsrc_sse2.a
+#libsrc_isa_ext_x86_64_la_SOURCES += libsrc_sse2.a 
+#noinst_LTLIBRARIES += libsrc_isa_ext_x86_64.la 
+# libsrc_sse2.la
 endif
-libsrc_sse2_a_SOURCES = \
+libsrc_sse2_la_SOURCES = \
 	FileScanner_sse4_2.cpp
 
-libsrc_sse2_a_CPPFLAGS = $(AM_CPPFLAGS)
-libsrc_sse2_a_CFLAGS = $(AM_CFLAGS)
-libsrc_sse2_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
+libsrc_sse2_la_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_sse2_la_CFLAGS = $(AM_CFLAGS)
+libsrc_sse2_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
 
 
 # SSE4.2 but no POPCNT.
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
 if BUILD_CXXFLAGS_EXT_X86_64_NO_POPCNT
-noinst_LIBRARIES += libsrc_sse4_2_no_popcnt.a
+noinst_LTLIBRARIES += libsrc_sse4_2_no_popcnt.la
 endif
 endif
-libsrc_sse4_2_no_popcnt_a_SOURCES = \
+libsrc_sse4_2_no_popcnt_la_SOURCES = \
 	FileScanner_sse4_2.cpp
 
-libsrc_sse4_2_no_popcnt_a_CPPFLAGS = $(AM_CPPFLAGS)
-libsrc_sse4_2_no_popcnt_a_CFLAGS = $(AM_CFLAGS)
-libsrc_sse4_2_no_popcnt_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_NO_POPCNT)
+libsrc_sse4_2_no_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_sse4_2_no_popcnt_la_CFLAGS = $(AM_CFLAGS)
+libsrc_sse4_2_no_popcnt_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_NO_POPCNT)
 
 # SSE4.2 with POPCNT
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
 if BUILD_CXXFLAGS_EXT_X86_64_POPCNT
-noinst_LIBRARIES += libsrc_sse4_2_popcnt.a
+noinst_LTLIBRARIES += libsrc_sse4_2_popcnt.la
 endif
 endif
-libsrc_sse4_2_popcnt_a_SOURCES = \
+libsrc_sse4_2_popcnt_la_SOURCES = \
 	FileScanner_sse4_2.cpp
 
-libsrc_sse4_2_popcnt_a_CPPFLAGS = $(AM_CPPFLAGS)
-libsrc_sse4_2_popcnt_a_CFLAGS = $(AM_CFLAGS)
-libsrc_sse4_2_popcnt_a_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
+libsrc_sse4_2_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_sse4_2_popcnt_la_CFLAGS = $(AM_CFLAGS)
+libsrc_sse4_2_popcnt_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
 
