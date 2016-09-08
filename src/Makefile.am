@@ -54,6 +54,7 @@ CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
 libsrc_isa_ext_x86_64.a:
 	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.a
 	$(AR) -rcT $@ libsrc_sse2.a
+	$(RANLIB) $@
 #echo -e "create libsrc_isa_ext_x86_64.a\naddlib libsrc_sse2.a\nsave\nend" | ar -M
 
 #CXXFLAGS_USER:=$(CXXFLAGS)
