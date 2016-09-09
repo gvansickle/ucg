@@ -18,9 +18,11 @@
 SUBDIRS = future libext
 
 MOSTLYCLEANFILES =
-EXTRA_LIBRARIES =
+EXTRA_LTLIBRARIES =
 
-noinst_LTLIBRARIES = libsrc.la libsrc_isa_ext_x86_64.la
+SUFFIXES = .fmv
+
+noinst_LTLIBRARIES = libsrc.la ###libsrc_isa_ext_x86_64.la
 libsrc_la_SOURCES = \
 	ArgParse.cpp ArgParse.h \
 	DirInclusionManager.cpp DirInclusionManager.h \
@@ -41,20 +43,27 @@ libsrc_la_SOURCES = \
 	sync_queue_impl_selector.h \
 	TypeManager.cpp TypeManager.h
 
+nodist_EXTRA_libsrc_la_SOURCES =
 libsrc_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_la_CFLAGS = $(AM_CFLAGS)
 libsrc_la_CXXFLAGS = $(AM_CXXFLAGS)
+libsrc_la_LIBADD =
 
-libsrc_isa_ext_x86_64_la_SOURCES =
-libsrc_isa_ext_x86_64_la_DEPENDENCIES =
+
+
+#libsrc_isa_ext_x86_64_la_SOURCES = 
+
+.fmv.lo:
+	@echo "##### DEBUG: Building $@ from $<"
+	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(subst .sse2.fmv,,$<)
 
 ###
 ### Libs to contain multiversioned functions.
 ###
 CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
-libsrc_isa_ext_x86_64.la:
-	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.la
-	libtool --mode=link c++ -static -o $@ libsrc_sse2.la
+#libsrc_isa_ext_x86_64.la:
+#	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.la
+#	libtool --tag=CXX --verbose --mode=link -static -o $@ libsrc_sse2.la
 #$(AR) -rcT $@ libsrc_sse2.a
 #echo -e "create libsrc_isa_ext_x86_64.a\naddlib libsrc_sse2.a\nsave\nend" | ar -M
 
@@ -68,16 +77,15 @@ libsrc_isa_ext_x86_64.la:
 
 # SSE2
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
-EXTRA_LIBRARIES += libsrc_sse2.a
-MOSTLYCLEANFILES += libsrc_sse2.a
-libsrc_isa_ext_x86_64_la_DEPENDENCIES += libsrc_sse2.a
-#libsrc_isa_ext_x86_64_la_SOURCES += libsrc_sse2.a 
-#noinst_LTLIBRARIES += libsrc_isa_ext_x86_64.la 
-# libsrc_sse2.la
+EXTRA_LTLIBRARIES += libsrc_sse2.la
+#nodist_EXTRA_libsrc_la_SOURCES += libsrc_sse2.la.sse2.fmv
+libsrc_la_LIBADD += libsrc_sse2.la
+#MOSTLYCLEANFILES += libsrc_sse2.la
+#libsrc_isa_ext_x86_64_la_DEPENDENCIES += libsrc_sse2.la
+#libsrc_isa_ext_x86_64_la_SOURCES += libsrc_sse2.la 
+#noinst_LTLIBRARIES += libsrc_sse2.la
 endif
-libsrc_sse2_la_SOURCES = \
-	FileScanner_sse4_2.cpp
-
+libsrc_sse2_la_SOURCES = FileScanner_sse4_2.cpp
 libsrc_sse2_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_sse2_la_CFLAGS = $(AM_CFLAGS)
 libsrc_sse2_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
