@@ -53,14 +53,18 @@ libsrc_la_LIBADD =
 
 #libsrc_isa_ext_x86_64_la_SOURCES = 
 
-.fmv.lo:
-	@echo "##### DEBUG: Building $@ from $<"
-	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(subst .sse2.fmv,,$<)
 
 ###
 ### Libs to contain multiversioned functions.
 ###
 CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
+
+#.fmv.lo:
+libsrc_sse2.fmv.la:
+	@echo "##### DEBUG: Building $@ from libsrc_sse2.la"
+	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.la
+	$(CXXLINK) libsrc_sse2.la
+
 #libsrc_isa_ext_x86_64.la:
 #	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.la
 #	libtool --tag=CXX --verbose --mode=link -static -o $@ libsrc_sse2.la
@@ -79,8 +83,8 @@ CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
 EXTRA_LTLIBRARIES += libsrc_sse2.la
 #nodist_EXTRA_libsrc_la_SOURCES += libsrc_sse2.la.sse2.fmv
-libsrc_la_LIBADD += libsrc_sse2.la
-#MOSTLYCLEANFILES += libsrc_sse2.la
+libsrc_la_LIBADD += libsrc_sse2.fmv.la
+MOSTLYCLEANFILES += libsrc_sse2.fmv.la
 #libsrc_isa_ext_x86_64_la_DEPENDENCIES += libsrc_sse2.la
 #libsrc_isa_ext_x86_64_la_SOURCES += libsrc_sse2.la 
 #noinst_LTLIBRARIES += libsrc_sse2.la
