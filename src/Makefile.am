@@ -66,7 +66,7 @@ libsrc_la_LIBADD =
 #
 CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
 
-libsrc_sse2.fmv.la: $(libsrc_sse2_la_SOURCES)
+libsrc_sse2.fmv.la: $(libsrc_sse2_la_OBJECTS) ##$(libsrc_sse2_la_SOURCES)
 	@echo "##### DEBUG: Building $@ from libsrc_sse2.la"
 	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.la
 	$(CXXLINK) libsrc_sse2.la
