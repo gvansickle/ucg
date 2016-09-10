@@ -17,12 +17,11 @@
 
 SUBDIRS = future libext
 
+# Need these to be defined here because we'll be appending to them later.
 MOSTLYCLEANFILES =
 EXTRA_LTLIBRARIES =
 
-SUFFIXES = .fmv
-
-noinst_LTLIBRARIES = libsrc.la ###libsrc_isa_ext_x86_64.la
+noinst_LTLIBRARIES = libsrc.la
 libsrc_la_SOURCES = \
 	ArgParse.cpp ArgParse.h \
 	DirInclusionManager.cpp DirInclusionManager.h \
@@ -43,7 +42,6 @@ libsrc_la_SOURCES = \
 	sync_queue_impl_selector.h \
 	TypeManager.cpp TypeManager.h
 
-nodist_EXTRA_libsrc_la_SOURCES =
 libsrc_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_la_CFLAGS = $(AM_CFLAGS)
 libsrc_la_CXXFLAGS = $(AM_CXXFLAGS)
@@ -51,42 +49,38 @@ libsrc_la_LIBADD =
 
 
 
-#libsrc_isa_ext_x86_64_la_SOURCES = 
-
-
 ###
-### Libs to contain multiversioned functions.
+### Libs and Automake mechanisms to handle multiversioned functions in a portable manner.
 ###
+
+# When compiling translation units for function multiversioning, we need to
+# make sure there are no "-march=" flags on the compiler's command line.  Since the
+# GNU Build System is set up to always let the user have the last word via $CFLAGS/$CXXFLAGS,
+# we need to go to some extra effort here to ensure that the user's flags don't break the compilation
+# of these files.
+# We essentially do two things:
+# - Create a new make variable, CXXFLAGS_MULTIVERSION, which is equal to the user's CXXFLAGS, but with
+#   any options which would change the ISA and/or extensions required for these functions filtered out.
+# - Build the source file for a given ISA+extension set by invoking $(MAKE) on this same Makefile,
+#   but passing CXXFLAGS_MULTIVERSION for CXXFLAGS.
+#
 CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
 
-#.fmv.lo:
-libsrc_sse2.fmv.la:
+libsrc_sse2.fmv.la: $(libsrc_sse2_la_SOURCES)
 	@echo "##### DEBUG: Building $@ from libsrc_sse2.la"
 	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.la
 	$(CXXLINK) libsrc_sse2.la
-
-#libsrc_isa_ext_x86_64.la:
-#	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.la
-#	libtool --tag=CXX --verbose --mode=link -static -o $@ libsrc_sse2.la
-#$(AR) -rcT $@ libsrc_sse2.a
-#echo -e "create libsrc_isa_ext_x86_64.a\naddlib libsrc_sse2.a\nsave\nend" | ar -M
 
 #CXXFLAGS_USER:=$(CXXFLAGS)
 #CXXFLAGS_FILT:=$(filter-out -march=%,$(CXXFLAGS_USER))
 #CXXFLAGS:=
 
-#@CXXFLAGS@
-#@CXXFLAGS_TESTING@
-#@CXXFLAGS_TESTING_OBJ@
 
 # SSE2
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
 EXTRA_LTLIBRARIES += libsrc_sse2.la
-#nodist_EXTRA_libsrc_la_SOURCES += libsrc_sse2.la.sse2.fmv
 libsrc_la_LIBADD += libsrc_sse2.fmv.la
-MOSTLYCLEANFILES += libsrc_sse2.fmv.la
-#libsrc_isa_ext_x86_64_la_DEPENDENCIES += libsrc_sse2.la
-#libsrc_isa_ext_x86_64_la_SOURCES += libsrc_sse2.la 
+MOSTLYCLEANFILES += libsrc_sse2.fmv.la libsrc_sse2.la
 #noinst_LTLIBRARIES += libsrc_sse2.la
 endif
 libsrc_sse2_la_SOURCES = FileScanner_sse4_2.cpp
