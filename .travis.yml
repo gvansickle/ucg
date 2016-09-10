@@ -11,10 +11,11 @@ compiler:
   - gcc
 
 before_install:
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
  # Travis CI has a broken libtool/sed issue in the OSX image(s) <see e.g. https://github.com/libgd/libgd/issues/266#issuecomment-234697932>.
  # This is the recommended work-around until they fix it.
  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew uninstall libtool && brew install libtool; fi
- - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install pcre pcre2 argp-standalone the_silver_searcher; fi
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew install pcre pcre2 argp-standalone the_silver_searcher; fi
  - if [ $TRAVIS_OS_NAME == osx ]; then brew tap homebrew/dupes; brew install grep; fi  # Install gnu grep to test against. @todo Make things work so this can be installed only after a successful build.
  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev && sudo apt-get install -qq silversearcher-ag; fi
 
