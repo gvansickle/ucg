@@ -78,10 +78,16 @@ libsrc_sse2.fmv.la: $(libsrc_sse2_la_SOURCES)
 
 # SSE2
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
+# From the Automake manual:
+# "Convenience libraries listed in noinst_LTLIBRARIES are always built.
+# Those listed in check_LTLIBRARIES are built only upon ‘make check’.
+# Finally, libraries listed in EXTRA_LTLIBRARIES are never built explicitly:
+# Automake outputs rules to build them, but if the library does not appear as a Makefile dependency anywhere it won’t be built."
 EXTRA_LTLIBRARIES += libsrc_sse2.la
 libsrc_la_LIBADD += libsrc_sse2.fmv.la
+#libsrc_la_LIBADD += libsrc_sse2.la
+# EXTRA_LTLIBRARIES don't get cleaned, so we have to add this lib here manually.
 MOSTLYCLEANFILES += libsrc_sse2.fmv.la libsrc_sse2.la
-#noinst_LTLIBRARIES += libsrc_sse2.la
 endif
 libsrc_sse2_la_SOURCES = FileScanner_sse4_2.cpp
 libsrc_sse2_la_CPPFLAGS = $(AM_CPPFLAGS)
@@ -95,8 +101,7 @@ if BUILD_CXXFLAGS_EXT_X86_64_NO_POPCNT
 noinst_LTLIBRARIES += libsrc_sse4_2_no_popcnt.la
 endif
 endif
-libsrc_sse4_2_no_popcnt_la_SOURCES = \
-	FileScanner_sse4_2.cpp
+libsrc_sse4_2_no_popcnt_la_SOURCES = FileScanner_sse4_2.cpp
 
 libsrc_sse4_2_no_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_sse4_2_no_popcnt_la_CFLAGS = $(AM_CFLAGS)
@@ -108,8 +113,7 @@ if BUILD_CXXFLAGS_EXT_X86_64_POPCNT
 noinst_LTLIBRARIES += libsrc_sse4_2_popcnt.la
 endif
 endif
-libsrc_sse4_2_popcnt_la_SOURCES = \
-	FileScanner_sse4_2.cpp
+libsrc_sse4_2_popcnt_la_SOURCES = FileScanner_sse4_2.cpp
 
 libsrc_sse4_2_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_sse4_2_popcnt_la_CFLAGS = $(AM_CFLAGS)
