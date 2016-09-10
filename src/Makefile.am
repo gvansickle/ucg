@@ -59,17 +59,25 @@ libsrc_la_LIBADD =
 # we need to go to some extra effort here to ensure that the user's flags don't break the compilation
 # of these files.
 # We essentially do two things:
-# - Create a new make variable, CXXFLAGS_MULTIVERSION, which is equal to the user's CXXFLAGS, but with
-#   any options which would change the ISA and/or extensions required for these functions filtered out.
-# - Build the source file for a given ISA+extension set by invoking $(MAKE) on this same Makefile,
-#   but passing CXXFLAGS_MULTIVERSION for CXXFLAGS.
 #
+# 1. Create a new make variable, CXXFLAGS_MULTIVERSION, which is equal to the user's CXXFLAGS, but with
+#   any options which would change the ISA and/or extensions required for these functions filtered out.
+# 2. Build the source file for a given ISA+extension set by invoking $(MAKE) on this same Makefile,
+#    but passing CXXFLAGS_MULTIVERSION for CXXFLAGS.
+#
+# #1 is failrly trivial, but #2 is quite a bit more involved.  We have to make sure the dependencies get transitively
+# passed to the .fmv.la library, make sure the first-stage .la library is *not* automatically built, etc.
+ 
 CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
 
-libsrc_sse2.fmv.la: $(libsrc_sse2_la_OBJECTS) ##$(libsrc_sse2_la_SOURCES)
-	@echo "##### DEBUG: Building $@ from libsrc_sse2.la"
-	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.la
-	$(CXXLINK) libsrc_sse2.la
+## Need to hook in the dependencies to the .fmv.la file the way we need them.
+## @note Can't depend on  $(libsrc_sse2_la_OBJECTS) here, causes libsrc_sse2_la to be built before this target is built. 
+## e.g. libsrc_sse2.fmv.la => libsrc_sse2.la
+libsrc_sse2.fmv.la:
+	@echo "=============================== MULTIVERSIONING BUILD START: Building $@ from deps: $+"
+	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(subst .fmv,,$@)
+	$(CXXLINK) $(subst .fmv,,$@)
+	@echo "=============================== MULTIVERSIONING BUILD END"
 
 #CXXFLAGS_USER:=$(CXXFLAGS)
 #CXXFLAGS_FILT:=$(filter-out -march=%,$(CXXFLAGS_USER))
