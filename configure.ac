@@ -52,7 +52,6 @@ AM_INIT_AUTOMAKE([
 	-Wall
 	-Werror
 ])
-dnl-Wno-override
 
 # To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
 # This will do that for us.
@@ -491,11 +490,6 @@ AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 ###
 ### Create the Makefiles for the program.
 ###
-#AC_CONFIG_FILES([src/Makefile], [
-#	echo "PWD: $(pwd)";
-#	echo "{ac_top_srcdir}: ${ac_top_srcdir} // $(realpath ${ac_top_srcdir})";
-#	sed 's/CXXFLAGS/DUMMYTEST/g' ${ac_top_srcdir}/src/Makefile.in > ${ac_tmp}/Makefile.in.tmp && mv ${ac_tmp}/Makefile.in.tmp ${ac_top_srcdir}/src/Makefile.in 
-#	])
 AC_CONFIG_FILES([Makefile
 	src/Makefile
 	src/future/Makefile

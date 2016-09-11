@@ -24,8 +24,6 @@ MOSTLYCLEANFILES =
 # Add suffix for Function MultiVersion libtool libraries.
 SUFFIXES = .fmv.la
 
-# Need this to include the automake rules created by the Autoconf (not configure) run.
-#include $(top_srcdir)/aminclude_static.am
 
 noinst_LTLIBRARIES = libsrc.la
 libsrc_la_SOURCES = \
