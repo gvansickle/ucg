@@ -20,7 +20,6 @@ SUBDIRS = future libext
 # Need these to be defined here because we'll be appending to them later.
 EXTRA_LTLIBRARIES =
 MOSTLYCLEANFILES =
-LTLIBS_FMV_LA =
 
 noinst_LTLIBRARIES = libsrc.la
 libsrc_la_SOURCES = \
@@ -75,10 +74,12 @@ CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
 ## @note Can't depend on  $(libsrc_sse2_la_OBJECTS) here, causes libsrc_sse2_la to be built with the wrong CXXFLAGS before this target is built. 
 ## e.g. libsrc_sse2.fmv.la => libsrc_sse2.la
 FORCE:
-$(LTLIBS_FMV_LA): FORCE
+libsrc_sse2.fmv.la: FORCE
+	$(make_fmv)
+libsrc_sse4_2_no_popcnt.fmv.la: FORCE
 	$(make_fmv)
 
-# The Actions for building fmv.la libraries.
+# The Actions for building .fmv.la libraries.
 make_fmv = @echo "=============================== MULTIVERSIONING BUILD START: Building $@ from deps: $+" &&\
 $(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(subst .fmv,,$@) &&\
 $(CXXLINK) $(subst .fmv,,$@) &&\
@@ -95,7 +96,6 @@ if BUILD_CXXFLAGS_EXT_X86_64_SSE2
 # Automake outputs rules to build them, but if the library does not appear as a Makefile dependency anywhere it won’t be built."
 EXTRA_LTLIBRARIES += libsrc_sse2.la
 libsrc_la_LIBADD += libsrc_sse2.fmv.la
-LTLIBS_FMV_LA += libsrc_sse2.fmv.la
 # EXTRA_LTLIBRARIES don't get cleaned, so we have to add this lib here manually.
 MOSTLYCLEANFILES += libsrc_sse2.fmv.la libsrc_sse2.la
 endif
@@ -108,14 +108,16 @@ libsrc_sse2_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
 # SSE4.2 but no POPCNT.
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
 if BUILD_CXXFLAGS_EXT_X86_64_NO_POPCNT
-noinst_LTLIBRARIES += libsrc_sse4_2_no_popcnt.la
+EXTRA_LTLIBRARIES += libsrc_sse4_2_no_popcnt.la
+libsrc_la_LIBADD += libsrc_sse4_2_no_popcnt.fmv.la
+MOSTLYCLEANFILES += libsrc_sse4_2_no_popcnt.fmv.la libsrc_sse4_2_no_popcnt.la
 endif
 endif
 libsrc_sse4_2_no_popcnt_la_SOURCES = FileScanner_sse4_2.cpp
-
 libsrc_sse4_2_no_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_sse4_2_no_popcnt_la_CFLAGS = $(AM_CFLAGS)
 libsrc_sse4_2_no_popcnt_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_NO_POPCNT)
+
 
 # SSE4.2 with POPCNT
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
