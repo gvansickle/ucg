@@ -77,7 +77,10 @@ libsrc_la_LIBADD =
 # Strip out -march='s, -msseN's, -mavx's, etc. from the C/CXXFLAGS.  This would be easier if GNU and BSD could
 # agree on basic Makefile syntax.
 # GNU make only: CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
-CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | ${ESED} 's/-m((arch=)|(sse)|(avx))[^[:space:]]*//g')
+STRIP_ARCH_FLAGS = ${ESED} 's/-m((arch=)|(sse)|(avx))[^[:space:]]*//g'
+CPPFLAGS_MULTIVERSION = $$(echo $(CPPFLAGS) | $(STRIP_ARCH_FLAGS))
+CFLAGS_MULTIVERSION = $$(echo $(CFLAGS) | $(STRIP_ARCH_FLAGS))
+CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | $(STRIP_ARCH_FLAGS))
 
 # The make rule and actions for building .fmv.la libraries from .la libraries,
 # and the .la libraries from their normal dependencies.
@@ -93,7 +96,7 @@ FORCE:
 $(libsrc_la_LIBADD): FORCE
 	@echo "MULTIVERSIONING BUILD START: Building $@"
 #	#echo "CFMV: $(CXXFLAGS_MULTIVERSION)"
-	$(MAKE) "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
+	$(MAKE) "CPPFLAGS=$(CPPFLAGS_MULTIVERSION)" "CFLAGS=$(CFLAGS_MULTIVERSION)" "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
 	$(CXXLINK) $(@:.fmv.la=.la)
 	@echo "MULTIVERSIONING BUILD END: Built $@"
 
