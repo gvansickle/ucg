@@ -49,10 +49,8 @@ ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
 ucg_LDADD = ./src/libsrc.la ./src/libext/libext.a ./src/future/libfuture.a \
-    ./src/libsrc_sse4_2_no_popcnt.la ./src/libsrc_sse4_2_popcnt.la
-###./src/libsrc_isa_ext_x86_64.la  ./src/libsrc_sse2.la
-# ./src/libsrc.a
-#./src/libsrc_sse2.a 
+    ./src/libsrc_sse4_2_popcnt.la
+
 
 # Collect some make-time info. 
 FORCE:

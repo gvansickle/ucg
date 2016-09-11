@@ -20,7 +20,11 @@ SUBDIRS = future libext
 # Need these to be defined here because we'll be appending to them later.
 EXTRA_LTLIBRARIES =
 MOSTLYCLEANFILES =
-LTLIBS_FMV_LA =
+
+SUFFIXES = .fmv.la
+
+# Need this to include the automake rules created by the Autoconf (not configure) run.
+#include $(top_srcdir)/aminclude_static.am
 
 noinst_LTLIBRARIES = libsrc.la
 libsrc_la_SOURCES = \
@@ -68,21 +72,29 @@ libsrc_la_LIBADD =
 #
 # #1 is failrly trivial, but #2 is quite a bit more involved.  We have to make sure the dependencies get transitively
 # passed to the .fmv.la library, make sure the first-stage .la library is *not* automatically built, etc.
- 
-CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
 
+# @todo strip out -msseN's, -mavx's, etc.
+#CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
+CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | ${ESED} 's/-march=[^[:space:]]*//g')
+
+# The make rules and actions for building .fmv.la libraries.
 ## Need to hook in the dependencies to the .fmv.la file the way we need them.
 ## @note Can't depend on  $(libsrc_sse2_la_OBJECTS) here, causes libsrc_sse2_la to be built with the wrong CXXFLAGS before this target is built. 
 ## e.g. libsrc_sse2.fmv.la => libsrc_sse2.la
 FORCE:
-$(LTLIBS_FMV_LA): FORCE
-	$(make_fmv)
+###libsrc_sse2.fmv.la: FORCE
+$(libsrc_la_LIBADD): FORCE
+	@echo "=============================== MULTIVERSIONING BUILD START: Building $@"
+	echo "CFMV: $(CXXFLAGS_MULTIVERSION)"
+	$(MAKE) "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
+	$(CXXLINK) $(@:.fmv.la=.la)
+	@echo "=============================== MULTIVERSIONING BUILD END"
 
-# The Actions for building fmv.la libraries.
-make_fmv = @echo "=============================== MULTIVERSIONING BUILD START: Building $@ from deps: $+" &&\
-$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(subst .fmv,,$@) &&\
-$(CXXLINK) $(subst .fmv,,$@) &&\
-echo "=============================== MULTIVERSIONING BUILD END"
+#libsrc_sse4_2_no_popcnt.fmv.la: FORCE
+#	@echo "=============================== MULTIVERSIONING BUILD START: Building $@"
+#	$(MAKE) "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
+#	$(CXXLINK) $(@:.fmv.la=.la)
+#	@echo "=============================== MULTIVERSIONING BUILD END"
 
 
 
@@ -95,7 +107,6 @@ if BUILD_CXXFLAGS_EXT_X86_64_SSE2
 # Automake outputs rules to build them, but if the library does not appear as a Makefile dependency anywhere it won’t be built."
 EXTRA_LTLIBRARIES += libsrc_sse2.la
 libsrc_la_LIBADD += libsrc_sse2.fmv.la
-LTLIBS_FMV_LA += libsrc_sse2.fmv.la
 # EXTRA_LTLIBRARIES don't get cleaned, so we have to add this lib here manually.
 MOSTLYCLEANFILES += libsrc_sse2.fmv.la libsrc_sse2.la
 endif
@@ -108,14 +119,16 @@ libsrc_sse2_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
 # SSE4.2 but no POPCNT.
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
 if BUILD_CXXFLAGS_EXT_X86_64_NO_POPCNT
-noinst_LTLIBRARIES += libsrc_sse4_2_no_popcnt.la
+EXTRA_LTLIBRARIES += libsrc_sse4_2_no_popcnt.la
+libsrc_la_LIBADD += libsrc_sse4_2_no_popcnt.fmv.la
+MOSTLYCLEANFILES += libsrc_sse4_2_no_popcnt.fmv.la libsrc_sse4_2_no_popcnt.la
 endif
 endif
 libsrc_sse4_2_no_popcnt_la_SOURCES = FileScanner_sse4_2.cpp
-
 libsrc_sse4_2_no_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_sse4_2_no_popcnt_la_CFLAGS = $(AM_CFLAGS)
 libsrc_sse4_2_no_popcnt_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_NO_POPCNT)
+
 
 # SSE4.2 with POPCNT
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
