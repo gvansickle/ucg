@@ -77,7 +77,7 @@ libsrc_la_LIBADD =
 # Strip out -march='s, -msseN's, -mavx's, etc. from the C/CXXFLAGS.  This would be easier if GNU and BSD could
 # agree on basic Makefile syntax.
 # GNU make only: CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
-CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | ${ESED} 's/-march=[^[:space:]]*//g')
+CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | ${ESED} 's/-m((arch=)|(sse)|(avx))[^[:space:]]*//g')
 
 # The make rule and actions for building .fmv.la libraries from .la libraries,
 # and the .la libraries from their normal dependencies.
