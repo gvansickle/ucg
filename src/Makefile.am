@@ -18,8 +18,9 @@
 SUBDIRS = future libext
 
 # Need these to be defined here because we'll be appending to them later.
-MOSTLYCLEANFILES =
 EXTRA_LTLIBRARIES =
+MOSTLYCLEANFILES =
+LTLIBS_FMV_LA =
 
 noinst_LTLIBRARIES = libsrc.la
 libsrc_la_SOURCES = \
@@ -73,17 +74,15 @@ CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
 ## Need to hook in the dependencies to the .fmv.la file the way we need them.
 ## @note Can't depend on  $(libsrc_sse2_la_OBJECTS) here, causes libsrc_sse2_la to be built with the wrong CXXFLAGS before this target is built. 
 ## e.g. libsrc_sse2.fmv.la => libsrc_sse2.la
-#.FORCE: libsrc_sse2.fmv.la
 FORCE:
-libsrc_sse2.fmv.la: FORCE
-	$(make-fmv)
+$(LTLIBS_FMV_LA): FORCE
+	$(make_fmv)
 
-define make-fmv =
-@echo "=============================== MULTIVERSIONING BUILD START: Building $@ from deps: $+"
-$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(subst .fmv,,$@)
-$(CXXLINK) $(subst .fmv,,$@)
-@echo "=============================== MULTIVERSIONING BUILD END"
-endef
+# The Actions for building fmv.la libraries.
+make_fmv = @echo "=============================== MULTIVERSIONING BUILD START: Building $@ from deps: $+" &&\
+$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(subst .fmv,,$@) &&\
+$(CXXLINK) $(subst .fmv,,$@) &&\
+echo "=============================== MULTIVERSIONING BUILD END"
 
 
 
@@ -96,6 +95,7 @@ if BUILD_CXXFLAGS_EXT_X86_64_SSE2
 # Automake outputs rules to build them, but if the library does not appear as a Makefile dependency anywhere it won’t be built."
 EXTRA_LTLIBRARIES += libsrc_sse2.la
 libsrc_la_LIBADD += libsrc_sse2.fmv.la
+LTLIBS_FMV_LA += libsrc_sse2.fmv.la
 # EXTRA_LTLIBRARIES don't get cleaned, so we have to add this lib here manually.
 MOSTLYCLEANFILES += libsrc_sse2.fmv.la libsrc_sse2.la
 endif
