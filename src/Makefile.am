@@ -21,6 +21,8 @@ SUBDIRS = future libext
 EXTRA_LTLIBRARIES =
 MOSTLYCLEANFILES =
 
+SUFFIXES = .fmv.la
+
 # Need this to include the automake rules created by the Autoconf (not configure) run.
 #include $(top_srcdir)/aminclude_static.am
 
@@ -81,7 +83,7 @@ CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | ${ESED} 's/-march=[^[:space:]]*//g
 ## e.g. libsrc_sse2.fmv.la => libsrc_sse2.la
 FORCE:
 ###libsrc_sse2.fmv.la: FORCE
-%.fmv.la: FORCE
+$(libsrc_la_LIBADD): FORCE
 	@echo "=============================== MULTIVERSIONING BUILD START: Building $@"
 	echo "CFMV: $(CXXFLAGS_MULTIVERSION)"
 	$(MAKE) "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
