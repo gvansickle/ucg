@@ -18,8 +18,9 @@
 SUBDIRS = future libext
 
 # Need these to be defined here because we'll be appending to them later.
-MOSTLYCLEANFILES =
 EXTRA_LTLIBRARIES =
+MOSTLYCLEANFILES =
+LTLIBS_FMV_LA =
 
 noinst_LTLIBRARIES = libsrc.la
 libsrc_la_SOURCES = \
@@ -59,29 +60,44 @@ libsrc_la_LIBADD =
 # we need to go to some extra effort here to ensure that the user's flags don't break the compilation
 # of these files.
 # We essentially do two things:
-# - Create a new make variable, CXXFLAGS_MULTIVERSION, which is equal to the user's CXXFLAGS, but with
-#   any options which would change the ISA and/or extensions required for these functions filtered out.
-# - Build the source file for a given ISA+extension set by invoking $(MAKE) on this same Makefile,
-#   but passing CXXFLAGS_MULTIVERSION for CXXFLAGS.
 #
+# 1. Create a new make variable, CXXFLAGS_MULTIVERSION, which is equal to the user's CXXFLAGS, but with
+#   any options which would change the ISA and/or extensions required for these functions filtered out.
+# 2. Build the source file for a given ISA+extension set by invoking $(MAKE) on this same Makefile,
+#    but passing CXXFLAGS_MULTIVERSION for CXXFLAGS.
+#
+# #1 is failrly trivial, but #2 is quite a bit more involved.  We have to make sure the dependencies get transitively
+# passed to the .fmv.la library, make sure the first-stage .la library is *not* automatically built, etc.
+ 
 CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
 
-libsrc_sse2.fmv.la: $(libsrc_sse2_la_OBJECTS) ##$(libsrc_sse2_la_SOURCES)
-	@echo "##### DEBUG: Building $@ from libsrc_sse2.la"
-	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) libsrc_sse2.la
-	$(CXXLINK) libsrc_sse2.la
+## Need to hook in the dependencies to the .fmv.la file the way we need them.
+## @note Can't depend on  $(libsrc_sse2_la_OBJECTS) here, causes libsrc_sse2_la to be built with the wrong CXXFLAGS before this target is built. 
+## e.g. libsrc_sse2.fmv.la => libsrc_sse2.la
+FORCE:
+$(LTLIBS_FMV_LA): FORCE
+	$(make_fmv)
 
-#CXXFLAGS_USER:=$(CXXFLAGS)
-#CXXFLAGS_FILT:=$(filter-out -march=%,$(CXXFLAGS_USER))
-#CXXFLAGS:=
+# The Actions for building fmv.la libraries.
+make_fmv = @echo "=============================== MULTIVERSIONING BUILD START: Building $@ from deps: $+" &&\
+$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(subst .fmv,,$@) &&\
+$(CXXLINK) $(subst .fmv,,$@) &&\
+echo "=============================== MULTIVERSIONING BUILD END"
+
 
 
 # SSE2
 if BUILD_CXXFLAGS_EXT_X86_64_SSE2
+# From the Automake manual:
+# "Convenience libraries listed in noinst_LTLIBRARIES are always built.
+# Those listed in check_LTLIBRARIES are built only upon ‘make check’.
+# Finally, libraries listed in EXTRA_LTLIBRARIES are never built explicitly:
+# Automake outputs rules to build them, but if the library does not appear as a Makefile dependency anywhere it won’t be built."
 EXTRA_LTLIBRARIES += libsrc_sse2.la
 libsrc_la_LIBADD += libsrc_sse2.fmv.la
+LTLIBS_FMV_LA += libsrc_sse2.fmv.la
+# EXTRA_LTLIBRARIES don't get cleaned, so we have to add this lib here manually.
 MOSTLYCLEANFILES += libsrc_sse2.fmv.la libsrc_sse2.la
-#noinst_LTLIBRARIES += libsrc_sse2.la
 endif
 libsrc_sse2_la_SOURCES = FileScanner_sse4_2.cpp
 libsrc_sse2_la_CPPFLAGS = $(AM_CPPFLAGS)
@@ -95,8 +111,7 @@ if BUILD_CXXFLAGS_EXT_X86_64_NO_POPCNT
 noinst_LTLIBRARIES += libsrc_sse4_2_no_popcnt.la
 endif
 endif
-libsrc_sse4_2_no_popcnt_la_SOURCES = \
-	FileScanner_sse4_2.cpp
+libsrc_sse4_2_no_popcnt_la_SOURCES = FileScanner_sse4_2.cpp
 
 libsrc_sse4_2_no_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_sse4_2_no_popcnt_la_CFLAGS = $(AM_CFLAGS)
@@ -108,8 +123,7 @@ if BUILD_CXXFLAGS_EXT_X86_64_POPCNT
 noinst_LTLIBRARIES += libsrc_sse4_2_popcnt.la
 endif
 endif
-libsrc_sse4_2_popcnt_la_SOURCES = \
-	FileScanner_sse4_2.cpp
+libsrc_sse4_2_popcnt_la_SOURCES = FileScanner_sse4_2.cpp
 
 libsrc_sse4_2_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_sse4_2_popcnt_la_CFLAGS = $(AM_CFLAGS)
