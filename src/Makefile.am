@@ -21,6 +21,7 @@ SUBDIRS = future libext
 EXTRA_LTLIBRARIES =
 MOSTLYCLEANFILES =
 
+# Add suffix for Function MultiVersion libtool libraries.
 SUFFIXES = .fmv.la
 
 # Need this to include the automake rules created by the Autoconf (not configure) run.
@@ -76,7 +77,10 @@ libsrc_la_LIBADD =
 # Strip out -march='s, -msseN's, -mavx's, etc. from the C/CXXFLAGS.  This would be easier if GNU and BSD could
 # agree on basic Makefile syntax.
 # GNU make only: CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
-CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | ${ESED} 's/-march=[^[:space:]]*//g')
+STRIP_ARCH_FLAGS = ${ESED} 's/-m((arch=)|(sse)|(avx))[^[:space:]]*//g'
+CPPFLAGS_MULTIVERSION = $$(echo $(CPPFLAGS) | $(STRIP_ARCH_FLAGS))
+CFLAGS_MULTIVERSION = $$(echo $(CFLAGS) | $(STRIP_ARCH_FLAGS))
+CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | $(STRIP_ARCH_FLAGS))
 
 # The make rule and actions for building .fmv.la libraries from .la libraries,
 # and the .la libraries from their normal dependencies.
@@ -92,7 +96,7 @@ FORCE:
 $(libsrc_la_LIBADD): FORCE
 	@echo "MULTIVERSIONING BUILD START: Building $@"
 #	#echo "CFMV: $(CXXFLAGS_MULTIVERSION)"
-	$(MAKE) "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
+	$(MAKE) "CPPFLAGS=$(CPPFLAGS_MULTIVERSION)" "CFLAGS=$(CFLAGS_MULTIVERSION)" "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
 	$(CXXLINK) $(@:.fmv.la=.la)
 	@echo "MULTIVERSIONING BUILD END: Built $@"
 
@@ -132,11 +136,12 @@ libsrc_sse4_2_no_popcnt_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_
 # SSE4.2 with POPCNT
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
 if BUILD_CXXFLAGS_EXT_X86_64_POPCNT
-noinst_LTLIBRARIES += libsrc_sse4_2_popcnt.la
+EXTRA_LTLIBRARIES += libsrc_sse4_2_popcnt.la
+libsrc_la_LIBADD += libsrc_sse4_2_popcnt.fmv.la
+MOSTLYCLEANFILES += libsrc_sse4_2_popcnt.fmv.la libsrc_sse4_2_popcnt.la
 endif
 endif
 libsrc_sse4_2_popcnt_la_SOURCES = FileScanner_sse4_2.cpp
-
 libsrc_sse4_2_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_sse4_2_popcnt_la_CFLAGS = $(AM_CFLAGS)
 libsrc_sse4_2_popcnt_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
