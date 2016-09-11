@@ -21,6 +21,7 @@ SUBDIRS = future libext
 EXTRA_LTLIBRARIES =
 MOSTLYCLEANFILES =
 
+# Add suffix for Function MultiVersion libtool libraries.
 SUFFIXES = .fmv.la
 
 # Need this to include the automake rules created by the Autoconf (not configure) run.
@@ -132,11 +133,12 @@ libsrc_sse4_2_no_popcnt_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_
 # SSE4.2 with POPCNT
 if BUILD_CXXFLAGS_EXT_X86_64_SSE4_2
 if BUILD_CXXFLAGS_EXT_X86_64_POPCNT
-noinst_LTLIBRARIES += libsrc_sse4_2_popcnt.la
+EXTRA_LTLIBRARIES += libsrc_sse4_2_popcnt.la
+libsrc_la_LIBADD += libsrc_sse4_2_popcnt.fmv.la
+MOSTLYCLEANFILES += libsrc_sse4_2_popcnt.fmv.la libsrc_sse4_2_popcnt.la
 endif
 endif
 libsrc_sse4_2_popcnt_la_SOURCES = FileScanner_sse4_2.cpp
-
 libsrc_sse4_2_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_sse4_2_popcnt_la_CFLAGS = $(AM_CFLAGS)
 libsrc_sse4_2_popcnt_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
