@@ -69,26 +69,25 @@ libsrc_la_LIBADD =
 # passed to the .fmv.la library, make sure the first-stage .la library is *not* automatically built, etc.
 
 # @todo strip out -msseN's, -mavx's, etc.
-CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
+#CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
+CXXFLAGS_MULTIVERSION = $(CXXFLAGS:-march%=)
 
+# The make rules and actions for building .fmv.la libraries.
 ## Need to hook in the dependencies to the .fmv.la file the way we need them.
 ## @note Can't depend on  $(libsrc_sse2_la_OBJECTS) here, causes libsrc_sse2_la to be built with the wrong CXXFLAGS before this target is built. 
 ## e.g. libsrc_sse2.fmv.la => libsrc_sse2.la
 FORCE:
 libsrc_sse2.fmv.la: FORCE
-	@echo "=============================== MULTIVERSIONING BUILD START: Building $@ from deps: $+"
-	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(subst .fmv,,$@)
+	@echo "=============================== MULTIVERSIONING BUILD START: Building $@"
+	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(@:.fmv.la=.la)
 	$(CXXLINK) $(subst .fmv,,$@)
 	@echo "=============================== MULTIVERSIONING BUILD END"
 
 libsrc_sse4_2_no_popcnt.fmv.la: FORCE
-	@echo "=============================== MULTIVERSIONING BUILD START: Building $@ from deps: $+"
-	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(subst .fmv,,$@)
+	@echo "=============================== MULTIVERSIONING BUILD START: Building $@"
+	$(MAKE) CXXFLAGS=$(CXXFLAGS_MULTIVERSION) $(@:.fmv.la=.la)
 	$(CXXLINK) $(subst .fmv,,$@)
 	@echo "=============================== MULTIVERSIONING BUILD END"
-
-# The Actions for building .fmv.la libraries.
-make_fmv = 
 
 
 
