@@ -70,7 +70,7 @@ libsrc_la_LIBADD =
 
 # @todo strip out -msseN's, -mavx's, etc.
 #CXXFLAGS_MULTIVERSION = $(filter-out -march=%,$(CXXFLAGS))
-CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | ${ESED} 's/-march=[^ \t]*//g')
+CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | ${ESED} 's/-march=[^[:space:]]*//g')
 
 # The make rules and actions for building .fmv.la libraries.
 ## Need to hook in the dependencies to the .fmv.la file the way we need them.
@@ -81,13 +81,13 @@ libsrc_sse2.fmv.la: FORCE
 	@echo "=============================== MULTIVERSIONING BUILD START: Building $@"
 	echo "CFMV: $(CXXFLAGS_MULTIVERSION)"
 	$(MAKE) "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
-	$(CXXLINK) $(subst .fmv,,$@)
+	$(CXXLINK) $(@:.fmv.la=.la)
 	@echo "=============================== MULTIVERSIONING BUILD END"
 
 libsrc_sse4_2_no_popcnt.fmv.la: FORCE
 	@echo "=============================== MULTIVERSIONING BUILD START: Building $@"
 	$(MAKE) "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
-	$(CXXLINK) $(subst .fmv,,$@)
+	$(CXXLINK) $(@:.fmv.la=.la)
 	@echo "=============================== MULTIVERSIONING BUILD END"
 
 
