@@ -49,10 +49,10 @@ AM_INIT_AUTOMAKE([
 	subdir-objects
 	color-tests
 	std-options
-	-Wno-override
+	-Wall
+	-Werror
 ])
-	dnl-Wall
-	dnl-Werror
+dnl-Wno-override
 
 # To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
 # This will do that for us.
@@ -95,9 +95,9 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 
 #m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
-# @note Not clear at this time if we need AM_PROG_AR when we're using Libtool.
+# @note We still need AM_PROG_AR when we're using Libtool, or it will complain about a non-POSIX linker.
 # See e.g. https://lists.gnu.org/archive/html/libtool/2012-11/msg00019.html.
-#AM_PROG_AR
+AM_PROG_AR
 #AC_PROG_RANLIB
 
 # Initialize Libtool.
@@ -338,30 +338,6 @@ AM_CONDITIONAL([BUILD_X86_64_ISA_EXTENSIONS], [test "x$HAVE_X86_64_ISA_EXTENSION
 AM_COND_IF([BUILD_X86_64_ISA_EXTENSIONS],
 	[AC_MSG_NOTICE([Compiler supports x86-64 ISA extensions, will use them.])],
 	[AC_MSG_NOTICE([Compiler does not support x86-64 ISA extensions, will not use them.])])
-
-#----------------------------------------------------
-#
-# @todo Experiments.
-# Add support for macros that create Automake rules.
-# Remember to add "include $(top_srcdir)/aminclude_static.am" to every Makefile.am
-# where these are needed.
-#AX_AM_MACROS_STATIC
-#AX_ADD_AM_MACRO_STATIC([
-#	AS_ESCAPE([
-#libsrc_sse2.fmv.la: FORCE
-#	@echo "=============================== MULTIVERSIONING BUILD START: Building $@"
-#	echo "CFMV: $(CXXFLAGS_MULTIVERSION)"
-#	$(MAKE) "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
-#	$(CXXLINK) $(@:.fmv.la=.la)
-#	@echo "=============================== MULTIVERSIONING BUILD END"
-#])
-#])
-#AC_CONFIG_COMMANDS([src/Makefile.in], [cp ${ac_srcdir}/src/Makefile.in test.in && echo "TIMESTAMP: $(date)" >> ${ac_srcdir}/src/Makefile.in], [SOMEVAR=$SOMEVAR])
-#AC_SUBST([CXXFLAGS_TESTING], ['CXXFLAGS:=$(filter-out -march=%,$(CXXFLAGS))']) #'libsrc_sse2_a-FileScanner_sse4_2.o: override CXXFLAGS=-march=x86-64'])
-#AC_SUBST([CXXFLAGS_TESTING_OBJ], []) #'libsrc_sse2_a-FileScanner_sse4_2.obj: override CXXFLAGS=-march=x86-64'])
-#AC_SUBST([CXXFLAGS], [$(filter-out -march=%,$(CXXFLAGS))])
-#
-#----------------------------------------------------
 
 
 # Check if the implementation underlying C++11's std::thread<> is pthreads.  Note that we don't actually require pthreads,
