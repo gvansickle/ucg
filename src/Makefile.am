@@ -21,6 +21,9 @@ SUBDIRS = future libext
 EXTRA_LTLIBRARIES =
 MOSTLYCLEANFILES =
 
+# Need this to include the automake rules created by the Autoconf (not configure) run.
+#include $(top_srcdir)/aminclude_static.am
+
 noinst_LTLIBRARIES = libsrc.la
 libsrc_la_SOURCES = \
 	ArgParse.cpp ArgParse.h \
@@ -77,18 +80,19 @@ CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | ${ESED} 's/-march=[^[:space:]]*//g
 ## @note Can't depend on  $(libsrc_sse2_la_OBJECTS) here, causes libsrc_sse2_la to be built with the wrong CXXFLAGS before this target is built. 
 ## e.g. libsrc_sse2.fmv.la => libsrc_sse2.la
 FORCE:
-libsrc_sse2.fmv.la: FORCE
+###libsrc_sse2.fmv.la: FORCE
+%.fmv.la: FORCE
 	@echo "=============================== MULTIVERSIONING BUILD START: Building $@"
 	echo "CFMV: $(CXXFLAGS_MULTIVERSION)"
 	$(MAKE) "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
 	$(CXXLINK) $(@:.fmv.la=.la)
 	@echo "=============================== MULTIVERSIONING BUILD END"
 
-libsrc_sse4_2_no_popcnt.fmv.la: FORCE
-	@echo "=============================== MULTIVERSIONING BUILD START: Building $@"
-	$(MAKE) "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
-	$(CXXLINK) $(@:.fmv.la=.la)
-	@echo "=============================== MULTIVERSIONING BUILD END"
+#libsrc_sse4_2_no_popcnt.fmv.la: FORCE
+#	@echo "=============================== MULTIVERSIONING BUILD START: Building $@"
+#	$(MAKE) "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
+#	$(CXXLINK) $(@:.fmv.la=.la)
+#	@echo "=============================== MULTIVERSIONING BUILD END"
 
 
 
