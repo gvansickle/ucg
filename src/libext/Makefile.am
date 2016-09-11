@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
-noinst_LIBRARIES = libext.a 
-libext_a_SOURCES = \
+noinst_LTLIBRARIES = libext.la
+libext_la_SOURCES = \
 	cpuidex.hpp cpuidex.cpp \
 	DirTree.h DirTree.cpp \
 	filesystem.hpp \
@@ -26,6 +26,6 @@ libext_a_SOURCES = \
 	static_diagnostics.hpp \
 	string.hpp
 
-libext_a_CPPFLAGS = $(AM_CPPFLAGS)
-libext_a_CFLAGS = $(AM_CFLAGS)
-libext_a_CXXFLAGS = $(AM_CXXFLAGS)
+libext_la_CPPFLAGS = $(AM_CPPFLAGS)
+libext_la_CFLAGS = $(AM_CFLAGS)
+libext_la_CXXFLAGS = $(AM_CXXFLAGS)
