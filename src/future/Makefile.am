@@ -20,12 +20,12 @@
 # Obviously this doesn't include language syntax changes, but mainly new library functions, templates, etc.
 # Also, I'm putting C++11 backfill here (e.g. the spotty std::to_string() support of not-so-ancient std <string> libs). 
 
-noinst_LIBRARIES = libfuture.a 
-libfuture_a_SOURCES = \
+noinst_LTLIBRARIES = libfuture.la 
+libfuture_la_SOURCES = \
 	dummy.cpp \
 	memory.hpp \
 	string.hpp
 
-libfuture_a_CPPFLAGS = $(AM_CPPFLAGS)
-libfuture_a_CFLAGS = $(AM_CFLAGS)
-libfuture_a_CXXFLAGS = $(AM_CXXFLAGS)
+libfuture_la_CPPFLAGS = $(AM_CPPFLAGS)
+libfuture_la_CFLAGS = $(AM_CFLAGS)
+libfuture_la_CXXFLAGS = $(AM_CXXFLAGS)

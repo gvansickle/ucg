@@ -15,6 +15,7 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 /** @file  Portable Function multiversioning functionality. */
 
 #ifndef SRC_LIBEXT_MULTIVERSIONING_HPP_

@@ -26,7 +26,7 @@ ACLOCAL_AMFLAGS = -I m4 --install
 # Note that we can't list these other libraries in e.g. *_DEPENDENCIES because that replaces all Automake-generated dependencies.
 SUBDIRS = third_party src . tests
 
-# Set these *FILE Automake vars to empty, so that we can simply always append (+=) to them later.
+# Set these *CLEANFILES Automake vars to empty, so that we can simply always append (+=) to them later.
 CLEANFILES =
 MOSTLYCLEANFILES =
 DISTCLEANFILES =
@@ -34,6 +34,10 @@ MAINTAINERCLEANFILES =
 
 # Make sure README.rd and other docs get distributed and installed correctly.
 dist_doc_DATA = README.md NEWS.md COPYING AUTHORS
+
+# Update libtool if it gets out of date.
+libtool: $(LIBTOOL_DEPS)
+	$(SHELL) ./config.status libtool
 
 # The Automake rules for the ucg executable.
 bin_PROGRAMS=ucg
@@ -44,7 +48,7 @@ ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS)
 ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.a ./src/libext/libext.a ./src/future/libfuture.a ./src/libsrc_sse2.a ./src/libsrc_sse4_2_no_popcnt.a ./src/libsrc_sse4_2_popcnt.a ./src/libsrc.a
+ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la
 
 # Collect some make-time info. 
 FORCE:

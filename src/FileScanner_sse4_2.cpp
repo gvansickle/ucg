@@ -27,6 +27,15 @@
 #include <cstdint>
 #include <immintrin.h>
 
+#ifdef __SSE2__
+STATIC_MSG("Have SSE2")
+#endif
+#ifdef __SSE4_2__
+STATIC_MSG("Have SSE4_2")
+#endif
+#ifdef __POPCNT__
+STATIC_MSG("Have POPCNT")
+#endif
 
 // Declaration here only so we can apply gcc attributes.
 inline uint8_t popcount16(uint16_t bits) noexcept ATTR_CONST /* Doesn't access globals, has no side-effects.*/
