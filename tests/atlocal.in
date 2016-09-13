@@ -43,7 +43,7 @@ export PROG_GNU_GREP="@PROG_GNU_GREP@"
 export AWK="@AWK@"
 export PYTHON="@PYTHON@"
 
-# At testsuite-time, find the programs we wish to compare performance with.
+# At testsuite-run-time, find the programs we wish to compare performance with.
 PROGLIST=built_ucg:ucg
 if PROG_INST_UCG="$(which ucg 2>/dev/null)";
 then
