@@ -36,23 +36,29 @@
 ### abs_builddir=/<...>/UCGTopSrcDir/build/tests
 ### at_top_srcdir=../..
 ### 
+
 # Paths to source that we'll test against.
-# We generate this one.
+## We generate this file.
 m4_define([UCG_TEST_FILE_NAME_LARGE_FILE_1], ["${builddir}/500MBLoremIpsum.cpp"])
+## The Boost library, version 1.58.0.
 m4_define([UCG_BOOST_PATH], ["${top_srcdir}/../boost_1_58_0"])
+
 # The file where we'll put the results of the performance tests.
 # This file will be created in performance_tests.at.
 m4_define([UCG_PERF_RESULTS_FILE], [${builddir}/perf_test_results.txt])
-# Preference list for choosing a prep run output file to use as the standard.
-# Find the one with the most lines, preferring GNU grep then the system grep.
+
+# Preference list for choosing a prep run output file to use as the matched-lines standard.
+# Find the one with the most lines, preferring GNU grep -P, then GNU grep -E, then the system grep.
 m4_define([UCG_PREF_LIST], [inst_system_grep
 inst_gnu_grep_e
 inst_gnu_grep_p])
 
-
+# "source" is neither POSIX nor portable.  Macro so we can find uses of the portable "." if we need to.
+m4_define([AXUCG_SOURCE], [.])
 
 ###
 ### Start of the performance tests.
+### @todo Probably should change terminology to "benchmarks" throughout.
 ###
 AT_BANNER([UniversalCodeGrep performance tests])
 
@@ -98,6 +104,10 @@ AS_ECHO(["END PROGVER INFO"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
 
+###
+### UCG_GEN_PERFTEST()
+### M4 macro which generates the shell script for a single benchmark.
+###
 m4_define([UCG_GEN_PERFTEST],
 [
 # $1 == ## program name list.
@@ -121,6 +131,10 @@ AT_CAPTURE_FILE([./cmdlines.sh])
 m4_popdef([test_case_id])
 ])
 
+###
+### UCG_SUMMARIZE_PERFTEST
+### M4 macro which generates the shell script code to parse and summarize the results of a single benchmark run.
+###
 m4_define([UCG_SUMMARIZE_PERFTEST],
 [
 # Choose a prep run output file to use as the standard.
@@ -203,7 +217,7 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 UCG_GEN_PERFTEST([${PROGLIST}], [TC1], ['BOOST.*HPP'],[UCG_BOOST_PATH],[3],[0])  ### @todo no CHARACTERIZE
 
 # Run the test script.
-AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([AXUCG_SOURCE ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST
 
@@ -226,7 +240,7 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 # Generate the test script.
 UCG_GEN_PERFTEST([$PROGLIST], [TC2], ['TEST_BOOST_NO_INTRINSIC_WCHAR_T'],[UCG_BOOST_PATH],[3],[0])
 # Run the test script.
-AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([AXUCG_SOURCE ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST
 
@@ -258,7 +272,7 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 # Generate the test script.
 UCG_GEN_PERFTEST([$PROGLIST], [TC3], ['iudice[\w]*umputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
 # Run the test script.
-AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([AXUCG_SOURCE ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST
 
@@ -278,7 +292,7 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 # Generate the test script.
 UCG_GEN_PERFTEST([$PROGLIST], [TC4], ['iudicemaequumputo'],[UCG_TEST_FILE_NAME_LARGE_FILE_1],[3],[0])
 # Run the test script.
-AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([AXUCG_SOURCE ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST
 
@@ -310,7 +324,7 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 # Generate the test script.
 UCG_GEN_PERFTEST([${PROGLIST}], [TC5], ['#include\s+".*"'],[UCG_BOOST_PATH],[3],[0])
 # Run the test script.
-AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([AXUCG_SOURCE ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST
 
@@ -333,7 +347,7 @@ AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 # Generate the test script.
 UCG_GEN_PERFTEST([${PROGLIST}], [TC6], ['#endif'], [UCG_BOOST_PATH],[3],[0])
 # Run the test script.
-AT_CHECK([. ./cmdlines.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([AXUCG_SOURCE ./cmdlines.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST
 

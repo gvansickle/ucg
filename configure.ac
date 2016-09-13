@@ -97,6 +97,7 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # @note We still need AM_PROG_AR when we're using Libtool, or it will complain about a non-POSIX linker.
 # See e.g. https://lists.gnu.org/archive/html/libtool/2012-11/msg00019.html.
 AM_PROG_AR
+# Shouldn't need ranlib since we're using libtool.
 #AC_PROG_RANLIB
 
 # Initialize Libtool.
@@ -196,18 +197,18 @@ AC_CACHE_CHECK([for a grep which supports PCREs], [ac_cv_path_PROG_GREP_P],
 AC_SUBST([PROG_GREP_P], [$ac_cv_path_PROG_GREP_P])
 
 # See if we have a pcre2grep.
-AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep])
+AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 
 ###
 ### Checks for maintainer tools.
 ###
 
 # Python, for generation of test suite.
-### @note Python >= 2.7 is actually required to run the testsuite at the moment, but my hope is that
-### this will soon become a pre-"make distcheck" requirement.
+### @note Python >= 2.7 is actually required to run the testsuite at the moment, and hence is 
+### not a maintainer-only tool.  My hope is that this will soon become a pre-"make distcheck" requirement.
 AM_PATH_PYTHON([2.7])
 
-# Autotest needs autom4te, or 'missing's stub for it. 
+# Autotest needs autom4te, or 'missing's stub for it post-distribution. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 # Doxygen support.
