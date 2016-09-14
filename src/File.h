@@ -87,7 +87,7 @@ private:
 
 	size_t m_file_size { 0 };
 
-	/// The ResizableArray that we'll get storage from.
+	/// The ResizableArray that we'll get file data storage from.
 	std::shared_ptr<ResizableArray<char>> m_storage;
 
 	const char *m_file_data { nullptr };

@@ -156,6 +156,15 @@ class TestGenDatabase(object):
         INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
         """.format(output_table_name))
         return c
+    
+    def generate_tests_type_2(self, output_table_name=None):
+        c = self.dbconnection.cursor()
+        c.execute("""CREATE TABLE {} AS
+        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, o.opt_expansion, p.opt_exclude_dir_literal, t.regex, t.corpus
+        FROM test_cases AS t CROSS JOIN progsundertest as p
+        INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
+        """.format(output_table_name))
+        return c
             
     def read_csv_into_table(self, table_name=None, filename=None, prim_key=None, foreign_key_tuples=None):
         c = self.dbconnection.cursor()

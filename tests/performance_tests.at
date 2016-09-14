@@ -253,7 +253,7 @@ AT_CLEANUP
 ###
 ### Generate test files for large file tests.
 ###
-AT_SETUP([generating files for large file tests])
+AT_SETUP([Generating files for large file tests])
 AT_KEYWORDS([performance])
 # Generate the test file UCG_TEST_FILE_NAME_LARGE_FILE_1, which is Lorum ipsum text with one distinct test string at the end.
 AT_CHECK([${builddir}/dummy-file-gen -b 500000000 | fold -s > UCG_TEST_FILE_NAME_LARGE_FILE_1], [0], [stdout], [stderr])
@@ -303,7 +303,7 @@ AT_CLEANUP
 ###
 ### Delete test files for the large file tests.
 ###
-AT_SETUP([deleting files for large file tests])
+AT_SETUP([Deleting files for large file tests])
 AT_KEYWORDS([performance])
 # Delete the test file UCG_TEST_FILE_NAME_LARGE_FILE_1, which is Lorum ipsum text with one distinct test string at the end.
 AT_CHECK([test -f "UCG_TEST_FILE_NAME_LARGE_FILE_1" && rm "UCG_TEST_FILE_NAME_LARGE_FILE_1"], [0], [stdout], [stderr])
