@@ -120,22 +120,6 @@ private:
 
 };
 
-/// @todo UNUSED, REMOVE?
-#if 0
-static std::string GetPathAsString(FTSENT *ftsent, std::string& name)
-{
-	if(ftsent->fts_parent != nullptr)
-	{
-		ExtraFTSENTDirInfo *ext = reinterpret_cast<ExtraFTSENTDirInfo*>(ftsent->fts_parent->fts_pointer);
-
-		return ext->GetDirName() + "/" + name;
-	}
-	else
-	{
-		return std::string(ftsent->fts_path, ftsent->fts_pathlen);
-	}
-}
-#endif
 
 Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
@@ -198,8 +182,6 @@ void Globber::Run()
 	LOG(INFO) << m_traversal_stats;
 }
 
-#define LOG_PARENT_INFO(ftsent) "LOG_PARENT_INFO" /*"With parent path/name: " << ((ftsent->fts_parent == nullptr) ? "<null parent>" : ftsent_path(ftsent->fts_parent)) \
-		<< " /// " << ((ftsent->fts_parent == nullptr) ? "<null parent>" : ftsent_name(ftsent->fts_parent))*/
 
 void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index)
 {
@@ -222,7 +204,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		size_t old_val {0};
 		size_t num_dirs_found_this_loop {0};
 
-#if TRAVERSE_ONLY != 1
 		// If we haven't seen m_num_start_paths_remaining == 0 yet...
 		if(!start_paths_have_been_consumed)
 		{
@@ -234,7 +215,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				// so skip the spin here entirely.
 			}
 		}
-#endif
 
 		/// @todo We can't use FS_NOSTAT here.  OSX at least isn't able to determine regular
 		/// files without the stat, so they get returned as FTS_NSOK / 11 /	no stat(2) requested.
@@ -243,7 +223,9 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		/// @note Per looking at the fts_open() source, FTS_LOGICAL turns on FTS_NOCHDIR, but since we're traversing
 		/// in multiple threads, and there's only a process-wide cwd, we'll specify it anyway.
 		/// @todo Current gnulib supports additional flags here: FTS_CWDFD | FTS_DEFER_STAT | FTS_NOATIME.  We should
-		/// check for these and use them if they exist.
+		/// check for these and use them if they exist.  Note the following though regarding O_NOATIME from the GNU libc
+		/// docs <https://www.gnu.org/software/libc/manual/html_node/Operating-Modes.html#Operating-Modes>:
+		/// "Only the owner of the file or the superuser may use this bit. This is a GNU extension."
 		int fts_options = FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/;
 		FTS *fts = fts_open(dirs, fts_options, NULL);
 		while(FTSENT *ftsent = fts_read(fts))
@@ -252,9 +234,8 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 
 			bool skip_inclusion_checks = false;
 
-			LOG(INFO) << "Considering file path/name \'" << ftsent_path(ftsent) << " /// " << ftsent_name(ftsent) << "\' at depth = " << ftsent->fts_level << ", " << LOG_PARENT_INFO(ftsent);
+			LOG(INFO) << "Considering file path/name \'" << ftsent_path(ftsent) << " /// " << ftsent_name(ftsent) << "\' at depth = " << ftsent->fts_level;
 
-#if TRAVERSE_ONLY != 1
 			// Determine if we should skip the inclusion/exclusion checks for this file/dir.  We should only do this
 			// for files/dirs specified on the command line, which will have an fts_level of FTS_ROOTLEVEL (0), and the
 			// start_paths_have_been_consumed flag will still be false.
@@ -262,7 +243,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 			{
 				skip_inclusion_checks = true;
 			}
-#endif
+
 			switch(ftsent->fts_info)
 			{
 			case FTS_F:
@@ -271,7 +252,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				LOG(INFO) << "... normal file.";
 				stats.m_num_files_found++;
 
-#if TRAVERSE_ONLY != 1
 				// Check for inclusion.
 				name.assign(ftsent->fts_name, ftsent->fts_namelen);
 				if(skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
@@ -290,11 +270,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 					stats.m_num_files_rejected++;
 				}
 
-				LOG(INFO) << LOG_PARENT_INFO(ftsent);
-
-#else
-				std::cout << "File: " << '\n';//path << '\n';
-#endif
 				break;
 			}
 			case FTS_D:
@@ -302,7 +277,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				LOG(INFO) << "... directory.";
 				stats.m_num_directories_found++;
 
-#if TRAVERSE_ONLY != 1
 				// It's a directory.  Check if we should descend into it.
 				if(!m_recurse_subdirs && ftsent->fts_level > FTS_ROOTLEVEL)
 				{
@@ -364,20 +338,13 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 					}
 				}
 
+				LOG(INFO) << "Pre-order visit to dir \'" << ftsent->fts_path << "\', setting fts_pointer==" << std::hex << ftsent->fts_pointer;
 
-				LOG(INFO) << LOG_PARENT_INFO(ftsent);
-#if 0
-				ftsent->fts_pointer = new ExtraFTSENTDirInfo(ftsent);
-#endif
-				LOG(INFO) << "Pre-order visit to dir \'" << ftsent->fts_path << "\', setting fts_pointer==" << std::hex << ftsent->fts_pointer << '\n';
-#else
-				std::cout << "Dir: " << '\n';//path << ", depth: " << ftsent->fts_level << '\n';
-#endif
 				break;
 			}
 			case FTS_DP:
 			{
-				LOG(INFO) << "Post-order visit to dir \'" << ftsent->fts_path << "\', fts_pointer==" << std::hex << ftsent->fts_pointer << '\n';
+				LOG(INFO) << "Post-order visit to dir \'" << ftsent->fts_path << "\', fts_pointer==" << std::hex << ftsent->fts_pointer;
 				break;
 			}
 			case FTS_NSOK:

@@ -19,8 +19,7 @@
 
 EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in \
 	gen_test_script.py stats.awk \
-	benchmark_progs.csv opts_defs.csv test_cases.csv \
-	performance_test_gen.awk performance_test_summarizer.awk
+	benchmark_progs.csv opts_defs.csv test_cases.csv
 CLEANFILES = perf_test_results.txt
 DISTCLEANFILES = atconfig
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
