@@ -112,7 +112,7 @@ m4_define([UCG_GEN_PERFTEST],
 [
 # $1 == ## program name list.
 # $2 == test_case_id from test_cases.csv.
-# $3 == ## regex.
+# $3 == '--opt=' options to pass to the program under test.
 # $4 == ## test file/directory path
 # $5 == ## NUM_ITERATIONS
 # $6 == ## CHARACTERIZE

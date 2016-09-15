@@ -332,12 +332,9 @@ def main(argv=None): # IGNORE:C0111
         opts = args.opts or []
         test_output_filename = args.test_output_filename
         paths = args.paths
-        #verbose = args.verbose
         inpat = args.include
         expat = args.exclude
 
-        #if verbose > 0:
-        #    print("Verbose mode on")
 
         if inpat and expat and inpat == expat:
             raise CLIError("include and exclude pattern are equal! Nothing will be processed.")
