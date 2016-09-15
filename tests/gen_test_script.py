@@ -3,6 +3,7 @@
 
 from __future__ import print_function
 import argparse
+from ast import parse
 
 copyright_notice=\
 '''
@@ -157,13 +158,27 @@ class TestGenDatabase(object):
         """.format(output_table_name))
         return c
     
-    def generate_tests_type_2(self, output_table_name=None):
+    def parse_opt(self, optstring):
+        opt_parts = optstring.split("=")
+        return opt_parts
+    
+    def generate_tests_type_2(self, opts=None, output_table_name=None):
         c = self.dbconnection.cursor()
-        c.execute("""CREATE TABLE {} AS
-        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, o.opt_expansion, p.opt_exclude_dir_literal, t.regex, t.corpus
+        select_opts = ""
+        select_opts += "o.opt_expansion, "
+        for opt in opts:
+            print("opt: " + opt)
+            (opt_id, opt_val) = self.parse_opt(opt)
+            if opt_val:
+                select_opts += "p.opt_" + opt_id + " || \"" + opt_val + "\","
+            else:
+                select_opts += "p.opt_" + opt_id + ","
+        select_string = """CREATE TABLE {} AS
+        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, {} t.regex, t.corpus
         FROM test_cases AS t CROSS JOIN progsundertest as p
         INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
-        """.format(output_table_name))
+        """.format(output_table_name, select_opts)
+        c.execute(select_string)
         return c
             
     def read_csv_into_table(self, table_name=None, filename=None, prim_key=None, foreign_key_tuples=None):
@@ -206,10 +221,14 @@ class TestGenDatabase(object):
         for row in rows:
             print("Row        : " + ", ".join(row))
     
-    def GenerateTestScript(self, test_case_id, test_output_filename, fh=sys.stdout):
+    def GenerateTestScript(self, test_case_id, test_output_filename, options=None, fh=sys.stdout):
         """
         Generate and output the test script.
         """
+        # Query the db.
+        self.generate_tests_type_2(options, "benchmark1")
+        self.PrintTable("benchmark1")
+        
         test_cases = ""
         test_inst_num=0
         rows = self.dbconnection.execute('SELECT * FROM benchmark1 WHERE test_case_id == "{}"'.format(test_case_id))
@@ -261,8 +280,6 @@ class TestGenDatabase(object):
         self.read_csv_into_table(table_name="test_cases", filename=csv_dir+'/test_cases.csv')
         self._select_data("benchmark_1")
         #self.PrintTable("benchmark_1")
-        self.generate_tests_type_1("benchmark1")
-        #self.PrintTable("benchmark1")
 
 
 class CLIError(Exception):
@@ -298,8 +315,9 @@ def main(argv=None): # IGNORE:C0111
                             type=argparse.FileType('w'), default=sys.stdout)
         parser.add_argument("-c", "--test-case", dest="test_case", help="The test case id to generate the shell script for.", required=True)
         parser.add_argument("-d", "--csv-dir", dest="csv_dir", help="Directory where the source csv files can be found.", required=True)
+        parser.add_argument("--opt", dest="opts", action='append', help="Options to give the test programs.  Can be specified multiple times.")
         parser.add_argument("-r", "--test-output", dest="test_output_filename", help="Test results combined output filename.", required=True)
-        parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
+        #parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
         parser.add_argument("-i", "--include", dest="include", help="only include paths matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
         parser.add_argument("-e", "--exclude", dest="exclude", help="exclude paths matching this regex pattern. [default: %(default)s]", metavar="RE" )
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
@@ -311,14 +329,15 @@ def main(argv=None): # IGNORE:C0111
         outfile_name = args.outfile_name
         test_case = args.test_case
         csv_dir = args.csv_dir
+        opts = args.opts or []
         test_output_filename = args.test_output_filename
         paths = args.paths
-        verbose = args.verbose
+        #verbose = args.verbose
         inpat = args.include
         expat = args.exclude
 
-        if verbose > 0:
-            print("Verbose mode on")
+        #if verbose > 0:
+        #    print("Verbose mode on")
 
         if inpat and expat and inpat == expat:
             raise CLIError("include and exclude pattern are equal! Nothing will be processed.")
@@ -331,7 +350,8 @@ def main(argv=None): # IGNORE:C0111
             results_db.LoadDatabaseFiles(csv_dir=csv_dir)
             
             # Generate the shell script, writing it to outfile.
-            results_db.GenerateTestScript(test_case_id=test_case, test_output_filename=test_output_filename, fh=outfile_name)
+            results_db.GenerateTestScript(test_case_id=test_case, test_output_filename=test_output_filename, options=opts,
+                                           fh=outfile_name)
             
         return 0
     except KeyboardInterrupt:
