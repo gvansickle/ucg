@@ -64,7 +64,10 @@ PROGLIST=$PROGLIST,inst_system_grep:grep
 if test -x "${PROG_GNU_GREP}";
 then
 	PROGLIST=$PROGLIST,inst_gnu_grep_e:$PROG_GNU_GREP
-	PROGLIST=$PROGLIST,inst_gnu_grep_p:$PROG_GNU_GREP
+fi
+if test -x "${PROG_GREP_P}";
+then
+	PROGLIST=$PROGLIST,inst_gnu_grep_p:$PROG_GREP_P
 fi
 
 ### Functions for use in the testsuite.
