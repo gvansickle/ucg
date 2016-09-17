@@ -6,4 +6,4 @@ inst_ag,${PROG_INST_AG},true,,,,--ignore-dir=,only_cpp_ack
 inst_pcre2grep,${PROG_PCRE2GREP},true,-rn --color,,,--exclude-dir=,only_cpp_pcre2grep
 inst_system_grep,grep,false,-Ern --color,,,--exclude-dir=,only_cpp_grep
 inst_gnu_grep_e,${PROG_GNU_GREP},false,-Ern --color,,,--exclude-dir=,only_cpp_grep
-inst_gnu_grep_p,${PROG_GNU_GREP},true,-Prn --color,,,--exclude-dir=,only_cpp_grep
+inst_gnu_grep_p,${PROG_GREP_P},true,-Prn --color,,,--exclude-dir=,only_cpp_grep
