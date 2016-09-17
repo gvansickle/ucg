@@ -165,7 +165,12 @@ const char* File::GetFileData(int file_descriptor, size_t file_size, size_t pref
 		// Not using mmap().
 
 #ifdef HAVE_POSIX_FADVISE // OSX doesn't have it.
-		posix_fadvise(file_descriptor, 0, 0, POSIX_FADV_SEQUENTIAL | POSIX_FADV_WILLNEED);
+		// Notify the filesystem of our intentions to:
+		// - Access the file sequentially.  This will cause Linux to double the file's readahead window.
+		// - That we'll need the contents in the near future.  Per the Linux manpage, this will cause it to start
+		//   a non-blocking read of the file.
+		// Explicitly ignoring the return value for Coverity's sake.  If the advice is ignored, we should still be functional.
+		(void)posix_fadvise(file_descriptor, 0, 0, POSIX_FADV_SEQUENTIAL | POSIX_FADV_WILLNEED);
 #endif
 
 		m_storage->reserve_no_copy(file_size, preferred_block_size);
