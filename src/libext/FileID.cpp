@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <fts.h>
 
+
 FileID::FileID(const FTSENT *ftsent): m_path(ftsent->fts_path, ftsent->fts_pathlen)
 {
 	// Initialize the stat fields if possible.

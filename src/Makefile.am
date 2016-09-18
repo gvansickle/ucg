@@ -34,7 +34,6 @@ libsrc_la_SOURCES = \
 	Match.cpp Match.h \
 	MatchList.cpp MatchList.h \
 	File.cpp File.h \
-	FileID.cpp FileID.h \
 	FileScanner.cpp FileScanner.h \
 	FileScannerCpp11.cpp FileScannerCpp11.h \
 	FileScannerPCRE.cpp FileScannerPCRE.h \

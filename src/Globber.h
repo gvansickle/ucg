@@ -30,9 +30,9 @@
 #include <thread>
 #include <atomic>
 #include <libext/filesystem.hpp>
+#include "libext/FileID.h"
 #include "sync_queue_impl_selector.h"
 
-#include "FileID.h"
 
 // Forward decls.
 class TypeManager;

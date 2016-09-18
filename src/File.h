@@ -26,8 +26,8 @@
 #include <stdexcept>
 #include <memory>
 
+#include "libext/FileID.h"
 #include "ResizableArray.h"
-#include "FileID.h"
 
 /**
  * File() may throw this if it runs into trouble opening the given filename.

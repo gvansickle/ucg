@@ -17,8 +17,8 @@
 
 /** @file */
 
-#ifndef SRC_FILEID_H_
-#define SRC_FILEID_H_
+#ifndef SRC_LIBEXT_FILEID_H_
+#define SRC_LIBEXT_FILEID_H_
 
 #include <config.h>
 
@@ -27,8 +27,8 @@
 
 #include <string>
 
-#include <libext/integer.hpp>
-#include <libext/filesystem.hpp>
+#include "integer.hpp"
+#include "filesystem.hpp"
 
 
 /**
@@ -85,4 +85,4 @@ private:
 
 };
 
-#endif /* SRC_FILEID_H_ */
+#endif /* SRC_LIBEXT_FILEID_H_ */
