@@ -214,8 +214,6 @@ private:
 
 std::vector<size_t> AtFD::m_refcount_map(256);
 
-//std::map<int, size_t> AtFD::m_refcount_map;
-
 
 class DirStackEntry
 {
@@ -344,11 +342,11 @@ void DirTree::Read(std::vector<std::string> start_paths)
 
 			if(is_file)
 			{
-				std::cout << "File: " << '\n';//dse.get()->get_name() + "/" + dname << '\n';
+				//std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';
 			}
 			else if(is_dir)
 			{
-				std::cout << "Dir: " << '\n';//dse.get()->get_name() + "/" + dname << '\n';
+				//std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
 
 				if(!next_at_dir.is_valid())
 				{

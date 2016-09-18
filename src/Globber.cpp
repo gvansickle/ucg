@@ -43,8 +43,7 @@
 #include <libext/string.hpp>
 
 /// @todo FOR TEST, DELETE
-#define TRAVERSE_ONLY 0
-#define USE_DIRTREE 0
+#define USE_DIRTREE 1
 
 std::string ftsent_name(FTSENT*p)
 {
@@ -69,6 +68,9 @@ std::string ftsent_path(FTSENT*p)
 	}
 }
 
+/**
+ * @todo OBSOLETE, REMOVE.
+ */
 class ExtraFTSENTDirInfo
 {
 public:
