@@ -25,21 +25,21 @@
 #include <fts.h>
 
 
-FileID::FileID(path_known_relative_t tag, const FileID& at_dir_fileid, const std::string &pathname) : m_path(pathname)
+FileID::FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname) : m_path(pathname)
 {
 	/// @todo Needs full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(path_known_absolute_t tag, const FileID& at_dir_fileid, const std::string &pathname) : m_path(pathname)
+FileID::FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname) : m_path(pathname)
 {
 	/// @todo Needs full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(const FileID& at_dir_fileid, const std::string &pathname)
+FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname)
 {
 	/// @todo Needs full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
@@ -51,7 +51,7 @@ FileID::FileID(const FileID& at_dir_fileid, const std::string &pathname)
 	}
 	else
 	{
-		m_path = at_dir_fileid.GetPath() + '/' + pathname;
+		m_path = at_dir_fileid->GetPath() + '/' + pathname;
 	}
 }
 

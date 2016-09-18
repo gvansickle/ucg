@@ -268,6 +268,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_name_filter_type &
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
 	int file_fd;
+	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(0);
 
 	//std::queue<std::shared_ptr<DirStackEntry>> dir_stack;
 	std::queue<FileID> dir_stack;
@@ -276,7 +277,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_name_filter_type &
 	{
 		// AT_FDCWD == Start at the cwd of the process.
 		//dir_stack.push(std::make_shared<DirStackEntry>(DirStackEntry(nullptr, AtFD::make_shared_dupfd(AT_FDCWD), p)));
-		dir_stack.push(FileID(FileID(0), p));
+		dir_stack.push(FileID(root_file_id, p));
 
 		/// @todo The start_paths can be files or dirs.  Currently the loop below will only work if they're dirs.
 	}
@@ -363,7 +364,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_name_filter_type &
 					LOG(INFO) << "... should be scanned.";
 
 					//m_out_queue.wait_push(FileID(FileID::path_known_absolute, FileID(0), dse.get()->get_name() + "/" + dname));
-					m_out_queue.wait_push(FileID(FileID::path_known_absolute, FileID(0), dse.GetPath() + "/" + dname));
+					m_out_queue.wait_push(FileID(FileID::path_known_absolute, root_file_id, dse.GetPath() + "/" + dname));
 
 					// Count the number of files we found that were included in the search.
 					///stats.m_num_files_scanned++;
@@ -383,7 +384,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_name_filter_type &
 //				}
 
 				//dir_atfd = std::make_shared<DirStackEntry>(dse, next_at_dir, dname);
-				FileID dir_atfd(FileID::path_known_absolute, FileID(0), dse.GetPath() + '/' + dname);
+				FileID dir_atfd(FileID::path_known_absolute, root_file_id, dse.GetPath() + '/' + dname);
 
 				dir_stack.push(dir_atfd);
 			}

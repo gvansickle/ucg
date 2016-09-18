@@ -26,6 +26,7 @@
 #include <fts.h>
 
 #include <string>
+#include <memory>
 
 #include "integer.hpp"
 #include "filesystem.hpp"
@@ -49,9 +50,9 @@ public:
 	/// @{
 	FileID() = default;
 	FileID(int v) : m_path(".") {};
-	FileID(path_known_relative_t tag, const FileID& at_dir_fileid, const std::string &pathname);
-	FileID(path_known_absolute_t tag, const FileID& at_dir_fileid, const std::string &pathname);
-	FileID(const FileID& at_dir_fileid, const std::string &pathname);
+	FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
+	FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
+	FileID(std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
 	FileID(const FTSENT *ftsent);
 	FileID(const FileID&) = default;
 	FileID(FileID&&) = default;
@@ -59,7 +60,6 @@ public:
 
 	FileID& operator=(const FileID&) = default;
 	FileID& operator=(FileID&&) = default;
-
 
 	/// Destructor.
 	~FileID();
@@ -79,6 +79,9 @@ public:
 private:
 
 	void LazyLoadStatInfo() const;
+
+	/// Shared pointer to the directory this FileID is in.
+	std::shared_ptr<FileID> m_at_dir;
 
 	/// The path to this file.
 	std::string m_path;
