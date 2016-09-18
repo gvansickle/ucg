@@ -17,6 +17,7 @@
 
 /** @file */
 
+#include <src/libext/FileID.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -27,7 +28,6 @@
 #include "sync_queue_impl_selector.h"
 #include "Logger.h"
 #include "ArgParse.h"
-#include "FileID.h"
 #include "Globber.h"
 #include "TypeManager.h"
 #include "DirInclusionManager.h"
