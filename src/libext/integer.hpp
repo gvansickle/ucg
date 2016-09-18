@@ -23,10 +23,28 @@
 #include <config.h>
 
 #include <cstdint>
+#include <endian.h>  ///< @todo Watch this for portability issues.  Exists in GNU libs, Cygwin, not sure of others.
 
 #include "hints.hpp"
 
-// Boost has a template of this nature, but of course more complete.
+// Make sure we know our endianness.
+#if !defined(__BYTE_ORDER)
+#error "Cannot determine host byte order."
+#endif
+
+/**
+ * Recursive template for creating an unsigned integral type with at least #NumBits bits.
+ * Boost has a template of this nature, but more complete.
+ *
+ * Example:
+ * @code{.cpp}
+ * // I need a type with at least 34 bits:
+ * using uint_34 = uint_t<34>::fast;
+ * // Now use the new type.
+ * uint_34 = 12;
+ * [...]
+ * @endcode
+ */
 template <unsigned char NumBits>
 struct uint_t
 {
@@ -36,6 +54,7 @@ struct uint_t
 template<> struct uint_t<128> { using fast = unsigned __int128; };
 template<> struct uint_t<64> { using fast = uint_fast64_t; };
 template<> struct uint_t<32> { using fast = uint_fast32_t; };
+
 
 /**
  * constexpr function template for determining at compile time if an unsigned value is a power of two or not.
@@ -50,7 +69,7 @@ constexpr
 	bool>::type is_power_of_2(T val)
 {
 	// The "val &&" prevents 0 from being incorrectly classified as a power-of-2.
-	return val && !(val & (val - 1));
+	return static_cast<bool>(val && !(val & (val - static_cast<T>(1))));
 };
 
 /**
@@ -75,6 +94,42 @@ constexpr inline uint32_t bswap(uint32_t x)
 #else
 	/// @todo create a fallback.
 	static_assert(false, "Generic bswap32() not yet implemented.");
+#endif
+}
+
+/**
+ * Portable byte-order conversion of a value from Host order to big-endian.
+ * This overload is for unsigned 32-bit values.
+ *
+ * @param x
+ * @return
+ */
+// Separate declaration here to avoid "attributes are not allowed on a function-definition" error.
+constexpr inline uint32_t host_to_be(uint32_t x) ATTR_CONST ATTR_ARTIFICIAL;
+constexpr inline uint32_t host_to_be(uint32_t x)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	return bswap(x);
+#else
+	return x;
+#endif
+}
+
+/**
+ * Portable byte-order conversion of a value from Host order to little-endian.
+ * This overload is for unsigned 32-bit values.
+ *
+ * @param x
+ * @return
+ */
+// Separate declaration here to avoid "attributes are not allowed on a function-definition" error.
+constexpr inline uint32_t host_to_le(uint32_t x) ATTR_CONST ATTR_ARTIFICIAL;
+constexpr inline uint32_t host_to_le(uint32_t x)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	return x;
+#else
+	return bswap(x);
 #endif
 }
 
