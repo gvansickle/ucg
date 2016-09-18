@@ -74,7 +74,7 @@ File::File(FileID file_id, std::shared_ptr<ResizableArray<char>> storage) : m_st
 	if(m_file_data == MAP_FAILED)
 	{
 		// Mapping failed.
-		ERROR() << "Couldn't map file \"" << m_filename << "\"" << std::endl;
+		ERROR() << "Couldn't map file \"" << m_filename << "\"";
 		throw std::system_error(errno, std::system_category());
 	}
 }
@@ -131,7 +131,7 @@ File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> st
 	if(m_file_data == MAP_FAILED)
 	{
 		// Mapping failed.
-		ERROR() << "Couldn't map file \"" << filename << "\"" << std::endl;
+		ERROR() << "Couldn't map file \"" << filename << "\"";
 		throw std::system_error(errno, std::system_category());
 	}
 }

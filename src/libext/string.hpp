@@ -32,6 +32,7 @@
 #include <numeric>
 #include <algorithm>
 
+#include "integer.hpp"
 #include "hints.hpp"
 
 /**
@@ -150,13 +151,20 @@ public:
 
 	~microstring() noexcept = default;
 
+	/**
+	 * Return the number of characters in the microstring.
+	 *
+	 * @todo Redo this function with sse2 or just bit-twiddling instead of strnlen etc.  Not used mmuch at the moment, so this
+	 * is ok for now.
+	 *
+	 * @return Length of string.
+	 */
 	size_t length() const noexcept
 	{
 		auto tmp = m_storage;
 
-		// If we're little-endian, swap the bytes of the tmp var.
-		/// @todo Check for little endianness.
-		tmp = __builtin_bswap32(tmp);
+		// Make sure the bytes of the tmp var are in big-endian order.
+		tmp = host_to_be(tmp);
 
 		auto ptr = reinterpret_cast<const char *>(&tmp);
 
@@ -168,7 +176,7 @@ public:
 	/// Implicitly convert to a std::string.
 	operator std::string() const
 	{
-		underlying_storage_type tmp = __builtin_bswap32(m_storage);
+		underlying_storage_type tmp = host_to_be(m_storage);
 		return std::string(reinterpret_cast<const char *>(&tmp), length());
 	};
 
