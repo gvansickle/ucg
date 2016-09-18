@@ -23,12 +23,11 @@
 #include <config.h>
 
 #include <cstdint>
-#include <endian.h>  ///< @todo Watch this for portability issues.  Exists in GNU libs, Cygwin, not sure of others.
 
 #include "hints.hpp"
 
 // Make sure we know our endianness.
-#if !defined(__BYTE_ORDER)
+#if !defined(__BYTE_ORDER__)
 #error "Cannot determine host byte order."
 #endif
 
@@ -108,7 +107,7 @@ constexpr inline uint32_t bswap(uint32_t x)
 constexpr inline uint32_t host_to_be(uint32_t x) ATTR_CONST ATTR_ARTIFICIAL;
 constexpr inline uint32_t host_to_be(uint32_t x)
 {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 	return bswap(x);
 #else
 	return x;
@@ -126,7 +125,7 @@ constexpr inline uint32_t host_to_be(uint32_t x)
 constexpr inline uint32_t host_to_le(uint32_t x) ATTR_CONST ATTR_ARTIFICIAL;
 constexpr inline uint32_t host_to_le(uint32_t x)
 {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 	return x;
 #else
 	return bswap(x);
