@@ -9,7 +9,8 @@ source "https://rubygems.org"
 # This will help ensure the proper Jekyll version is running.
 # Happy Jekylling!
 
-#gem "github-pages", group: :jekyll_plugins
+# For Linux.
+gem "github-pages", group: :jekyll_plugins
 
 # require 'json'
 # require 'open-uri'
@@ -17,7 +18,8 @@ source "https://rubygems.org"
 
 # gem 'certified', '~> 1.0' if Gem.win_platform?
 # gem 'github-pages', group: :jekyll_plugins
-gem 'github-pages'
+# For Windows.
+#gem 'github-pages'
 # gem 'wdm', '>= 0.1.0' if Gem.win_platform?
 
 # If you want to use Jekyll native, uncomment the line below.
