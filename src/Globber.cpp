@@ -146,8 +146,9 @@ void Globber::Run()
 	std::vector<std::thread> threads;
 
 #if USE_DIRTREE == 1 /// @todo TEMP
-	DirTree dt;
-	dt.Read(m_start_paths);
+	DirTree dt(m_out_queue);
+	DirTree::file_name_filter_type fi = std::bind(&TypeManager::FileShouldBeScanned, m_type_manager, std::placeholders::_1);
+	dt.Read(m_start_paths, fi);
 	return;
 #endif
 

@@ -24,6 +24,11 @@
 
 #include <vector>
 #include <string>
+#include <functional>
+
+/// @todo Break this dependency on the output queue class.
+#include "../sync_queue_impl_selector.h"
+#include "FileID.h"
 
 /*
  *
@@ -31,10 +36,17 @@
 class DirTree
 {
 public:
-	DirTree();
+	DirTree(sync_queue<FileID>& output_queue);
 	~DirTree();
 
-	void Read(std::vector<std::string> start_paths);
+	/// Type of the file include/exclude predicate.
+	using file_name_filter_type = std::function<bool (const std::string& name)>;
+
+	void Read(std::vector<std::string> start_paths, file_name_filter_type &fi);
+
+private:
+
+	sync_queue<FileID>& m_out_queue;
 };
 
 #endif /* SRC_LIBEXT_DIRTREE_H_ */

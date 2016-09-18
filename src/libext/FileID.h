@@ -37,11 +37,25 @@
 class FileID
 {
 public:
+	/// @name Tag types for selecting FileID() constructors when the given path is known to be relative or absolute.
+	/// @{
+	struct path_known_relative_t {};
+	struct path_known_absolute_t {};
+	static constexpr path_known_relative_t path_known_relative = path_known_relative_t();
+	static constexpr path_known_absolute_t path_known_absolute = path_known_absolute_t();
+	/// @}
+
+	/// @name Constructors.
+	/// @{
 	FileID() = default;
+	FileID(int v) : m_path(".") {};
+	FileID(path_known_relative_t tag, const FileID& at_dir_fileid, const std::string &pathname);
+	FileID(path_known_absolute_t tag, const FileID& at_dir_fileid, const std::string &pathname);
 	FileID(const FTSENT *ftsent);
 	FileID(const FileID&) = default;
-	FileID& operator=(const FileID&) = default;
 	FileID(FileID&&) = default;
+	/// @}
+	FileID& operator=(const FileID&) = default;
 	~FileID();
 
 	std::string GetPath() const { return m_path; };
