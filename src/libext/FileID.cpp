@@ -39,6 +39,22 @@ FileID::FileID(path_known_absolute_t tag, const FileID& at_dir_fileid, const std
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
+FileID::FileID(const FileID& at_dir_fileid, const std::string &pathname)
+{
+	/// @todo Needs full openat() semantics:
+	/// - If pathname is absolute, at_dir_fd is ignored.
+	/// - If pathname is relative, it's relative to at_dir_fd.
+
+	if(is_pathname_absolute(pathname))
+	{
+		m_path = pathname;
+	}
+	else
+	{
+		m_path = at_dir_fileid.GetPath() + '/' + pathname;
+	}
+}
+
 FileID::FileID(const FTSENT *ftsent): m_path(ftsent->fts_path, ftsent->fts_pathlen)
 {
 	// Initialize the stat fields if possible.

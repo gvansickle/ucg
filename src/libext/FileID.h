@@ -51,14 +51,20 @@ public:
 	FileID(int v) : m_path(".") {};
 	FileID(path_known_relative_t tag, const FileID& at_dir_fileid, const std::string &pathname);
 	FileID(path_known_absolute_t tag, const FileID& at_dir_fileid, const std::string &pathname);
+	FileID(const FileID& at_dir_fileid, const std::string &pathname);
 	FileID(const FTSENT *ftsent);
 	FileID(const FileID&) = default;
 	FileID(FileID&&) = default;
 	/// @}
+
 	FileID& operator=(const FileID&) = default;
+	FileID& operator=(FileID&&) = default;
+
+
+	/// Destructor.
 	~FileID();
 
-	std::string GetPath() const { return m_path; };
+	const std::string& GetPath() const { return m_path; };
 
 	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
 
@@ -98,5 +104,9 @@ private:
 	///@}
 
 };
+
+static_assert(std::is_assignable<FileID, FileID>::value, "FileID must be assignable to itself.");
+static_assert(std::is_copy_assignable<FileID>::value, "FileID must be copy assignable to itself.");
+static_assert(std::is_move_assignable<FileID>::value, "FileID must be move assignable to itself.");
 
 #endif /* SRC_LIBEXT_FILEID_H_ */

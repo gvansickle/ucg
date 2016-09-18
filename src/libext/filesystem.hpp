@@ -71,4 +71,27 @@ inline bool is_same_file(int fd1, int fd2)
 	}
 }
 
+/**
+ * Examines the given #path and determines if it is absolute.
+ *
+ * @param path
+ * @return
+ */
+inline bool is_pathname_absolute(const std::string &path) noexcept
+{
+#if 1 // == IS_POSIX
+	if(path[0] == '/')
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+#else /// @todo Handle Windows etc.
+#error "Only POSIX-like systems currently supported."
+	return false;
+#endif
+}
+
 #endif /* SRC_LIBEXT_FILESYSTEM_HPP_ */
