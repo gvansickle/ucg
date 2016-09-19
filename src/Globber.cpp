@@ -147,8 +147,9 @@ void Globber::Run()
 
 #if USE_DIRTREE == 1 /// @todo TEMP
 	DirTree dt(m_out_queue);
-	DirTree::file_name_filter_type fi = std::bind(&TypeManager::FileShouldBeScanned, m_type_manager, std::placeholders::_1);
-	dt.Read(m_start_paths, fi);
+	DirTree::file_basename_filter_type fi = std::bind(&TypeManager::FileShouldBeScanned, m_type_manager, std::placeholders::_1);
+	DirTree::dir_basename_filter_type dir_basename_filter = std::bind(&DirInclusionManager::DirShouldBeExcluded, m_dir_inc_manager, std::placeholders::_1);
+	dt.Read(m_start_paths, fi, dir_basename_filter);
 	return;
 #endif
 

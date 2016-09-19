@@ -40,9 +40,12 @@ public:
 	~DirTree();
 
 	/// Type of the file include/exclude predicate.
-	using file_name_filter_type = std::function<bool (const std::string& name)>;
+	using file_basename_filter_type = std::function<bool (const std::string& name)>;
 
-	void Read(std::vector<std::string> start_paths, file_name_filter_type &fi);
+	using dir_basename_filter_type = std::function<bool (const std::string& name)>;
+
+	void Read(std::vector<std::string> start_paths, file_basename_filter_type &fi,
+			dir_basename_filter_type &dir_basename_filter);
 
 private:
 

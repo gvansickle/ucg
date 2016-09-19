@@ -261,7 +261,7 @@ private:
 };
 
 
-void DirTree::Read(std::vector<std::string> start_paths, file_name_filter_type &fi)
+void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_type &fi, dir_basename_filter_type &dir_basename_filter)
 {
 	///int num_entries {0};
 	struct stat statbuf;
@@ -287,22 +287,20 @@ void DirTree::Read(std::vector<std::string> start_paths, file_name_filter_type &
 		auto dse = dir_stack.front();
 		dir_stack.pop();
 
-		int openat_dir_search_flags = O_SEARCH ? O_SEARCH : O_RDONLY;
 //		int open_at_fd = dse->get_at_fd();
 //		const char *open_at_path = dse->m_path.c_str();
 		int open_at_fd = AT_FDCWD;
 		const char *open_at_path = dse.GetPath().c_str();
-		file_fd = openat(open_at_fd, open_at_path, openat_dir_search_flags | O_DIRECTORY | O_NOCTTY);
-		d = fdopendir(file_fd);
+
+		d = opendirat(open_at_fd, open_at_path);
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
 			perror("fdopendir");
+			continue;
 		}
 
 		// This will be the "at" directory for all files and directories found in this directory.
-		//AtFD next_at_dir;
-		//std::shared_ptr<DirStackEntry> dir_atfd;
 		FileID next_at_dir;
 
 		while ((dp = readdir(d)) != NULL)
@@ -333,7 +331,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_name_filter_type &
 			if(is_unknown)
 			{
 				// Stat the filename using the at-descriptor.
-				fstatat(file_fd, dname, &statbuf, AT_NO_AUTOMOUNT);
+				fstatat(file_fd, dname, &statbuf, AT_NO_AUTOMOUNT); ///< @todo file_fd is never getting opened.
 				is_dir = S_ISDIR(statbuf.st_mode);
 				is_file = S_ISREG(statbuf.st_mode);
 				if(is_dir || is_file)
@@ -377,6 +375,13 @@ void DirTree::Read(std::vector<std::string> start_paths, file_name_filter_type &
 			else if(is_dir)
 			{
 				//std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
+				if(dir_basename_filter(std::string(dname))) //!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
+				{
+					// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
+					LOG(INFO) << "... should be ignored.";
+					///stats.m_num_dirs_rejected++;
+					continue;
+				}
 
 //				if(!next_at_dir.is_valid())
 //				{
