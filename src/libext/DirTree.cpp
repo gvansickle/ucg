@@ -21,6 +21,8 @@
 
 #include "DirTree.h"
 
+#include "../Logger.h" ///< @todo Break this root-ward dependency.
+
 #include <fcntl.h> // For AT_FDCWD, AT_NO_AUTOMOUNT
 #include <sys/stat.h>
 #include <unistd.h>
@@ -80,15 +82,12 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 
 ///@}
 
-DirTree::DirTree()
+DirTree::DirTree(sync_queue<FileID>& output_queue) : m_out_queue(output_queue)
 {
-	// TODO Auto-generated constructor stub
-
 }
 
 DirTree::~DirTree()
 {
-	// TODO Auto-generated destructor stub
 }
 
 class AtFD
@@ -214,8 +213,6 @@ private:
 
 std::vector<size_t> AtFD::m_refcount_map(256);
 
-//std::map<int, size_t> AtFD::m_refcount_map;
-
 
 class DirStackEntry
 {
@@ -264,19 +261,23 @@ private:
 };
 
 
-void DirTree::Read(std::vector<std::string> start_paths)
+void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_type &fi, dir_basename_filter_type &dir_basename_filter)
 {
 	///int num_entries {0};
 	struct stat statbuf;
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
 	int file_fd;
+	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(0);
 
-	std::queue<std::shared_ptr<DirStackEntry>> dir_stack;
+	//std::queue<std::shared_ptr<DirStackEntry>> dir_stack;
+	std::queue<FileID> dir_stack;
+
 	for(auto p : start_paths)
 	{
 		// AT_FDCWD == Start at the cwd of the process.
-		dir_stack.push(std::make_shared<DirStackEntry>(DirStackEntry(nullptr, AtFD::make_shared_dupfd(AT_FDCWD), p)));
+		//dir_stack.push(std::make_shared<DirStackEntry>(DirStackEntry(nullptr, AtFD::make_shared_dupfd(AT_FDCWD), p)));
+		dir_stack.push(FileID(root_file_id, p));
 
 		/// @todo The start_paths can be files or dirs.  Currently the loop below will only work if they're dirs.
 	}
@@ -286,18 +287,21 @@ void DirTree::Read(std::vector<std::string> start_paths)
 		auto dse = dir_stack.front();
 		dir_stack.pop();
 
-		int openat_dir_search_flags = O_SEARCH ? O_SEARCH : O_RDONLY;
-		file_fd = openat(dse->get_at_fd(), dse->m_path.c_str(), openat_dir_search_flags | O_DIRECTORY | O_NOATIME | O_NOCTTY);
-		d = fdopendir(file_fd);
+//		int open_at_fd = dse->get_at_fd();
+//		const char *open_at_path = dse->m_path.c_str();
+		int open_at_fd = AT_FDCWD;
+		const char *open_at_path = dse.GetPath().c_str();
+
+		d = opendirat(open_at_fd, open_at_path);
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
 			perror("fdopendir");
+			continue;
 		}
 
 		// This will be the "at" directory for all files and directories found in this directory.
-		AtFD next_at_dir;
-		std::shared_ptr<DirStackEntry> dir_atfd;
+		FileID next_at_dir;
 
 		while ((dp = readdir(d)) != NULL)
 		{
@@ -327,7 +331,7 @@ void DirTree::Read(std::vector<std::string> start_paths)
 			if(is_unknown)
 			{
 				// Stat the filename using the at-descriptor.
-				fstatat(file_fd, dname, &statbuf, AT_NO_AUTOMOUNT);
+				fstatat(file_fd, dname, &statbuf, AT_NO_AUTOMOUNT); ///< @todo file_fd is never getting opened.
 				is_dir = S_ISDIR(statbuf.st_mode);
 				is_file = S_ISREG(statbuf.st_mode);
 				if(is_dir || is_file)
@@ -344,18 +348,48 @@ void DirTree::Read(std::vector<std::string> start_paths)
 
 			if(is_file)
 			{
-				std::cout << "File: " << '\n';//dse.get()->get_name() + "/" + dname << '\n';
+				//std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';
+				// It's a normal file.
+				LOG(INFO) << "... normal file.";
+				///stats.m_num_files_found++;
+
+				// Check for inclusion.
+				///name.assign(ftsent->fts_name, ftsent->fts_namelen);
+				if(fi(std::string(dname))) //skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
+				{
+					// Based on the file name, this file should be scanned.
+
+					LOG(INFO) << "... should be scanned.";
+
+					//m_out_queue.wait_push(FileID(FileID::path_known_absolute, FileID(0), dse.get()->get_name() + "/" + dname));
+					m_out_queue.wait_push(FileID(FileID::path_known_absolute, root_file_id, dse.GetPath() + "/" + dname));
+
+					// Count the number of files we found that were included in the search.
+					///stats.m_num_files_scanned++;
+				}
+				else
+				{
+					///stats.m_num_files_rejected++;
+				}
 			}
 			else if(is_dir)
 			{
-				std::cout << "Dir: " << '\n';//dse.get()->get_name() + "/" + dname << '\n';
-
-				if(!next_at_dir.is_valid())
+				//std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
+				if(dir_basename_filter(std::string(dname))) //!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
 				{
-					next_at_dir = AtFD::make_shared_dupfd(file_fd);
+					// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
+					LOG(INFO) << "... should be ignored.";
+					///stats.m_num_dirs_rejected++;
+					continue;
 				}
 
-				dir_atfd = std::make_shared<DirStackEntry>(dse, next_at_dir, dname);
+//				if(!next_at_dir.is_valid())
+//				{
+//					next_at_dir = AtFD::make_shared_dupfd(file_fd);
+//				}
+
+				//dir_atfd = std::make_shared<DirStackEntry>(dse, next_at_dir, dname);
+				FileID dir_atfd(FileID::path_known_absolute, root_file_id, dse.GetPath() + '/' + dname);
 
 				dir_stack.push(dir_atfd);
 			}

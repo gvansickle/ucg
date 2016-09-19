@@ -26,6 +26,7 @@
 #include <fts.h>
 
 #include <string>
+#include <memory>
 
 #include "integer.hpp"
 #include "filesystem.hpp"
@@ -37,14 +38,33 @@
 class FileID
 {
 public:
+	/// @name Tag types for selecting FileID() constructors when the given path is known to be relative or absolute.
+	/// @{
+	struct path_known_relative_t {};
+	struct path_known_absolute_t {};
+	static constexpr path_known_relative_t path_known_relative = path_known_relative_t();
+	static constexpr path_known_absolute_t path_known_absolute = path_known_absolute_t();
+	/// @}
+
+	/// @name Constructors.
+	/// @{
 	FileID() = default;
+	FileID(int v) : m_path(".") {};
+	FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
+	FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
+	FileID(std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
 	FileID(const FTSENT *ftsent);
 	FileID(const FileID&) = default;
-	FileID& operator=(const FileID&) = default;
 	FileID(FileID&&) = default;
+	/// @}
+
+	FileID& operator=(const FileID&) = default;
+	FileID& operator=(FileID&&) = default;
+
+	/// Destructor.
 	~FileID();
 
-	std::string GetPath() const { return m_path; };
+	const std::string& GetPath() const { return m_path; };
 
 	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
 
@@ -59,6 +79,9 @@ public:
 private:
 
 	void LazyLoadStatInfo() const;
+
+	/// Shared pointer to the directory this FileID is in.
+	std::shared_ptr<FileID> m_at_dir;
 
 	/// The path to this file.
 	std::string m_path;
@@ -84,5 +107,9 @@ private:
 	///@}
 
 };
+
+static_assert(std::is_assignable<FileID, FileID>::value, "FileID must be assignable to itself.");
+static_assert(std::is_copy_assignable<FileID>::value, "FileID must be copy assignable to itself.");
+static_assert(std::is_move_assignable<FileID>::value, "FileID must be move assignable to itself.");
 
 #endif /* SRC_LIBEXT_FILEID_H_ */
