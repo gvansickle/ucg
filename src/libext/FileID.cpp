@@ -25,21 +25,23 @@
 #include <fts.h>
 
 
-FileID::FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname) : FileID(at_dir_fileid, pathname)
+FileID::FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename) : FileID(at_dir_fileid, basename)
 {
+	/// @note Taking basename by value since we are always storing it.
 	/// @todo Needs full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname) : m_at_dir(at_dir_fileid), m_path(pathname)
+FileID::FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname) : m_at_dir(at_dir_fileid), m_path(pathname)
 {
+	/// @note Taking pathname by value since we are always storing it.
 	/// @todo Needs full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname) : m_at_dir(at_dir_fileid)
+FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname) : m_at_dir(at_dir_fileid)
 {
 	/// @todo Needs full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
