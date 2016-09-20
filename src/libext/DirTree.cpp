@@ -263,7 +263,6 @@ private:
 
 void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_type &fi, dir_basename_filter_type &dir_basename_filter)
 {
-	///int num_entries {0};
 	struct stat statbuf;
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
@@ -330,8 +329,8 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 
 			if(is_unknown)
 			{
-				// Stat the filename using the at-descriptor.
-				fstatat(file_fd, dname, &statbuf, AT_NO_AUTOMOUNT); ///< @todo file_fd is never getting opened.
+				// Stat the filename using the directory as the at-descriptor.
+				fstatat(dirfd(d), dname, &statbuf, AT_NO_AUTOMOUNT); ///< @todo file_fd is never getting opened.
 				is_dir = S_ISDIR(statbuf.st_mode);
 				is_file = S_ISREG(statbuf.st_mode);
 				if(is_dir || is_file)

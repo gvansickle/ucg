@@ -22,7 +22,7 @@
 
 #include <config.h>
 
-#include <fcntl.h>
+#include <fcntl.h> // For openat() etc.
 #include <sys/stat.h>
 #include <sys/types.h> // for dev_t, ino_t
 #include <dirent.h>

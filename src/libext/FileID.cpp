@@ -55,6 +55,11 @@ FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, const std::string &pathnam
 	}
 }
 
+FileID::FileID(const dirent *de)
+{
+
+}
+
 FileID::FileID(const FTSENT *ftsent): m_path(ftsent->fts_path, ftsent->fts_pathlen)
 {
 	// Initialize the stat fields if possible.

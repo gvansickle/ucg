@@ -32,6 +32,9 @@
 #include "filesystem.hpp"
 
 
+// Forward declaration.
+struct dirent;
+
 /**
  *
  */
@@ -50,6 +53,7 @@ public:
 	/// @{
 	FileID() = default;
 	FileID(int v) : m_path(".") {};
+	FileID(const dirent *de);
 	FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
 	FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
