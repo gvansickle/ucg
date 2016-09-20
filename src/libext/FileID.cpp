@@ -32,14 +32,14 @@ FileID::FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid,
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname) : m_path(pathname)
+FileID::FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname) : m_at_dir(at_dir_fileid), m_path(pathname)
 {
 	/// @todo Needs full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname)
+FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname) : m_at_dir(at_dir_fileid)
 {
 	/// @todo Needs full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
@@ -51,7 +51,7 @@ FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, const std::string &pathnam
 	}
 	else
 	{
-		m_path = at_dir_fileid->GetPath() + '/' + pathname;
+		m_basename = pathname;
 	}
 }
 
@@ -77,6 +77,17 @@ FileID::~FileID()
 {
 }
 
+const std::string& FileID::GetPath() const
+{
+	if(m_path.empty())
+	{
+		// Build the full path.
+		m_path = m_at_dir->GetPath() + '/' + m_basename;
+	}
+
+	return m_path;
+}
+
 void FileID::LazyLoadStatInfo() const
 {
 	if(IsStatInfoValid())
@@ -88,7 +99,7 @@ void FileID::LazyLoadStatInfo() const
 	// We don't have stat info and now we need it.
 	// Get it from the filename.
 	struct stat stat_buf;
-	if(stat(m_path.c_str(), &stat_buf) != 0)
+	if(stat(GetPath().c_str(), &stat_buf) != 0)
 	{
 		// Error.
 		/// @todo

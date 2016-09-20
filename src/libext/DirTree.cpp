@@ -405,7 +405,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 	//				}
 
 					//dir_atfd = std::make_shared<DirStackEntry>(dse, next_at_dir, dname);
-					FileID dir_atfd(FileID::path_known_absolute, root_file_id, dse->GetPath() + '/' + basename);
+					FileID dir_atfd(FileID::path_known_relative, dse, basename);
 
 					dir_stack.push(std::make_shared<FileID>(dir_atfd));
 				}

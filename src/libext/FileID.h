@@ -54,7 +54,7 @@ public:
 	FileID() = default;
 	FileID(int v) : m_path(".") {};
 	FileID(const dirent *de);
-	FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
+	FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &basename);
 	FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname);
 	FileID(const FTSENT *ftsent);
@@ -68,7 +68,7 @@ public:
 	/// Destructor.
 	~FileID();
 
-	const std::string& GetPath() const { return m_path; };
+	const std::string& GetPath() const;
 
 	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
 
@@ -88,7 +88,10 @@ private:
 	std::shared_ptr<FileID> m_at_dir;
 
 	/// The path to this file.
-	std::string m_path;
+	mutable std::string m_path;
+
+	/// The basename of this file.
+	std::string m_basename;
 
 	/// @name Info normally gathered from a stat() call.
 	///@{
