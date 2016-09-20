@@ -266,17 +266,16 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 	struct stat statbuf;
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
-	int file_fd;
 	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(0);
 
 	//std::queue<std::shared_ptr<DirStackEntry>> dir_stack;
-	std::queue<FileID> dir_stack;
+	std::queue<std::shared_ptr<FileID>> dir_stack;
 
 	for(auto p : start_paths)
 	{
 		// AT_FDCWD == Start at the cwd of the process.
 		//dir_stack.push(std::make_shared<DirStackEntry>(DirStackEntry(nullptr, AtFD::make_shared_dupfd(AT_FDCWD), p)));
-		dir_stack.push(FileID(root_file_id, p));
+		dir_stack.push(std::make_shared<FileID>(FileID(root_file_id, p)));
 
 		/// @todo The start_paths can be files or dirs.  Currently the loop below will only work if they're dirs.
 	}
@@ -289,7 +288,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 //		int open_at_fd = dse->get_at_fd();
 //		const char *open_at_path = dse->m_path.c_str();
 		int open_at_fd = AT_FDCWD;
-		const char *open_at_path = dse.GetPath().c_str();
+		const char *open_at_path = dse->GetPath().c_str();
 
 		d = opendirat(open_at_fd, open_at_path);
 		if(d == nullptr)
@@ -379,7 +378,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 						LOG(INFO) << "... should be scanned.";
 
 						//m_out_queue.wait_push(FileID(FileID::path_known_absolute, FileID(0), dse.get()->get_name() + "/" + dname));
-						m_out_queue.wait_push(FileID(FileID::path_known_absolute, root_file_id, dse.GetPath() + "/" + basename));
+						m_out_queue.wait_push(FileID(FileID::path_known_relative, dse, basename));
 
 						// Count the number of files we found that were included in the search.
 						///stats.m_num_files_scanned++;
@@ -406,9 +405,9 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 	//				}
 
 					//dir_atfd = std::make_shared<DirStackEntry>(dse, next_at_dir, dname);
-					FileID dir_atfd(FileID::path_known_absolute, root_file_id, dse.GetPath() + '/' + basename);
+					FileID dir_atfd(FileID::path_known_absolute, root_file_id, dse->GetPath() + '/' + basename);
 
-					dir_stack.push(dir_atfd);
+					dir_stack.push(std::make_shared<FileID>(dir_atfd));
 				}
 			}
 		}

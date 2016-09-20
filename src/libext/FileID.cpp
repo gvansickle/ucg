@@ -25,7 +25,7 @@
 #include <fts.h>
 
 
-FileID::FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname) : m_path(pathname)
+FileID::FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, const std::string &pathname) : FileID(at_dir_fileid, pathname)
 {
 	/// @todo Needs full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
