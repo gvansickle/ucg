@@ -321,6 +321,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 			}
 #endif
 			const char *dname = dp->d_name;
+			// Skip "." and "..".
 			if(dname[0] == '.' && (dname[1] == 0 || (dname[1] == '.' && dname[2] == 0)))
 			{
 				//std::cerr << "skipping: " << dname << '\n';
@@ -330,7 +331,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 			if(is_unknown)
 			{
 				// Stat the filename using the directory as the at-descriptor.
-				fstatat(dirfd(d), dname, &statbuf, AT_NO_AUTOMOUNT); ///< @todo file_fd is never getting opened.
+				fstatat(dirfd(d), dname, &statbuf, AT_NO_AUTOMOUNT);
 				is_dir = S_ISDIR(statbuf.st_mode);
 				is_file = S_ISREG(statbuf.st_mode);
 				if(is_dir || is_file)
@@ -345,52 +346,70 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 				continue;
 			}
 
-			if(is_file)
+			// We now know the type for certain.
+			// Is this a file type we're interested in?
+			if(is_file || is_dir)
 			{
-				//std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';
-				// It's a normal file.
-				LOG(INFO) << "... normal file.";
-				///stats.m_num_files_found++;
+				// We'll need the file's basename.
+#if defined(_DIRENT_HAVE_D_NAMLEN)
+				// struct dirent has a d_namelen field.
+				std::string basename.assign(dp->d_name, dp->d_namelen);
+#elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
+				// We can cheaply determine how much memory we need to allocate for the name.
+				std::string basename(_D_ALLOC_NAMLEN(dp), '\0');
+				basename.assign(dp->d_name);
+#else
+				// All we have is a null-terminated d_name.
+				std::string basename.assign(dp->d_name);
+#endif
 
-				// Check for inclusion.
-				///name.assign(ftsent->fts_name, ftsent->fts_namelen);
-				if(fi(std::string(dname))) //skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
+				if(is_file)
 				{
-					// Based on the file name, this file should be scanned.
+					//std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';
+					// It's a normal file.
+					LOG(INFO) << "... normal file.";
+					///stats.m_num_files_found++;
 
-					LOG(INFO) << "... should be scanned.";
+					// Check for inclusion.
+					///name.assign(ftsent->fts_name, ftsent->fts_namelen);
+					if(fi(basename)) //skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
+					{
+						// Based on the file name, this file should be scanned.
 
-					//m_out_queue.wait_push(FileID(FileID::path_known_absolute, FileID(0), dse.get()->get_name() + "/" + dname));
-					m_out_queue.wait_push(FileID(FileID::path_known_absolute, root_file_id, dse.GetPath() + "/" + dname));
+						LOG(INFO) << "... should be scanned.";
 
-					// Count the number of files we found that were included in the search.
-					///stats.m_num_files_scanned++;
+						//m_out_queue.wait_push(FileID(FileID::path_known_absolute, FileID(0), dse.get()->get_name() + "/" + dname));
+						m_out_queue.wait_push(FileID(FileID::path_known_absolute, root_file_id, dse.GetPath() + "/" + basename));
+
+						// Count the number of files we found that were included in the search.
+						///stats.m_num_files_scanned++;
+					}
+					else
+					{
+						///stats.m_num_files_rejected++;
+					}
 				}
-				else
+				else if(is_dir)
 				{
-					///stats.m_num_files_rejected++;
+					//std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
+					if(dir_basename_filter(basename)) //!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
+					{
+						// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
+						LOG(INFO) << "... should be ignored.";
+						///stats.m_num_dirs_rejected++;
+						continue;
+					}
+
+	//				if(!next_at_dir.is_valid())
+	//				{
+	//					next_at_dir = AtFD::make_shared_dupfd(file_fd);
+	//				}
+
+					//dir_atfd = std::make_shared<DirStackEntry>(dse, next_at_dir, dname);
+					FileID dir_atfd(FileID::path_known_absolute, root_file_id, dse.GetPath() + '/' + basename);
+
+					dir_stack.push(dir_atfd);
 				}
-			}
-			else if(is_dir)
-			{
-				//std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
-				if(dir_basename_filter(std::string(dname))) //!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
-				{
-					// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
-					LOG(INFO) << "... should be ignored.";
-					///stats.m_num_dirs_rejected++;
-					continue;
-				}
-
-//				if(!next_at_dir.is_valid())
-//				{
-//					next_at_dir = AtFD::make_shared_dupfd(file_fd);
-//				}
-
-				//dir_atfd = std::make_shared<DirStackEntry>(dse, next_at_dir, dname);
-				FileID dir_atfd(FileID::path_known_absolute, root_file_id, dse.GetPath() + '/' + dname);
-
-				dir_stack.push(dir_atfd);
 			}
 		}
 
