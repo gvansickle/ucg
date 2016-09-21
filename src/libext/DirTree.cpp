@@ -268,13 +268,11 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 	struct dirent *dp {nullptr};
 	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(0);
 
-	//std::queue<std::shared_ptr<DirStackEntry>> dir_stack;
 	std::queue<std::shared_ptr<FileID>> dir_stack;
 
 	for(auto p : start_paths)
 	{
 		// AT_FDCWD == Start at the cwd of the process.
-		//dir_stack.push(std::make_shared<DirStackEntry>(DirStackEntry(nullptr, AtFD::make_shared_dupfd(AT_FDCWD), p)));
 		dir_stack.push(std::make_shared<FileID>(FileID(root_file_id, p)));
 
 		/// @todo The start_paths can be files or dirs.  Currently the loop below will only work if they're dirs.
@@ -285,21 +283,16 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 		auto dse = dir_stack.front();
 		dir_stack.pop();
 
-//		int open_at_fd = dse->get_at_fd();
-//		const char *open_at_path = dse->m_path.c_str();
-		int open_at_fd = AT_FDCWD;
+		//int open_at_fd = dse->GetAtDir()->GetFileDescriptor();
 		const char *open_at_path = dse->GetPath().c_str();
 
-		d = opendirat(open_at_fd, open_at_path);
+		d = opendirat(/*open_at_fd*/AT_FDCWD, open_at_path);
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
 			perror("fdopendir");
 			continue;
 		}
-
-		// This will be the "at" directory for all files and directories found in this directory.
-		FileID next_at_dir;
 
 		while ((dp = readdir(d)) != NULL)
 		{
@@ -399,12 +392,6 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 						continue;
 					}
 
-	//				if(!next_at_dir.is_valid())
-	//				{
-	//					next_at_dir = AtFD::make_shared_dupfd(file_fd);
-	//				}
-
-					//dir_atfd = std::make_shared<DirStackEntry>(dse, next_at_dir, dname);
 					FileID dir_atfd(FileID::path_known_relative, dse, basename);
 
 					dir_stack.push(std::make_shared<FileID>(dir_atfd));

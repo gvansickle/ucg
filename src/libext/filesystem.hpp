@@ -119,6 +119,10 @@ inline DIR* opendirat(int at_dir, const char *name)
 	constexpr int openat_dir_search_flags = O_SEARCH ? O_SEARCH : O_RDONLY;
 
 	int file_fd = openat(at_dir, name, openat_dir_search_flags | O_DIRECTORY | O_NOCTTY);
+	if(file_fd < 0)
+	{
+		perror("openat() failed");
+	}
 	DIR* d = fdopendir(file_fd);
 
 	return d;

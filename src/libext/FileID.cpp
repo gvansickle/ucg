@@ -21,6 +21,8 @@
 
 #include "FileID.h"
 
+#include <fcntl.h> // For AT_FDCWD, AT_NO_AUTOMOUNT
+#include <unistd.h> // For close().
 #include <sys/stat.h>
 #include <fts.h>
 
@@ -45,7 +47,8 @@ FileID::FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid,
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname) : m_at_dir(at_dir_fileid)
 {
-	/// @todo Needs full openat() semantics:
+	/// @note Taking pathname by value since we are always storing it.
+	/// Full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 
@@ -79,6 +82,10 @@ FileID::FileID(const FTSENT *ftsent): m_path(ftsent->fts_path, ftsent->fts_pathl
 
 FileID::~FileID()
 {
+	if(m_file_descriptor >= 0)
+	{
+		close(m_file_descriptor);
+	}
 }
 
 const std::string& FileID::GetPath() const
@@ -116,4 +123,31 @@ void FileID::LazyLoadStatInfo() const
 		m_block_size = stat_buf.st_blksize;
 		m_blocks = stat_buf.st_blocks;
 	}
+}
+
+int FileID::GetFileDescriptor()
+{
+	/// @todo This needs rethinking.  The FD would be opened differently depending on the file type etc.
+
+
+	if(m_file_descriptor == cm_invalid_file_descriptor)
+	{
+		// File hasn't been opened.
+
+		if(m_basename.empty() && !m_path.empty())
+		{
+			m_file_descriptor = openat(AT_FDCWD, m_path.c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY);
+		}
+		else
+		{
+			m_file_descriptor = openat(m_at_dir->GetFileDescriptor(), GetBasename().c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY);
+		}
+
+		if(m_file_descriptor < 0)
+		{
+			throw std::runtime_error("Bad fd");
+		}
+	}
+
+	return m_file_descriptor;
 }

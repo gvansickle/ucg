@@ -52,7 +52,7 @@ public:
 	/// @name Constructors.
 	/// @{
 	FileID() = default;
-	FileID(int v) : m_path(".") {};
+	FileID(int v) : m_basename("."), m_path("."), m_file_descriptor(AT_FDCWD) {};
 	FileID(const dirent *de);
 	FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename);
 	FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
@@ -68,7 +68,13 @@ public:
 	/// Destructor.
 	~FileID();
 
+	const std::string& GetBasename() const noexcept { return m_basename; };
 	const std::string& GetPath() const;
+
+	int GetFileDescriptor();
+
+	/// @todo This should maybe be weak_ptr.
+	const std::shared_ptr<FileID> GetAtDir() const noexcept { return m_at_dir; };
 
 	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
 
@@ -92,6 +98,10 @@ private:
 
 	/// The basename of this file.
 	std::string m_basename;
+
+	static constexpr int cm_invalid_file_descriptor = -987;
+
+	mutable int m_file_descriptor { cm_invalid_file_descriptor };
 
 	/// @name Info normally gathered from a stat() call.
 	///@{
