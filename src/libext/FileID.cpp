@@ -31,7 +31,7 @@ FileID::FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid,
 	: m_at_dir(at_dir_fileid), m_basename(basename)
 {
 	/// @note Taking basename by value since we are always storing it.
-	/// @todo Needs full openat() semantics:
+	/// Full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
@@ -40,7 +40,7 @@ FileID::FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid,
 	: m_at_dir(at_dir_fileid), m_path(pathname)
 {
 	/// @note Taking pathname by value since we are always storing it.
-	/// @todo Needs full openat() semantics:
+	/// Full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
@@ -97,6 +97,24 @@ const std::string& FileID::GetPath() const
 	}
 
 	return m_path;
+}
+
+const std::shared_ptr<FileID> FileID::GetAtDir() const noexcept
+{
+	if(!m_at_dir)
+	{
+		throw std::runtime_error("no atdir");
+	}
+	return m_at_dir;
+};
+
+const std::string& FileID::GetAtDirRelativeBasename() const noexcept
+{
+	if(m_basename.empty())
+	{
+		throw std::runtime_error("basename was empty");
+	}
+	return m_basename;
 }
 
 void FileID::LazyLoadStatInfo() const

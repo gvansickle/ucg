@@ -266,7 +266,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 	struct stat statbuf;
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
-	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(0);
+	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(AT_FDCWD);
 
 	std::queue<std::shared_ptr<FileID>> dir_stack;
 
@@ -283,10 +283,11 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 		auto dse = dir_stack.front();
 		dir_stack.pop();
 
-		//int open_at_fd = dse->GetAtDir()->GetFileDescriptor();
-		const char *open_at_path = dse->GetPath().c_str();
+		int open_at_fd = dse->GetAtDir()->GetFileDescriptor();
+		//const char *open_at_path = dse->GetPath().c_str();  ///< @todo Needs to be relative to open_at_fd.
+		const char *open_at_path = dse->GetAtDirRelativeBasename().c_str();
 
-		d = opendirat(/*open_at_fd*/AT_FDCWD, open_at_path);
+		d = opendirat(open_at_fd, open_at_path);
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.

@@ -74,7 +74,9 @@ public:
 	int GetFileDescriptor();
 
 	/// @todo This should maybe be weak_ptr.
-	const std::shared_ptr<FileID> GetAtDir() const noexcept { return m_at_dir; };
+	const std::shared_ptr<FileID> GetAtDir() const noexcept;
+
+	const std::string& GetAtDirRelativeBasename() const noexcept;
 
 	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
 
