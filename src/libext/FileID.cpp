@@ -90,7 +90,7 @@ const std::string& FileID::GetPath() const
 	if(m_path.empty())
 	{
 		// Build the full path.
-		if(m_at_dir->GetPath() != "." /** @todo make more efficient && correct, e.g. check for AT_FWCD. */)
+		if(!m_at_dir->IsAtFDCWD())
 		{
 			m_path = m_at_dir->GetPath() + '/' + m_basename;
 		}

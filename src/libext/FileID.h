@@ -76,6 +76,8 @@ public:
 
 	int GetFileDescriptor();
 
+	bool IsAtFDCWD() const noexcept { return m_file_descriptor == AT_FDCWD; };
+
 	/// @todo This should maybe be weak_ptr.
 	const std::shared_ptr<FileID> GetAtDir() const noexcept;
 
