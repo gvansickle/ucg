@@ -52,7 +52,7 @@ public:
 	/// @name Constructors.
 	/// @{
 	FileID() = default;
-	FileID(int v) : m_basename("."), m_path("."), m_file_descriptor(AT_FDCWD) {};
+	FileID(int v) : m_path("."), m_basename("."), m_file_descriptor(AT_FDCWD) {};
 	FileID(const dirent *de);
 	FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename);
 	FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
@@ -63,6 +63,9 @@ public:
 	/// @}
 
 	FileID& operator=(const FileID&) = default;
+
+	/// @todo Default move assign/construct won't be completely correct here; at a minimum,
+	/// move_from->m_file_descriptor needs to be reset to cm_invalid_file_descriptor.  Probably other issues.
 	FileID& operator=(FileID&&) = default;
 
 	/// Destructor.
@@ -88,6 +91,8 @@ public:
 		return m_block_size;
 	};
 
+	const dev_ino_pair GetUniqueFileIdentifier() const noexcept { LazyLoadStatInfo(); return m_unique_file_identifier; };
+
 private:
 
 	void LazyLoadStatInfo() const;
@@ -95,10 +100,15 @@ private:
 	/// Shared pointer to the directory this FileID is in.
 	std::shared_ptr<FileID> m_at_dir;
 
-	/// The path to this file.
+	/// The absolute path to this file.
+	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
 	mutable std::string m_path;
 
 	/// The basename of this file.
+	/// We define this somewhat differently here: This is either:
+	/// - The full absolute path, or
+	/// - The path relative to m_at_dir, which may consist of more than one path element.
+	/// In any case, it is always equal to the string passed into the constructor.
 	std::string m_basename;
 
 	static constexpr int cm_invalid_file_descriptor = -987;

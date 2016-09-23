@@ -27,7 +27,7 @@
 #include <fts.h>
 
 
-FileID::FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename)
+FileID::FileID(path_known_relative_t, std::shared_ptr<FileID> at_dir_fileid, std::string basename)
 	: m_at_dir(at_dir_fileid), m_basename(basename)
 {
 	/// @note Taking basename by value since we are always storing it.
@@ -36,8 +36,8 @@ FileID::FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid,
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
-	: m_at_dir(at_dir_fileid), m_path(pathname)
+FileID::FileID(path_known_absolute_t, std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
+	: m_at_dir(at_dir_fileid), m_path(pathname), m_basename(pathname)
 {
 	/// @note Taking pathname by value since we are always storing it.
 	/// Full openat() semantics:
@@ -45,7 +45,8 @@ FileID::FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid,
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname) : m_at_dir(at_dir_fileid)
+FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
+	: m_at_dir(at_dir_fileid), m_basename(pathname)
 {
 	/// @note Taking pathname by value since we are always storing it.
 	/// Full openat() semantics:
@@ -55,10 +56,6 @@ FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname) : m_
 	if(is_pathname_absolute(pathname))
 	{
 		m_path = pathname;
-	}
-	else
-	{
-		m_basename = pathname;
 	}
 }
 
@@ -93,7 +90,14 @@ const std::string& FileID::GetPath() const
 	if(m_path.empty())
 	{
 		// Build the full path.
-		m_path = m_at_dir->GetPath() + '/' + m_basename;
+		if(m_at_dir->GetPath() != "." /** @todo make more efficient && correct, e.g. check for AT_FWCD. */)
+		{
+			m_path = m_at_dir->GetPath() + '/' + m_basename;
+		}
+		else
+		{
+			m_path = m_basename;
+		}
 	}
 
 	return m_path;

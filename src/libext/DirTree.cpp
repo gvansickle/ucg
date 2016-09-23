@@ -261,7 +261,7 @@ private:
 };
 
 
-void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_type &fi, dir_basename_filter_type &dir_basename_filter)
+void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_type &file_basename_filter, dir_basename_filter_type &dir_basename_filter)
 {
 	struct stat statbuf;
 	DIR *d {nullptr};
@@ -284,7 +284,6 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 		dir_stack.pop();
 
 		int open_at_fd = dse->GetAtDir()->GetFileDescriptor();
-		//const char *open_at_path = dse->GetPath().c_str();  ///< @todo Needs to be relative to open_at_fd.
 		const char *open_at_path = dse->GetAtDirRelativeBasename().c_str();
 
 		d = opendirat(open_at_fd, open_at_path);
@@ -365,7 +364,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 
 					// Check for inclusion.
 					///name.assign(ftsent->fts_name, ftsent->fts_namelen);
-					if(fi(basename)) //skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
+					if(file_basename_filter(basename)) //skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
 					{
 						// Based on the file name, this file should be scanned.
 
@@ -394,6 +393,16 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 					}
 
 					FileID dir_atfd(FileID::path_known_relative, dse, basename);
+
+					// We have to detect any symlink cycles ourselves.
+					if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier().m_val))
+					{
+						// Found cycle.
+						//WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
+						//fts_set(fts, ftsent, FTS_SKIP);
+						continue;
+					}
+
 
 					dir_stack.push(std::make_shared<FileID>(dir_atfd));
 				}
