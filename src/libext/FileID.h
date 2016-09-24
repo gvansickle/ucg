@@ -74,9 +74,9 @@ public:
 	const std::string& GetBasename() const noexcept { return m_basename; };
 	const std::string& GetPath() const;
 
-	int GetFileDescriptor();
+	FileDescriptor GetFileDescriptor();
 
-	bool IsAtFDCWD() const noexcept { return m_file_descriptor == AT_FDCWD; };
+	bool IsAtFDCWD() const noexcept { return m_file_descriptor.GetInt() == AT_FDCWD; };
 
 	/// @todo This should maybe be weak_ptr.
 	const std::shared_ptr<FileID> GetAtDir() const noexcept;
@@ -113,9 +113,7 @@ private:
 	/// In any case, it is always equal to the string passed into the constructor.
 	std::string m_basename;
 
-	static constexpr int cm_invalid_file_descriptor = -987;
-
-	mutable int m_file_descriptor { cm_invalid_file_descriptor };
+	mutable FileDescriptor m_file_descriptor;
 
 	/// @name Info normally gathered from a stat() call.
 	///@{

@@ -79,10 +79,7 @@ FileID::FileID(const FTSENT *ftsent): m_path(ftsent->fts_path, ftsent->fts_pathl
 
 FileID::~FileID()
 {
-	if(m_file_descriptor >= 0)
-	{
-		close(m_file_descriptor);
-	}
+
 }
 
 const std::string& FileID::GetPath() const
@@ -147,25 +144,25 @@ void FileID::LazyLoadStatInfo() const
 	}
 }
 
-int FileID::GetFileDescriptor()
+FileDescriptor FileID::GetFileDescriptor()
 {
 	/// @todo This needs rethinking.  The FD would be opened differently depending on the file type etc.
 
 
-	if(m_file_descriptor == cm_invalid_file_descriptor)
+	if(m_file_descriptor.IsInvalid())
 	{
 		// File hasn't been opened.
 
 		if(m_basename.empty() && !m_path.empty())
 		{
-			m_file_descriptor = openat(AT_FDCWD, m_path.c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY);
+			m_file_descriptor = FileDescriptor(openat(AT_FDCWD, m_path.c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
 		}
 		else
 		{
-			m_file_descriptor = openat(m_at_dir->GetFileDescriptor(), GetBasename().c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY);
+			m_file_descriptor = FileDescriptor(openat(m_at_dir->GetFileDescriptor().GetInt(), GetBasename().c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
 		}
 
-		if(m_file_descriptor < 0)
+		if(m_file_descriptor.GetInt() < 0)
 		{
 			throw std::runtime_error("Bad fd");
 		}

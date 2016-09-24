@@ -282,10 +282,10 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 		auto dse = dir_stack.front();
 		dir_stack.pop();
 
-		int open_at_fd = dse->GetAtDir()->GetFileDescriptor();
+		FileDescriptor open_at_fd = dse->GetAtDir()->GetFileDescriptor();
 		const char *open_at_path = dse->GetAtDirRelativeBasename().c_str();
 
-		d = opendirat(open_at_fd, open_at_path);
+		d = opendirat(open_at_fd.GetInt(), open_at_path);
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
