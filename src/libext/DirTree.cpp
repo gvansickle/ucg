@@ -95,7 +95,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
 	// AT_FDCWD == Start at the cwd of the process.
-	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(AT_FDCWD);
+	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(FileID::path_known_cwd_tag());
 
 	std::queue<std::shared_ptr<FileID>> dir_stack;
 

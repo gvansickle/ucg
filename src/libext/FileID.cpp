@@ -27,7 +27,11 @@
 #include <fts.h>
 
 
-FileID::FileID(path_known_relative_t, std::shared_ptr<FileID> at_dir_fileid, std::string basename)
+FileID::FileID(path_known_cwd_tag) : m_path("."), m_basename("."), m_file_descriptor(AT_FDCWD)
+{
+}
+
+FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename)
 	: m_at_dir(at_dir_fileid), m_basename(basename)
 {
 	/// @note Taking basename by value since we are always storing it.
@@ -36,7 +40,7 @@ FileID::FileID(path_known_relative_t, std::shared_ptr<FileID> at_dir_fileid, std
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(path_known_absolute_t, std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
+FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
 	: m_at_dir(at_dir_fileid), m_path(pathname), m_basename(pathname)
 {
 	/// @note Taking pathname by value since we are always storing it.

@@ -43,19 +43,22 @@ class FileID
 public:
 	/// @name Tag types for selecting FileID() constructors when the given path is known to be relative or absolute.
 	/// @{
-	struct path_known_relative_t {};
-	struct path_known_absolute_t {};
-	static constexpr path_known_relative_t path_known_relative = path_known_relative_t();
-	static constexpr path_known_absolute_t path_known_absolute = path_known_absolute_t();
+	struct path_type_tag {};
+	struct path_known_relative_tag {};
+	struct path_known_absolute_tag {};
+	struct path_known_cwd_tag {};
+	static constexpr path_known_relative_tag path_known_relative = path_known_relative_tag();
+	static constexpr path_known_absolute_tag path_known_absolute = path_known_absolute_tag();
+	static constexpr path_known_cwd_tag path_known_cwd = path_known_cwd_tag();
 	/// @}
 
 	/// @name Constructors.
 	/// @{
 	FileID() = default;
-	FileID(int v) : m_path("."), m_basename("."), m_file_descriptor(AT_FDCWD) {};
+	FileID(path_known_cwd_tag tag);
 	FileID(const dirent *de);
-	FileID(path_known_relative_t tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename);
-	FileID(path_known_absolute_t tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
+	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename);
+	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
 	FileID(const FTSENT *ftsent);
 	FileID(const FileID&) = default;
@@ -64,8 +67,6 @@ public:
 
 	FileID& operator=(const FileID&) = default;
 
-	/// @todo Default move assign/construct won't be completely correct here; at a minimum,
-	/// move_from->m_file_descriptor needs to be reset to cm_invalid_file_descriptor.  Probably other issues.
 	FileID& operator=(FileID&&) = default;
 
 	/// Destructor.
