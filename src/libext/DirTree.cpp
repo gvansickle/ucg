@@ -263,16 +263,15 @@ private:
 
 void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_type &file_basename_filter, dir_basename_filter_type &dir_basename_filter)
 {
-	struct stat statbuf;
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
+	// AT_FDCWD == Start at the cwd of the process.
 	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(AT_FDCWD);
 
 	std::queue<std::shared_ptr<FileID>> dir_stack;
 
 	for(auto p : start_paths)
 	{
-		// AT_FDCWD == Start at the cwd of the process.
 		dir_stack.push(std::make_shared<FileID>(FileID(root_file_id, p)));
 
 		/// @todo The start_paths can be files or dirs.  Currently the loop below will only work if they're dirs.
@@ -296,119 +295,129 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 
 		while ((dp = readdir(d)) != NULL)
 		{
-			bool is_dir {false};
-			bool is_file {false};
-			bool is_unknown {true};
-
-#ifdef _DIRENT_HAVE_D_TYPE
-			// Reject anything that isn't a directory or a regular file.
-			// If it's DT_UNKNOWN, we'll have to do a stat to find out.
-			is_dir = (dp->d_type == DT_DIR);
-			is_file = (dp->d_type == DT_REG);
-			is_unknown = (dp->d_type == DT_UNKNOWN);
-			if(!is_file && !is_dir && !is_unknown)
-			{
-				// It's a type we don't care about.
-				continue;
-			}
-#endif
-			const char *dname = dp->d_name;
-			// Skip "." and "..".
-			if(dname[0] == '.' && (dname[1] == 0 || (dname[1] == '.' && dname[2] == 0)))
-			{
-				//std::cerr << "skipping: " << dname << '\n';
-				continue;
-			}
-
-			if(is_unknown)
-			{
-				// Stat the filename using the directory as the at-descriptor.
-				fstatat(dirfd(d), dname, &statbuf, AT_NO_AUTOMOUNT);
-				is_dir = S_ISDIR(statbuf.st_mode);
-				is_file = S_ISREG(statbuf.st_mode);
-				if(is_dir || is_file)
-				{
-					is_unknown = false;
-				}
-			}
-
-			if(is_unknown)
-			{
-				std::cerr << "cannot determine file type: " << dname << ", " << statbuf.st_mode << '\n';
-				continue;
-			}
-
-			// We now know the type for certain.
-			// Is this a file type we're interested in?
-			if(is_file || is_dir)
-			{
-				// We'll need the file's basename.
-#if defined(_DIRENT_HAVE_D_NAMLEN)
-				// struct dirent has a d_namelen field.
-				std::string basename.assign(dp->d_name, dp->d_namelen);
-#elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
-				// We can cheaply determine how much memory we need to allocate for the name.
-				std::string basename(_D_ALLOC_NAMLEN(dp), '\0');
-				basename.assign(dp->d_name);
-#else
-				// All we have is a null-terminated d_name.
-				std::string basename.assign(dp->d_name);
-#endif
-
-				if(is_file)
-				{
-					//std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';
-					// It's a normal file.
-					LOG(INFO) << "... normal file.";
-					///stats.m_num_files_found++;
-
-					// Check for inclusion.
-					///name.assign(ftsent->fts_name, ftsent->fts_namelen);
-					if(file_basename_filter(basename)) //skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
-					{
-						// Based on the file name, this file should be scanned.
-
-						LOG(INFO) << "... should be scanned.";
-
-						//m_out_queue.wait_push(FileID(FileID::path_known_absolute, FileID(0), dse.get()->get_name() + "/" + dname));
-						m_out_queue.wait_push(FileID(FileID::path_known_relative, dse, basename));
-
-						// Count the number of files we found that were included in the search.
-						///stats.m_num_files_scanned++;
-					}
-					else
-					{
-						///stats.m_num_files_rejected++;
-					}
-				}
-				else if(is_dir)
-				{
-					//std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
-					if(dir_basename_filter(basename)) //!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
-					{
-						// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
-						LOG(INFO) << "... should be ignored.";
-						///stats.m_num_dirs_rejected++;
-						continue;
-					}
-
-					FileID dir_atfd(FileID::path_known_relative, dse, basename);
-
-					// We have to detect any symlink cycles ourselves.
-					if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier().m_val))
-					{
-						// Found cycle.
-						//WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
-						//fts_set(fts, ftsent, FTS_SKIP);
-						continue;
-					}
-
-
-					dir_stack.push(std::make_shared<FileID>(dir_atfd));
-				}
-			}
+			ProcessDirent(dse, d, dp, file_basename_filter, dir_basename_filter, dir_stack);
 		}
 
 		closedir(d);
+	}
+}
+
+void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* dp,
+		file_basename_filter_type &file_basename_filter,
+		dir_basename_filter_type &dir_basename_filter,
+		std::queue<std::shared_ptr<FileID>>& dir_stack)
+{
+	bool is_dir {false};
+	bool is_file {false};
+	bool is_unknown {true};
+
+#ifdef _DIRENT_HAVE_D_TYPE
+	// Reject anything that isn't a directory or a regular file.
+	// If it's DT_UNKNOWN, we'll have to do a stat to find out.
+	is_dir = (dp->d_type == DT_DIR);
+	is_file = (dp->d_type == DT_REG);
+	is_unknown = (dp->d_type == DT_UNKNOWN);
+	if(!is_file && !is_dir && !is_unknown)
+	{
+		// It's a type we don't care about.
+		return;
+	}
+#endif
+	const char *dname = dp->d_name;
+	// Skip "." and "..".
+	if(dname[0] == '.' && (dname[1] == 0 || (dname[1] == '.' && dname[2] == 0)))
+	{
+		//std::cerr << "skipping: " << dname << '\n';
+		return;
+	}
+
+	struct stat statbuf;
+
+	if(is_unknown)
+	{
+		// Stat the filename using the directory as the at-descriptor.
+		fstatat(dirfd(d), dname, &statbuf, AT_NO_AUTOMOUNT);
+		is_dir = S_ISDIR(statbuf.st_mode);
+		is_file = S_ISREG(statbuf.st_mode);
+		if(is_dir || is_file)
+		{
+			is_unknown = false;
+		}
+	}
+
+	if(is_unknown)
+	{
+		std::cerr << "cannot determine file type: " << dname << ", " << statbuf.st_mode << '\n';
+		return;
+	}
+
+	// We now know the type for certain.
+	// Is this a file type we're interested in?
+	if(is_file || is_dir)
+	{
+		// We'll need the file's basename.
+#if defined(_DIRENT_HAVE_D_NAMLEN)
+		// struct dirent has a d_namelen field.
+		std::string basename.assign(dp->d_name, dp->d_namelen);
+#elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
+		// We can cheaply determine how much memory we need to allocate for the name.
+		std::string basename(_D_ALLOC_NAMLEN(dp), '\0');
+		basename.assign(dp->d_name);
+#else
+		// All we have is a null-terminated d_name.
+		std::string basename.assign(dp->d_name);
+#endif
+
+		if(is_file)
+		{
+			//std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';
+			// It's a normal file.
+			LOG(INFO) << "... normal file.";
+			///stats.m_num_files_found++;
+
+			// Check for inclusion.
+			///name.assign(ftsent->fts_name, ftsent->fts_namelen);
+			if(file_basename_filter(basename)) //skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
+			{
+				// Based on the file name, this file should be scanned.
+
+				LOG(INFO) << "... should be scanned.";
+
+				//m_out_queue.wait_push(FileID(FileID::path_known_absolute, FileID(0), dse.get()->get_name() + "/" + dname));
+				m_out_queue.wait_push(FileID(FileID::path_known_relative, dse, basename));
+
+				// Count the number of files we found that were included in the search.
+				///stats.m_num_files_scanned++;
+			}
+			else
+			{
+				///stats.m_num_files_rejected++;
+			}
+		}
+		else if(is_dir)
+		{
+			//std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
+			if(dir_basename_filter(basename)) //!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
+			{
+				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
+				LOG(INFO) << "... should be ignored.";
+				///stats.m_num_dirs_rejected++;
+				return;
+			}
+
+			FileID dir_atfd(FileID::path_known_relative, dse, basename);
+
+			// We have to detect any symlink cycles ourselves.
+			if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier().m_val))
+			{
+				// Found cycle.
+				//WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
+				//fts_set(fts, ftsent, FTS_SKIP);
+				return;
+			}
+
+
+			dir_stack.push(std::make_shared<FileID>(dir_atfd));
+		}
 	}
 }
