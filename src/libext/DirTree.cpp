@@ -90,7 +90,9 @@ DirTree::~DirTree()
 {
 }
 
-void DirTree::Scandir(std::vector<std::string> start_paths, file_basename_filter_type &file_basename_filter, dir_basename_filter_type &dir_basename_filter)
+void DirTree::Scandir(std::vector<std::string> start_paths,
+		file_basename_filter_type &file_basename_filter,
+		dir_basename_filter_type &dir_basename_filter)
 {
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
@@ -104,7 +106,8 @@ void DirTree::Scandir(std::vector<std::string> start_paths, file_basename_filter
 		auto file_or_dir = std::make_shared<FileID>(FileID(root_file_id, p));
 		if(file_or_dir->IsRegularFile())
 		{
-			/// @todo
+			/// @todo filter-out mechanism?
+			m_out_queue.wait_push(FileID(*file_or_dir));
 		}
 		else if(file_or_dir->IsDir())
 		{
@@ -180,6 +183,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 		}
 	}
 
+	// Is the file type still unknown?
 	if(is_unknown)
 	{
 		std::cerr << "cannot determine file type: " << dname << ", " << statbuf.st_mode << '\n';
