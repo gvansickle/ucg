@@ -196,19 +196,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 	{
 		// We'll need the file's basename.
 		std::string basename = dirent_get_name(dp);
-#if 0
-#if defined(_DIRENT_HAVE_D_NAMLEN)
-		// struct dirent has a d_namelen field.
-		std::string basename.assign(dp->d_name, dp->d_namelen);
-#elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
-		// We can cheaply determine how much memory we need to allocate for the name.
-		std::string basename(_D_ALLOC_NAMLEN(dp), '\0');
-		basename.assign(dp->d_name);
-#else
-		// All we have is a null-terminated d_name.
-		std::string basename(dp->d_name);
-#endif
-#endif
+
 		if(is_file)
 		{
 			//std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';

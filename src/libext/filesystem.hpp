@@ -58,6 +58,12 @@ struct dev_ino_pair
 	dev_ino_pair_type m_val { 0 };
 };
 
+/**
+ * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as posible.
+ *
+ * @param de
+ * @return
+ */
 inline std::string dirent_get_name(const dirent* de) noexcept
 {
 #if defined(_DIRENT_HAVE_D_NAMLEN)
