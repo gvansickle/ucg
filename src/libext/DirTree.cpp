@@ -90,7 +90,9 @@ DirTree::~DirTree()
 {
 }
 
-void DirTree::Scandir(std::vector<std::string> start_paths, file_basename_filter_type &file_basename_filter, dir_basename_filter_type &dir_basename_filter)
+void DirTree::Scandir(std::vector<std::string> start_paths,
+		file_basename_filter_type &file_basename_filter,
+		dir_basename_filter_type &dir_basename_filter)
 {
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
@@ -104,7 +106,8 @@ void DirTree::Scandir(std::vector<std::string> start_paths, file_basename_filter
 		auto file_or_dir = std::make_shared<FileID>(FileID(root_file_id, p));
 		if(file_or_dir->IsRegularFile())
 		{
-			/// @todo
+			/// @todo filter-out mechanism?
+			m_out_queue.wait_push(FileID(*file_or_dir));
 		}
 		else if(file_or_dir->IsDir())
 		{
@@ -180,6 +183,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 		}
 	}
 
+	// Is the file type still unknown?
 	if(is_unknown)
 	{
 		std::cerr << "cannot determine file type: " << dname << ", " << statbuf.st_mode << '\n';
@@ -191,17 +195,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 	if(is_file || is_dir)
 	{
 		// We'll need the file's basename.
-#if defined(_DIRENT_HAVE_D_NAMLEN)
-		// struct dirent has a d_namelen field.
-		std::string basename.assign(dp->d_name, dp->d_namelen);
-#elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
-		// We can cheaply determine how much memory we need to allocate for the name.
-		std::string basename(_D_ALLOC_NAMLEN(dp), '\0');
-		basename.assign(dp->d_name);
-#else
-		// All we have is a null-terminated d_name.
-		std::string basename(dp->d_name);
-#endif
+		std::string basename = dirent_get_name(dp);
 
 		if(is_file)
 		{
@@ -219,7 +213,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 				LOG(INFO) << "... should be scanned.";
 
 				//m_out_queue.wait_push(FileID(FileID::path_known_absolute, FileID(0), dse.get()->get_name() + "/" + dname));
-				m_out_queue.wait_push(FileID(FileID::path_known_relative, dse, basename));
+				m_out_queue.wait_push(FileID(FileID::path_known_relative, dse, basename, FileID::FT_REG));
 
 				// Count the number of files we found that were included in the search.
 				///stats.m_num_files_scanned++;
@@ -240,7 +234,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 				return;
 			}
 
-			FileID dir_atfd(FileID::path_known_relative, dse, basename);
+			FileID dir_atfd(FileID::path_known_relative, dse, basename, FileID::FT_DIR);
 
 			// We have to detect any symlink cycles ourselves.
 			if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier().m_val))

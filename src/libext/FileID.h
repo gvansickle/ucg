@@ -67,8 +67,8 @@ public:
 	FileID() = default;
 	FileID(path_known_cwd_tag tag);
 	FileID(const dirent *de);
-	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename);
-	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
+	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type = FT_UNINITIALIZED);
+	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
 	FileID(const FTSENT *ftsent);
 	FileID(const FileID&) = default;
