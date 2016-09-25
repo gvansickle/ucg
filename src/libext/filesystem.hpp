@@ -22,12 +22,14 @@
 
 #include <config.h>
 
-#include <fcntl.h>
+#include <fcntl.h> // For openat() etc.
+#include <unistd.h> // For close().
 #include <sys/stat.h>
 #include <sys/types.h> // for dev_t, ino_t
 #include <dirent.h>
 
 #include "integer.hpp"
+#include "../Logger.h"
 
 /// @name Take care of some portability issues.
 /// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
@@ -55,6 +57,125 @@ struct dev_ino_pair
 
 	dev_ino_pair_type m_val { 0 };
 };
+
+
+#if 1 /// @todo
+constexpr int cm_invalid_file_descriptor = -987;
+struct FileDescriptorDeleter
+{
+	void operator()(int *fd) const noexcept
+	{
+		if(*fd >= 0)
+		{
+			LOG(INFO) << "Closing file descriptor " << *fd;
+			close(*fd);
+		}
+	}
+};
+using FileDescriptor = std::shared_ptr<int>;
+inline std::shared_ptr<int> make_shared_fd(int fd)
+{
+	return FileDescriptor(new int(fd), FileDescriptorDeleter());
+}
+
+#else
+/**
+ * Wrapper for C's 'int' file descriptor.
+ * This class only adds C++ RAII abilities and correct move semantics to a file descriptor.
+ */
+class FileDescriptor
+{
+public:
+	FileDescriptor() noexcept = default;
+
+	explicit FileDescriptor(int fd) noexcept { m_file_descriptor = fd; };
+
+	/// Copy constructor will dup the file descriptor.
+	FileDescriptor(const FileDescriptor &other) noexcept : FileDescriptor()
+	{
+		*this = other;
+	}
+
+	/// Move constructor.
+	/// For a move, the #moved_from FileDescriptor has to be invalidated.  Otherwise,
+	/// when it is destroyed, it will close the file, which it no longer owns.
+	FileDescriptor(FileDescriptor&& moved_from) noexcept : FileDescriptor()
+	{
+		// Implement in terms of move-assignment.
+		*this = std::move(moved_from);
+	}
+
+	/// Destructor.  Closes #m_file_descriptor if it's valid.
+	~FileDescriptor()
+	{
+		if((m_file_descriptor >= 0) && (m_file_descriptor != cm_invalid_file_descriptor))
+		{
+			close(m_file_descriptor);
+		}
+	};
+
+	/// The default copy-assignment operator won't do the right thing.
+	const FileDescriptor& operator=(const FileDescriptor& other) noexcept
+	{
+		if(this != &other)
+		{
+			if((m_file_descriptor >= 0) && (m_file_descriptor != cm_invalid_file_descriptor))
+			{
+				close(m_file_descriptor);
+			}
+
+			if(other.m_file_descriptor < 0)
+			{
+				m_file_descriptor = other.m_file_descriptor;
+			}
+			else
+			{
+				m_file_descriptor = dup(other.m_file_descriptor);
+				if((m_file_descriptor < 0) && (m_file_descriptor != AT_FDCWD))
+				{
+					perror("dup");
+				}
+			}
+		}
+		return *this;
+	}
+
+	/// The default move-assignment operator won't do the right thing.
+	FileDescriptor& operator=(FileDescriptor&& other) noexcept
+	{
+		if(this != &other)
+		{
+			// Step 1: Release any resources this owns.
+			if((m_file_descriptor >= 0) && (m_file_descriptor != cm_invalid_file_descriptor))
+			{
+				close(m_file_descriptor);
+			}
+
+			// Step 2: Take other's resources.
+			m_file_descriptor = other.m_file_descriptor;
+
+			// Step 3: Set other to a destructible state.
+			// In particular here, this means invalidating its file descriptor,
+			// so it isn't closed when other is deleted.
+			other.m_file_descriptor = cm_invalid_file_descriptor;
+		}
+
+		// Step 4: Return *this.
+		return *this;
+	}
+
+	/// Allow read access to the underlying int.
+	int GetInt() const noexcept { return m_file_descriptor; };
+
+	/// Returns true if this FileDescriptor has never been assigned a valid file descriptor.
+	bool IsInvalid() const noexcept { return m_file_descriptor == cm_invalid_file_descriptor; };
+
+private:
+	static constexpr int cm_invalid_file_descriptor = -987;
+
+	int m_file_descriptor { cm_invalid_file_descriptor };
+};
+#endif
 
 
 /**
@@ -116,9 +237,14 @@ inline bool is_pathname_absolute(const std::string &path) noexcept
 
 inline DIR* opendirat(int at_dir, const char *name)
 {
+	LOG(INFO) << "Attempting to open directory \'" << name << "\' at file descriptor " << at_dir;
 	constexpr int openat_dir_search_flags = O_SEARCH ? O_SEARCH : O_RDONLY;
 
 	int file_fd = openat(at_dir, name, openat_dir_search_flags | O_DIRECTORY | O_NOCTTY);
+	if(file_fd < 0)
+	{
+		perror("openat() failed");
+	}
 	DIR* d = fdopendir(file_fd);
 
 	return d;

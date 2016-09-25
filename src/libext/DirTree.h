@@ -25,10 +25,13 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <set>
 
 /// @todo Break this dependency on the output queue class.
 #include "../sync_queue_impl_selector.h"
 #include "FileID.h"
+
+#include <dirent.h>
 
 /*
  *
@@ -44,12 +47,21 @@ public:
 
 	using dir_basename_filter_type = std::function<bool (const std::string& name)>;
 
-	void Read(std::vector<std::string> start_paths, file_basename_filter_type &fi,
+	void Scandir(std::vector<std::string> start_paths, file_basename_filter_type &file_basename_filter,
 			dir_basename_filter_type &dir_basename_filter);
 
 private:
 
 	sync_queue<FileID>& m_out_queue;
+
+	std::mutex m_dir_mutex;
+	std::set<dev_ino_pair_type> m_dir_has_been_visited;
+	bool HasDirBeenVisited(dev_ino_pair_type di) { std::unique_lock<std::mutex> lock(m_dir_mutex); return !m_dir_has_been_visited.insert(di).second; };
+
+	void ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent *de, file_basename_filter_type &file_basename_filter,
+			dir_basename_filter_type &dir_basename_filter,
+			std::queue<std::shared_ptr<FileID>>& dir_stack);
+
 };
 
 #endif /* SRC_LIBEXT_DIRTREE_H_ */
