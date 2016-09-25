@@ -200,7 +200,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 		basename.assign(dp->d_name);
 #else
 		// All we have is a null-terminated d_name.
-		std::string basename.assign(dp->d_name);
+		std::string basename(dp->d_name);
 #endif
 
 		if(is_file)
