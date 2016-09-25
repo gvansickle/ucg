@@ -58,6 +58,24 @@ struct dev_ino_pair
 	dev_ino_pair_type m_val { 0 };
 };
 
+inline std::string dirent_get_name(const dirent* de) noexcept
+{
+#if defined(_DIRENT_HAVE_D_NAMLEN)
+		// struct dirent has a d_namelen field.
+		std::string basename.assign(de->d_name, de->d_namelen);
+#elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
+		// We can cheaply determine how much memory we need to allocate for the name.
+		std::string basename(_D_ALLOC_NAMLEN(de), '\0');
+		basename.assign(de->d_name);
+#else
+		// All we have is a null-terminated d_name.
+		std::string basename(de->d_name);
+#endif
+
+	// RVO should optimize this.
+	return basename;
+}
+
 
 #if 1 /// @todo
 constexpr int cm_invalid_file_descriptor = -987;

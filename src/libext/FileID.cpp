@@ -31,8 +31,8 @@ FileID::FileID(path_known_cwd_tag) : m_basename("."), m_path("."), m_file_descri
 {
 }
 
-FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename)
-	: m_basename(basename), m_at_dir(at_dir_fileid)
+FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
+	: m_basename(basename), m_at_dir(at_dir_fileid), m_file_type(type)
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
@@ -40,8 +40,8 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
-	: m_basename(pathname), m_at_dir(at_dir_fileid), m_path(pathname)
+FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type)
+	: m_basename(pathname), m_at_dir(at_dir_fileid), m_path(pathname), m_file_type(type)
 {
 	/// @note Taking pathname by value since we are always storing it.
 	/// Full openat() semantics:

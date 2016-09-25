@@ -195,6 +195,8 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 	if(is_file || is_dir)
 	{
 		// We'll need the file's basename.
+		std::string basename = dirent_get_name(dp);
+#if 0
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 		// struct dirent has a d_namelen field.
 		std::string basename.assign(dp->d_name, dp->d_namelen);
@@ -206,7 +208,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 		// All we have is a null-terminated d_name.
 		std::string basename(dp->d_name);
 #endif
-
+#endif
 		if(is_file)
 		{
 			//std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';
@@ -223,7 +225,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 				LOG(INFO) << "... should be scanned.";
 
 				//m_out_queue.wait_push(FileID(FileID::path_known_absolute, FileID(0), dse.get()->get_name() + "/" + dname));
-				m_out_queue.wait_push(FileID(FileID::path_known_relative, dse, basename));
+				m_out_queue.wait_push(FileID(FileID::path_known_relative, dse, basename, FileID::FT_REG));
 
 				// Count the number of files we found that were included in the search.
 				///stats.m_num_files_scanned++;
@@ -244,7 +246,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 				return;
 			}
 
-			FileID dir_atfd(FileID::path_known_relative, dse, basename);
+			FileID dir_atfd(FileID::path_known_relative, dse, basename, FileID::FT_DIR);
 
 			// We have to detect any symlink cycles ourselves.
 			if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier().m_val))
