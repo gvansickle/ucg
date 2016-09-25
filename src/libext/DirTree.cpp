@@ -90,7 +90,7 @@ DirTree::~DirTree()
 {
 }
 
-void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_type &file_basename_filter, dir_basename_filter_type &dir_basename_filter)
+void DirTree::Scandir(std::vector<std::string> start_paths, file_basename_filter_type &file_basename_filter, dir_basename_filter_type &dir_basename_filter)
 {
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
@@ -101,9 +101,15 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 
 	for(auto p : start_paths)
 	{
-		dir_stack.push(std::make_shared<FileID>(FileID(root_file_id, p)));
-
-		/// @todo The start_paths can be files or dirs.  Currently the loop below will only work if they're dirs.
+		auto file_or_dir = std::make_shared<FileID>(FileID(root_file_id, p));
+		if(file_or_dir->IsRegularFile())
+		{
+			/// @todo
+		}
+		else if(file_or_dir->IsDir())
+		{
+			dir_stack.push(file_or_dir);
+		}
 	}
 
 	while(!dir_stack.empty())
@@ -114,7 +120,7 @@ void DirTree::Read(std::vector<std::string> start_paths, file_basename_filter_ty
 		FileDescriptor open_at_fd = dse->GetAtDir()->GetFileDescriptor();
 		const char *open_at_path = dse->GetAtDirRelativeBasename().c_str();
 
-		d = opendirat(open_at_fd.GetInt(), open_at_path);
+		d = opendirat(*open_at_fd, open_at_path);
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
@@ -240,8 +246,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 			if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier().m_val))
 			{
 				// Found cycle.
-				//WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
-				//fts_set(fts, ftsent, FTS_SKIP);
+				WARN() << "\'" << dir_atfd.GetPath() << "\': recursive directory loop";
 				return;
 			}
 

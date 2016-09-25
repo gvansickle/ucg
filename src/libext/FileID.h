@@ -52,6 +52,16 @@ public:
 	static constexpr path_known_cwd_tag path_known_cwd = path_known_cwd_tag();
 	/// @}
 
+	/// File Types enum.
+	enum FileType
+	{
+		FT_UNINITIALIZED,
+		FT_UNKNOWN,
+		FT_REG,
+		FT_DIR,
+		FT_SYMLINK
+	};
+
 	/// @name Constructors.
 	/// @{
 	FileID() = default;
@@ -77,7 +87,11 @@ public:
 
 	FileDescriptor GetFileDescriptor();
 
-	bool IsAtFDCWD() const noexcept { return m_file_descriptor.GetInt() == AT_FDCWD; };
+	FileType GetFileType() const noexcept;
+	bool IsRegularFile() const noexcept { return GetFileType() == FT_REG; };
+	bool IsDir() const noexcept { return GetFileType() == FT_DIR; };
+
+	bool IsAtFDCWD() const noexcept { return *m_file_descriptor == AT_FDCWD; };
 
 	/// @todo This should maybe be weak_ptr.
 	const std::shared_ptr<FileID> GetAtDir() const noexcept;
@@ -98,15 +112,6 @@ public:
 
 private:
 
-	void LazyLoadStatInfo() const;
-
-	/// Shared pointer to the directory this FileID is in.
-	std::shared_ptr<FileID> m_at_dir;
-
-	/// The absolute path to this file.
-	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
-	mutable std::string m_path;
-
 	/// The basename of this file.
 	/// We define this somewhat differently here: This is either:
 	/// - The full absolute path, or
@@ -114,10 +119,22 @@ private:
 	/// In any case, it is always equal to the string passed into the constructor.
 	std::string m_basename;
 
-	mutable FileDescriptor m_file_descriptor;
+	/// Shared pointer to the directory this FileID is in.
+	std::shared_ptr<FileID> m_at_dir;
+
+	void LazyLoadStatInfo() const;
+
+	/// The absolute path to this file.
+	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
+	mutable std::string m_path;
+
+
+	mutable FileDescriptor m_file_descriptor { make_shared_fd(cm_invalid_file_descriptor) };
 
 	/// @name Info normally gathered from a stat() call.
 	///@{
+
+	mutable FileType m_file_type { FT_UNINITIALIZED };
 
 	/// Indicator of whether the stat info is valid or not.
 	mutable bool m_stat_info_valid { false };

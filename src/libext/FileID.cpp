@@ -27,12 +27,12 @@
 #include <fts.h>
 
 
-FileID::FileID(path_known_cwd_tag) : m_path("."), m_basename("."), m_file_descriptor(AT_FDCWD)
+FileID::FileID(path_known_cwd_tag) : m_basename("."), m_path("."), m_file_descriptor(make_shared_fd(AT_FDCWD)), m_file_type(FT_DIR)
 {
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename)
-	: m_at_dir(at_dir_fileid), m_basename(basename)
+	: m_basename(basename), m_at_dir(at_dir_fileid)
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
@@ -41,7 +41,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
-	: m_at_dir(at_dir_fileid), m_path(pathname), m_basename(pathname)
+	: m_basename(pathname), m_at_dir(at_dir_fileid), m_path(pathname)
 {
 	/// @note Taking pathname by value since we are always storing it.
 	/// Full openat() semantics:
@@ -50,7 +50,7 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
-	: m_at_dir(at_dir_fileid), m_basename(pathname)
+	: m_basename(pathname), m_at_dir(at_dir_fileid)
 {
 	/// @note Taking pathname by value since we are always storing it.
 	/// Full openat() semantics:
@@ -93,7 +93,9 @@ const std::string& FileID::GetPath() const
 		// Build the full path.
 		if(!m_at_dir->IsAtFDCWD())
 		{
-			m_path = m_at_dir->GetPath() + '/' + m_basename;
+			auto at_path = m_at_dir->GetPath();
+			m_path.reserve(at_path.size() + m_basename.size() + 2);
+			m_path = at_path + '/' + m_basename;
 		}
 		else
 		{
@@ -122,6 +124,17 @@ const std::string& FileID::GetAtDirRelativeBasename() const noexcept
 	return m_basename;
 }
 
+FileID::FileType FileID::GetFileType() const noexcept
+{
+	if(m_file_type == FT_UNINITIALIZED)
+	{
+		// We don't know the file type yet.  We'll have to get it from a stat() call.
+		LazyLoadStatInfo();
+	}
+
+	return m_file_type;
+}
+
 void FileID::LazyLoadStatInfo() const
 {
 	if(IsStatInfoValid())
@@ -141,6 +154,26 @@ void FileID::LazyLoadStatInfo() const
 	else
 	{
 		m_stat_info_valid = true;
+
+		// Determine file type.
+		if(S_ISREG(stat_buf.st_mode))
+		{
+			m_file_type = FT_REG;
+		}
+		else if(S_ISDIR(stat_buf.st_mode))
+		{
+			m_file_type = FT_DIR;
+		}
+		else if(S_ISLNK(stat_buf.st_mode))
+		{
+			m_file_type = FT_SYMLINK;
+		}
+		else
+		{
+			// Those are the only types we know or care about.
+			m_file_type = FT_UNKNOWN;
+		}
+
 		m_unique_file_identifier = dev_ino_pair(stat_buf.st_dev, stat_buf.st_ino);
 		m_size = stat_buf.st_size;
 		m_block_size = stat_buf.st_blksize;
@@ -153,20 +186,20 @@ FileDescriptor FileID::GetFileDescriptor()
 	/// @todo This needs rethinking.  The FD would be opened differently depending on the file type etc.
 
 
-	if(m_file_descriptor.IsInvalid())
+	if(*m_file_descriptor == cm_invalid_file_descriptor)
 	{
 		// File hasn't been opened.
 
 		if(m_basename.empty() && !m_path.empty())
 		{
-			m_file_descriptor = FileDescriptor(openat(AT_FDCWD, m_path.c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
+			m_file_descriptor = make_shared_fd(openat(AT_FDCWD, m_path.c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
 		}
 		else
 		{
-			m_file_descriptor = FileDescriptor(openat(m_at_dir->GetFileDescriptor().GetInt(), GetBasename().c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
+			m_file_descriptor = make_shared_fd(openat(*(m_at_dir->GetFileDescriptor()), GetBasename().c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
 		}
 
-		if(m_file_descriptor.GetInt() < 0)
+		if(*m_file_descriptor < 0)
 		{
 			throw std::runtime_error("Bad fd");
 		}

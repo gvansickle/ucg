@@ -29,6 +29,7 @@
 #include <dirent.h>
 
 #include "integer.hpp"
+#include "../Logger.h"
 
 /// @name Take care of some portability issues.
 /// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
@@ -57,6 +58,27 @@ struct dev_ino_pair
 	dev_ino_pair_type m_val { 0 };
 };
 
+
+#if 1 /// @todo
+constexpr int cm_invalid_file_descriptor = -987;
+struct FileDescriptorDeleter
+{
+	void operator()(int *fd) const noexcept
+	{
+		if(*fd >= 0)
+		{
+			LOG(INFO) << "Closing file descriptor " << *fd;
+			close(*fd);
+		}
+	}
+};
+using FileDescriptor = std::shared_ptr<int>;
+inline std::shared_ptr<int> make_shared_fd(int fd)
+{
+	return FileDescriptor(new int(fd), FileDescriptorDeleter());
+}
+
+#else
 /**
  * Wrapper for C's 'int' file descriptor.
  * This class only adds C++ RAII abilities and correct move semantics to a file descriptor.
@@ -153,6 +175,7 @@ private:
 
 	int m_file_descriptor { cm_invalid_file_descriptor };
 };
+#endif
 
 
 /**
@@ -214,6 +237,7 @@ inline bool is_pathname_absolute(const std::string &path) noexcept
 
 inline DIR* opendirat(int at_dir, const char *name)
 {
+	LOG(INFO) << "Attempting to open directory \'" << name << "\' at file descriptor " << at_dir;
 	constexpr int openat_dir_search_flags = O_SEARCH ? O_SEARCH : O_RDONLY;
 
 	int file_fd = openat(at_dir, name, openat_dir_search_flags | O_DIRECTORY | O_NOCTTY);
