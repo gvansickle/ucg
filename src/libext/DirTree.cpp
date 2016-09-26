@@ -91,8 +91,8 @@ DirTree::~DirTree()
 }
 
 void DirTree::Scandir(std::vector<std::string> start_paths,
-		file_basename_filter_type &file_basename_filter,
-		dir_basename_filter_type &dir_basename_filter)
+		const file_basename_filter_type& file_basename_filter,
+		const dir_basename_filter_type& dir_basename_filter)
 {
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
@@ -141,8 +141,8 @@ void DirTree::Scandir(std::vector<std::string> start_paths,
 }
 
 void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* dp,
-		file_basename_filter_type &file_basename_filter,
-		dir_basename_filter_type &dir_basename_filter,
+		const file_basename_filter_type& file_basename_filter,
+		const dir_basename_filter_type& dir_basename_filter,
 		std::queue<std::shared_ptr<FileID>>& dir_stack)
 {
 	bool is_dir {false};
