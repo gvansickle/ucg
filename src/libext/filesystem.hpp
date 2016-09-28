@@ -97,6 +97,7 @@ struct FileDescriptorDeleter
 	}
 };
 using FileDescriptor = std::shared_ptr<int>;
+inline std::shared_ptr<int> make_shared_fd(int fd) ATTR_ARTIFICIAL;
 inline std::shared_ptr<int> make_shared_fd(int fd)
 {
 	return FileDescriptor(new int(fd), FileDescriptorDeleter());

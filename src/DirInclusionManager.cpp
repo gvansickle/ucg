@@ -37,13 +37,10 @@ static const std::string f_builtin_dir_excludes[] =
 
 DirInclusionManager::DirInclusionManager()
 {
-	// TODO Auto-generated constructor stub
-
 }
 
 DirInclusionManager::~DirInclusionManager()
 {
-	// TODO Auto-generated destructor stub
 }
 
 void DirInclusionManager::AddExclusions(const std::set<std::string>& exclusions)
@@ -68,7 +65,7 @@ void DirInclusionManager::CompileExclusionTables()
 
 bool DirInclusionManager::DirShouldBeExcluded(const std::string &name) const
 {
-	if(m_excluded_literal_dirs.count(name) != 0)
+	if(m_excluded_literal_dirs.find(name) != m_excluded_literal_dirs.end())
 	{
 		// This directory shouldn't be traversed.
 		return true;

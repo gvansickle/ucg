@@ -30,7 +30,7 @@ class DirInclusionManager
 {
 public:
 	DirInclusionManager();
-	virtual ~DirInclusionManager();
+	~DirInclusionManager();
 
 	void AddExclusions(const std::set<std::string> &exclusions);
 
