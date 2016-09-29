@@ -94,7 +94,8 @@ public:
 	bool IsAtFDCWD() const noexcept { return *m_file_descriptor == AT_FDCWD; };
 
 	/// @todo This should maybe be weak_ptr.
-	const std::shared_ptr<FileID> GetAtDir() const noexcept;
+	const std::shared_ptr<FileID>& GetAtDirCRef() const noexcept;
+	std::shared_ptr<FileID> GetAtDir() const noexcept { return m_at_dir; };
 
 	const std::string& GetAtDirRelativeBasename() const noexcept;
 
@@ -108,7 +109,10 @@ public:
 		return m_block_size;
 	};
 
-	const dev_ino_pair GetUniqueFileIdentifier() const noexcept { LazyLoadStatInfo(); return m_unique_file_identifier; };
+	const dev_ino_pair GetUniqueFileIdentifier() const noexcept { if(m_unique_file_identifier.m_val == 0) { LazyLoadStatInfo(); }; return m_unique_file_identifier; };
+
+	dev_t GetDev() const noexcept { if(m_dev == 0xFFFFFFFF) { LazyLoadStatInfo(); }; return m_dev; };
+	void SetDevIno(dev_t d, ino_t i) noexcept;
 
 private:
 
@@ -140,6 +144,8 @@ private:
 	mutable bool m_stat_info_valid { false };
 
 	mutable dev_ino_pair m_unique_file_identifier;
+
+	mutable dev_t m_dev { 0xFFFFFFFF };
 
 	/// File size in bytes.
 	mutable off_t m_size { 0 };

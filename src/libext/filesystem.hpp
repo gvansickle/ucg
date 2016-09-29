@@ -94,6 +94,7 @@ struct FileDescriptorDeleter
 			LOG(INFO) << "Closing file descriptor " << *fd;
 			close(*fd);
 		}
+		delete fd;
 	}
 };
 using FileDescriptor = std::shared_ptr<int>;

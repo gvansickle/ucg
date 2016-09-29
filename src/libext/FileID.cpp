@@ -106,7 +106,7 @@ const std::string& FileID::GetPath() const
 	return m_path;
 }
 
-const std::shared_ptr<FileID> FileID::GetAtDir() const noexcept
+const std::shared_ptr<FileID>& FileID::GetAtDirCRef() const noexcept
 {
 	if(!m_at_dir)
 	{
@@ -135,6 +135,12 @@ FileID::FileType FileID::GetFileType() const noexcept
 	return m_file_type;
 }
 
+void FileID::SetDevIno(dev_t d, ino_t i) noexcept
+{
+	m_dev = d;
+	m_unique_file_identifier = dev_ino_pair(d, i);
+}
+
 void FileID::LazyLoadStatInfo() const
 {
 	if(IsStatInfoValid())
@@ -150,6 +156,7 @@ void FileID::LazyLoadStatInfo() const
 	{
 		// Error.
 		/// @todo
+		perror("stat failed");
 	}
 	else
 	{
@@ -174,6 +181,7 @@ void FileID::LazyLoadStatInfo() const
 			m_file_type = FT_UNKNOWN;
 		}
 
+		m_dev = stat_buf.st_dev;
 		m_unique_file_identifier = dev_ino_pair(stat_buf.st_dev, stat_buf.st_ino);
 		m_size = stat_buf.st_size;
 		m_block_size = stat_buf.st_blksize;

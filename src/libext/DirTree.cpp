@@ -117,7 +117,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths,
 
 	while(!dir_stack.empty())
 	{
-		auto dse = dir_stack.front();
+		std::shared_ptr<FileID> dse = dir_stack.front();
 		dir_stack.pop();
 
 		FileDescriptor open_at_fd = dse->GetAtDir()->GetFileDescriptor();
@@ -212,7 +212,6 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 
 				LOG(INFO) << "... should be scanned.";
 
-				//m_out_queue.wait_push(FileID(FileID::path_known_absolute, FileID(0), dse.get()->get_name() + "/" + dname));
 				m_out_queue.wait_push(FileID(FileID::path_known_relative, dse, basename, FileID::FT_REG));
 
 				// Count the number of files we found that were included in the search.
@@ -235,6 +234,8 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 			}
 
 			FileID dir_atfd(FileID::path_known_relative, dse, basename, FileID::FT_DIR);
+			/// @todo GRVS THIS IS SEGFAULTING.
+			dir_atfd.SetDevIno(dse->GetDev(), dp->d_ino);
 
 			// We have to detect any symlink cycles ourselves.
 			if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier().m_val))
