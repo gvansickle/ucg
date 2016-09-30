@@ -82,12 +82,15 @@ inline bool is_same_file(int fd1, int fd2)
 	}
 }
 
+namespace portable
+{
 
 /**
- * A more usable and portable replacement for GNU and POSIX dirname().
+ * A more usable and portable replacement for glibc and POSIX dirname().
  *
- * @param path
- * @return
+ * @param path  const ref to a path string.  Guaranteed to not be modified in any way by the function call.
+ * @return  A std::string representing the path to return the directory of.  Guaranteed to be a normal std::string with which you may do
+ *          whatever you can do with any other std::string.
  */
 inline std::string dirname(const std::string &path)
 {
@@ -101,6 +104,8 @@ inline std::string dirname(const std::string &path)
 	free(modifiable_path);
 
 	return retval;
+}
+
 }
 
 #endif /* SRC_LIBEXT_FILESYSTEM_HPP_ */
