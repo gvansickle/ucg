@@ -99,7 +99,7 @@ inline std::string dirname(const std::string &path)
 
 	// Copy the output of dirname into a std:string.  We don't ever free the string dirname() returns
 	// because it's either a static buffer, or it's a pointer to modifiable_path.  The latter we'll free below.
-	std::string retval(dirname(modifiable_path));
+	std::string retval(::dirname(modifiable_path));
 
 	free(modifiable_path);
 
