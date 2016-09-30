@@ -149,7 +149,7 @@ AC_PROG_EGREP
 AC_PROG_FGREP
 AC_PROG_AWK
 AC_PROG_LN_S
-AS_IF([test "$LN_S" == 'ln -s'],
+AS_IF([test "$LN_S" = 'ln -s'],
 	[AC_SUBST([TEST_LN_S], [$LN_S])],
 	[AC_SUBST([TEST_LN_S], [:])
 	AC_MSG_WARN([couldn't find a real 'ln -s', will not be able to run all tests])])
@@ -345,7 +345,7 @@ AM_COND_IF([BUILD_X86_64_ISA_EXTENSIONS],
 # optionally use some pthreads functionality, e.g. naming threads for diagnostic, logging, and other purposes.
 # Macro docs: http://www.gnu.org/software/autoconf-archive/ax_pthread.html#ax_pthread
 AX_PTHREAD
-AS_IF([test "x$ax_pthread_ok" == xyes],
+AS_IF([test "x$ax_pthread_ok" = xyes],
 	[
 		AC_MSG_NOTICE([found pthreads])
 		AC_MSG_CHECKING([if the C++11 underlying thread implementation is pthreads])
@@ -353,8 +353,7 @@ AS_IF([test "x$ax_pthread_ok" == xyes],
         [AC_LANG_PROGRAM([
         					#include <type_traits>
         					#include <thread>
-        					#include <pthread.h>
-        					
+        					#include <pthread.h> 					
         				],
                          [
                          	static_assert(std::is_same<std::thread::native_handle_type, pthread_t>::value, "C++11 underlying thread implementation is not pthreads");
