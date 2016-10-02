@@ -27,7 +27,8 @@
 // Nothing to do.
 #elif HAVE_POSIX_MEMALIGN
 // Create a thin wrapper around posix_memalign().
-inline void* aligned_alloc(size_t algn, size_t size) ATTR_ALLOC_SIZE(2) ATTR_MALLOC { void *p=0; posix_memalign(&p, algn, size); return p; };
+inline void* aligned_alloc(size_t algn, size_t size) ATTR_ALLOC_SIZE(2) ATTR_MALLOC;
+inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign(&p, algn, size); return p; };
 #else
 #error "Could not find aligned memory allocator."
 #endif
