@@ -390,7 +390,7 @@ AC_CHECK_DECLS([std::to_string(int)],
 				],
 				[], [#include <string>])
 
-AC_SEARCH_LIBS([argp_parse],[argp])
+AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
 
 AC_CHECK_FUNCS([sched_setaffinity])
 
