@@ -59,7 +59,7 @@ AM_INIT_AUTOMAKE([
 AC_USE_SYSTEM_EXTENSIONS
 
 # Determine how many CPUs we have on the build machine.
-AX_COUNT_CPUS
+AX_COUNT_CPUS([], [])
 AC_SUBST([CPU_COUNT])
 
 # Set up the maintainer compiler flags.
