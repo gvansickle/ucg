@@ -3,7 +3,9 @@ language: cpp
 matrix:
     include:
         - os: osx
-          osx_image: [xcode8, beta-xcode6.1]
+          osx_image: beta-xcode6.1
+        - os: osx
+          osx_image: xcode8
         - os: linux
           dist: trusty
           sudo: required
