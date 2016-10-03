@@ -1,12 +1,12 @@
 language: cpp
 
 matrix:
-	include:
-		- os: osx
- 	  	  osx_image: xcode8
-		- os: linux
-		  dist: trusty
-		  sudo: required
+    include:
+        - os: osx
+          osx_image: xcode8
+        - os: linux
+          dist: trusty
+          sudo: required
  
 compiler:
   - clang
