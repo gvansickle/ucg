@@ -1,14 +1,22 @@
 language: cpp
-sudo: required
-dist: trusty
 
-os:
- - osx
- - linux
- 
-compiler:
-  - clang
-  - gcc
+matrix:
+    include:
+        - os: osx
+          osx_image: beta-xcode6.1
+        - os: osx
+          osx_image: xcode8
+        - os: linux
+          dist: trusty
+          sudo: required
+          compiler: gcc
+        - os: linux
+          dist: trusty
+          sudo: required
+          compiler: clang
+#compiler:
+#  - clang
+#  - gcc
 
 before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
