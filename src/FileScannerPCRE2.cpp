@@ -141,9 +141,18 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 
 	if(jit_retval != 0)
 	{
-		// JIT compilation error.
-		pcre2_code_free(m_pcre2_regex);
-		throw FileScannerException(std::string("PCRE2 JIT compilation error: ") + PCRE2ErrorCodeToErrorString(jit_retval));
+		// Was it a real error, or does the PCRE2 lib not have JIT compiled in?
+		if(jit_retval == PCRE2_ERROR_JIT_BADOPTION)
+		{
+			// No JIT support.
+			LOG(INFO) << "No PCRE2 JIT support: " << PCRE2ErrorCodeToErrorString(jit_retval);
+		}
+		else
+		{
+			// JIT compilation error.
+			pcre2_code_free(m_pcre2_regex);
+			throw FileScannerException(std::string("PCRE2 JIT compilation error: ") + PCRE2ErrorCodeToErrorString(jit_retval));
+		}
 	}
 
 	// Only allow the one callout we use internally, no user callouts.
