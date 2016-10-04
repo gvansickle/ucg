@@ -135,7 +135,7 @@ AS_IF([$PROG_SCRIPT -qfc "stty raw && echo hello" /dev/null > /dev/null 2>&1],
 		AC_SUBST([PROG_SCRIPT_POST_TEXT], ['/dev/null'])
 		AC_MSG_RESULT([Linux style])
 		],
-      [$PROG_SCRIPT -q /dev/null stty raw && echo "hello" > /dev/null 2>&1],
+      [stty raw && $PROG_SCRIPT -q /dev/null echo "hello" > /dev/null 2>&1],
 		[
 		AC_SUBST([PROG_SCRIPT_TYPE], [bsd])
 		AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-q /dev/null'])
