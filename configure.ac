@@ -128,14 +128,14 @@ AS_IF([ test "x$ac_path_ESED_found" = "x:" ],
 # try to sort it out here.
 AC_PATH_PROG([PROG_SCRIPT], [script], [:])
 AC_MSG_CHECKING([$PROG_SCRIPT's command line type])
-AS_IF([$PROG_SCRIPT -qfc "echo hello" /dev/null > /dev/null 2>&1],
+AS_IF([$PROG_SCRIPT -qfc "stty raw && echo hello" /dev/null > /dev/null 2>&1],
 		[
 		AC_SUBST([PROG_SCRIPT_TYPE], [linux])
 		AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-qfc'])
 		AC_SUBST([PROG_SCRIPT_POST_TEXT], ['/dev/null'])
 		AC_MSG_RESULT([Linux style])
 		],
-      [$PROG_SCRIPT -q /dev/null echo "hello" > /dev/null 2>&1],
+      [$PROG_SCRIPT -q /dev/null stty raw && echo "hello" > /dev/null 2>&1],
 		[
 		AC_SUBST([PROG_SCRIPT_TYPE], [bsd])
 		AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-q /dev/null'])

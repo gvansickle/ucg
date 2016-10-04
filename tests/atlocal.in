@@ -213,8 +213,8 @@ ASX_SCRIPT ()
 {
 	# Note: '\r' removal in here because script outputs \r\n's, even on Linuxes.
 	case $PROG_SCRIPT_TYPE in
-		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "$*" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
-		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "${@}" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw && $(printf "%q " "${@}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT stty raw && "${@}" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
 		*) exit 1;;
 	esac
 }
