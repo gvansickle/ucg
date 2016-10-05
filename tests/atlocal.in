@@ -235,5 +235,5 @@ ASX_SCRIPT ()
 #       AT_CHECK([{ ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something' ; } | $PROG_TOHEX > stdout_tty], [0], [stdout], [stderr])
 #       will prefix stdout_tty with '^D<backspace><backspace>' (hex 5e  44  08  08).  Not clear why.  Until we figure that out, just
 #       strip those chars with sed if they're there.
-PROG_TOHEX='sed \'s/^\^D\x08\x08//\' | od -t ax1'
+PROG_TOHEX='eval sed s/^\^D\x08\x08// | od -t ax1'
 
