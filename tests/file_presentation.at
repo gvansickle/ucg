@@ -118,8 +118,7 @@ AT_CLEANUP
 #
 AT_SETUP([Color-vs-terminal tests])
 
-AT_DATA([test_file.cpp],
-[abcd
+AT_DATA([test_file.cpp],[abcd
 efgh
 abcd
 ])
@@ -133,13 +132,12 @@ AT_DATA([expout],[@<:@32;1m@<:@Ktest_file.cpp@<:@0m@<:@K
 AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --color 'bc'], [0], [expout])
 
 # Check for nocolor to a TTY.
-AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor 'bc'], [0],
-[test_file.cpp
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor 'bc'], [0], [test_file.cpp
 1:abcd
 3:abcd
 ])
 
 # Check for default (should be color).
-AT_CHECK([ASX_SCRIPT ucg --noenv --cpp 'bc'],[0],[expout])
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp 'bc'], [0], [expout])
 
 AT_CLEANUP
