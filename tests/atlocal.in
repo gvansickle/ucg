@@ -222,17 +222,18 @@ ASX_SCRIPT ()
 	#         + /usr/bin/script -q /dev/null /bin/sh -c 'stty raw && ucg --noenv --cpp --nocolor --column do_something'
 	#       i.e. 'do_something' gets changed into an unquoted do_something.
 	#
-	# @note On some OSX systems (which detect as having a bsd-style 'script' utility), the below will prefix
-	#       the output with '^D<backspace><backspace>' (hex 5e  44  08  08).  Not clear why.  Until we figure that out, just
-	#       strip those chars if they're there.
 	case $PROG_SCRIPT_TYPE in
 		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
-		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT $SHELL -c "stty raw && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | sed 's/^\^D\x08\x08//' | tr -d '\r';;
+		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT $SHELL -c "stty raw && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
 		*) exit 1;;
 	esac
 }
 
 # Pipe output through this to convert to an ASCII+Hex text representation.
 # Useful for detecting differences in non-printing characters. 
-PROG_TOHEX='od -t ax1'
+# @note On some OSX systems (which detect as having a bsd-style 'script' utility), tests such as this:
+#       AT_CHECK([{ ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something' ; } | $PROG_TOHEX > stdout_tty], [0], [stdout], [stderr])
+#       will prefix stdout_tty with '^D<backspace><backspace>' (hex 5e  44  08  08).  Not clear why.  Until we figure that out, just
+#       strip those chars with sed if they're there.
+PROG_TOHEX='sed \'s/^\^D\x08\x08//\' | od -t ax1'
 

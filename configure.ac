@@ -204,9 +204,10 @@ AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 ###
 
 # Python, for generation of test suite.
-### @note Python >= 2.7 is actually required to run the testsuite at the moment, and hence is 
+### @note Python >= 2.7 is actually required to run the benchmarks in the testsuite at the moment, and hence is 
 ### not a maintainer-only tool.  My hope is that this will soon become a pre-"make distcheck" requirement.
-AM_PATH_PYTHON([2.7])
+AM_PATH_PYTHON([2.7],,[:])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])  #<< Automake conditional for skipping tests which require python.
 
 # Autotest needs autom4te, or 'missing's stub for it post-distribution. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
