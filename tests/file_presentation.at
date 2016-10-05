@@ -56,8 +56,13 @@ AT_DATA([test_file.cpp.expected],[test_file.cpp
 4:2:	do_something();
 6:5:    do_something_else();
 ])
-AT_CHECK([{ ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something' ; } > stdout_tty], [0], [stdout], [stderr])
-AT_CHECK([diff test_file.cpp.expected stdout_tty], [0], [stdout], [stderr]) 
+
+AT_CHECK([cat test_file.cpp.expected | $PROG_TOHEX > test_file.cpp.expected.hex], [0])
+
+AT_CHECK([{ ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something' ; } | $PROG_TOHEX > stdout_tty], [0], [stdout], [stderr])
+AT_CAPTURE_FILE([test_file.cpp.expected.hex])
+AT_CAPTURE_FILE([stdout_tty])
+AT_CHECK([diff test_file.cpp.expected.hex stdout_tty], [0], [stdout], [stderr]) 
 
 
 # Check for nocolumn output to a TTY.
@@ -68,7 +73,7 @@ AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor --nocolumn 'do_something'],[0],
 ])
 
 # Check for default (nocolumn) output to a TTY.
-AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor 'do_something'],[0],
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor 'do_something'], [0],
 [test_file.cpp
 4:	do_something();
 6:    do_something_else();
@@ -115,29 +120,31 @@ AT_CLEANUP
 #
 AT_SETUP([Color-vs-terminal tests])
 
-AT_DATA([test_file.cpp],
-[abcd
+AT_DATA([test_file.cpp],[abcd
 efgh
 abcd
 ])
 
-AT_DATA([expout],
-[@<:@32;1m@<:@Ktest_file.cpp@<:@0m@<:@K
+AT_DATA([expout],[@<:@32;1m@<:@Ktest_file.cpp@<:@0m@<:@K
 @<:@33;1m@<:@K1@<:@0m@<:@K:a@<:@30;43;1m@<:@Kbc@<:@0m@<:@Kd
 @<:@33;1m@<:@K3@<:@0m@<:@K:a@<:@30;43;1m@<:@Kbc@<:@0m@<:@Kd
 ])
 
+AT_CHECK([cat expout | $PROG_TOHEX > expout.hex], [0])
+AT_CAPTURE_FILE([expout.hex])
+
 # Check for color output to a TTY.
-AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --color 'bc'],[0],[expout])
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --color 'bc' | $PROG_TOHEX > stdout.hex], [0], [stdout], [stderr])
+AT_CAPTURE_FILE([stdout.hex])
+AT_CHECK([diff expout.hex stdout.hex], [0], [stdout], [stderr])
 
 # Check for nocolor to a TTY.
-AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor 'bc'],[0],
-[test_file.cpp
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor 'bc'], [0], [test_file.cpp
 1:abcd
 3:abcd
 ])
 
 # Check for default (should be color).
-AT_CHECK([ASX_SCRIPT ucg --noenv --cpp 'bc'],[0],[expout])
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp 'bc'], [0], [expout])
 
 AT_CLEANUP

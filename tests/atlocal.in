@@ -212,12 +212,28 @@ get_system_info()
 ASX_SCRIPT ()
 {
 	# Note: '\r' removal in here because script outputs \r\n's, even on Linuxes.
+	# @note The BSD case here seems to work for our current purposes, but I suspect it may fail if
+	#       we pass in args with nontrivial quoting or escapes.  E.g., if you './run -x -d' the "--[no]column tests",
+	#       you'll see this:
+	#         ../../tests/file_presentation.at:59: { ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something' ; } > stdout_tty
+	#         + ASX_SCRIPT ucg --noenv --cpp --nocolor --column do_something
+	#         + printf %s 'ucg --noenv --cpp --nocolor --column do_something'
+	#         + tr -d '\r'
+	#         + /usr/bin/script -q /dev/null /bin/sh -c 'stty raw && ucg --noenv --cpp --nocolor --column do_something'
+	#       i.e. 'do_something' gets changed into an unquoted do_something.
+	#
 	case $PROG_SCRIPT_TYPE in
-		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw && $(printf "%q " "${@}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
-		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT $SHELL -c "stty raw && $(printf "%q " "${@}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT $SHELL -c "stty raw && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
 		*) exit 1;;
 	esac
 }
 
-
+# Pipe output through this to convert to an ASCII+Hex text representation.
+# Useful for detecting differences in non-printing characters. 
+# @note On some OSX systems (which detect as having a bsd-style 'script' utility), tests such as this:
+#       AT_CHECK([{ ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something' ; } | $PROG_TOHEX > stdout_tty], [0], [stdout], [stderr])
+#       will prefix stdout_tty with '^D<backspace><backspace>' (hex 5e  44  08  08).  Not clear why.  Until we figure that out, just
+#       strip those chars with sed if they're there.
+PROG_TOHEX='eval sed s/^\^D\x08\x08// | od -t ax1'
 
