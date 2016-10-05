@@ -228,5 +228,7 @@ ASX_SCRIPT ()
 	esac
 }
 
-
+# Pipe output through this to convert to an ASCII+Hex text representation.
+# Useful for detecting differences in non-printing characters. 
+PROG_TOHEX='od -t ax1'
 
