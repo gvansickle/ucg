@@ -32,7 +32,7 @@
 - Resolved issue with highlights on wrapped lines sometimes extending the full width of the terminal.  Resolves #80.
 - Resolved issue where matches spanning an eol (e.g. 'a\s+b' matching 'a\nb') would cause the program to throw an exception and terminate.  Resolves #92.
 - Resolved segfaults on some systems due to dirname() modifying its parameter.  Resolves #96.
-
+- No longer treating PCRE2 reporting no JIT support as an error.  Resolves #100.
 
 ## [0.2.2] - 2016-04-09
 
