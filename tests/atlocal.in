@@ -223,8 +223,8 @@ ASX_SCRIPT ()
 	#       i.e. 'do_something' gets changed into an unquoted do_something.
 	#
 	case $PROG_SCRIPT_TYPE in
-		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
-		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT $SHELL -c "stty raw && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw >/dev/null 2>&1 && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT $SHELL -c "stty raw >/dev/null 2>&1 && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
 		*) exit 1;;
 	esac
 }
