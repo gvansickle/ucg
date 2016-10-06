@@ -222,14 +222,11 @@ ASX_SCRIPT ()
 	#         + /usr/bin/script -q /dev/null /bin/sh -c 'stty raw && ucg --noenv --cpp --nocolor --column do_something'
 	#       i.e. 'do_something' gets changed into an unquoted do_something.
 	#
-	original_stty_state=$(stty -g);
-	stty raw >/dev/null 2>&1;
 	case $PROG_SCRIPT_TYPE in
 		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "$(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
-		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT $SHELL -c "$(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw >/dev/null 2>&1 && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
 		*) exit 1;;
 	esac
-	stty "$original_stty_state" >/dev/null 2>&1;
 }
 
 # Pipe output through this to convert to an ASCII+Hex text representation.
