@@ -224,7 +224,7 @@ ASX_SCRIPT ()
 	#
 	case $PROG_SCRIPT_TYPE in
 		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "$(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
-		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw >/dev/null 2>&1 && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		bsd) echo $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw >/dev/null 2>&1 && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
 		*) exit 1;;
 	esac
 }
