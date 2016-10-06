@@ -128,14 +128,14 @@ AS_IF([ test "x$ac_path_ESED_found" = "x:" ],
 # try to sort it out here.
 AC_PATH_PROG([PROG_SCRIPT], [script], [:])
 AC_MSG_CHECKING([$PROG_SCRIPT's command line type])
-AS_IF([$PROG_SCRIPT -qfc "echo hello" /dev/null > /dev/null 2>&1],
+AS_IF([$PROG_SCRIPT -qfc "stty raw && echo hello" /dev/null > /dev/null 2>&1],
 		[
 		AC_SUBST([PROG_SCRIPT_TYPE], [linux])
 		AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-qfc'])
 		AC_SUBST([PROG_SCRIPT_POST_TEXT], ['/dev/null'])
 		AC_MSG_RESULT([Linux style])
 		],
-      [$PROG_SCRIPT -q /dev/null echo "hello" > /dev/null 2>&1],
+      [$PROG_SCRIPT -q /dev/null $SHELL -c 'stty raw && echo "hello"' > /dev/null 2>&1],
 		[
 		AC_SUBST([PROG_SCRIPT_TYPE], [bsd])
 		AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-q /dev/null'])
@@ -204,9 +204,10 @@ AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 ###
 
 # Python, for generation of test suite.
-### @note Python >= 2.7 is actually required to run the testsuite at the moment, and hence is 
+### @note Python >= 2.7 is actually required to run the benchmarks in the testsuite at the moment, and hence is 
 ### not a maintainer-only tool.  My hope is that this will soon become a pre-"make distcheck" requirement.
-AM_PATH_PYTHON([2.7])
+AM_PATH_PYTHON([2.7],,[:])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])  #<< Automake conditional for skipping tests which require python.
 
 # Autotest needs autom4te, or 'missing's stub for it post-distribution. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
