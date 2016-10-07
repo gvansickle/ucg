@@ -125,6 +125,7 @@ get_system_info()
 	echo "kernel_version_uname_v: "`uname_or_unknown -v`"";
 	echo "machine_uname_m: "`uname_or_unknown -m`"";
 	# Non-POSIX uname options.
+	echo "operatingsystem_uname_o: "`uname_or_unknown -o`""; # This is for Cygwin, it's the closest we have to a PRETTY_NAME in /etc/os-release.  
 	echo "processor_uname_p: "`uname_or_unknown -p`"";
 	echo "END uname info.";
 	echo "";
