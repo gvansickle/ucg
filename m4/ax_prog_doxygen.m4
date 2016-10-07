@@ -97,7 +97,7 @@
 #   and this notice are preserved. This file is offered as-is, without any
 #   warranty.
 
-#serial 19
+#serial 20
 
 ## ----------##
 ## Defaults. ##
@@ -553,7 +553,8 @@ doxygen-doc: doxygen-run \$(DX_PS_GOAL) \$(DX_PDF_GOAL)
 ]])dnl
 [DX_CLEANFILES = \\]
 m4_foreach([DX_i], [DX_loop],
-[[	\$(DX_DOCDIR]DX_i[)/\$(PACKAGE).tag \\
+[[	\$(DX_DOCDIR]DX_i[)/doxygen_sqlite3.db \\
+	\$(DX_DOCDIR]DX_i[)/\$(PACKAGE).tag \\
 ]])dnl
 [	-r \\
 	\$(DX_CLEAN_HTML) \\

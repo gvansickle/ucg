@@ -26,7 +26,19 @@
 #include <unistd.h> // For close().
 #include <sys/stat.h>
 #include <sys/types.h> // for dev_t, ino_t
+// Don't know where the name "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
+/// There are two basename()s.  GNU basename, from string.h, and POSIX basename() from libgen.h.
+/// See notes here: https://linux.die.net/man/3/dirname
+/// Of course they behave slightly differently: GNU version returns an empty string if the path has a trailing slash, and doesn't modify it's argument.
+/// To complicate matters further, the glibc version of the POSIX function versions do modify their args.
+/// And at least NetBSD behaves similarly.  So, include the POSIX versions and we'll try to clean this mess up below.
+#include <libgen.h>
 #include <dirent.h>
+
+/// @note Because we included libgen.h above, we shouldn't get the GNU version from this #include of string.h.
+#include <string.h>
+#include <cstdlib>   // For free().
+#include <string>
 
 #include "integer.hpp"
 #include "../Logger.h"
@@ -235,6 +247,32 @@ inline bool is_same_file(int fd1, int fd2)
 	{
 		return false;
 	}
+}
+
+namespace portable
+{
+
+/**
+ * A more usable and portable replacement for glibc and POSIX dirname().
+ *
+ * @param path  const ref to a path string.  Guaranteed to not be modified in any way by the function call.
+ * @return  A std::string representing the path to return the directory of.  Guaranteed to be a normal std::string with which you may do
+ *          whatever you can do with any other std::string.
+ */
+inline std::string dirname(const std::string &path)
+{
+	// Get a copy of the path string which dirname() can modify all it wants.
+	char * modifiable_path = strdup(path.c_str());
+
+	// Copy the output of dirname into a std:string.  We don't ever free the string dirname() returns
+	// because it's either a static buffer, or it's a pointer to modifiable_path.  The latter we'll free below.
+	std::string retval(::dirname(modifiable_path));
+
+	free(modifiable_path);
+
+	return retval;
+}
+
 }
 
 /**

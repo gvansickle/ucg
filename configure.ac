@@ -59,7 +59,7 @@ AM_INIT_AUTOMAKE([
 AC_USE_SYSTEM_EXTENSIONS
 
 # Determine how many CPUs we have on the build machine.
-AX_COUNT_CPUS
+AX_COUNT_CPUS([], [])
 AC_SUBST([CPU_COUNT])
 
 # Set up the maintainer compiler flags.
@@ -128,14 +128,14 @@ AS_IF([ test "x$ac_path_ESED_found" = "x:" ],
 # try to sort it out here.
 AC_PATH_PROG([PROG_SCRIPT], [script], [:])
 AC_MSG_CHECKING([$PROG_SCRIPT's command line type])
-AS_IF([$PROG_SCRIPT -qfc "echo hello" /dev/null > /dev/null 2>&1],
+AS_IF([$PROG_SCRIPT -qfc "stty raw && echo hello" /dev/null > /dev/null 2>&1],
 		[
 		AC_SUBST([PROG_SCRIPT_TYPE], [linux])
 		AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-qfc'])
 		AC_SUBST([PROG_SCRIPT_POST_TEXT], ['/dev/null'])
 		AC_MSG_RESULT([Linux style])
 		],
-      [$PROG_SCRIPT -q /dev/null echo "hello" > /dev/null 2>&1],
+      [$PROG_SCRIPT -q /dev/null $SHELL -c 'stty raw && echo "hello"' > /dev/null 2>&1],
 		[
 		AC_SUBST([PROG_SCRIPT_TYPE], [bsd])
 		AC_SUBST([PROG_SCRIPT_PRE_TEXT], ['-q /dev/null'])
@@ -149,7 +149,7 @@ AC_PROG_EGREP
 AC_PROG_FGREP
 AC_PROG_AWK
 AC_PROG_LN_S
-AS_IF([test "$LN_S" == 'ln -s'],
+AS_IF([test "$LN_S" = 'ln -s'],
 	[AC_SUBST([TEST_LN_S], [$LN_S])],
 	[AC_SUBST([TEST_LN_S], [:])
 	AC_MSG_WARN([couldn't find a real 'ln -s', will not be able to run all tests])])
@@ -204,9 +204,10 @@ AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 ###
 
 # Python, for generation of test suite.
-### @note Python >= 2.7 is actually required to run the testsuite at the moment, and hence is 
+### @note Python >= 2.7 is actually required to run the benchmarks in the testsuite at the moment, and hence is 
 ### not a maintainer-only tool.  My hope is that this will soon become a pre-"make distcheck" requirement.
-AM_PATH_PYTHON([2.7])
+AM_PATH_PYTHON([2.7],,[:])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])  #<< Automake conditional for skipping tests which require python.
 
 # Autotest needs autom4te, or 'missing's stub for it post-distribution. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
@@ -345,7 +346,7 @@ AM_COND_IF([BUILD_X86_64_ISA_EXTENSIONS],
 # optionally use some pthreads functionality, e.g. naming threads for diagnostic, logging, and other purposes.
 # Macro docs: http://www.gnu.org/software/autoconf-archive/ax_pthread.html#ax_pthread
 AX_PTHREAD
-AS_IF([test "x$ax_pthread_ok" == xyes],
+AS_IF([test "x$ax_pthread_ok" = xyes],
 	[
 		AC_MSG_NOTICE([found pthreads])
 		AC_MSG_CHECKING([if the C++11 underlying thread implementation is pthreads])
@@ -353,8 +354,7 @@ AS_IF([test "x$ax_pthread_ok" == xyes],
         [AC_LANG_PROGRAM([
         					#include <type_traits>
         					#include <thread>
-        					#include <pthread.h>
-        					
+        					#include <pthread.h> 					
         				],
                          [
                          	static_assert(std::is_same<std::thread::native_handle_type, pthread_t>::value, "C++11 underlying thread implementation is not pthreads");
@@ -391,7 +391,7 @@ AC_CHECK_DECLS([std::to_string(int)],
 				],
 				[], [#include <string>])
 
-AC_SEARCH_LIBS([argp_parse],[argp])
+AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
 
 AC_CHECK_FUNCS([sched_setaffinity])
 

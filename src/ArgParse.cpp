@@ -57,7 +57,7 @@
 #include <fcntl.h>
 #include <unistd.h> // for GetUserHomeDir()-->getuid().
 #include <sys/stat.h>
-#include <libgen.h>   // Don't know where the name "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
+//#include <libgen.h>   // Don't know where the name "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
 
 #include <libext/string.hpp>
 #include <libext/filesystem.hpp>
@@ -759,16 +759,17 @@ std::string ArgParse::GetProjectRCFilename() const
 	char *original_cwd = getcwd(NULL, 0);
 #endif
 
+
 	LOG(INFO) << "cwd = \'" << original_cwd << "\'";
 
-	char *current_cwd = original_cwd;
-	while((current_cwd != nullptr) && (current_cwd[0] != '.'))
+	std::string current_cwd(original_cwd == nullptr ? "" : original_cwd);
+	while(!current_cwd.empty() && current_cwd[0] != '.')
 	{
 		// If we were able to get a file descriptor to $HOME above...
 		if(home_fd != -1)
 		{
 			// ...check if this dir is the user's $HOME dir.
-			int cwd_fd = open(current_cwd, O_RDONLY);
+			int cwd_fd = open(current_cwd.c_str(), O_RDONLY);
 			if(cwd_fd != -1)
 			{
 				/// @todo Should probably check for is-a-dir here.
@@ -784,7 +785,7 @@ std::string ArgParse::GetProjectRCFilename() const
 		}
 
 		// Try to open the config file.
-		auto test_rc_filename = std::string(current_cwd);
+		auto test_rc_filename = current_cwd;
 		if(*test_rc_filename.rbegin() != '/')
 		{
 			test_rc_filename += "/";
@@ -804,14 +805,14 @@ std::string ArgParse::GetProjectRCFilename() const
 		/// @note GRVS - get_current_dir_name() under Cygwin will currently return a DOS path if this is started
 		///              under the Eclipse gdb.  This mostly doesn't cause problems, except for terminating the loop.
 		///              The clause below after the || handles this.
-		if((std::strlen(current_cwd) == 1) || (std::strlen(current_cwd) <= 4 && current_cwd[1] == ':'))
+		if((current_cwd.length() == 1) || (current_cwd.length() <= 4 && current_cwd[1] == ':'))
 		{
 			// We've hit the root and didn't find a config file.
 			break;
 		}
 
 		// Go up one directory.
-		current_cwd = dirname(current_cwd);
+		current_cwd = portable::dirname(current_cwd);
 	}
 
 	// Free the cwd string.
