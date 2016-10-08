@@ -20,9 +20,10 @@
 
 #include <config.h>
 
+#include <cstdlib>
+
 #include <libext/hints.hpp>
 
-#include <cstdlib>
 #ifdef HAVE_ALIGNED_ALLOC
 // Nothing to do.
 #elif HAVE_POSIX_MEMALIGN
@@ -34,7 +35,7 @@ inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign
 #endif
 
 #include "Logger.h"
-#include "libext/integer.hpp"
+#include <libext/integer.hpp>
 
 /**
  * This is sort of a poor-man's std::allocator<>, without the std.  We use it in the File() constructor

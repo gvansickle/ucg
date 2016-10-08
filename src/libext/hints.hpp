@@ -17,12 +17,12 @@
 
 /** @file Macros for compiler optimization hints.  */
 
+#ifndef SRC_LIBEXT_HINTS_HPP_
+#define SRC_LIBEXT_HINTS_HPP_
+
 #include <config.h>
 
 #include <type_traits>
-
-#ifndef SRC_LIBEXT_HINTS_HPP_
-#define SRC_LIBEXT_HINTS_HPP_
 
 #include "static_diagnostics.hpp"
 
