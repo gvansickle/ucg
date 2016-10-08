@@ -50,7 +50,7 @@ ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS)
 ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./third_party/gnulib/libgnu.la ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la
+ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la ./third_party/gnulib/libgnu.la
 
 # Collect some make-time info. 
 FORCE:

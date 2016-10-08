@@ -23,7 +23,7 @@
 #include <config.h>
 
 #include <sys/stat.h> // For the stat types.
-#include <fts.h>
+#include <fts_.h>
 
 #include <string>
 
