@@ -1,22 +1,25 @@
 language: cpp
 
+# For Linux builds:
+dist: trusty
+sudo: required
+
+# For OS X builds:
+# @note xcode7.3 and above are OSX 10.11, removed until we have a fix for #103, tabs->spaces.
+
 matrix:
     include:
         - os: osx
-          osx_image: beta-xcode6.1
+          osx_image: xcode8
         - os: osx
           osx_image: xcode7.1
-#        - os: osx # ==> OSX 10.11, removed until we have a fix for #103, tabs->spaces.
-#          osx_image: xcode7.3
-#          osx_image: xcode8
+        - os: osx
+          osx_image: beta-xcode6.1
         - os: linux
-          dist: trusty
-          sudo: required
           compiler: gcc
         - os: linux
-          dist: trusty
-          sudo: required
           compiler: clang
+
 #compiler:
 #  - clang
 #  - gcc
@@ -32,15 +35,15 @@ before_install:
  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev && sudo apt-get install -qq silversearcher-ag; fi
 
 before_script:
- - echo "g++ --version:" && g++ --version && echo "===="
+ - echo "g++ --version:" && g++ --version && autoreconf --version && automake --version && libtool --version && echo "===="
  - # pwd ==> /home/travis/build/gvansickle/ucg
- - sysctl -a
+ - #sysctl -a
  - #if [ $TRAVIS_OS_NAME == osx ]; then sysctl -a hw; fi
- - if [ $TRAVIS_OS_NAME == linux ]; then cat /proc/cpuinfo | grep flags; fi
+ - #if [ $TRAVIS_OS_NAME == linux ]; then cat /proc/cpuinfo | grep flags; fi
  - # lscpu = Doesn't exist on OSX or Cygwin
  - # free -ht = Doesn't exist on OSX or Cygwin
  - # df main.cpp # df does exist on Cygwin.  Also on OSX, but params are different, no --output, -T is different.
- - mount | fgrep -w "`df . | grep '%' | sed -e 's/.*% *//'`"
+ - #mount | fgrep -w "`df . | grep '%' | sed -e 's/.*% *//'`"
  - git fetch --unshallow  # Travis limits its pull by default to 50 revs.  The build then can't do a proper "git describe".
 
 script:
