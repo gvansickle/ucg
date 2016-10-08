@@ -135,7 +135,8 @@ Globber::Globber(std::vector<std::string> start_paths,
 		  m_dirjobs(dirjobs),
 		  m_out_queue(out_queue)
 {
-
+	/// @todo DEBUG - REMOVE
+	m_dirjobs = 1;
 }
 
 void Globber::Run()
