@@ -28,7 +28,7 @@ AC_COPYRIGHT([Copyright (C) 2015-2016 Gary R. Van Sickle])
 AC_CONFIG_AUX_DIR([build-aux])
 
 # Additional Autoconf macros are in ./m4.
-AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_MACRO_DIRS([m4 third_party/gnulib/m4])
 
 # Clear the "user defaults" for compiler optimization and debug flags.  This doesn't override any configure-time or make-time settings the
 # builder may specifiy for these variables, it just makes the values empty if they're not specified at configure- or make-time.
@@ -64,7 +64,8 @@ AC_SUBST([CPU_COUNT])
 
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
-AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
+AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra -I$(top_builddir)/third_party/gnulib -I$(top_srcdir)/third_party/gnulib"])
+### @todo AM_CPPFLAGS = -I$(top_builddir)/gnulib -I$(top_srcdir)/gnulib >>> DO WE NEED THIS?
 # By default, compile C and C++ with the maximum possible debugging info and maximum optimization.
 # For debugging, do a "make CXXFLAGS=-O0".
 AC_SUBST([AM_CFLAGS], ["-ggdb3 -O3"])
@@ -90,6 +91,8 @@ AC_PROG_CXX
 # of this macro gets released.  See http://lists.gnu.org/archive/html/autoconf-archive-maintainers/2016-03/msg00034.html.
 AX_CXX_COMPILE_STDCXX_11([ext],[mandatory])
 AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
+# Early-Initialize gnulib.
+gl_EARLY
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 
@@ -228,6 +231,11 @@ DX_INIT_DOXYGEN([UniversalCodeGrep])
 ###
 ### Checks for libraries
 ###
+
+#
+# For gnulib.
+#
+gl_INIT
 
 AC_LANG_PUSH([C++])
 
@@ -495,6 +503,7 @@ AC_CONFIG_FILES([Makefile
 	src/Makefile
 	src/future/Makefile
 	src/libext/Makefile
-	third_party/Makefile])
+	third_party/Makefile
+	third_party/gnulib/Makefile])
 AC_OUTPUT
 

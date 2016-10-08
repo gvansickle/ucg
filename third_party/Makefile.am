@@ -22,6 +22,8 @@
 ## Much of this directory is conditionalized at configure time, so we define some vars at the top
 ## which we'll append to later in the sections which are not conditionalized out.
 
+SUBDIRS = gnulib
+
 noinst_SCRIPTS =
 
 # Directory trees we need to delete on a "make clean".
