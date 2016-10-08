@@ -20,6 +20,8 @@
 #ifndef FILESCANNERCPP11_H_
 #define FILESCANNERCPP11_H_
 
+#include <config.h>
+
 #include "FileScanner.h"
 
 #include <regex>

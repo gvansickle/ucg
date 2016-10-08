@@ -18,7 +18,7 @@
 #ifndef SRC_RESIZABLEARRAY_H_
 #define SRC_RESIZABLEARRAY_H_
 
-#include "config.h"
+#include <config.h>
 
 #include <libext/hints.hpp>
 

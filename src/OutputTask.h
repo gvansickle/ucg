@@ -20,6 +20,8 @@
 #ifndef OUTPUTTASK_H_
 #define OUTPUTTASK_H_
 
+#include <config.h>
+
 #include <MatchList.h>
 
 #include <memory>
