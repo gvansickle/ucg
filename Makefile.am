@@ -19,12 +19,14 @@
 # any third-party macros (e.g. the system-wide ax_* Autoconf Macro Archive ones
 # in /usr/share/aclocal) to ./m4 so they get distributed and automatically updated.
 # Only useful in the top-level Makefile.am (see http://sources.redhat.com/automake/automake.html#Rebuilding).
-ACLOCAL_AMFLAGS = -I m4 --install
+ACLOCAL_AMFLAGS = -I m4 -I third_party/gnulib/m4 --install
 
 # The subdirectories containing the source code, docs, and tests.
 # Note: The code in src depends on the libraries in third_party, so make sure the latter is always listed before the former.
 # Note that we can't list these other libraries in e.g. *_DEPENDENCIES because that replaces all Automake-generated dependencies.
 SUBDIRS = third_party src . tests
+
+EXTRA_DIST = third_party/gnulib/m4/gnulib-cache.m4
 
 # Set these *CLEANFILES Automake vars to empty, so that we can simply always append (+=) to them later.
 CLEANFILES =
@@ -48,7 +50,7 @@ ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS)
 ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la
+ucg_LDADD = ./third_party/gnulib/libgnu.la ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la
 
 # Collect some make-time info. 
 FORCE:

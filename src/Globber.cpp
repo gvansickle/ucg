@@ -30,7 +30,7 @@
 #include "TypeManager.h"
 #include "DirInclusionManager.h"
 
-#include <fts.h>
+#include <fts_.h>   ///< Use the gnulib version of the fts library.
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
