@@ -64,7 +64,7 @@ AC_SUBST([CPU_COUNT])
 
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
-AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra -I$(top_builddir)/third_party/gnulib -I$(top_srcdir)/third_party/gnulib"])
+AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra -I\${top_builddir}/third_party/gnulib -I\${top_srcdir}/third_party/gnulib"])
 ### @todo AM_CPPFLAGS = -I$(top_builddir)/gnulib -I$(top_srcdir)/gnulib >>> DO WE NEED THIS?
 # By default, compile C and C++ with the maximum possible debugging info and maximum optimization.
 # For debugging, do a "make CXXFLAGS=-O0".
