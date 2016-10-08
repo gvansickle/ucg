@@ -35,7 +35,7 @@ before_install:
  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev && sudo apt-get install -qq silversearcher-ag; fi
 
 before_script:
- - echo "g++ --version:" && g++ --version && autoreconf --version && automake --version && libtool --version && echo "===="
+ - echo "g++ --version:" && g++ --version && autoreconf --version && automake --version && echo "===="
  - # pwd ==> /home/travis/build/gvansickle/ucg
  - #sysctl -a
  - #if [ $TRAVIS_OS_NAME == osx ]; then sysctl -a hw; fi
