@@ -72,6 +72,9 @@ AT_CLEANUP
 ###
 AT_SETUP([Tree with cross-linked symlinks, multithreaded])
 
+### @todo DEV/DEBUG, REMOVE THIS
+AT_SKIP_IF([true])
+
 # Create the directory tree.
 UCG_CREATE_CROSSLINKED_DIR
 
