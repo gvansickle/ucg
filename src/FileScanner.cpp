@@ -17,7 +17,7 @@
 
 /** @file */
 
-#include "config.h"
+#include <config.h>
 
 #include <libext/cpuidex.hpp>
 #include <libext/multiversioning.hpp>

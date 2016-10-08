@@ -20,7 +20,7 @@
 #ifndef SRC_FILESCANNERPCRE2_H_
 #define SRC_FILESCANNERPCRE2_H_
 
-#include "config.h"
+#include <config.h>
 
 #include "FileScanner.h"
 

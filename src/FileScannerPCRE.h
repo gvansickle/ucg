@@ -20,6 +20,8 @@
 #ifndef SRC_FILESCANNERPCRE_H_
 #define SRC_FILESCANNERPCRE_H_
 
+#include <config.h>
+
 #include "FileScanner.h"
 
 #ifdef HAVE_LIBPCRE

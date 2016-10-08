@@ -17,6 +17,8 @@
 
 /** @file */
 
+#include <config.h>
+
 #include "Match.h"
 
 #include <algorithm>
