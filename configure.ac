@@ -44,7 +44,8 @@ AC_CONFIG_MACRO_DIRS([m4 third_party/gnulib/m4])
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
-AM_INIT_AUTOMAKE([
+# Set up Automake.  Require at least automake 1.14
+AM_INIT_AUTOMAKE([1.14
 	foreign
 	subdir-objects
 	color-tests
