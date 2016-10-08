@@ -22,7 +22,7 @@
 #include "FileID.h"
 
 #include <sys/stat.h>
-#include <fts.h>
+#include <fts_.h>
 
 FileID::FileID(const FTSENT *ftsent): m_path(ftsent->fts_path, ftsent->fts_pathlen)
 {
