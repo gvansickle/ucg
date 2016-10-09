@@ -17,5 +17,7 @@
 
 /** @file  Portable Function multiversioning functionality. */
 
+#include <config.h>
+
 #include "multiversioning.hpp"
 

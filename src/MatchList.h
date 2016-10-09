@@ -20,6 +20,8 @@
 #ifndef MATCHLIST_H_
 #define MATCHLIST_H_
 
+#include <config.h>
+
 #include <string>
 #include <vector>
 #include <iosfwd>

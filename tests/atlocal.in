@@ -213,6 +213,7 @@ get_system_info()
 ASX_SCRIPT ()
 {
 	# Note: '\r' removal in here because script outputs \r\n's, even on Linuxes.
+	STRIP_SPURIOUS_CONTROL_CHARS='eval tr -d "\010" | sed s/^\^D// | tr -d "\r"';
 	# @note The BSD case here seems to work for our current purposes, but I suspect it may fail if
 	#       we pass in args with nontrivial quoting or escapes.  E.g., if you './run -x -d' the "--[no]column tests",
 	#       you'll see this:
@@ -225,7 +226,7 @@ ASX_SCRIPT ()
 	#
 	case $PROG_SCRIPT_TYPE in
 		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw >/dev/null 2>&1 && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
-		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT command eval "stty raw >/dev/null 2>&1 && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT command eval "stty raw >/dev/null 2>&1 && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | $STRIP_SPURIOUS_CONTROL_CHARS;;
 		*) exit 1;;
 	esac
 }
@@ -235,6 +236,8 @@ ASX_SCRIPT ()
 # @note On some OSX systems (which detect as having a bsd-style 'script' utility), tests such as this:
 #       AT_CHECK([{ ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something' ; } | $PROG_TOHEX > stdout_tty], [0], [stdout], [stderr])
 #       will prefix stdout_tty with '^D<backspace><backspace>' (hex 5e  44  08  08).  Not clear why.  Until we figure that out, just
-#       strip those chars with sed if they're there.
-PROG_TOHEX='eval sed s/^\^D\x08\x08// | od -t ax1'
+#       strip those chars with tr and sed if they're there.
+# @note Portability: POSIX sed doesn't support specifying numeric values in either BRE or EREs, so we use tr here, which
+#       does support octal char specifications under POSIX. 
+PROG_TOHEX='eval tr -d "\010" | sed s/^\^D// | od -t ax1'
 

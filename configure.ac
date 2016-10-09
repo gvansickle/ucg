@@ -44,7 +44,8 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
-AM_INIT_AUTOMAKE([
+# Set up Automake.  Require at least automake 1.14
+AM_INIT_AUTOMAKE([1.14
 	foreign
 	subdir-objects
 	color-tests
@@ -78,18 +79,21 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 ## Checks for the programs needed to do a build.
 
 AC_PROG_INSTALL
-AC_PROG_CC
-# This is required instead of AC_PROG_CC_C_O by automake's "subdir-objects" option.
-AM_PROG_CC_C_O
+AC_PROG_CC_C99
+# Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
+#   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
+#   explicit use of AM_PROG_CC_C_O should no longer be required."
+#AM_PROG_CC_C_O
 AC_PROG_CXX
+AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 ## Make sure we get a C++ compiler which supports C++11.
 # Determine what switches we need to get at least some level of C++11 support.
 # We do this here because this macro will replace $CXX with "$CXX -c++11switch", so we'll use this
 # in the AC_LANG_PUSH([C++]) tests below.
 # NOTE: The odd-looking ordering here (this before AC_PROG_CXXCPP) is required until the next version
 # of this macro gets released.  See http://lists.gnu.org/archive/html/autoconf-archive-maintainers/2016-03/msg00034.html.
+# @note 2016-10-8 Macro has been updated, trying to change the ordering.
 AX_CXX_COMPILE_STDCXX_11([ext],[mandatory])
-AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 
@@ -297,6 +301,14 @@ AC_LANG_POP([C++])
 ### Checks for compiler characteristics.
 ###
 
+# Check if the C compiler supports some flags we'd like to set.
+# Append them to AM_CFLAGS if it does.
+AC_LANG_PUSH([C])
+AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CFLAGS])
+AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CFLAGS])
+AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CFLAGS])
+AC_LANG_POP([C])
+
 AC_LANG_PUSH([C++])
 
 # Check if the C++ compiler supports a "restrict" variant.
@@ -305,8 +317,6 @@ AC_LANG_PUSH([C++])
 
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does.
-
-# Capture the compile command line in the binary.
 AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
 #AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be. @note Doesn't seem to do anything.
@@ -454,22 +464,6 @@ AS_IF([test $ptsetname != no],
 	[AC_MSG_RESULT([none found])])
 
 AC_LANG_POP([C++])
-
-#AC_LANG_PUSH([C++])
-# At least gcc 4.8.x claims to support C++11, but its std::regex library is mostly stubbed in.
-# Attempt to detect this.  On gcc 4.8.x, std::regex_iterator<> is not defined, which we use anyway, so we'll use that
-# type's existence and linkability as our test.
-#SAVE_CXXFLAGS="$CXXFLAGS"
-#CXXFLAGS="$CXXFLAGS $CXX11_FLAG"
-#AC_MSG_CHECKING([whether C++ <regex> library is usable])
-#AC_LINK_IFELSE(
-#	[AC_LANG_PROGRAM([[#include <regex>]],[[std::regex_iterator<const char *> test;]])],
-#	[AC_MSG_RESULT([yes])],
-#	[AC_MSG_ERROR([std::regex_iterator<> is not defined in your C++ standard library. \
-#gcc < 4.9.0 is known to have this problem.])]
-#	)
-#CXXFLAGS="$SAVE_CXXFLAGS"
-#AC_LANG_POP([C++])
 
 
 ###
