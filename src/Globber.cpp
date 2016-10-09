@@ -136,7 +136,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 		  m_out_queue(out_queue)
 {
 	/// @todo DEBUG - REMOVE
-	m_dirjobs = 1;
+	//m_dirjobs = 1;
 }
 
 void Globber::Run()
@@ -227,8 +227,17 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		/// check for these and use them if they exist.  Note the following though regarding O_NOATIME from the GNU libc
 		/// docs <https://www.gnu.org/software/libc/manual/html_node/Operating-Modes.html#Operating-Modes>:
 		/// "Only the owner of the file or the superuser may use this bit. This is a GNU extension."
-		int fts_options = FTS_LOGICAL | FTS_NOCHDIR /*| FTS_NOSTAT*/;
+		int fts_options = FTS_LOGICAL /*| FTS_NOSTAT*/;
+#if defined(FTS_CWDFD)
+		fts_options |= FTS_CWDFD | FTS_TIGHT_CYCLE_CHECK | FTS_DEFER_STAT | FTS_NOATIME;
+#else
+		fts_options |= FTS_NOCHDIR;
+#endif
 		FTS *fts = fts_open(dirs, fts_options, NULL);
+		if(fts == nullptr)
+		{
+			perror("fts error");
+		}
 		while(FTSENT *ftsent = fts_read(fts))
 		{
 			std::string name;
@@ -303,26 +312,26 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 					if(ftsent->fts_level == FTS_ROOTLEVEL)
 					{
 						// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
-//						if(HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino).m_val))
-//						{
-//							// Found cycle.
-//							WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
-//							fts_set(fts, ftsent, FTS_SKIP);
-//							continue;
-//						}
+						if(HasDirBeenVisited(dev_ino_pair(ftsent).m_val))
+						{
+							// Found cycle.
+							WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
+							fts_set(fts, ftsent, FTS_SKIP);
+							continue;
+						}
 					}
 					if(m_recurse_subdirs && (ftsent->fts_level > FTS_ROOTLEVEL))
 					{
 						if(num_dirs_found_this_loop == 0)
 						{
 							// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
-//							if(HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino).m_val))
-//							{
-//								// Found cycle.
-//								WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
-//								fts_set(fts, ftsent, FTS_SKIP);
-//								continue;
-//							}
+							if(HasDirBeenVisited(dev_ino_pair(ftsent).m_val))
+							{
+								// Found cycle.
+								WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
+								fts_set(fts, ftsent, FTS_SKIP);
+								continue;
+							}
 
 							// Handle this one ourselves.
 							LOG(INFO) << "... subdir, not queuing it up for multithreaded scanning, handling it from same FTS stream.";

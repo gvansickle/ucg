@@ -65,8 +65,8 @@ AC_SUBST([CPU_COUNT])
 
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
-AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra -I\${top_builddir}/third_party/gnulib -I\${top_srcdir}/third_party/gnulib"])
-### @todo AM_CPPFLAGS = -I$(top_builddir)/gnulib -I$(top_srcdir)/gnulib >>> DO WE NEED THIS?
+AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra -I\$(top_builddir)/third_party/gnulib -I\$(top_srcdir)/third_party/gnulib"])
+### @todo AM_CPPFLAGS = -I$(top_builddir)/gnulib -I$(top_srcdir)/gnulib >>> SHOULD THE ABOVE BE IN Makefile.am????
 # By default, compile C and C++ with the maximum possible debugging info and maximum optimization.
 # For debugging, do a "make CXXFLAGS=-O0".
 AC_SUBST([AM_CFLAGS], ["-ggdb3 -O3"])
@@ -81,8 +81,6 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 
 AC_PROG_INSTALL
 AC_PROG_CC_C99
-# Early-Initialize gnulib.
-gl_EARLY
 # Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
@@ -97,6 +95,9 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # of this macro gets released.  See http://lists.gnu.org/archive/html/autoconf-archive-maintainers/2016-03/msg00034.html.
 # @note 2016-10-8 Macro has been updated, trying to change the ordering.
 AX_CXX_COMPILE_STDCXX_11([ext],[mandatory])
+
+# Early-Initialize gnulib.
+gl_EARLY
 
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
@@ -237,11 +238,6 @@ DX_INIT_DOXYGEN([UniversalCodeGrep])
 ### Checks for libraries
 ###
 
-#
-# For gnulib.
-#
-gl_INIT
-
 AC_LANG_PUSH([C++])
 
 # We use libpcre or libpcre2 for regex matching.  As of this writing there are no C++11 implementations
@@ -310,6 +306,12 @@ AC_LANG_POP([C++])
 ### Checks for compiler characteristics.
 ###
 
+AC_LANG_PUSH([C])
+AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CFLAGS])
+AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CFLAGS])
+AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CFLAGS])
+AC_LANG_POP([C])
+
 AC_LANG_PUSH([C++])
 
 # Check if the C++ compiler supports a "restrict" variant.
@@ -318,8 +320,6 @@ AC_LANG_PUSH([C++])
 
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does.
-
-# Capture the compile command line in the binary.
 AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
 #AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be. @note Doesn't seem to do anything.
@@ -468,22 +468,10 @@ AS_IF([test $ptsetname != no],
 
 AC_LANG_POP([C++])
 
-#AC_LANG_PUSH([C++])
-# At least gcc 4.8.x claims to support C++11, but its std::regex library is mostly stubbed in.
-# Attempt to detect this.  On gcc 4.8.x, std::regex_iterator<> is not defined, which we use anyway, so we'll use that
-# type's existence and linkability as our test.
-#SAVE_CXXFLAGS="$CXXFLAGS"
-#CXXFLAGS="$CXXFLAGS $CXX11_FLAG"
-#AC_MSG_CHECKING([whether C++ <regex> library is usable])
-#AC_LINK_IFELSE(
-#	[AC_LANG_PROGRAM([[#include <regex>]],[[std::regex_iterator<const char *> test;]])],
-#	[AC_MSG_RESULT([yes])],
-#	[AC_MSG_ERROR([std::regex_iterator<> is not defined in your C++ standard library. \
-#gcc < 4.9.0 is known to have this problem.])]
-#	)
-#CXXFLAGS="$SAVE_CXXFLAGS"
-#AC_LANG_POP([C++])
-
+#
+# For gnulib.
+#
+gl_INIT
 
 ###
 ### Checks for system services
