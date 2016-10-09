@@ -81,8 +81,6 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 
 AC_PROG_INSTALL
 AC_PROG_CC_C99
-# Early-Initialize gnulib.
-gl_EARLY
 # Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
@@ -97,6 +95,9 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # of this macro gets released.  See http://lists.gnu.org/archive/html/autoconf-archive-maintainers/2016-03/msg00034.html.
 # @note 2016-10-8 Macro has been updated, trying to change the ordering.
 AX_CXX_COMPILE_STDCXX_11([ext],[mandatory])
+
+# Early-Initialize gnulib.
+gl_EARLY
 
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
