@@ -27,7 +27,7 @@
 
 
 # Specification in the form of a command-line invocation:
-#   gnulib-tool --import --lib=libgnu --source-base=third_party/gnulib --m4-base=third_party/gnulib/m4 --doc-base=third_party/gnulib/doc --tests-base=tests --aux-dir=build-aux --conditional-dependencies --libtool --macro-prefix=gl fts
+#   gnulib-tool --import --lib=libgnu --source-base=third_party/gnulib --m4-base=third_party/gnulib/m4 --doc-base=third_party/gnulib/doc --tests-base=tests --aux-dir=build-aux --conditional-dependencies --libtool --macro-prefix=gl --witness-c-macro=HAVE_GNULIB --no-vc-files fts
 
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([])
@@ -46,4 +46,5 @@ gl_CONDITIONAL_DEPENDENCIES
 gl_LIBTOOL
 gl_MACRO_PREFIX([gl])
 gl_PO_DOMAIN([])
-gl_WITNESS_C_MACRO([])
+gl_WITNESS_C_MACRO([HAVE_GNULIB])
+gl_VC_FILES([false])

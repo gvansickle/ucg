@@ -150,6 +150,7 @@ AC_DEFUN([gl_INIT],
   m4_pushdef([gl_LIBSOURCES_DIR], [])
   gl_COMMON
   gl_source_base='third_party/gnulib'
+  m4_pushdef([gl_MODULE_INDICATOR_CONDITION], [HAVE_GNULIB])
   gl_MODULE_INDICATOR_FOR_TESTS([cloexec])
   gl_FUNC_CLOSEDIR
   if test $HAVE_CLOSEDIR = 0 || test $REPLACE_CLOSEDIR = 1; then
@@ -799,6 +800,7 @@ AC_DEFUN([gl_INIT],
   AM_CONDITIONAL([gl_GNULIB_ENABLED_strerror], [$gl_gnulib_enabled_strerror])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_dbb57f49352be8fb86869629a254fb72], [$gl_gnulib_enabled_dbb57f49352be8fb86869629a254fb72])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_string], [$gl_gnulib_enabled_string])
+  m4_popdef([gl_MODULE_INDICATOR_CONDITION])
   # End of code from modules
   m4_ifval(gl_LIBSOURCES_LIST, [
     m4_syscmd([test ! -d ]m4_defn([gl_LIBSOURCES_DIR])[ ||

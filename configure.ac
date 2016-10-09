@@ -306,6 +306,12 @@ AC_LANG_POP([C++])
 ### Checks for compiler characteristics.
 ###
 
+AC_LANG_PUSH([C])
+AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CFLAGS])
+AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CFLAGS])
+AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CFLAGS])
+AC_LANG_POP([C])
+
 AC_LANG_PUSH([C++])
 
 # Check if the C++ compiler supports a "restrict" variant.
@@ -314,8 +320,6 @@ AC_LANG_PUSH([C++])
 
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does.
-
-# Capture the compile command line in the binary.
 AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
 #AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be. @note Doesn't seem to do anything.

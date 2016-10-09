@@ -229,7 +229,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		/// "Only the owner of the file or the superuser may use this bit. This is a GNU extension."
 		int fts_options = FTS_LOGICAL /*| FTS_NOSTAT*/;
 #if defined(FTS_CWDFD)
-		fts_options |= FTS_CWDFD | FTS_DEFER_STAT | FTS_NOATIME;
+		fts_options |= FTS_CWDFD | FTS_TIGHT_CYCLE_CHECK | FTS_DEFER_STAT | FTS_NOATIME;
 #else
 		fts_options |= FTS_NOCHDIR;
 #endif
