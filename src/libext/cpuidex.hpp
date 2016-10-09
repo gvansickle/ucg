@@ -20,6 +20,8 @@
 #ifndef SRC_LIBEXT_CPUIDEX_HPP_
 #define SRC_LIBEXT_CPUIDEX_HPP_
 
+#include <config.h>
+
 /// @name x86-64 extensions
 /// @{
 bool sys_has_sse2() noexcept;

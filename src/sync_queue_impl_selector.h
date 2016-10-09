@@ -24,7 +24,7 @@
 #ifndef SYNC_QUEUE_IMPL_SELECTOR_H
 #define SYNC_QUEUE_IMPL_SELECTOR_H
 
-#include "config.h"
+#include <config.h>
 
 #ifdef USE_SYNC_QUEUE_BOOST
 #include <boost/thread/sync_queue.hpp>

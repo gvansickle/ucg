@@ -17,6 +17,8 @@
 
 /** @file  Portable CPUID-related functionality. */
 
+#include <config.h>
+
 #include "cpuidex.hpp"
 
 #include <cstdint>

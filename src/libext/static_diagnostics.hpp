@@ -20,6 +20,8 @@
 #ifndef SRC_LIBEXT_STATIC_DIAGNOSTICS_HPP_
 #define SRC_LIBEXT_STATIC_DIAGNOSTICS_HPP_
 
+#include <config.h>
+
 /// @name Preprocessor token appending helpers.
 /// These two combined allow the expansion of two preprocessor tokens to be token-pasted.
 ///@{
