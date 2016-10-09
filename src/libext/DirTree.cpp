@@ -82,13 +82,10 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 
 DirTree::DirTree()
 {
-	// TODO Auto-generated constructor stub
-
 }
 
 DirTree::~DirTree()
 {
-	// TODO Auto-generated destructor stub
 }
 
 class AtFD

@@ -98,9 +98,16 @@ const char *argp_program_version = PACKAGE_STRING "\n"
 // Not static, argp.h externs this.
 const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 
-static char doc[] = "ucg: the UniversalCodeGrep code search tool.";
+/**
+ * The pre- and post-opion help text.
+ */
+static const char doc[] = "\nucg: the UniversalCodeGrep code search tool."
+		"\vExit status is 0 if any matches were found, 1 if no matches, 2 or greater on error.";
 
-static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
+/**
+ * The "Usage:" text.
+ */
+static const char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
 /// Keys for options without short-options.
 enum OPT
