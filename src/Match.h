@@ -20,6 +20,8 @@
 #ifndef MATCH_H_
 #define MATCH_H_
 
+#include <config.h>
+
 #include <string>
 #include <type_traits>
 

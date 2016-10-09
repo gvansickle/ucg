@@ -17,12 +17,12 @@
 
 /** @file Macros for compiler optimization hints.  */
 
+#ifndef SRC_LIBEXT_HINTS_HPP_
+#define SRC_LIBEXT_HINTS_HPP_
+
 #include <config.h>
 
 #include <type_traits>
-
-#ifndef SRC_LIBEXT_HINTS_HPP_
-#define SRC_LIBEXT_HINTS_HPP_
 
 #include "static_diagnostics.hpp"
 
@@ -36,10 +36,12 @@
 /// See http://infocenter.arm.com/help/topic/com.arm.doc.dui0472m/chr1359124207681.html.
 /// @note The ARM tools apparently define __promise() in <assert.h>, though it's documented as an intrinsic.
 ///
+#if !defined(assume) && !defined(HAVE_GNULIB)  // Gnulib has a comparable definition.
 #if defined(HAVE___BUILTIN_UNREACHABLE)
 #	define assume(exp)  if(exp) {} else { __builtin_unreachable(); }
 #else
 #	define assume(expr)  /* empty */
+#endif
 #endif
 
 /// @name Linux-like likely() and unlikely() macros.
