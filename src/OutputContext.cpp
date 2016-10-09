@@ -17,6 +17,8 @@
 
 /** @file  */
 
+#include <config.h>
+
 #include "OutputContext.h"
 
 OutputContext::OutputContext(bool output_is_tty, bool enable_color, bool print_column)

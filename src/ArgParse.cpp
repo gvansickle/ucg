@@ -57,7 +57,6 @@
 #include <fcntl.h>
 #include <unistd.h> // for GetUserHomeDir()-->getuid().
 #include <sys/stat.h>
-//#include <libgen.h>   // Don't know where the name "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
 
 #include <libext/string.hpp>
 #include <libext/filesystem.hpp>

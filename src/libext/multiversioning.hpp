@@ -21,6 +21,8 @@
 #ifndef SRC_LIBEXT_MULTIVERSIONING_HPP_
 #define SRC_LIBEXT_MULTIVERSIONING_HPP_
 
+#include <config.h>
+
 #include "static_diagnostics.hpp"
 
 /// @name MULTIVERSION_DECORATOR_<FEATURE> function definition decorators

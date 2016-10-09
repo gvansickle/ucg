@@ -20,6 +20,8 @@
 #ifndef SYNC_QUEUE_H_
 #define SYNC_QUEUE_H_
 
+#include <config.h>
+
 #include <mutex>
 #include <condition_variable>
 #include <queue>
