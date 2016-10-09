@@ -22,6 +22,7 @@
 
 #include <config.h>
 
+#include <fts_.h>
 #include <sys/stat.h>
 #include <sys/types.h> // for dev_t, ino_t
 // Don't know where the name "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
@@ -44,6 +45,9 @@ using dev_ino_pair_type = uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast;
 struct dev_ino_pair
 {
 	dev_ino_pair() = default;
+#if defined(D_INO_IN_DIRENT)
+	dev_ino_pair(FTSENT *ftsent) { m_val = ftsent->fts_statp[0].st_dev; m_val <<= sizeof(ino_t)*8; m_val |= ftsent->fts_statp[0].st_ino; };
+#endif
 	dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
 
 	dev_ino_pair_type m_val { 0 };
