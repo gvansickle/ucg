@@ -17,6 +17,8 @@
 
 /** @file */
 
+#include <config.h>
+
 #include <src/libext/FileID.h>
 #include <iostream>
 #include <string>

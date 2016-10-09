@@ -17,6 +17,8 @@
 
 /** @file */
 
+#include <config.h>
+
 #include "FileScannerCpp11.h"
 
 FileScannerCpp11::FileScannerCpp11(sync_queue<FileID> &in_queue,

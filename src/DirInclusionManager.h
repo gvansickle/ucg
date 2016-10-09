@@ -20,6 +20,8 @@
 #ifndef DIRINCLUSIONMANAGER_H_
 #define DIRINCLUSIONMANAGER_H_
 
+#include <config.h>
+
 #include <string>
 #include <set>
 

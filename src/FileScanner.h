@@ -20,7 +20,7 @@
 #ifndef FILESCANNER_H_
 #define FILESCANNER_H_
 
-#include "config.h"
+#include <config.h>
 
 #include <stdexcept>
 #include <string>

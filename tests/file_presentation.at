@@ -56,13 +56,13 @@ AT_DATA([test_file.cpp.expected],[test_file.cpp
 4:2:	do_something();
 6:5:    do_something_else();
 ])
-
 AT_CHECK([cat test_file.cpp.expected | $PROG_TOHEX > test_file.cpp.expected.hex], [0])
 
-AT_CHECK([( ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something' ) | $PROG_TOHEX > stdout_tty], [0], [stdout], [stderr])
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something'], [0], [stdout], [stderr])
+AT_CHECK([cat stdout | $PROG_TOHEX > stdout_tty.txt.hex], [0])
 AT_CAPTURE_FILE([test_file.cpp.expected.hex])
-AT_CAPTURE_FILE([stdout_tty])
-AT_CHECK([diff test_file.cpp.expected.hex stdout_tty], [0], [stdout], [stderr]) 
+AT_CAPTURE_FILE([stdout_tty.txt.hex])
+AT_CHECK([diff test_file.cpp.expected.hex stdout_tty.txt.hex], [0], [stdout], [stderr])
 
 
 # Check for nocolumn output to a TTY.
