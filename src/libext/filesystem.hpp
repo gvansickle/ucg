@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 #include <sys/types.h> // for dev_t, ino_t
 // Don't know where the name "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
-/// There are two basename()s.  GNU basename, from string.h, and POSIX basename() from libgen.h.
+/// There are two basename()/dirnames()'s.  GNU basename, from string.h, and POSIX basename() from libgen.h.
 /// See notes here: https://linux.die.net/man/3/dirname
 /// Of course they behave slightly differently: GNU version returns an empty string if the path has a trailing slash, and doesn't modify it's argument.
 /// To complicate matters further, the glibc version of the POSIX function versions do modify their args.
@@ -158,6 +158,8 @@ inline std::string dirname(const std::string &path)
 
 	return retval;
 }
+
+/// @todo basename().
 
 }
 
