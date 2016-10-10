@@ -216,6 +216,13 @@ AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])  #<< Automake conditional
 # Autotest needs autom4te, or 'missing's stub for it post-distribution. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
+# Add Valgrind support.
+AX_VALGRIND_DFLT([memcheck], [off])
+AX_VALGRIND_DFLT([helgrind], [off])
+AX_VALGRIND_DFLT([drd], [off])
+AX_VALGRIND_DFLT([sgcheck], [off])
+AX_VALGRIND_CHECK
+
 # Doxygen support.
 DX_DOXYGEN_FEATURE(ON)
 DX_DOT_FEATURE(ON)
@@ -482,7 +489,8 @@ AC_CONFIG_TESTDIR([tests])
 AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 
 ### Valgrind support.
-AH_BOTTOM([#include <valgrind_support.h>])
+### @todo Fix this.
+#AH_BOTTOM([#include <valgrind_support.h>])
 
 ###
 ### Create the Makefiles for the program.

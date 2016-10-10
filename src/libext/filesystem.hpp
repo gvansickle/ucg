@@ -80,11 +80,11 @@ inline std::string dirent_get_name(const dirent* de) noexcept
 {
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 		// struct dirent has a d_namelen field.
-		std::string basename.assign(de->d_name, de->d_namelen);
+		std::string basename(de->d_name, de->d_namelen);
 #elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
 		// We can cheaply determine how much memory we need to allocate for the name.
-		std::string basename(_D_ALLOC_NAMLEN(de), '\0');
-		basename.assign(de->d_name);
+		/// @todo May not have a strnlen(). // std::string basename(_D_ALLOC_NAMLEN(de), '\0');
+		std::string basename(de->d_name, strnlen(de->d_name, _D_ALLOC_NAMLEN(de)));
 #else
 		// All we have is a null-terminated d_name.
 		std::string basename(de->d_name);
