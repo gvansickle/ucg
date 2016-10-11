@@ -104,14 +104,21 @@ void DirTree::Scandir(std::vector<std::string> start_paths,
 	for(auto p : start_paths)
 	{
 		auto file_or_dir = std::make_shared<FileID>(FileID(root_file_id, p));
-		if(file_or_dir->IsRegularFile())
+		auto type = file_or_dir->GetFileType();
+		if(type == FileID::FT_REG)
 		{
 			/// @todo filter-out mechanism?
 			m_out_queue.wait_push(FileID(*file_or_dir));
 		}
-		else if(file_or_dir->IsDir())
+		else if(type == FileID::FT_DIR)
 		{
 			dir_stack.push(file_or_dir);
+		}
+		else if(type == FileID::FT_STAT_FAILED)
+		{
+			// Couldn't get any info on this path.
+			NOTICE() << "Could not get stat info at path \'" << file_or_dir->GetPath() << "\': "
+												<< LOG_STRERROR(errno) << ". Skipping.";
 		}
 	}
 
@@ -131,9 +138,18 @@ void DirTree::Scandir(std::vector<std::string> start_paths,
 			continue;
 		}
 
-		while ((dp = readdir(d)) != NULL)
+		do
 		{
-			ProcessDirent(dse, d, dp, file_basename_filter, dir_basename_filter, dir_stack);
+			errno = 0;
+			if((dp = readdir(d)) != NULL)
+			{
+				ProcessDirent(dse, d, dp, file_basename_filter, dir_basename_filter, dir_stack);
+			}
+		} while(dp != NULL);
+
+		if(errno != 0)
+		{
+			WARN() << "Could not read directory: " << LOG_STRERROR(errno) << ". Skipping.";
 		}
 
 		closedir(d);
@@ -234,7 +250,6 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 			}
 
 			FileID dir_atfd(FileID::path_known_relative, dse, basename, FileID::FT_DIR);
-			/// @todo GRVS THIS IS SEGFAULTING.
 			dir_atfd.SetDevIno(dse->GetDev(), dp->d_ino);
 
 			// We have to detect any symlink cycles ourselves.

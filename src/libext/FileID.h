@@ -59,7 +59,8 @@ public:
 		FT_UNKNOWN,
 		FT_REG,
 		FT_DIR,
-		FT_SYMLINK
+		FT_SYMLINK,
+		FT_STAT_FAILED
 	};
 
 	/// @name Constructors.
@@ -128,6 +129,8 @@ private:
 
 	void LazyLoadStatInfo() const;
 
+	const std::string& UnsyncedGetPath() const;
+
 	/// The absolute path to this file.
 	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
 	mutable std::string m_path;
@@ -158,6 +161,8 @@ private:
 	/// @note POSIX doesn't define the units for this.  Linux is documented to use 512-byte units, as is GNU libc.
 	mutable blkcnt_t m_blocks { 0 };
 	///@}
+
+	static std::mutex sm_mutables_mutex;
 
 };
 

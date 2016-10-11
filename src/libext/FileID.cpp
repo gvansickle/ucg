@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <fts.h>
 
+std::mutex FileID::sm_mutables_mutex;
 
 FileID::FileID(path_known_cwd_tag) : m_basename("."), m_path("."), m_file_descriptor(make_shared_fd(AT_FDCWD)), m_file_type(FT_DIR)
 {
@@ -88,12 +89,18 @@ FileID::~FileID()
 
 const std::string& FileID::GetPath() const
 {
+	std::lock_guard<std::mutex> lg(sm_mutables_mutex);
+	return UnsyncedGetPath();
+}
+
+const std::string& FileID::UnsyncedGetPath() const
+{
 	if(m_path.empty())
 	{
 		// Build the full path.
 		if(!m_at_dir->IsAtFDCWD())
 		{
-			auto at_path = m_at_dir->GetPath();
+			auto at_path = m_at_dir->UnsyncedGetPath();
 			m_path.reserve(at_path.size() + m_basename.size() + 2);
 			m_path = at_path + '/' + m_basename;
 		}
@@ -155,8 +162,8 @@ void FileID::LazyLoadStatInfo() const
 	if(stat(GetPath().c_str(), &stat_buf) != 0)
 	{
 		// Error.
-		/// @todo
-		perror("stat failed");
+		m_file_type = FT_STAT_FAILED;
+		//perror("stat failed");
 	}
 	else
 	{
