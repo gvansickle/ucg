@@ -67,7 +67,7 @@ public:
 	/// @{
 	FileID() = default;
 	FileID(path_known_cwd_tag tag);
-	FileID(const dirent *de);
+	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
@@ -126,6 +126,8 @@ private:
 
 	/// Shared pointer to the directory this FileID is in.
 	std::shared_ptr<FileID> m_at_dir;
+
+	void UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept;
 
 	void LazyLoadStatInfo() const;
 

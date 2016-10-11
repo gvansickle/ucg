@@ -64,9 +64,14 @@ FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
 	}
 }
 
-FileID::FileID(const dirent *de)
+FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf, FileType type)
+	: FileID::FileID(path_known_relative, at_dir_fileid, basename, type)
 {
-
+	// basename is a file relative to at_dir_fileid, and we also have stat info for it.
+	if(stat_buf != nullptr)
+	{
+		UnsyncedSetStatInfo(*stat_buf);
+	}
 }
 
 FileID::FileID(const FTSENT *ftsent): m_path(ftsent->fts_path, ftsent->fts_pathlen)
@@ -148,6 +153,36 @@ void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 	m_unique_file_identifier = dev_ino_pair(d, i);
 }
 
+void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
+{
+	m_stat_info_valid = true;
+
+	// Determine file type.
+	if(S_ISREG(stat_buf.st_mode))
+	{
+		m_file_type = FT_REG;
+	}
+	else if(S_ISDIR(stat_buf.st_mode))
+	{
+		m_file_type = FT_DIR;
+	}
+	else if(S_ISLNK(stat_buf.st_mode))
+	{
+		m_file_type = FT_SYMLINK;
+	}
+	else
+	{
+		// Those are the only types we know or care about.
+		m_file_type = FT_UNKNOWN;
+	}
+
+	m_dev = stat_buf.st_dev;
+	m_unique_file_identifier = dev_ino_pair(stat_buf.st_dev, stat_buf.st_ino);
+	m_size = stat_buf.st_size;
+	m_block_size = stat_buf.st_blksize;
+	m_blocks = stat_buf.st_blocks;
+}
+
 void FileID::LazyLoadStatInfo() const
 {
 	if(IsStatInfoValid())
@@ -166,32 +201,7 @@ void FileID::LazyLoadStatInfo() const
 	}
 	else
 	{
-		m_stat_info_valid = true;
-
-		// Determine file type.
-		if(S_ISREG(stat_buf.st_mode))
-		{
-			m_file_type = FT_REG;
-		}
-		else if(S_ISDIR(stat_buf.st_mode))
-		{
-			m_file_type = FT_DIR;
-		}
-		else if(S_ISLNK(stat_buf.st_mode))
-		{
-			m_file_type = FT_SYMLINK;
-		}
-		else
-		{
-			// Those are the only types we know or care about.
-			m_file_type = FT_UNKNOWN;
-		}
-
-		m_dev = stat_buf.st_dev;
-		m_unique_file_identifier = dev_ino_pair(stat_buf.st_dev, stat_buf.st_ino);
-		m_size = stat_buf.st_size;
-		m_block_size = stat_buf.st_blksize;
-		m_blocks = stat_buf.st_blocks;
+		UnsyncedSetStatInfo(stat_buf);
 	}
 }
 
