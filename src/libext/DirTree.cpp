@@ -104,14 +104,21 @@ void DirTree::Scandir(std::vector<std::string> start_paths,
 	for(auto p : start_paths)
 	{
 		auto file_or_dir = std::make_shared<FileID>(FileID(root_file_id, p));
-		if(file_or_dir->IsRegularFile())
+		auto type = file_or_dir->GetFileType();
+		if(type == FileID::FT_REG)
 		{
 			/// @todo filter-out mechanism?
 			m_out_queue.wait_push(FileID(*file_or_dir));
 		}
-		else if(file_or_dir->IsDir())
+		else if(type == FileID::FT_DIR)
 		{
 			dir_stack.push(file_or_dir);
+		}
+		else if(type == FileID::FT_STAT_FAILED)
+		{
+			// Couldn't get any info on this path.
+			NOTICE() << "Could not get stat info at path \'" << file_or_dir->GetPath() << "\': "
+												<< LOG_STRERROR(errno) << ". Skipping.";
 		}
 	}
 
@@ -131,37 +138,48 @@ void DirTree::Scandir(std::vector<std::string> start_paths,
 			continue;
 		}
 
-		while ((dp = readdir(d)) != NULL)
+		do
 		{
-			ProcessDirent(dse, d, dp, file_basename_filter, dir_basename_filter, dir_stack);
+			errno = 0;
+			if((dp = readdir(d)) != NULL)
+			{
+				ProcessDirent(dse, d, dp, file_basename_filter, dir_basename_filter, dir_stack);
+			}
+		} while(dp != NULL);
+
+		if(errno != 0)
+		{
+			WARN() << "Could not read directory: " << LOG_STRERROR(errno) << ". Skipping.";
 		}
 
 		closedir(d);
 	}
 }
 
-void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* dp,
+void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, struct dirent* current_dirent,
 		const file_basename_filter_type& file_basename_filter,
 		const dir_basename_filter_type& dir_basename_filter,
 		std::queue<std::shared_ptr<FileID>>& dir_stack)
 {
 	bool is_dir {false};
 	bool is_file {false};
+	bool is_symlink {false};
 	bool is_unknown {true};
 
 #ifdef _DIRENT_HAVE_D_TYPE
-	// Reject anything that isn't a directory or a regular file.
+	// Reject anything that isn't a directory, a regular file, or a symlink.
 	// If it's DT_UNKNOWN, we'll have to do a stat to find out.
-	is_dir = (dp->d_type == DT_DIR);
-	is_file = (dp->d_type == DT_REG);
-	is_unknown = (dp->d_type == DT_UNKNOWN);
-	if(!is_file && !is_dir && !is_unknown)
+	is_dir = (current_dirent->d_type == DT_DIR);
+	is_file = (current_dirent->d_type == DT_REG);
+	is_symlink = (current_dirent->d_type == DT_LNK);
+	is_unknown = (current_dirent->d_type == DT_UNKNOWN);
+	if(!is_file && !is_dir && !is_symlink && !is_unknown)
 	{
 		// It's a type we don't care about.
 		return;
 	}
 #endif
-	const char *dname = dp->d_name;
+	const char *dname = current_dirent->d_name;
 	// Skip "." and "..".
 	if(dname[0] == '.' && (dname[1] == 0 || (dname[1] == '.' && dname[2] == 0)))
 	{
@@ -170,17 +188,22 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 	}
 
 	struct stat statbuf;
+	struct stat *statbuff_ptr = nullptr;
 
 	if(is_unknown)
 	{
 		// Stat the filename using the directory as the at-descriptor.
-		fstatat(dirfd(d), dname, &statbuf, AT_NO_AUTOMOUNT);
+		fstatat(dirfd(current_at_dir), dname, &statbuf, AT_NO_AUTOMOUNT);
+		/// @todo Capture this info in the FileID object.
 		is_dir = S_ISDIR(statbuf.st_mode);
 		is_file = S_ISREG(statbuf.st_mode);
-		if(is_dir || is_file)
+		// This shouldn't ever come back as a symlink; fstatat() follows symlinks.
+		is_symlink = S_ISLNK(statbuf.st_mode);
+		if(is_dir || is_file || is_symlink)
 		{
 			is_unknown = false;
 		}
+		statbuff_ptr = &statbuf;
 	}
 
 	// Is the file type still unknown?
@@ -192,10 +215,10 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 
 	// We now know the type for certain.
 	// Is this a file type we're interested in?
-	if(is_file || is_dir)
+	if(is_file || is_dir || is_symlink)
 	{
 		// We'll need the file's basename.
-		std::string basename = dirent_get_name(dp);
+		std::string basename = dirent_get_name(current_dirent);
 
 		if(is_file)
 		{
@@ -212,7 +235,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 
 				LOG(INFO) << "... should be scanned.";
 
-				m_out_queue.wait_push(FileID(FileID::path_known_relative, dse, basename, FileID::FT_REG));
+				m_out_queue.wait_push({FileID::path_known_relative, dse, basename, statbuff_ptr, FileID::FT_REG});
 
 				// Count the number of files we found that were included in the search.
 				///stats.m_num_files_scanned++;
@@ -234,8 +257,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 			}
 
 			FileID dir_atfd(FileID::path_known_relative, dse, basename, FileID::FT_DIR);
-			/// @todo GRVS THIS IS SEGFAULTING.
-			dir_atfd.SetDevIno(dse->GetDev(), dp->d_ino);
+			dir_atfd.SetDevIno(dse->GetDev(), current_dirent->d_ino);
 
 			// We have to detect any symlink cycles ourselves.
 			if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier().m_val))
@@ -247,6 +269,10 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 
 
 			dir_stack.push(std::make_shared<FileID>(dir_atfd));
+		}
+		else if(is_symlink)
+		{
+			WARN() << "FOUND SYMLINK: " << dse->GetPath() << "/" << basename;
 		}
 	}
 }
