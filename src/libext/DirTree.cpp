@@ -163,13 +163,15 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 {
 	bool is_dir {false};
 	bool is_file {false};
+	bool is_symlink {false};
 	bool is_unknown {true};
 
 #ifdef _DIRENT_HAVE_D_TYPE
-	// Reject anything that isn't a directory or a regular file.
+	// Reject anything that isn't a directory, a regular file, or a symlink.
 	// If it's DT_UNKNOWN, we'll have to do a stat to find out.
 	is_dir = (dp->d_type == DT_DIR);
 	is_file = (dp->d_type == DT_REG);
+	is_symlink = (dp->d_type == DT_LNK);
 	is_unknown = (dp->d_type == DT_UNKNOWN);
 	if(!is_file && !is_dir && !is_unknown)
 	{
@@ -191,9 +193,12 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 	{
 		// Stat the filename using the directory as the at-descriptor.
 		fstatat(dirfd(d), dname, &statbuf, AT_NO_AUTOMOUNT);
+		/// @todo Capture this info in the FileID object.
 		is_dir = S_ISDIR(statbuf.st_mode);
 		is_file = S_ISREG(statbuf.st_mode);
-		if(is_dir || is_file)
+		// This shouldn't ever come back as a symlink; fstatat() follows symlinks.
+		is_symlink = S_ISLNK(statbuf.st_mode);
+		if(is_dir || is_file || is_symlink)
 		{
 			is_unknown = false;
 		}
@@ -208,7 +213,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 
 	// We now know the type for certain.
 	// Is this a file type we're interested in?
-	if(is_file || is_dir)
+	if(is_file || is_dir || is_symlink)
 	{
 		// We'll need the file's basename.
 		std::string basename = dirent_get_name(dp);
@@ -262,6 +267,10 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent* 
 
 
 			dir_stack.push(std::make_shared<FileID>(dir_atfd));
+		}
+		else if(is_symlink)
+		{
+			WARN() << "FOUND SYMLINK: " << dse->GetPath() << "/" << basename;
 		}
 	}
 }

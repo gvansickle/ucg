@@ -163,7 +163,6 @@ void FileID::LazyLoadStatInfo() const
 	{
 		// Error.
 		m_file_type = FT_STAT_FAILED;
-		//perror("stat failed");
 	}
 	else
 	{
