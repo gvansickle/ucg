@@ -43,7 +43,7 @@ libtool: $(LIBTOOL_DEPS)
 bin_PROGRAMS=ucg
 ucg_SOURCES=main.cpp build_info.h
 nodist_ucg_SOURCES=build_info.cpp
-CLEANFILES+=build_info.cpp
+CLEANFILES += build_info.cpp
 ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
 ucg_CFLAGS = $(AM_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS)
@@ -84,6 +84,10 @@ verify-provenance:
 		exit 1; \
 	fi;
 
+# Valgrind rules.
+@VALGRIND_CHECK_RULES@
+#VALGRIND_SUPPRESSIONS_FILES = ## No suppressions currently.
+#EXTRA_DIST = ## No suppressions currently.
 	
 # Doxygen rules
 @DX_RULES@

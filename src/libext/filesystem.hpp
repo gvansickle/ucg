@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 #include <sys/types.h> // for dev_t, ino_t
 // Don't know where the name "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
-/// There are two basename()/dirnames()'s.  GNU basename, from string.h, and POSIX basename() from libgen.h.
+/// There are two basename()s.  GNU basename, from string.h, and POSIX basename() from libgen.h.
 /// See notes here: https://linux.die.net/man/3/dirname
 /// Of course they behave slightly differently: GNU version returns an empty string if the path has a trailing slash, and doesn't modify it's argument.
 /// To complicate matters further, the glibc version of the POSIX function versions do modify their args.
@@ -80,7 +80,7 @@ struct dev_ino_pair
 };
 
 /**
- * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as posible.
+ * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as possible.
  *
  * @param de
  * @return
@@ -89,11 +89,11 @@ inline std::string dirent_get_name(const dirent* de) noexcept
 {
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 		// struct dirent has a d_namelen field.
-		std::string basename.assign(de->d_name, de->d_namelen);
+		std::string basename(de->d_name, de->d_namelen);
 #elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
 		// We can cheaply determine how much memory we need to allocate for the name.
-		std::string basename(_D_ALLOC_NAMLEN(de), '\0');
-		basename.assign(de->d_name);
+		/// @todo May not have a strnlen(). // std::string basename(_D_ALLOC_NAMLEN(de), '\0');
+		std::string basename(de->d_name, strnlen(de->d_name, _D_ALLOC_NAMLEN(de)));
 #else
 		// All we have is a null-terminated d_name.
 		std::string basename(de->d_name);

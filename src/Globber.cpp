@@ -69,6 +69,9 @@ std::string ftsent_path(FTSENT*p)
 	}
 }
 
+/**
+ * @todo OBSOLETE, REMOVE.
+ */
 class ExtraFTSENTDirInfo
 {
 public:
