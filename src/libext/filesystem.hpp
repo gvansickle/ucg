@@ -79,12 +79,14 @@ struct dev_ino_pair
 	dev_ino_pair_type m_val { 0 };
 };
 
+
 /**
  * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as possible.
  *
  * @param de
  * @return
  */
+inline std::string dirent_get_name(const dirent* de) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 inline std::string dirent_get_name(const dirent* de) noexcept
 {
 #if defined(_DIRENT_HAVE_D_NAMLEN)
@@ -92,8 +94,13 @@ inline std::string dirent_get_name(const dirent* de) noexcept
 		std::string basename(de->d_name, de->d_namelen);
 #elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
 		// We can cheaply determine how much memory we need to allocate for the name.
-		/// @todo May not have a strnlen(). // std::string basename(_D_ALLOC_NAMLEN(de), '\0');
+#if defined(HAVE_STRNLEN)
+		// If we have strnlen(), it should be faster than strlen().
 		std::string basename(de->d_name, strnlen(de->d_name, _D_ALLOC_NAMLEN(de)));
+#else
+		// No strnlen.  Even if we have a _D_ALLOC_NAMLEN, there isn't much we can do with it here.
+		std::string basename(de->d_name);
+#endif
 #else
 		// All we have is a null-terminated d_name.
 		std::string basename(de->d_name);
@@ -102,6 +109,8 @@ inline std::string dirent_get_name(const dirent* de) noexcept
 	// RVO should optimize this.
 	return basename;
 }
+
+
 /**
  * Checks two file descriptors (file, dir, whatever) and checks if they are referring to the same entity.
  *

@@ -400,6 +400,8 @@ AC_LANG_POP([C++])
 AC_LANG_PUSH([C++])
 
 AC_FUNC_STRNLEN
+AS_IF([test "$ac_cv_func_strnlen_working" = "yes"],
+	[AC_DEFINE([HAVE_STRNLEN], [1], [Defined if strnlen() exists and is not broken.])])
 
 # There's an issue with at least Cygwin's std lib and/or gcc itself which makes to_string() unavailable
 # (see e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580 (fixed on gcc trunk 2015-11-13),
@@ -491,7 +493,7 @@ AC_CONFIG_TESTDIR([tests])
 AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 
 ### Valgrind support.
-### @todo Fix this.
+### @todo Put this in.
 #AH_BOTTOM([#include <valgrind_support.h>])
 
 ###
