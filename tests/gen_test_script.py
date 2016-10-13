@@ -41,7 +41,7 @@ test_script_template_1 = Template("""\
 NUM_ITERATIONS=${num_iterations};
 
 # Make sure we have a time program.
-if test "x$$PROG_TIME" = "x";
+if test "x$$PROG_TIME" = "x:";
 then
     PROG_TIME='time -p'
 fi;

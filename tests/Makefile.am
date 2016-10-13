@@ -159,9 +159,9 @@ $(srcdir)/TC4.sh : $(BENCHMARK_SCRIPT_DEPS)
 	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC4 "$${builddir}/500MBLoremIpsum.cpp" -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
 $(srcdir)/TC5.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC5 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC5 '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
 $(srcdir)/TC6.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC6 --opt=exclude_dir_literal=docs $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC6 --opt=exclude_dir_literal=docs '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 	
 endif
