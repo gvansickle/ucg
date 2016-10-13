@@ -141,6 +141,11 @@ BENCHMARK_SCRIPT_DEPS = gen_test_script.py stats.awk \
 
 dist_check_SCRIPTS = $(BENCHMARKSCRIPTS)
 
+# Conditional around the TCn.sh rebuild rules.
+# @todo This is a bit of a hack intended to prevent these distributed scripts from being rebuilt from a tarball,
+#       but obviously won't work if the builder does have Python.  Fix this. 
+if HAVE_PYTHON
+
 $(srcdir)/TC1.sh : $(BENCHMARK_SCRIPT_DEPS)
 	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC1 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
@@ -159,3 +164,4 @@ $(srcdir)/TC5.sh : $(BENCHMARK_SCRIPT_DEPS)
 $(srcdir)/TC6.sh : $(BENCHMARK_SCRIPT_DEPS)
 	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC6 --opt=exclude_dir_literal=docs $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 	
+endif
