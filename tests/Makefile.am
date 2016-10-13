@@ -19,10 +19,11 @@
 
 EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in \
 	gen_test_script.py stats.awk \
-	benchmark_progs.csv opts_defs.csv test_cases.csv
+	benchmark_progs.csv opts_defs.csv test_cases.csv \
+	$(BENCHMARKSCRIPTS)
 CLEANFILES = perf_test_results.txt
 DISTCLEANFILES = atconfig
-MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
+MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE) $(BENCHMARKSCRIPTS)
 
 ###
 ### Dummy file generator exe.
@@ -35,7 +36,12 @@ dummy_file_gen_CFLAGS = $(AM_CFLAGS)
 dummy_file_gen_CXXFLAGS = $(AM_CXXFLAGS)
 dummy_file_gen_LDFLAGS = $(AM_LDFLAGS)
 
-BENCHMARKSCRIPTS = TC1.sh TC2.sh TC3.sh TC4.sh TC5.sh TC6.sh
+BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
+	$(srcdir)/TC2.sh \
+	$(srcdir)/TC3.sh \
+	$(srcdir)/TC4.sh \
+	$(srcdir)/TC5.sh \
+	$(srcdir)/TC6.sh
 
      
 # This line appears in the Autoconf/Autotest manual, but see configure.ac.
@@ -132,6 +138,8 @@ installcheck-local: atconfig atlocal $(TESTSUITE)
 
 BENCHMARK_SCRIPT_DEPS = gen_test_script.py stats.awk \
 	benchmark_progs.csv opts_defs.csv test_cases.csv Makefile.am
+
+dist_check_SCRIPTS = $(BENCHMARKSCRIPTS)
 
 $(srcdir)/TC1.sh : $(BENCHMARK_SCRIPT_DEPS)
 	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC1 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
