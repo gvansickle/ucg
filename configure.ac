@@ -212,6 +212,7 @@ AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 ### not a maintainer-only tool.  My hope is that this will soon become a pre-"make distcheck" requirement.
 AM_PATH_PYTHON([2.7],,[:])
 AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])  #<< Automake conditional for skipping tests which require python.
+AX_PYTHON_MODULE([sqlite3],,[python])
 
 # Autotest needs autom4te, or 'missing's stub for it post-distribution. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
@@ -400,7 +401,7 @@ AC_LANG_POP([C++])
 AC_LANG_PUSH([C++])
 
 AC_FUNC_STRNLEN
-AS_IF([test "$ac_cv_func_strnlen_working" = "yes"],
+AS_IF([test "x$ac_cv_func_strnlen_working" = "xyes"],
 	[AC_DEFINE([HAVE_STRNLEN], [1], [Defined if strnlen() exists and is not broken.])])
 
 # There's an issue with at least Cygwin's std lib and/or gcc itself which makes to_string() unavailable
