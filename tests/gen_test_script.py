@@ -61,6 +61,8 @@ if test "x$$PROG_TIME" = "x:";
 then
     PROG_TIME='time -p'
 fi;
+### @todo
+PROG_TIME="$$builddir/portable_time -p"
 
 echo "Starting performance tests, results file is '${results_file}'";
 
