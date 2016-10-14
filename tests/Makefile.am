@@ -29,13 +29,25 @@ MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE) $(BENCHMARKSCRIPTS)
 ### Dummy file generator exe.
 ### Only built during a "make check", and not installed.
 ###
-check_PROGRAMS = dummy-file-gen
+check_PROGRAMS = dummy-file-gen portable_time
 dummy_file_gen_SOURCES = dummy-file-gen.cpp lorem_ipsum.hpp
 dummy_file_gen_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
 dummy_file_gen_CFLAGS = $(AM_CFLAGS)
 dummy_file_gen_CXXFLAGS = $(AM_CXXFLAGS)
 dummy_file_gen_LDFLAGS = $(AM_LDFLAGS)
 
+###
+### Portable time utility.
+###
+portable_time_SOURCES = portable_time.cpp
+portable_time_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
+portable_time_CFLAGS = $(AM_CFLAGS)
+portable_time_CXXFLAGS = $(AM_CXXFLAGS)
+portable_time_LDFLAGS = $(AM_LDFLAGS)
+
+###
+### Benchmark scripts.  These are maintainer-built source.
+###
 BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
 	$(srcdir)/TC2.sh \
 	$(srcdir)/TC3.sh \

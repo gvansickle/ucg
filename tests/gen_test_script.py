@@ -36,15 +36,14 @@ from string import Template
 test_script_template_1 = Template("""\
 #!/bin/sh
 
-# GENERATED FILE, DO NOT EDIT
+###
+### GENERATED FILE, DO NOT EDIT
+###
 
 NUM_ITERATIONS=${num_iterations};
 
-# Make sure we have a time program.
-if test "x$$PROG_TIME" = "x:";
-then
-    PROG_TIME='time -p'
-fi;
+# Use our own time program so we don't have to worry about portability.
+PROG_TIME="$$builddir/portable_time -p"
 
 echo "Starting performance tests, results file is '${results_file}'";
 
@@ -53,7 +52,9 @@ ${test_cases}
 """)
 
 prog_run_template = Template("""\
-# Start of test run for ${prog_id}/${prog_path}.
+###
+### Start of test run for ${prog_id}, '${prog_path}'.
+###
 
 # First check to make sure this program is available on the system.
 if command -v "${prog_path}" >/dev/null 2>&1;
@@ -143,17 +144,17 @@ class TestGenDatabase(object):
         c = self.dbconnection.cursor()
                 
         # Do a cartesian join.
-        c.execute("""CREATE TABLE {} AS SELECT test_cases.test_case_id, progsundertest.prog_id, progsundertest.exename, progsundertest.pre_options,
-                coalesce(progsundertest.opt_dirjobs, '') as opt_dirjobs, coalesce(test_cases.regex,'') || "   " || coalesce(test_cases.corpus,'') AS CombinedColumnsTest
+        c.execute("""CREATE TABLE {} AS SELECT test_cases.test_case_id, benchmark_progs.prog_id, benchmark_progs.exename, benchmark_progs.pre_options,
+                coalesce(benchmark_progs.opt_dirjobs, '') as opt_dirjobs, coalesce(test_cases.regex,'') || "   " || coalesce(test_cases.corpus,'') AS CombinedColumnsTest
             FROM test_cases
-            CROSS JOIN progsundertest
+            CROSS JOIN benchmark_progs
             """.format(output_table_name))
 
     def generate_tests_type_1(self, output_table_name=None):
         c = self.dbconnection.cursor()
         c.execute("""CREATE TABLE {} AS
         SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, o.opt_expansion, t.regex, t.corpus
-        FROM test_cases AS t CROSS JOIN progsundertest as p
+        FROM test_cases AS t CROSS JOIN benchmark_progs as p
         INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
         """.format(output_table_name))
         return c
@@ -165,17 +166,16 @@ class TestGenDatabase(object):
     def generate_tests_type_2(self, opts=None, output_table_name=None):
         c = self.dbconnection.cursor()
         select_opts = ""
-        select_opts += "o.opt_expansion, "
+        select_opts += "coalesce(o.opt_expansion, '') "
         for opt in opts:
             print("opt: " + opt)
             (opt_id, opt_val) = self.parse_opt(opt)
+            select_opts += """|| " " || coalesce(p.opt_""" + opt_id + """, '')"""
             if opt_val:
-                select_opts += "p.opt_" + opt_id + " || \"" + opt_val + "\","
-            else:
-                select_opts += "p.opt_" + opt_id + ","
+                select_opts += ' || "' + opt_val + '"'
         select_string = """CREATE TABLE {} AS
-        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, {} t.regex, t.corpus
-        FROM test_cases AS t CROSS JOIN progsundertest as p
+        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, {} AS other_options, t.regex, t.corpus
+        FROM test_cases AS t CROSS JOIN benchmark_progs as p
         INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
         """.format(output_table_name, select_opts)
         c.execute(select_string)
@@ -239,7 +239,7 @@ class TestGenDatabase(object):
             cmd_line=cmd_line_template.substitute(
                 prog=row['exename'],
                 pre_params=row['pre_options'],
-                opt_only_type=row['opt_expansion'],
+                opt_only_type=row['other_options'],
                 regex=row['regex'],
                 corpus=row['corpus']
                 )
@@ -274,9 +274,9 @@ class TestGenDatabase(object):
     def LoadDatabaseFiles(self, csv_dir=None):
         print("sqlite3 lib version: {}".format(sqlite3.sqlite_version), file=sys.stderr)
         self.read_csv_into_table(table_name="opts_defs", filename=csv_dir+'/opts_defs.csv', prim_key='opt_id')
-        self.read_csv_into_table(table_name="progsundertest", filename=csv_dir+'/benchmark_progs.csv',
+        self.read_csv_into_table(table_name="benchmark_progs", filename=csv_dir+'/benchmark_progs.csv',
                                  foreign_key_tuples=[("opt_only_cpp", "opts_defs(opt_id)")])
-        #self.PrintTable("progsundertest")
+        #self.PrintTable("benchmark_progs")
         self.read_csv_into_table(table_name="test_cases", filename=csv_dir+'/test_cases.csv')
         self._select_data("benchmark_1")
         #self.PrintTable("benchmark_1")
