@@ -36,7 +36,23 @@ from string import Template
 test_script_template_1 = Template("""\
 #!/bin/sh
 
-# GENERATED FILE, DO NOT EDIT
+###
+### GENERATED FILE, DO NOT EDIT
+###
+
+# Dump the environment for debug purposes.
+#env >> ${results_file};
+### pwd=/<...>/UCGTopSrcDir/build/tests/testsuite.dir/39
+### srcdir=../../../../tests <== This will get you to the srcdir of the test's *.at file at test run time.
+### top_srcdir=../../../.. <== This will get you to the real top_srcdir relative to the test's CWD at test runtime.
+### builddir=../.. <== This will get you to /<..>/UCGTopBuildDir/tests from the CWD at test runtime. 
+### abs_builddir=/<...>/UCGTopSrcDir/build/tests
+### at_top_srcdir=../..
+:;{
+    echo "pwd: $$(pwd)";
+    echo "srcdir: $$srcdir // $$(readlink -f $$srcdir)";
+    echo "builddir: $$builddir // $$(readlink -f $$builddir)"; 
+} >> ${results_file}
 
 NUM_ITERATIONS=${num_iterations};
 
@@ -53,7 +69,9 @@ ${test_cases}
 """)
 
 prog_run_template = Template("""\
-# Start of test run for ${prog_id}/${prog_path}.
+###
+### Start of test run for ${prog_id}, '${prog_path}'.
+###
 
 # First check to make sure this program is available on the system.
 if command -v "${prog_path}" >/dev/null 2>&1;

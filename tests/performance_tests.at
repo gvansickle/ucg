@@ -60,7 +60,7 @@ m4_define([AXUCG_SOURCE], [.])
 ### Start of the performance tests.
 ### @todo Probably should change terminology to "benchmarks" throughout.
 ###
-AT_BANNER([UniversalCodeGrep performance tests])
+AT_BANNER([UniversalCodeGrep Benchmarks])
 
 #
 # Create the logfile.

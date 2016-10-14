@@ -159,8 +159,9 @@ AS_IF([test "$LN_S" = 'ln -s'],
 	AC_MSG_WARN([couldn't find a real 'ln -s', will not be able to run all tests])])
 	
 # Find a usable "time" command.
+if false; then
 AC_CACHE_CHECK([for suitable time command], [ac_cv_path_PROG_TIME],
-	[AC_PATH_PROGS_FEATURE_CHECK([PROG_TIME], [time],
+	[AC_PATH_PROGS_FEATURE_CHECK([PROG_TIME], [tyime 'eval time -p'],
 		[for posix_option in '' '-p'; do
 	   			timeout=`{ $ac_path_PROG_TIME $posix_option echo hello ; } 2>&1 | $EGREP 'real[[^0123456789]]+[[0123456789\.]]+$'`
 	    	test "x$timeout" != x \
@@ -171,6 +172,9 @@ AC_CACHE_CHECK([for suitable time command], [ac_cv_path_PROG_TIME],
 		])
 	])
 AC_SUBST([PROG_TIME], [$ac_cv_path_PROG_TIME])
+fi;
+AC_SUBST([PROG_TIME], ['eval time -p'])
+
 
 # Try to find GNU grep.
 AC_CACHE_CHECK([for GNU grep], [ac_cv_path_PROG_GNU_GREP],
