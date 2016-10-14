@@ -158,24 +158,6 @@ AS_IF([test "$LN_S" = 'ln -s'],
 	[AC_SUBST([TEST_LN_S], [:])
 	AC_MSG_WARN([couldn't find a real 'ln -s', will not be able to run all tests])])
 	
-# Find a usable "time" command.
-if false; then
-AC_CACHE_CHECK([for suitable time command], [ac_cv_path_PROG_TIME],
-	[AC_PATH_PROGS_FEATURE_CHECK([PROG_TIME], [tyime 'eval time -p'],
-		[for posix_option in '' '-p'; do
-	   			timeout=`{ $ac_path_PROG_TIME $posix_option echo hello ; } 2>&1 | $EGREP 'real[[^0123456789]]+[[0123456789\.]]+$'`
-	    	test "x$timeout" != x \
-	    	&& ac_cv_path_PROG_TIME="$ac_path_PROG_TIME $posix_option" ac_path_PROG_TIME_found=: && break
-			done;],
-		[	ac_cv_path_PROG_TIME=time
-			AC_MSG_WARN([could not find a POSIX-compiant time command; some tests may fail])
-		])
-	])
-AC_SUBST([PROG_TIME], [$ac_cv_path_PROG_TIME])
-fi;
-AC_SUBST([PROG_TIME], ['eval time -p'])
-
-
 # Try to find GNU grep.
 AC_CACHE_CHECK([for GNU grep], [ac_cv_path_PROG_GNU_GREP],
 [
@@ -216,7 +198,7 @@ AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 ### not a maintainer-only tool.  My hope is that this will soon become a pre-"make distcheck" requirement.
 AM_PATH_PYTHON([2.7],,[:])
 AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])  #<< Automake conditional for skipping tests which require python.
-AX_PYTHON_MODULE([sqlite3],,[python])
+AM_COND_IF([HAVE_PYTHON], [AX_PYTHON_MODULE([sqlite3],,[python])], [])
 
 # Autotest needs autom4te, or 'missing's stub for it post-distribution. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])

@@ -40,28 +40,9 @@ test_script_template_1 = Template("""\
 ### GENERATED FILE, DO NOT EDIT
 ###
 
-# Dump the environment for debug purposes.
-#env >> ${results_file};
-### pwd=/<...>/UCGTopSrcDir/build/tests/testsuite.dir/39
-### srcdir=../../../../tests <== This will get you to the srcdir of the test's *.at file at test run time.
-### top_srcdir=../../../.. <== This will get you to the real top_srcdir relative to the test's CWD at test runtime.
-### builddir=../.. <== This will get you to /<..>/UCGTopBuildDir/tests from the CWD at test runtime. 
-### abs_builddir=/<...>/UCGTopSrcDir/build/tests
-### at_top_srcdir=../..
-:;{
-    echo "pwd: $$(pwd)";
-    echo "srcdir: $$srcdir // $$(readlink -f $$srcdir)";
-    echo "builddir: $$builddir // $$(readlink -f $$builddir)"; 
-} >> ${results_file}
-
 NUM_ITERATIONS=${num_iterations};
 
-# Make sure we have a time program.
-if test "x$$PROG_TIME" = "x:";
-then
-    PROG_TIME='time -p'
-fi;
-### @todo
+# Use our own time program so we don't have to worry about portability.
 PROG_TIME="$$builddir/portable_time -p"
 
 echo "Starting performance tests, results file is '${results_file}'";
