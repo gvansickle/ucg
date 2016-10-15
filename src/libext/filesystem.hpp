@@ -22,6 +22,7 @@
 
 #include <config.h>
 
+#include <cstdio>  // For perror() on FreeBSD.
 #include <fcntl.h> // For openat() etc.
 #include <unistd.h> // For close().
 #include <sys/stat.h>
