@@ -44,10 +44,10 @@ bin_PROGRAMS=ucg
 ucg_SOURCES=main.cpp build_info.h
 nodist_ucg_SOURCES=build_info.cpp
 CLEANFILES += build_info.cpp
-ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
-ucg_CFLAGS = $(AM_CFLAGS)
-ucg_CXXFLAGS = $(AM_CXXFLAGS)
-ucg_LDFLAGS = $(AM_LDFLAGS)
+ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) $(PCRE_CPPFLAGS) $(PCRE2_CPPFLAGS)
+ucg_CFLAGS = $(AM_CFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
+ucg_CXXFLAGS = $(AM_CXXFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
+ucg_LDFLAGS = $(AM_LDFLAGS) $(PCRE_LIBS) $(PCRE2_LIBS)
 ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la
 
 # Collect some make-time info. 
@@ -85,7 +85,8 @@ verify-provenance:
 	fi;
 
 # Valgrind rules.
-@VALGRIND_CHECK_RULES@
+# @todo Note that this expands to GNU-make-only constructs, which fails on the BSDs.
+#@VALGRIND_CHECK_RULES@
 #VALGRIND_SUPPRESSIONS_FILES = ## No suppressions currently.
 #EXTRA_DIST = ## No suppressions currently.
 	

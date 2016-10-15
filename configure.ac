@@ -196,19 +196,22 @@ AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 # Python, for generation of test suite.
 ### @note Python >= 2.7 is actually required to run the benchmarks in the testsuite at the moment, and hence is 
 ### not a maintainer-only tool.  My hope is that this will soon become a pre-"make distcheck" requirement.
-AM_PATH_PYTHON([2.7],,[:])
-AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])  #<< Automake conditional for skipping tests which require python.
-AM_COND_IF([HAVE_PYTHON], [AX_PYTHON_MODULE([sqlite3],,[python])], [])
+AM_PATH_PYTHON([2.7],,)
+AM_CONDITIONAL([HAVE_PYTHON], [test "x$PYTHON" != "x"])  #<< Automake conditional for skipping tests which require python.
+AM_COND_IF([HAVE_PYTHON],
+	[AX_PYTHON_MODULE([sqlite3],,[python])],
+	[AM_MISSING_PROG([python], [PYTHON])])
 
 # Autotest needs autom4te, or 'missing's stub for it post-distribution. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 # Add Valgrind support.
-AX_VALGRIND_DFLT([memcheck], [off])
-AX_VALGRIND_DFLT([helgrind], [off])
-AX_VALGRIND_DFLT([drd], [off])
-AX_VALGRIND_DFLT([sgcheck], [off])
-AX_VALGRIND_CHECK
+# @todo Note that this expands to GNU-make-only constructs, which fails on the BSDs.
+#AX_VALGRIND_DFLT([memcheck], [off])
+#AX_VALGRIND_DFLT([helgrind], [off])
+#AX_VALGRIND_DFLT([drd], [off])
+#AX_VALGRIND_DFLT([sgcheck], [off])
+#AX_VALGRIND_CHECK
 
 # Doxygen support.
 DX_DOXYGEN_FEATURE(ON)
@@ -234,23 +237,19 @@ AC_LANG_PUSH([C++])
 # or even exist (clang has no Linux <regex> support) for production use.
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 	[
-		AC_SUBST([HAVE_LIBPCRE],[yes])
+		# Found it.  Remember to add $PCRE_LIBS, $PCRE_CFLAGS, and $PCRE_CPPFLAGS to the appropriate automake vars.
+		AC_SUBST([HAVE_LIBPCRE], [yes])
 		AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])
 	],
 	[AC_MSG_WARN([Unable to find libpcre: $PCRE_PKG_ERRORS])])
-AC_MSG_NOTICE([PCRE_LIBS=${PCRE_LIBS}])
-AC_MSG_NOTICE([PCRE_CFLAGS=${PCRE_CFLAGS}])
-CPPFLAGS="$PCRE_CFLAGS $CPPFLAGS"
-LIBS="$PCRE_LIBS $LIBS"
 
 PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.0],
 	[
-		AC_SUBST([HAVE_LIBPCRE2],[yes])
+		# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
+		AC_SUBST([HAVE_LIBPCRE2], [yes])
 		AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
 	],
 	[AC_MSG_WARN([Unable to find libpcre2: $PCRE2_PKG_ERRORS])])
-CPPFLAGS="$PCRE2_CFLAGS $CPPFLAGS"
-LIBS="$PCRE2_LIBS $LIBS"
 
 # Make sure we found at least one of them.
 AS_IF([test "x$HAVE_LIBPCRE" = x -a "x$HAVE_LIBPCRE2" = x],
