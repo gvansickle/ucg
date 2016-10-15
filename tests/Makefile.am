@@ -153,27 +153,26 @@ BENCHMARK_SCRIPT_DEPS = gen_test_script.py stats.awk \
 
 dist_check_SCRIPTS = $(BENCHMARKSCRIPTS)
 
-# Conditional around the TCn.sh rebuild rules.
-# @todo This is a bit of a hack intended to prevent these distributed scripts from being rebuilt from a tarball,
-#       but obviously won't work if the builder does have Python.  Fix this. 
-if HAVE_PYTHON
+# The TCn.sh rebuild rules.
+# These files should only ever need to be built pre-"make dist", and should never need to be
+# regenerated from a tarball.  Hence, we're using the $(MAINTPYTHON) variable here, which is either
+# a python interpreter or the "missing" script.
 
 $(srcdir)/TC1.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC1 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC1 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
 $(srcdir)/TC2.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC2 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC2 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
 $(srcdir)/TC3.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC3 "$${builddir}/500MBLoremIpsum.cpp" -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC3 "$${builddir}/500MBLoremIpsum.cpp" -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
 $(srcdir)/TC4.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC4 "$${builddir}/500MBLoremIpsum.cpp" -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC4 "$${builddir}/500MBLoremIpsum.cpp" -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
 $(srcdir)/TC5.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC5 '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC5 '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
 $(srcdir)/TC6.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(PYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC6 --opt=exclude_dir_literal=docs '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
-	
-endif
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC6 --opt=exclude_dir_literal=docs '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+
