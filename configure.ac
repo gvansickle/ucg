@@ -108,6 +108,16 @@ AM_PROG_AR
 LT_INIT([static disable-shared])
 AC_SUBST([LIBTOOL_DEPS])
 
+AC_MSG_NOTICE([START])
+_KPSE_USE_LIBTOOL
+#LT_OUTPUT
+AC_MSG_NOTICE([libtool info:
+sys_lib_search_path_spec:   $sys_lib_search_path_spec
+sys_lib_dlsearch_path_spec: $sys_lib_dlsearch_path_spec
+runpath_var:                $runpath_var
+])
+AC_MSG_NOTICE([END])
+
 PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED
 # Find the sed option which turns on Extended Regular Expressions.
