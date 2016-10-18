@@ -93,7 +93,7 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # NOTE: The odd-looking ordering here (this before AC_PROG_CXXCPP) is required until the next version
 # of this macro gets released.  See http://lists.gnu.org/archive/html/autoconf-archive-maintainers/2016-03/msg00034.html.
 # @note 2016-10-8 Macro has been updated, trying to change the ordering.
-AX_CXX_COMPILE_STDCXX_11([ext],[mandatory])
+AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 

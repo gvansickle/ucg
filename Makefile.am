@@ -99,6 +99,10 @@ MOSTLYCLEANFILES+=$(DX_CLEANFILES)
 ## Distribution. ##
 ## ------------- ##
 
-# .tarball-version should only ever exist in a distribution tarball.
+# Hook the "make dist" target to generate a ".tarball-version" file in the root dir of the tarball.
+# This .tarball-version file contains the repo version info corresponding to the repo from which the tarball was
+# built.  It should only ever exist in a distribution tarball (and the source tree extracted from that tarball).
+# if it for some reason exists in the working directory of a repo, that's an error, and it will be caught above in the
+# "verify-provenance" rule.
 dist-hook:
-	echo -n "$$(cd $(top_srcdir) && git describe --long --dirty | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
+	$(ECHO_N) "$$(cd $(top_srcdir) && git describe --long --dirty --always | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
