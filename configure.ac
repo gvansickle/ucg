@@ -59,10 +59,6 @@ AM_INIT_AUTOMAKE([1.14
 # @note Must be done before LT_INIT, or it will complain.
 AC_USE_SYSTEM_EXTENSIONS
 
-# Determine how many CPUs we have on the build machine.
-AX_COUNT_CPUS([], [])
-AC_SUBST([CPU_COUNT])
-
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
 AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
@@ -107,16 +103,6 @@ AM_PROG_AR
 # Initialize Libtool.
 LT_INIT([static disable-shared])
 AC_SUBST([LIBTOOL_DEPS])
-
-AC_MSG_NOTICE([START])
-_KPSE_USE_LIBTOOL
-#LT_OUTPUT
-AC_MSG_NOTICE([libtool info:
-sys_lib_search_path_spec:   $sys_lib_search_path_spec
-sys_lib_dlsearch_path_spec: $sys_lib_dlsearch_path_spec
-runpath_var:                $runpath_var
-])
-AC_MSG_NOTICE([END])
 
 PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED
@@ -509,3 +495,17 @@ AC_CONFIG_FILES([Makefile
 	third_party/Makefile])
 AC_OUTPUT
 
+# Print a configure summary.
+AC_MSG_NOTICE([
+*** Configuration Summary ***
+
+  C compiler:                 $CC
+  C++ compiler:               $CXX
+  
+  libtool info
+  ------------
+  sys_lib_search_path_spec:   $sys_lib_search_path_spec
+  sys_lib_dlsearch_path_spec: $sys_lib_dlsearch_path_spec
+  runpath_var:                $runpath_var
+
+])
