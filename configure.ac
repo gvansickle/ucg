@@ -59,10 +59,6 @@ AM_INIT_AUTOMAKE([1.14
 # @note Must be done before LT_INIT, or it will complain.
 AC_USE_SYSTEM_EXTENSIONS
 
-# Determine how many CPUs we have on the build machine.
-AX_COUNT_CPUS([], [])
-AC_SUBST([CPU_COUNT])
-
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
 AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
@@ -404,6 +400,7 @@ AC_CHECK_DECLS([std::to_string(int)],
 				],
 				[], [#include <string>])
 
+# We need the argp library.
 AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
 
 AC_CHECK_FUNCS([sched_setaffinity])
@@ -498,3 +495,17 @@ AC_CONFIG_FILES([Makefile
 	third_party/Makefile])
 AC_OUTPUT
 
+# Print a configure summary.
+AC_MSG_NOTICE([
+*** Configuration Summary ***
+
+  C compiler:                 $CC
+  C++ compiler:               $CXX
+  
+  libtool info
+  ------------
+  sys_lib_search_path_spec:   $sys_lib_search_path_spec
+  sys_lib_dlsearch_path_spec: $sys_lib_dlsearch_path_spec
+  runpath_var:                $runpath_var
+
+])
