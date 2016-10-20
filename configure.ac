@@ -502,6 +502,11 @@ AC_MSG_NOTICE([
   C compiler:                 $CC
   C++ compiler:               $CXX
   
+  PCRE Info
+  ---------
+  HAVE_LIBPCRE                $HAVE_LIBPCRE
+  HAVE_LIBPCRE2               $HAVE_LIBPCRE2
+  
   libtool info
   ------------
   sys_lib_search_path_spec:   $sys_lib_search_path_spec
