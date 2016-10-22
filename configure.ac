@@ -245,7 +245,7 @@ PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 	],
 	[AC_MSG_WARN([Unable to find libpcre: $PCRE_PKG_ERRORS])])
 
-PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.0],
+PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
 	[
 		# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
 		AC_SUBST([HAVE_LIBPCRE2], [yes])
