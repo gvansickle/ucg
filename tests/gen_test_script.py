@@ -168,7 +168,7 @@ class TestGenDatabase(object):
         select_opts = ""
         select_opts += "coalesce(o.opt_expansion, '') "
         for opt in opts:
-            print("opt: " + opt)
+            #print("opt: " + opt)
             (opt_id, opt_val) = self.parse_opt(opt)
             select_opts += """|| " " || coalesce(p.opt_""" + opt_id + """, '')"""
             if opt_val:
@@ -227,7 +227,7 @@ class TestGenDatabase(object):
         """
         # Query the db.
         self.generate_tests_type_2(options, "benchmark1")
-        self.PrintTable("benchmark1")
+        #self.PrintTable("benchmark1")
         
         test_cases = ""
         test_inst_num=0
