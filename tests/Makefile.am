@@ -137,10 +137,22 @@ clean-local:
 	test ! -f '$(TESTSUITE)' ||	$(SHELL) '$(TESTSUITE)' --clean
 	
 check-local: atconfig atlocal $(TESTSUITE)
-	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS)
+	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) ; RETVAL=$$? ; \
+	LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \
+	for FN in $$LOGS; do \
+	echo $$FN; \
+	cat $$FN; \
+	done; \
+	exit $$RETVAL;
      
 installcheck-local: atconfig atlocal $(TESTSUITE)
-	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) AUTOTEST_PATH='$(bindir)'
+	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) AUTOTEST_PATH='$(bindir)' ; RETVAL=$$? ; \
+	LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \
+	for FN in $$LOGS; do \
+	echo $$FN; \
+	cat $$FN; \
+	done; \
+	exit $$RETVAL;
 
 
 ###
