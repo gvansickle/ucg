@@ -138,6 +138,11 @@ clean-local:
 	
 check-local: atconfig atlocal $(TESTSUITE)
 	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS)
+	LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \
+	for FN in $LOGS; do \
+	echo $FN; \
+	cat $FN; \
+	done;
      
 installcheck-local: atconfig atlocal $(TESTSUITE)
 	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) AUTOTEST_PATH='$(bindir)'

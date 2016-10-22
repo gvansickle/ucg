@@ -88,6 +88,3 @@ m4_include([dir_tree_traversal.at])
 # Create the common perf test results file.
 m4_include([performance_tests.at])
 
-
-
-
