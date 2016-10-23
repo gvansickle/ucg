@@ -40,7 +40,9 @@ test_script_template_1 = Template("""\
 ### GENERATED FILE, DO NOT EDIT
 ###
 
+if test "x$$NUM_ITERATIONS" = "x"; then
 NUM_ITERATIONS=${num_iterations};
+fi;
 
 # Use our own time program so we don't have to worry about portability.
 PROG_TIME="$$builddir/portable_time -p"
@@ -263,7 +265,7 @@ class TestGenDatabase(object):
                 )
             test_cases += test_case + "\n"
         script = test_script_template_1.substitute(
-            num_iterations=3,
+            num_iterations=10,
             results_file=test_output_filename,
             test_cases=test_cases
             )
