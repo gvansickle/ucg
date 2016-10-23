@@ -62,7 +62,7 @@ As a consequence of its overall design for maximum concurrency and speed, `ucg` 
 | `/usr/bin/pcre2grep -rn --color '--exclude=^.*(?<!\.cpp|\.hpp|\.h|\.cc|\.cxx)$' '#include\s+.*' ~/src/boost_1_58_0` | 10.21 2016-01-12 | 0.818627 | 9527 | 1386 |
 | `/usr/bin/ag  --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.32.0 | 1.90161 | 9511 | 189 |
 
-Note that UniversalCodeGrep is in fact somewhat faster than `grep` itself, even when `grep` is only using [Extended Regular Expressions](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_04).  And it is certainly wins in the ease-of-use category.
+Note that UniversalCodeGrep is in fact somewhat faster than `grep` itself, even when `grep` is only using [Extended Regular Expressions](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_04).  And `ucg` certainly wins the ease-of-use contest.
 
 ## License
 
@@ -141,13 +141,23 @@ This will install the `ucg` executable in `/usr/local/bin`.  If you wish to inst
 
 #### Build Prerequisites
 
-##### `gcc` version 4.8 or greater.
+##### `gcc` and `g++` versions 4.8 or greater.
 
-Versions of `gcc` prior to 4.8 do not have sufficiently complete C++11 support to build `ucg`.
+Versions of `gcc` prior to 4.8 do not have sufficiently complete C++11 support to build `ucg`.  `clang`/`clang++` is also known to work, but is not the primary development compiler.
 
 ##### PCRE: `libpcre2-8` version 10.20 or greater, or `libpcre` version 8.21 or greater.
 
 One or both of these should be available from your Linux/OS X/*BSD distro's package manager. You'll need the `-devel` versions if they're separate.  Prefer `libpcre2-8`; while `ucg` will currently work with either PCRE2 or PCRE, you'll get better performance with PCRE2.
+
+> ##### OS X
+>
+> OS X additionally requires the installation of `argp-standalone`, which is normally part of the `glibc` library on Linux systems.  This can
+> be installed along with a pcre library from Homebrew:
+> ```sh
+> $ brew update
+> $ brew install pcre argp-standalone
+> ```  
+
 
 ### Supported OSes and Distributions
 
