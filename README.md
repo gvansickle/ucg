@@ -47,9 +47,9 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
 UniversalCodeGrep (`ucg`) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with [`Ack`](http://beyondgrep.com/), to some extent with [`ag`](http://geoff.greer.fm/ag/), and where appropriate with `grep`.  Search patterns are specified as PCRE regexes. 
 
 ### Speed
-`ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the [PCRE2 library](http://www.pcre.org/), with its [JIT compilation feature](http://www.pcre.org/current/doc/html/pcre2jit.html) providing a huge performance gain on most platforms.  Directory tree traversal is performed by multiple threads, reducing the impact of waiting for I/O completions.
+`ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the [PCRE2 library](http://www.pcre.org/), with its [JIT compilation feature](http://www.pcre.org/current/doc/html/pcre2jit.html) providing a huge performance gain on most platforms.  Directory tree traversal is performed by multiple threads, reducing the impact of waiting for I/O completions.  Critical functions are implemented with hand-rolled vectorized (SSE2/4.2/etc.) versions selected at program load-time based on what the system supports, with non-vectorized fallbacks.  
 
-As a consequence of its overall design for maximum concurrency and speed, `ucg` is extremely fast.  Under Fedora 24, scanning the Boost 1.58.0 source tree with `ucg` and a selection of similar utilities results in the following:
+As a consequence of its overall design for maximum concurrency and speed, `ucg` is extremely fast.  As an example, under Fedora 24, one of the benchmarks in the test suite which scans the Boost 1.58.0 source tree with `ucg` and a selection of similar utilities yields the following results:
 
 #### Benchmark: '#include\s+".*"' on Boost source
 
@@ -57,20 +57,12 @@ As a consequence of its overall design for maximum concurrency and speed, `ucg` 
 |---------|-----------------|---------------------------------------|-------------------|----------------|
 | `ucg --noenv --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.3.0 | 0.212767 | 9511 | 189 |
 | `/usr/bin/ucg --noenv --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.2.2 | 0.262368 | 9511 | 189 |
-| `/usr/bin/ag  --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.32.0 | 1.90161 | 9511 | 189 |
 | `/usr/bin/rg -n -t cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.2.3 | 0.262967 | 9509 | 0 |
-| `/usr/bin/pcre2grep -rn --color '--exclude=^.*(?<!\.cpp|\.hpp|\.h|\.cc|\.cxx)$' '#include\s+.*' ~/src/boost_1_58_0` | 10.21 2016-01-12 | 0.818627 | 9527 | 1386 |
 | `grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx '#include\s+.*' ~/src/boost_1_58_0` | grep (GNU grep) 2.25 | 0.366634 | 9509 | 0 |
+| `/usr/bin/pcre2grep -rn --color '--exclude=^.*(?<!\.cpp|\.hpp|\.h|\.cc|\.cxx)$' '#include\s+.*' ~/src/boost_1_58_0` | 10.21 2016-01-12 | 0.818627 | 9527 | 1386 |
+| `/usr/bin/ag  --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.32.0 | 1.90161 | 9511 | 189 |
 
-
-UniversalCodeGrep is in fact somewhat faster than `grep` itself.  Again under Fedora 23 and searching the Boost 1.58.0 source tree, `ucg` bests grep 2.22 not only in ease-of-use but in raw speed:
-
-| Command | Elapsed Real Time, Average of 10 Runs |
-|---------|--------------------------------------|
-| `time grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 0.9852 seconds |
-| `time ucg --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0`  | ~ 0.404 seconds |
-
-The resulting matches are identical.
+Note that UniversalCodeGrep is in fact somewhat faster than `grep` itself, even when `grep` is only using [Extended Regular Expressions](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_04).  And it is certainly wins in the ease-of-use category.
 
 ## License
 
@@ -106,6 +98,8 @@ sudo dnf copr enable grvs/UniversalCodeGrep
 sudo dnf install universalcodegrep
 ```
 
+<!-- COMING SOON
+
 ### Arch Linux User Repository
 
 If you are a Arch Linux user, the easiest way to install UniversalCodeGrep is from the Arch Linux User Repository (AUR) [here](https://aur.archlinux.org/packages/ucg/).  Installation is as simple as:
@@ -124,6 +118,8 @@ makepkg -sri
 ### openSUSE Binary RPMs
 
 Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/tag/0.3.0).
+
+-->
 
 ### Building the Source Tarball
 
@@ -149,9 +145,9 @@ This will install the `ucg` executable in `/usr/local/bin`.  If you wish to inst
 
 Versions of `gcc` prior to 4.8 do not have sufficiently complete C++11 support to build `ucg`.
 
-##### `pcre` version 8.21 or greater.
+##### PCRE: `libpcre2-8` version 10.20 or greater, or `libpcre` version 8.21 or greater.
 
-This should be available from your Linux distro.
+One or both of these should be available from your Linux/OS X/*BSD distro's package manager. You'll need the `-devel` versions if they're separate.  Prefer `libpcre2-8`; while `ucg` will currently work with either PCRE2 or PCRE, you'll get better performance with PCRE2.
 
 ### Supported OSes and Distributions
 
@@ -167,7 +163,9 @@ UniversalCodeGrep should build and function anywhere the prerequisites are avail
   - SLE 12
   - openSUSE 13.2
   - openSUSE Leap 42.1
-- Windows 7 + Cygwin 64-bit (Note however that speed here is comparable to `ag`)
+- Windows 7 + Cygwin 64-bit
+
+Note that at this time, only x86-64/amd64 architectures are supported.
 
 ## Usage
 
