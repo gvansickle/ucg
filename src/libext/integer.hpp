@@ -51,6 +51,7 @@ struct uint_t
 	using fast = typename uint_t<NumBits+1>::fast;
 };
 template<> struct uint_t<128> { using fast = unsigned __int128; };
+//template<> struct uint_t<128> { using fast = __m128i; }; ///< @todo Use something like this for platforms without a builtin 128-bit type.
 template<> struct uint_t<64> { using fast = uint_fast64_t; };
 template<> struct uint_t<32> { using fast = uint_fast32_t; };
 

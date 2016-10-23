@@ -40,6 +40,7 @@
 #include <string.h>
 #include <cstdlib>   // For free().
 #include <string>
+#include <type_traits>
 
 #include "integer.hpp"
 #include "../Logger.h"
@@ -69,14 +70,20 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 #endif
 /// @}
 
-
-using dev_ino_pair_type = uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast;
+using dev_ino_pair_type = std::conditional<
+		sizeof(__int128) < (sizeof(dev_t)+sizeof(ino_t)),
+		/*static_assert(false, "uintmax_t not big enough.")*/ int,
+		uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast
+		>::type;
 
 struct dev_ino_pair
 {
 	dev_ino_pair() = default;
 	dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
 
+	constexpr bool operator<(const dev_ino_pair& other) const { return m_val < other.m_val; };
+
+private:
 	dev_ino_pair_type m_val { 0 };
 };
 

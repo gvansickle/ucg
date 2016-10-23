@@ -55,6 +55,10 @@ fi
 #if PROG_ACK="$(which ack)";
 #then
 #fi
+if PROG_INST_RIPGREP="$(which rg 2>/dev/null)";
+then
+	PROGLIST=$PROGLIST,inst_ripgrep:$PROG_INST_RIPGREP
+fi
 if test -x "${PROG_PCRE2GREP}";
 then
 	PROGLIST=$PROGLIST,inst_pcre2grep:$PROG_PCRE2GREP

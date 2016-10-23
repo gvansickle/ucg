@@ -138,20 +138,24 @@ clean-local:
 	
 check-local: atconfig atlocal $(TESTSUITE)
 	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) ; RETVAL=$$? ; \
-	LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \
-	for FN in $$LOGS; do \
-	echo $$FN; \
-	cat $$FN; \
-	done; \
+	if test $$RETVAL != 0; then \
+		LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \
+		for FN in $$LOGS; do \
+			echo $$FN; \
+			cat $$FN; \
+		done; \
+	fi; \
 	exit $$RETVAL;
      
 installcheck-local: atconfig atlocal $(TESTSUITE)
 	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) AUTOTEST_PATH='$(bindir)' ; RETVAL=$$? ; \
-	LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \
-	for FN in $$LOGS; do \
-	echo $$FN; \
-	cat $$FN; \
-	done; \
+	if test $$RETVAL != 0; then \
+		LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \
+		for FN in $$LOGS; do \
+			echo $$FN; \
+			cat $$FN; \
+		done; \
+	fi; \
 	exit $$RETVAL;
 
 
