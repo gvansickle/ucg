@@ -149,7 +149,7 @@ Versions of `gcc` prior to 4.8 do not have sufficiently complete C++11 support t
 
 One or both of these should be available from your Linux/OS X/*BSD distro's package manager. You'll need the `-devel` versions if they're separate.  Prefer `libpcre2-8`; while `ucg` will currently work with either PCRE2 or PCRE, you'll get better performance with PCRE2.
 
-> #### OS X
+> #### OS X Prerequisites
 >
 > OS X additionally requires the installation of `argp-standalone`, which is normally part of the `glibc` library on Linux systems.  This can
 > be installed along with a pcre library from Homebrew:
@@ -157,7 +157,6 @@ One or both of these should be available from your Linux/OS X/*BSD distro's pack
 > $ brew update
 > $ brew install pcre argp-standalone
 > ```  
-
 
 ### Supported OSes and Distributions
 
