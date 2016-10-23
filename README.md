@@ -47,26 +47,20 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
 UniversalCodeGrep (`ucg`) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with [`Ack`](http://beyondgrep.com/), to some extent with [`ag`](http://geoff.greer.fm/ag/), and where appropriate with `grep`.  Search patterns are specified as PCRE regexes. 
 
 ### Speed
-`ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the [PCRE2 library](http://www.pcre.org/), with its [JIT compilation feature](http://www.pcre.org/current/doc/html/pcre2jit.html) providing a huge performance gain on most platforms.
+`ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the [PCRE2 library](http://www.pcre.org/), with its [JIT compilation feature](http://www.pcre.org/current/doc/html/pcre2jit.html) providing a huge performance gain on most platforms.  Directory tree traversal is performed by multiple threads, reducing the impact of waiting for I/O completions.
 
-As a consequence of its use of these facilities and its overall design for maximum concurrency and speed, `ucg` is extremely fast.  Under Fedora 24, scanning the Boost 1.58.0 source tree with `ucg` 0.3.0, [`ag`](http://geoff.greer.fm/ag/) 0.31.0, and `ack` 2.14 produces the following results:
-
-| Command | Elapsed Real Time, Average of 10 Runs |
-|---------|-----------------------|
-| `time ucg --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 0.404 seconds |
-| `time ag --cpp 'BOOST.*HPP' ~/src/boost_1_58_0`  | ~ 5.8862 seconds |
-| `time ack --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 12.0398 seconds |
+As a consequence of its overall design for maximum concurrency and speed, `ucg` is extremely fast.  Under Fedora 24, scanning the Boost 1.58.0 source tree with `ucg` and a selection of similar utilities results in the following:
 
 #### Benchmark: '#include\s+".*"' on Boost source
 
 | Command | Program Version | Elapsed Real Time, Average of 10 Runs | Num Matched Lines | Num Diff Chars |
 |---------|-----------------|---------------------------------------|-------------------|----------------|
-| `ucg --noenv --cpp '#include\s+.*' ../../../../../boost_1_58_0` | 0.3.0 | 0.212767 | 9511 | 189 |
-| `/usr/bin/ucg --noenv --cpp '#include\s+.*' ../../../../../boost_1_58_0` | 0.2.2 | 0.262368 | 9511 | 189 |
-| `/usr/bin/ag  --cpp '#include\s+.*' ../../../../../boost_1_58_0` | 0.32.0 | 1.90161 | 9511 | 189 |
-| `/usr/bin/rg -n -t cpp '#include\s+.*' ../../../../../boost_1_58_0` | 0.2.3 | 0.262967 | 9509 | 0 |
-| `/usr/bin/pcre2grep -rn --color '--exclude=^.*(?<!\.cpp|\.hpp|\.h|\.cc|\.cxx)$' '#include\s+.*' ../../../../../boost_1_58_0` | 10.21 2016-01-12 | 0.818627 | 9527 | 1386 |
-| `grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx '#include\s+.*' ../../../../../boost_1_58_0` | grep (GNU grep) 2.25 | 0.366634 | 9509 | 0 |
+| `ucg --noenv --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.3.0 | 0.212767 | 9511 | 189 |
+| `/usr/bin/ucg --noenv --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.2.2 | 0.262368 | 9511 | 189 |
+| `/usr/bin/ag  --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.32.0 | 1.90161 | 9511 | 189 |
+| `/usr/bin/rg -n -t cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.2.3 | 0.262967 | 9509 | 0 |
+| `/usr/bin/pcre2grep -rn --color '--exclude=^.*(?<!\.cpp|\.hpp|\.h|\.cc|\.cxx)$' '#include\s+.*' ~/src/boost_1_58_0` | 10.21 2016-01-12 | 0.818627 | 9527 | 1386 |
+| `grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx '#include\s+.*' ~/src/boost_1_58_0` | grep (GNU grep) 2.25 | 0.366634 | 9509 | 0 |
 
 
 UniversalCodeGrep is in fact somewhat faster than `grep` itself.  Again under Fedora 23 and searching the Boost 1.58.0 source tree, `ucg` bests grep 2.22 not only in ease-of-use but in raw speed:
