@@ -243,7 +243,7 @@ PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 		AC_SUBST([HAVE_LIBPCRE], [yes])
 		AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])
 	],
-	[AC_MSG_WARN([Unable to find libpcre: $PCRE_PKG_ERRORS])])
+	[AC_SUBST([HAVE_LIBPCRE], [no])])
 
 PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
 	[
@@ -251,12 +251,7 @@ PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
 		AC_SUBST([HAVE_LIBPCRE2], [yes])
 		AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
 	],
-	[AC_MSG_WARN([Unable to find libpcre2: $PCRE2_PKG_ERRORS])])
-
-# Make sure we found at least one of them.
-AS_IF([test "x$HAVE_LIBPCRE" = x -a "x$HAVE_LIBPCRE2" = x],
-	[AC_MSG_ERROR([unable to find a suitable pcre library.])],
-	[AC_MSG_NOTICE([found at least one usable pcre library.])])
+	[AC_SUBST([HAVE_LIBPCRE2], [no])])
 
 AC_LANG_POP([C++])
 
@@ -313,9 +308,9 @@ AC_LANG_PUSH([C++])
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does.
 AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
-#AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
+#AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm
 #AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be. @note Doesn't seem to do anything.
-AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CXXFLAGS]) # -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
+AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CXXFLAGS]) # -fopt-info-optimized -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security], [AM_CXXFLAGS])
@@ -514,3 +509,10 @@ AC_MSG_NOTICE([
   runpath_var:                $runpath_var
 
 ])
+
+
+# Make sure we found at least one of the PCRE libs.
+AS_IF([test "x$HAVE_LIBPCRE" = x -a "x$HAVE_LIBPCRE2" = x],
+	[AC_MSG_ERROR([unable to find a suitable pcre library.])],
+	[AC_MSG_NOTICE([found at least one usable pcre library.])])
+

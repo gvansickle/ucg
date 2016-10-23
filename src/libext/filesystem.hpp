@@ -76,8 +76,6 @@ using dev_ino_pair_type = std::conditional<
 		uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast
 		>::type;
 
-///static_assert(sizeof(dev_ino_pair_type) != 128/8, "ERROR");
-
 struct dev_ino_pair
 {
 	dev_ino_pair() = default;
