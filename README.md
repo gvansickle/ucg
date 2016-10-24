@@ -173,12 +173,6 @@ UniversalCodeGrep 0.3.0 should build and run anywhere the prerequisites are avai
   - Fedora 22, 23, 24, rawhide
   - CentOS 7
   - Ubuntu 16.04 (Xenial), 15.04, 14.04 (Trusty Tahr)
-<!-- @todo VERIFY
-  - Arch Linux
-  - SLE 12
-  - openSUSE 13.2
-  - openSUSE Leap 42.1
--->
 - Windows 7 + Cygwin 64-bit
 - OS X
   - Xcode 8gm/OS X 10.11
@@ -186,6 +180,12 @@ UniversalCodeGrep 0.3.0 should build and run anywhere the prerequisites are avai
   - Xcode 6.1/OS X 10.9
 - PC-BSD 10.3
 
+<!-- @todo VERIFY
+  - Arch Linux
+  - SLE 12
+  - openSUSE 13.2
+  - openSUSE Leap 42.1
+-->
 
 Note that at this time, only x86-64/amd64 architectures are supported.
 
