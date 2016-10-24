@@ -22,12 +22,13 @@
 
 #include <config.h>
 
+#include <cstdio>  // For perror() on FreeBSD.
 #include <fcntl.h> // For openat() etc.
 #include <unistd.h> // For close().
 #include <sys/stat.h>
 #include <sys/types.h> // for dev_t, ino_t
 // Don't know where the name "libgen" comes from, but this is where POSIX says dirname() and basename() are declared.
-/// There are two basename()/dirnames()'s.  GNU basename, from string.h, and POSIX basename() from libgen.h.
+/// There are two basename()s.  GNU basename, from string.h, and POSIX basename() from libgen.h.
 /// See notes here: https://linux.die.net/man/3/dirname
 /// Of course they behave slightly differently: GNU version returns an empty string if the path has a trailing slash, and doesn't modify it's argument.
 /// To complicate matters further, the glibc version of the POSIX function versions do modify their args.
@@ -39,6 +40,7 @@
 #include <string.h>
 #include <cstdlib>   // For free().
 #include <string>
+#include <type_traits>
 
 #include "integer.hpp"
 #include "../Logger.h"
@@ -68,32 +70,45 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 #endif
 /// @}
 
-
-using dev_ino_pair_type = uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast;
+using dev_ino_pair_type = std::conditional<
+		sizeof(__int128) < (sizeof(dev_t)+sizeof(ino_t)),
+		/*static_assert(false, "uintmax_t not big enough.")*/ int,
+		uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast
+		>::type;
 
 struct dev_ino_pair
 {
 	dev_ino_pair() = default;
 	dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
 
+	constexpr bool operator<(const dev_ino_pair& other) const { return m_val < other.m_val; };
+
+private:
 	dev_ino_pair_type m_val { 0 };
 };
 
+
 /**
- * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as posible.
+ * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as possible.
  *
  * @param de
  * @return
  */
+inline std::string dirent_get_name(const dirent* de) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 inline std::string dirent_get_name(const dirent* de) noexcept
 {
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 		// struct dirent has a d_namelen field.
-		std::string basename.assign(de->d_name, de->d_namelen);
+		std::string basename(de->d_name, de->d_namelen);
 #elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
 		// We can cheaply determine how much memory we need to allocate for the name.
-		std::string basename(_D_ALLOC_NAMLEN(de), '\0');
-		basename.assign(de->d_name);
+#if defined(HAVE_STRNLEN)
+		// If we have strnlen(), it should be faster than strlen().
+		std::string basename(de->d_name, strnlen(de->d_name, _D_ALLOC_NAMLEN(de)));
+#else
+		// No strnlen.  Even if we have a _D_ALLOC_NAMLEN, there isn't much we can do with it here.
+		std::string basename(de->d_name);
+#endif
 #else
 		// All we have is a null-terminated d_name.
 		std::string basename(de->d_name);
@@ -102,6 +117,8 @@ inline std::string dirent_get_name(const dirent* de) noexcept
 	// RVO should optimize this.
 	return basename;
 }
+
+
 /**
  * Checks two file descriptors (file, dir, whatever) and checks if they are referring to the same entity.
  *

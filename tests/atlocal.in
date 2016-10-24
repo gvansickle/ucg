@@ -34,7 +34,6 @@ export SED="@SED@"
 export ESED="@ESED@"
 export MKDIR_P="@MKDIR_P@"
 export TEST_LN_S="@TEST_LN_S@"
-export PROG_TIME="@PROG_TIME@"
 export FGREP="@FGREP@"
 export EGREP="@EGREP@"
 export PROG_GREP_P="@PROG_GREP_P@"
@@ -56,6 +55,10 @@ fi
 #if PROG_ACK="$(which ack)";
 #then
 #fi
+if PROG_INST_RIPGREP="$(which rg 2>/dev/null)";
+then
+	PROGLIST=$PROGLIST,inst_ripgrep:$PROG_INST_RIPGREP
+fi
 if test -x "${PROG_PCRE2GREP}";
 then
 	PROGLIST=$PROGLIST,inst_pcre2grep:$PROG_PCRE2GREP
@@ -225,7 +228,7 @@ ASX_SCRIPT ()
 	#       i.e. 'do_something' gets changed into an unquoted do_something.
 	#
 	case $PROG_SCRIPT_TYPE in
-		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw >/dev/null 2>&1 && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | tr -d '\r';;
+		linux) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT "stty raw >/dev/null 2>&1 && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | $STRIP_SPURIOUS_CONTROL_CHARS;;
 		bsd) $PROG_SCRIPT $PROG_SCRIPT_PRE_TEXT command eval "stty raw >/dev/null 2>&1 && $(printf '%s' "${*}")" $PROG_SCRIPT_POST_TEXT | $STRIP_SPURIOUS_CONTROL_CHARS;;
 		*) exit 1;;
 	esac

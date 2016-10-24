@@ -69,6 +69,9 @@ std::string ftsent_path(FTSENT*p)
 	}
 }
 
+/**
+ * @todo OBSOLETE, REMOVE.
+ */
 class ExtraFTSENTDirInfo
 {
 public:
@@ -311,7 +314,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 					if(ftsent->fts_level == FTS_ROOTLEVEL)
 					{
 						// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
-						if(HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino).m_val))
+						if(HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino)))
 						{
 							// Found cycle.
 							WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
@@ -324,7 +327,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 						if(num_dirs_found_this_loop == 0)
 						{
 							// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
-							if(HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino).m_val))
+							if(HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino)))
 							{
 								// Found cycle.
 								WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
