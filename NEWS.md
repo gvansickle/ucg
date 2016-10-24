@@ -5,7 +5,7 @@
 Major feature/bugfix release of UniversalCodeGrep (ucg).
 
 ### New Features
-- More than 30% faster than ucg 0.2.2 on most benchmarks.
+- 20-30% faster than ucg 0.2.2 on most benchmarks.
 - New file inclusion/exclusion options:
 	- `ack`-style `--ignore-file=FILTER:FILTERARGS`: Files matching FILTER:FILTERARGS (e.g. "ext:txt,cpp") will be ignored.
 	- `grep`-style `--include=GLOB`: Only files matching GLOB will be searched.
