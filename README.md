@@ -139,6 +139,13 @@ This will install the `ucg` executable in `/usr/local/bin`.  If you wish to inst
 ./configure --prefix=~/<install-root-dir>
 ```
 
+> #### *BSD Note
+>
+> On at least PC-BSD 10.3, g++48 can't find its own libstdc++ without a little help.  Configure the package like this:
+> ```sh
+> ./configure LDFLAGS='-Wl,-rpath=/usr/local/lib/gcc48'
+> ```
+
 #### Build Prerequisites
 
 ##### `gcc` and `g++` versions 4.8 or greater.
@@ -163,11 +170,9 @@ One or both of these should be available from your Linux/OS X/*BSD distro's pack
 UniversalCodeGrep should build and function anywhere the prerequisites are available.  It has been built and tested on the following OSes/distros:
 
 - Linux
-  - Ubuntu 15.04
+  - Ubuntu 16.04 (Xenial), 15.04
+  - Fedora 22, 23, 24, rawhide
   - CentOS 7
-  - Fedora 22
-  - Fedora 23
-  - RHEL 7
   - Arch Linux
   - SLE 12
   - openSUSE 13.2
