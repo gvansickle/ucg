@@ -167,17 +167,25 @@ One or both of these should be available from your Linux/OS X/*BSD distro's pack
 
 ### Supported OSes and Distributions
 
-UniversalCodeGrep should build and function anywhere the prerequisites are available.  It has been built and tested on the following OSes/distros:
+UniversalCodeGrep 0.3.0 should build and run anywhere the prerequisites are available.  It has been built and tested on the following OSes/distros:
 
 - Linux
-  - Ubuntu 16.04 (Xenial), 15.04
   - Fedora 22, 23, 24, rawhide
   - CentOS 7
+  - Ubuntu 16.04 (Xenial), 15.04, 14.04 (Trusty Tahr)
+<!-- @todo VERIFY
   - Arch Linux
   - SLE 12
   - openSUSE 13.2
   - openSUSE Leap 42.1
+-->
 - Windows 7 + Cygwin 64-bit
+- OS X
+  - Xcode 8gm/OS X 10.11
+  - Xcode 7.1.1 GM/OSX 10.10
+  - Xcode 6.1/OS X 10.9
+- PC-BSD 10.3
+
 
 Note that at this time, only x86-64/amd64 architectures are supported.
 
@@ -195,10 +203,10 @@ If no `FILES OR DIRECTORIES` are specified, searching starts in the current dire
 
 ### Command Line Options
 
-Version 0.3.0 of `ucg` supports a significant subset of the options supported by `ack`.  Future releases will have support for more options.
+Version 0.3.0 of `ucg` supports a significant subset of the options supported by `ack`.  In general, options specified later
+on the command line override options specified earlier on the command line.
 
 #### Searching
-
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--[no]smart-case`   | Ignore case if PATTERN is all lowercase (default: enabled). |
@@ -207,28 +215,28 @@ Version 0.3.0 of `ucg` supports a significant subset of the options supported by
 | `-w, --word-regexp`  | PATTERN must match a complete word.                         |
 
 ####  Search Output
-
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--column`   | Print column of first match after line number. |
 | `--nocolumn` | Don't print column of first match (default).   |
 
 #### File presentation
-
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--color, --colour`     | Render the output with ANSI color codes.    |
 | `--nocolor, --nocolour` | Render the output without ANSI color codes. |
 
-#### File inclusion/exclusion:
+#### File/directory inclusion/exclusion:
 | Option | Description |
 |----------------------|------------------------------------------|
-| `--ignore-dir=name, --ignore-directory=name`     | Exclude directories with this name.        |
-| `--noignore-dir=name, --noignore-directory=name` | Do not exclude directories with this name. |
+| `--[no]ignore-dir=name, --[no]ignore-directory=name`     | [Do not] exclude directories with this name.        |
+| `--exclude=GLOB, --ignore=GLOB` | Files matching GLOB will be ignored. |
+| `--ignore-file=FILTER:FILTERARGS` |  Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored. |
+| `--include=GLOB`                       | Only files matching GLOB will be searched. |
 | `-k, --known-types`                              | Only search in files of recognized types (default: on). |
 | `-n, --no-recurse`                               | Do not recurse into subdirectories.        |
 | `-r, -R, --recurse`                              | Recurse into subdirectories (default: on). |
-| `--type=[no]TYPE`                                | Include only [exclude all] TYPE files.  Types may also be specified as `--[no]TYPE`.     |
+| `--type=[no]TYPE`                                | Include only [exclude all] TYPE files.  Types may also be specified as `--[no]TYPE`: e.g., `--cpp` is equivalent to `--type=cpp`.  May be specified multiple times. |
 
 #### File type specification:
 | Option | Description |
@@ -237,11 +245,16 @@ Version 0.3.0 of `ucg` supports a significant subset of the options supported by
 | `--type-del=TYPE`                   | Remove any existing definition of type TYPE. |
 | `--type-set=TYPE:FILTER:FILTERARGS` | Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced. |
 
+#### Performance Tuning:
+| Option | Description |
+|----------------------|------------------------------------------|
+| `--dirjobs=NUM_JOBS`   |  Number of directory traversal jobs (std::thread<>s) to use.  Default is 2. |
+| `-j, --jobs=NUM_JOBS`       | Number of scanner jobs (std::thread<>s) to use.  Default is the number of cores on the system. |
+
 #### Miscellaneous:
 | Option | Description |
 |----------------------|------------------------------------------|
-| `-j, --jobs=NUM_JOBS` | Number of scanner jobs (std::thread<>s) to use. |
-| `--noenv`             | Ignore .ucgrc files.                            |
+| `--noenv`         | Ignore .ucgrc files.                            |
 
 #### Informational options:
 | Option | Description |
@@ -274,7 +287,7 @@ Options read later will override earlier options.
 
 ## User-Defined File Types
 
-`ucg` supports user-defined file types with the `--type-set=TYPE:FILTER:FILTERARGS` and `--type-add=TYPE:FILTER:FILTERARGS` command-line options.  Only two FILTERs are currently supported, `ext` (extension list) and `is` (literal filename).
+`ucg` supports user-defined file types with the `--type-set=TYPE:FILTER:FILTERARGS` and `--type-add=TYPE:FILTER:FILTERARGS` command-line options.  Three FILTERs are currently supported, `ext` (extension list), `is` (literal filename), and `glob` (glob pattern).
 
 ### Extension List Filter
 
@@ -287,6 +300,12 @@ Example:
 The literal filename filter simply specifies a single literal filename which is to be considered as belonging to file type TYPE.
 Example:
 `--type-add=autoconf:is:configure.ac`
+
+### Glob filter
+
+The glob filter allows you to specify a glob pattern to match against filenames.  If the glob matches, the file is considered as belonging to the file type TYPE.
+Example:
+`--type-set=mk:glob:?akefile*`
 
 ## Author
 
