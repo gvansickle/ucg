@@ -13,24 +13,25 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
 
 * [Introduction](#introduction)
   * [Speed](#speed)
+    * [Benchmark: '\#include\\s\+"\.\*"' on Boost source](#benchmark-includes-on-boost-source)
 * [License](#license)
 * [Installation](#installation)
-  * [Ubuntu PPA](#ubuntu-ppa)
-  * [Red Hat/Fedora/CentOS dnf/yum Repository](#red-hatfedoracentos-dnfyum-repository)
-  * [Arch Linux User Repository](#arch-linux-user-repository)
-  * [openSUSE Binary RPMs](#opensuse-binary-rpms)
+  * [Fedora/CentOS Copr Repository](#fedoracentos-copr-repository)
   * [Building the Source Tarball](#building-the-source-tarball)
+    * [\*BSD Note](#bsd-note)
     * [Build Prerequisites](#build-prerequisites)
-      * [gcc version 4\.8 or greater\.](#gcc-version-48-or-greater)
-      * [pcre version 8\.21 or greater\.](#pcre-version-821-or-greater)
+      * [gcc and g\+\+ versions 4\.8 or greater\.](#gcc-and-g-versions-48-or-greater)
+      * [PCRE: libpcre2\-8 version 10\.20 or greater, or libpcre version 8\.21 or greater\.](#pcre-libpcre2-8-version-1020-or-greater-or-libpcre-version-821-or-greater)
+    * [OS X Prerequisites](#os-x-prerequisites)
   * [Supported OSes and Distributions](#supported-oses-and-distributions)
 * [Usage](#usage)
   * [Command Line Options](#command-line-options)
     * [Searching](#searching)
     * [Search Output](#search-output)
     * [File presentation](#file-presentation)
-    * [File inclusion/exclusion:](#file-inclusionexclusion)
+    * [File/directory inclusion/exclusion:](#filedirectory-inclusionexclusion)
     * [File type specification:](#file-type-specification)
+    * [Performance Tuning:](#performance-tuning)
     * [Miscellaneous:](#miscellaneous)
     * [Informational options:](#informational-options)
 * [Configuration (\.ucgrc) Files](#configuration-ucgrc-files)
@@ -39,6 +40,7 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
 * [User\-Defined File Types](#user-defined-file-types)
   * [Extension List Filter](#extension-list-filter)
   * [Literal Filename Filter](#literal-filename-filter)
+  * [Glob filter](#glob-filter)
 * [Author](#author)
 
 
@@ -179,13 +181,6 @@ UniversalCodeGrep 0.3.0 should build and run anywhere the prerequisites are avai
   - Xcode 7.1.1 GM/OSX 10.10
   - Xcode 6.1/OS X 10.9
 - PC-BSD 10.3
-
-<!-- @todo VERIFY
-  - Arch Linux
-  - SLE 12
-  - openSUSE 13.2
-  - openSUSE Leap 42.1
--->
 
 Note that at this time, only x86-64/amd64 architectures are supported.
 
