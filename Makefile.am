@@ -105,4 +105,4 @@ MOSTLYCLEANFILES+=$(DX_CLEANFILES)
 # if it for some reason exists in the working directory of a repo, that's an error, and it will be caught above in the
 # "verify-provenance" rule.
 dist-hook:
-	$(ECHO_N) "$$(cd $(top_srcdir) && git describe --long --dirty --always | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
+	printf '%s' "$$(cd $(top_srcdir) && git describe --long --dirty --always | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
