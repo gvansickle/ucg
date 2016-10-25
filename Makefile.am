@@ -44,11 +44,11 @@ bin_PROGRAMS=ucg
 ucg_SOURCES=main.cpp build_info.h
 nodist_ucg_SOURCES=build_info.cpp
 CLEANFILES += build_info.cpp
-ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
-ucg_CFLAGS = $(AM_CFLAGS)
-ucg_CXXFLAGS = $(AM_CXXFLAGS)
+ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) $(PCRE_CPPFLAGS) $(PCRE2_CPPFLAGS)
+ucg_CFLAGS = $(AM_CFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
+ucg_CXXFLAGS = $(AM_CXXFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la
+ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la $(PCRE_LIBS) $(PCRE2_LIBS)
 
 # Collect some make-time info. 
 FORCE:
@@ -85,7 +85,8 @@ verify-provenance:
 	fi;
 
 # Valgrind rules.
-@VALGRIND_CHECK_RULES@
+# @todo Note that this expands to GNU-make-only constructs, which fails on the BSDs.
+#@VALGRIND_CHECK_RULES@
 #VALGRIND_SUPPRESSIONS_FILES = ## No suppressions currently.
 #EXTRA_DIST = ## No suppressions currently.
 	
@@ -98,6 +99,10 @@ MOSTLYCLEANFILES+=$(DX_CLEANFILES)
 ## Distribution. ##
 ## ------------- ##
 
-# .tarball-version should only ever exist in a distribution tarball.
+# Hook the "make dist" target to generate a ".tarball-version" file in the root dir of the tarball.
+# This .tarball-version file contains the repo version info corresponding to the repo from which the tarball was
+# built.  It should only ever exist in a distribution tarball (and the source tree extracted from that tarball).
+# if it for some reason exists in the working directory of a repo, that's an error, and it will be caught above in the
+# "verify-provenance" rule.
 dist-hook:
-	echo -n "$$(cd $(top_srcdir) && git describe --long --dirty | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
+	printf '%s' "$$(cd $(top_srcdir) && git describe --long --dirty --always | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"

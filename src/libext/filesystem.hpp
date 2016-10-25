@@ -22,6 +22,7 @@
 
 #include <config.h>
 
+#include <cstdio>  // For perror() on FreeBSD.
 #include <fcntl.h> // For openat() etc.
 #include <unistd.h> // For close().
 #include <sys/stat.h>
@@ -39,10 +40,19 @@
 #include <string.h>
 #include <cstdlib>   // For free().
 #include <string>
+#include <type_traits>
 
 #include "integer.hpp"
 #include "../Logger.h"
 
+#if !defined(HAVE_OPENAT) || HAVE_OPENAT == 0
+// No native openat() support.  Assume no *at() functions at all.  Stubs to allow this to compile for now.
+#define AT_FDCWD -200
+#define AT_NO_AUTOMOUNT 0
+inline int openat(int at_fd, const char *fn, int flags) { return -1; };
+inline DIR *fdopendir(int fd) { return nullptr; };
+inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags) { return -1; };
+#endif
 /// @name Take care of some portability issues.
 /// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
 /// - No AT_FDCWD, no openat, no fdopendir, no fstatat.
@@ -62,11 +72,36 @@
 
 using dev_ino_pair_type = uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast;
 
+/// @name Take care of some portability issues.
+/// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
+/// - No AT_FDCWD, no openat, no fdopendir, no fstatat.
+/// Cygwin:
+/// - No O_NOATIME, no AT_NO_AUTOMOUNT.
+/// Linux:
+/// - No O_SEARCH.
+/// @{
+#ifndef O_SEARCH
+// O_SEARCH is POSIX.1-2008, but not defined on at least Linux/glibc 2.24.
+// Possible reason, quoted from the standard: "Since O_RDONLY has historically had the value zero, implementations are not able to distinguish
+// between O_SEARCH and O_SEARCH | O_RDONLY, and similarly for O_EXEC."
+#define O_SEARCH 0
+#endif
+/// @}
+
+using dev_ino_pair_type = std::conditional<
+		sizeof(__int128) < (sizeof(dev_t)+sizeof(ino_t)),
+		/*static_assert(false, "uintmax_t not big enough.")*/ int,
+		uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast
+		>::type;
+
 struct dev_ino_pair
 {
 	dev_ino_pair() = default;
 	dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
 
+	constexpr bool operator<(const dev_ino_pair& other) const { return m_val < other.m_val; };
+
+private:
 	dev_ino_pair_type m_val { 0 };
 };
 
@@ -117,6 +152,37 @@ inline std::shared_ptr<int> make_shared_fd(int fd)
 }
 
 #else
+/**
+ * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as possible.
+ *
+ * @param de
+ * @return
+ */
+inline std::string dirent_get_name(const dirent* de) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+inline std::string dirent_get_name(const dirent* de) noexcept
+{
+#if defined(_DIRENT_HAVE_D_NAMLEN)
+		// struct dirent has a d_namelen field.
+		std::string basename(de->d_name, de->d_namelen);
+#elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
+		// We can cheaply determine how much memory we need to allocate for the name.
+#if defined(HAVE_STRNLEN)
+		// If we have strnlen(), it should be faster than strlen().
+		std::string basename(de->d_name, strnlen(de->d_name, _D_ALLOC_NAMLEN(de)));
+#else
+		// No strnlen.  Even if we have a _D_ALLOC_NAMLEN, there isn't much we can do with it here.
+		std::string basename(de->d_name);
+#endif
+#else
+		// All we have is a null-terminated d_name.
+		std::string basename(de->d_name);
+#endif
+
+	// RVO should optimize this.
+	return basename;
+}
+
+
 /**
  * Wrapper for C's 'int' file descriptor.
  * This class only adds C++ RAII abilities and correct move semantics to a file descriptor.
@@ -272,6 +338,8 @@ inline std::string dirname(const std::string &path)
 
 	return retval;
 }
+
+/// @todo basename().
 
 }
 

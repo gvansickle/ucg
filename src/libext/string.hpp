@@ -154,7 +154,7 @@ public:
 	/**
 	 * Return the number of characters in the microstring.
 	 *
-	 * @todo Redo this function with sse2 or just bit-twiddling instead of strnlen etc.  Not used mmuch at the moment, so this
+	 * @todo Redo this function with sse2 or just bit-twiddling instead of strnlen etc.  Not used much at the moment, so this
 	 * is ok for now.
 	 *
 	 * @return Length of string.

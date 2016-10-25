@@ -13,24 +13,25 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
 
 * [Introduction](#introduction)
   * [Speed](#speed)
+    * [Benchmark: '\#include\\s\+"\.\*"' on Boost source](#benchmark-includes-on-boost-source)
 * [License](#license)
 * [Installation](#installation)
-  * [Ubuntu PPA](#ubuntu-ppa)
-  * [Red Hat/Fedora/CentOS dnf/yum Repository](#red-hatfedoracentos-dnfyum-repository)
-  * [Arch Linux User Repository](#arch-linux-user-repository)
-  * [openSUSE Binary RPMs](#opensuse-binary-rpms)
+  * [Fedora/CentOS Copr Repository](#fedoracentos-copr-repository)
   * [Building the Source Tarball](#building-the-source-tarball)
+    * [\*BSD Note](#bsd-note)
     * [Build Prerequisites](#build-prerequisites)
-      * [gcc version 4\.8 or greater\.](#gcc-version-48-or-greater)
-      * [pcre version 8\.21 or greater\.](#pcre-version-821-or-greater)
+      * [gcc and g\+\+ versions 4\.8 or greater\.](#gcc-and-g-versions-48-or-greater)
+      * [PCRE: libpcre2\-8 version 10\.20 or greater, or libpcre version 8\.21 or greater\.](#pcre-libpcre2-8-version-1020-or-greater-or-libpcre-version-821-or-greater)
+    * [OS X Prerequisites](#os-x-prerequisites)
   * [Supported OSes and Distributions](#supported-oses-and-distributions)
 * [Usage](#usage)
   * [Command Line Options](#command-line-options)
     * [Searching](#searching)
     * [Search Output](#search-output)
     * [File presentation](#file-presentation)
-    * [File inclusion/exclusion:](#file-inclusionexclusion)
+    * [File/directory inclusion/exclusion:](#filedirectory-inclusionexclusion)
     * [File type specification:](#file-type-specification)
+    * [Performance Tuning:](#performance-tuning)
     * [Miscellaneous:](#miscellaneous)
     * [Informational options:](#informational-options)
 * [Configuration (\.ucgrc) Files](#configuration-ucgrc-files)
@@ -39,32 +40,31 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
 * [User\-Defined File Types](#user-defined-file-types)
   * [Extension List Filter](#extension-list-filter)
   * [Literal Filename Filter](#literal-filename-filter)
+  * [Glob filter](#glob-filter)
 * [Author](#author)
 
 
 ## Introduction
 
-UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with [`Ack`](http://beyondgrep.com/), to some extent with [`ag`](http://geoff.greer.fm/ag/), and where appropriate with `grep`.  Search patterns are specified as PCRE regexes. 
+UniversalCodeGrep (`ucg`) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with [`Ack`](http://beyondgrep.com/), to some extent with [`ag`](http://geoff.greer.fm/ag/), and where appropriate with `grep`.  Search patterns are specified as PCRE regexes. 
 
 ### Speed
-`ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the [PCRE library](http://www.pcre.org/), with its [JIT compilation feature](http://www.pcre.org/original/doc/html/pcrejit.html) providing a huge performance gain on most platforms.
+`ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the [PCRE2 library](http://www.pcre.org/), with its [JIT compilation feature](http://www.pcre.org/current/doc/html/pcre2jit.html) providing a huge performance gain on most platforms.  Directory tree traversal is performed by multiple threads, reducing the impact of waiting for I/O completions.  Critical functions are implemented with hand-rolled vectorized (SSE2/4.2/etc.) versions selected at program load-time based on what the system supports, with non-vectorized fallbacks.  
 
-As a consequence of its use of these facilities and its overall design for maximum concurrency and speed, `ucg` is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with `ucg` 0.2.2, [`ag`](http://geoff.greer.fm/ag/) 0.31.0, and `ack` 2.14 produces the following results:
+As a consequence of its overall design for maximum concurrency and speed, `ucg` is extremely fast.  As an example, under Fedora 24, one of the benchmarks in the test suite which scans the Boost 1.58.0 source tree with `ucg` and a selection of similar utilities yields the following results:
 
-| Command | Elapsed Real Time, Average of 5 Runs |
-|---------|-----------------------|
-| `time ucg --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 0.404 seconds |
-| `time ag --cpp 'BOOST.*HPP' ~/src/boost_1_58_0`  | ~ 5.8862 seconds |
-| `time ack --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 12.0398 seconds |
+#### Benchmark: '#include\s+".*"' on Boost source
 
-UniversalCodeGrep is in fact somewhat faster than `grep` itself.  Again under Fedora 23 and searching the Boost 1.58.0 source tree, `ucg` bests grep 2.22 not only in ease-of-use but in raw speed:
+| Command | Program Version | Elapsed Real Time, Average of 10 Runs | Num Matched Lines | Num Diff Chars |
+|---------|-----------------|---------------------------------------|-------------------|----------------|
+| `ucg --noenv --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.3.0 | 0.212767 | 9511 | 189 |
+| `/usr/bin/ucg --noenv --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.2.2 | 0.262368 | 9511 | 189 |
+| `/usr/bin/rg -n -t cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.2.3 | 0.262967 | 9509 | 0 |
+| `grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx '#include\s+.*' ~/src/boost_1_58_0` | grep (GNU grep) 2.25 | 0.366634 | 9509 | 0 |
+| `/usr/bin/pcre2grep -rn --color '--exclude=^.*(?<!\.cpp|\.hpp|\.h|\.cc|\.cxx)$' '#include\s+.*' ~/src/boost_1_58_0` | 10.21 2016-01-12 | 0.818627 | 9527 | 1386 |
+| `/usr/bin/ag  --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.32.0 | 1.90161 | 9511 | 189 |
 
-| Command | Elapsed Real Time, Average of 5 Runs |
-|---------|--------------------------------------|
-| `time grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx 'BOOST.*HPP' ~/src/boost_1_58_0` | ~ 0.9852 seconds |
-| `time ucg --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0`  | ~ 0.404 seconds |
-
-The resulting matches are identical.
+Note that UniversalCodeGrep is in fact somewhat faster than `grep` itself, even when `grep` is only using [Extended Regular Expressions](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_04).  And `ucg` certainly wins the ease-of-use contest.
 
 ## License
 
@@ -72,6 +72,9 @@ The resulting matches are identical.
 
 ## Installation
 
+UniversalCodeGrep binaries are currently available for Fedora 23/24/25/rawhide and Centos 7.  Binaries for other platforms (Ubuntu, Arch, openSUSE) are coming soon.
+
+<!-- COMING SOON
 ### Ubuntu PPA
 
 If you are a Ubuntu user, the easiest way to install UniversalCodeGrep is from the Launchpad PPA [here](https://launchpad.net/~grvs/+archive/ubuntu/ucg).  To install from the command line:
@@ -84,10 +87,11 @@ sudo apt-get update
 # Install ucg:
 sudo apt-get install universalcodegrep
 ```
+-->
 
-### Red Hat/Fedora/CentOS dnf/yum Repository
+### Fedora/CentOS Copr Repository
 
-If you are a Red Hat, Fedora, or CentOS user, the easiest way to install UniversalCodeGrep is from the Fedora Copr-hosted dnf/yum repository [here](https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep).  Installation is as simple as:
+If you are a Fedora or CentOS user, the easiest way to install UniversalCodeGrep is from the Fedora Copr-hosted dnf/yum repository [here](https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep).  Installation is as simple as:
 
 ```sh
 # Add the Copr repo to your system:
@@ -95,6 +99,8 @@ sudo dnf copr enable grvs/UniversalCodeGrep
 # Install UniversalCodeGrep:
 sudo dnf install universalcodegrep
 ```
+
+<!-- COMING SOON
 
 ### Arch Linux User Repository
 
@@ -113,15 +119,17 @@ makepkg -sri
 
 ### openSUSE Binary RPMs
 
-Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/tag/0.2.2).
+Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/tag/0.3.0).
+
+-->
 
 ### Building the Source Tarball
 
-UniversalCodeGrep can be built and installed from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.2.2/universalcodegrep-0.2.2.tar.gz)) in the standard autotools manner:
+UniversalCodeGrep can be built and installed from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.3.0/universalcodegrep-0.3.0.tar.gz)) in the standard autotools manner:
 
 ```sh
-tar -xaf universalcodegrep-0.2.2.tar.gz
-cd universalcodegrep-0.2.2.tar.gz
+tar -xaf universalcodegrep-0.3.0.tar.gz
+cd universalcodegrep-0.3.0.tar.gz
 ./configure
 make
 make install
@@ -133,31 +141,48 @@ This will install the `ucg` executable in `/usr/local/bin`.  If you wish to inst
 ./configure --prefix=~/<install-root-dir>
 ```
 
+> #### *BSD Note
+>
+> On at least PC-BSD 10.3, g++48 can't find its own libstdc++ without a little help.  Configure the package like this:
+> ```sh
+> ./configure LDFLAGS='-Wl,-rpath=/usr/local/lib/gcc48'
+> ```
+
 #### Build Prerequisites
 
-##### `gcc` version 4.8 or greater.
+##### `gcc` and `g++` versions 4.8 or greater.
 
-Versions of `gcc` prior to 4.8 do not have sufficiently complete C++11 support to build `ucg`.
+Versions of `gcc` prior to 4.8 do not have sufficiently complete C++11 support to build `ucg`.  `clang`/`clang++` is also known to work, but is not the primary development compiler.
 
-##### `pcre` version 8.21 or greater.
+##### PCRE: `libpcre2-8` version 10.20 or greater, or `libpcre` version 8.21 or greater.
 
-This should be available from your Linux distro.
+One or both of these should be available from your Linux/OS X/*BSD distro's package manager. You'll need the `-devel` versions if they're separate.  Prefer `libpcre2-8`; while `ucg` will currently work with either PCRE2 or PCRE, you'll get better performance with PCRE2.
+
+> #### OS X Prerequisites
+>
+> OS X additionally requires the installation of `argp-standalone`, which is normally part of the `glibc` library on Linux systems.  This can
+> be installed along with a pcre library from Homebrew:
+> ```sh
+> $ brew update
+> $ brew install pcre argp-standalone
+> ```  
 
 ### Supported OSes and Distributions
 
-UniversalCodeGrep should build and function anywhere the prerequisites are available.  It has been built and tested on the following OSes/distros:
+UniversalCodeGrep 0.3.0 should build and run anywhere the prerequisites are available.  It has been built and tested on the following OSes/distros:
 
 - Linux
-  - Ubuntu 15.04
+  - Fedora 22, 23, 24, rawhide
   - CentOS 7
-  - Fedora 22
-  - Fedora 23
-  - RHEL 7
-  - Arch Linux
-  - SLE 12
-  - openSUSE 13.2
-  - openSUSE Leap 42.1
-- Windows 7 + Cygwin 64-bit (Note however that speed here is comparable to `ag`)
+  - Ubuntu 16.04 (Xenial), 15.04, 14.04 (Trusty Tahr)
+- Windows 7 + Cygwin 64-bit
+- OS X
+  - Xcode 8gm/OS X 10.11
+  - Xcode 7.1.1 GM/OSX 10.10
+  - Xcode 6.1/OS X 10.9
+- PC-BSD 10.3
+
+Note that at this time, only x86-64/amd64 architectures are supported.
 
 ## Usage
 
@@ -173,10 +198,10 @@ If no `FILES OR DIRECTORIES` are specified, searching starts in the current dire
 
 ### Command Line Options
 
-Version 0.2.2 of `ucg` supports a significant subset of the options supported by `ack`.  Future releases will have support for more options.
+Version 0.3.0 of `ucg` supports a significant subset of the options supported by `ack`.  In general, options specified later
+on the command line override options specified earlier on the command line.
 
 #### Searching
-
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--[no]smart-case`   | Ignore case if PATTERN is all lowercase (default: enabled). |
@@ -185,28 +210,28 @@ Version 0.2.2 of `ucg` supports a significant subset of the options supported by
 | `-w, --word-regexp`  | PATTERN must match a complete word.                         |
 
 ####  Search Output
-
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--column`   | Print column of first match after line number. |
 | `--nocolumn` | Don't print column of first match (default).   |
 
 #### File presentation
-
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--color, --colour`     | Render the output with ANSI color codes.    |
 | `--nocolor, --nocolour` | Render the output without ANSI color codes. |
 
-#### File inclusion/exclusion:
+#### File/directory inclusion/exclusion:
 | Option | Description |
 |----------------------|------------------------------------------|
-| `--ignore-dir=name, --ignore-directory=name`     | Exclude directories with this name.        |
-| `--noignore-dir=name, --noignore-directory=name` | Do not exclude directories with this name. |
+| `--[no]ignore-dir=name, --[no]ignore-directory=name`     | [Do not] exclude directories with this name.        |
+| `--exclude=GLOB, --ignore=GLOB` | Files matching GLOB will be ignored. |
+| `--ignore-file=FILTER:FILTERARGS` |  Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored. |
+| `--include=GLOB`                       | Only files matching GLOB will be searched. |
 | `-k, --known-types`                              | Only search in files of recognized types (default: on). |
 | `-n, --no-recurse`                               | Do not recurse into subdirectories.        |
 | `-r, -R, --recurse`                              | Recurse into subdirectories (default: on). |
-| `--type=[no]TYPE`                                | Include only [exclude all] TYPE files.  Types may also be specified as `--[no]TYPE`.     |
+| `--type=[no]TYPE`                                | Include only [exclude all] TYPE files.  Types may also be specified as `--[no]TYPE`: e.g., `--cpp` is equivalent to `--type=cpp`.  May be specified multiple times. |
 
 #### File type specification:
 | Option | Description |
@@ -215,11 +240,16 @@ Version 0.2.2 of `ucg` supports a significant subset of the options supported by
 | `--type-del=TYPE`                   | Remove any existing definition of type TYPE. |
 | `--type-set=TYPE:FILTER:FILTERARGS` | Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced. |
 
+#### Performance Tuning:
+| Option | Description |
+|----------------------|------------------------------------------|
+| `--dirjobs=NUM_JOBS`   |  Number of directory traversal jobs (std::thread<>s) to use.  Default is 2. |
+| `-j, --jobs=NUM_JOBS`       | Number of scanner jobs (std::thread<>s) to use.  Default is the number of cores on the system. |
+
 #### Miscellaneous:
 | Option | Description |
 |----------------------|------------------------------------------|
-| `-j, --jobs=NUM_JOBS` | Number of scanner jobs (std::thread<>s) to use. |
-| `--noenv`             | Ignore .ucgrc files.                            |
+| `--noenv`         | Ignore .ucgrc files.                            |
 
 #### Informational options:
 | Option | Description |
@@ -252,7 +282,7 @@ Options read later will override earlier options.
 
 ## User-Defined File Types
 
-`ucg` supports user-defined file types with the `--type-set=TYPE:FILTER:FILTERARGS` and `--type-add=TYPE:FILTER:FILTERARGS` command-line options.  Only two FILTERs are currently supported, `ext` (extension list) and `is` (literal filename).
+`ucg` supports user-defined file types with the `--type-set=TYPE:FILTER:FILTERARGS` and `--type-add=TYPE:FILTER:FILTERARGS` command-line options.  Three FILTERs are currently supported, `ext` (extension list), `is` (literal filename), and `glob` (glob pattern).
 
 ### Extension List Filter
 
@@ -265,6 +295,12 @@ Example:
 The literal filename filter simply specifies a single literal filename which is to be considered as belonging to file type TYPE.
 Example:
 `--type-add=autoconf:is:configure.ac`
+
+### Glob filter
+
+The glob filter allows you to specify a glob pattern to match against filenames.  If the glob matches, the file is considered as belonging to the file type TYPE.
+Example:
+`--type-set=mk:glob:?akefile*`
 
 ## Author
 

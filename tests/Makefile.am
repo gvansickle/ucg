@@ -19,26 +19,45 @@
 
 EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in \
 	gen_test_script.py stats.awk \
-	benchmark_progs.csv opts_defs.csv test_cases.csv
+	benchmark_progs.csv opts_defs.csv test_cases.csv \
+	$(BENCHMARKSCRIPTS)
 CLEANFILES = perf_test_results.txt
 DISTCLEANFILES = atconfig
-MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
+MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE) $(BENCHMARKSCRIPTS)
 
 ###
 ### Dummy file generator exe.
 ### Only built during a "make check", and not installed.
 ###
-check_PROGRAMS = dummy-file-gen
+check_PROGRAMS = dummy-file-gen portable_time
 dummy_file_gen_SOURCES = dummy-file-gen.cpp lorem_ipsum.hpp
 dummy_file_gen_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
 dummy_file_gen_CFLAGS = $(AM_CFLAGS)
 dummy_file_gen_CXXFLAGS = $(AM_CXXFLAGS)
 dummy_file_gen_LDFLAGS = $(AM_LDFLAGS)
 
+###
+### Portable time utility.
+###
+portable_time_SOURCES = portable_time.cpp
+portable_time_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
+portable_time_CFLAGS = $(AM_CFLAGS)
+portable_time_CXXFLAGS = $(AM_CXXFLAGS)
+portable_time_LDFLAGS = $(AM_LDFLAGS)
+
+###
+### Benchmark scripts.  These are maintainer-built source.
+###
+BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
+	$(srcdir)/TC2.sh \
+	$(srcdir)/TC3.sh \
+	$(srcdir)/TC4.sh \
+	$(srcdir)/TC5.sh \
+	$(srcdir)/TC6.sh
+
      
 # This line appears in the Autoconf/Autotest manual, but see configure.ac.
-# The "AM_MISSING_PROG([AUTOM4TE], [autom4te])" line there takes care of this,
-# though the "AM_MISSING_PROG" macro is not documented.
+# The "AM_MISSING_PROG([AUTOM4TE], [autom4te])" line there takes care of this.
 #AUTOM4TE = $(SHELL) $(top_srcdir)/build-aux/missing --run autom4te
 
 
@@ -82,7 +101,8 @@ TESTSUITE_AT = \
 	version.at \
 	sanity.at \
 	search_modifiers.at \
-	performance_tests.at
+	performance_tests.at \
+	$(BENCHMARKSCRIPTS)
 
 # The actual shell script which is the testsuite.
 TESTSUITE = $(srcdir)/testsuite
@@ -117,8 +137,58 @@ clean-local:
 	test ! -f '$(TESTSUITE)' ||	$(SHELL) '$(TESTSUITE)' --clean
 	
 check-local: atconfig atlocal $(TESTSUITE)
-	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS)
+	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) ; RETVAL=$$? ; \
+	if test $$RETVAL != 0; then \
+		LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \
+		for FN in $$LOGS; do \
+			echo $$FN; \
+			cat $$FN; \
+		done; \
+	fi; \
+	exit $$RETVAL;
      
 installcheck-local: atconfig atlocal $(TESTSUITE)
-	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) AUTOTEST_PATH='$(bindir)'
+	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) AUTOTEST_PATH='$(bindir)' ; RETVAL=$$? ; \
+	if test $$RETVAL != 0; then \
+		LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \
+		for FN in $$LOGS; do \
+			echo $$FN; \
+			cat $$FN; \
+		done; \
+	fi; \
+	exit $$RETVAL;
+
+
+###
+### Rules to build benchmark test scripts at the same time testsuite is built.
+### I.e. these are built, distributed files.
+###
+
+BENCHMARK_SCRIPT_DEPS = gen_test_script.py stats.awk \
+	benchmark_progs.csv opts_defs.csv test_cases.csv Makefile.am
+
+dist_check_SCRIPTS = $(BENCHMARKSCRIPTS)
+
+# The TCn.sh rebuild rules.
+# These files should only ever need to be built pre-"make dist", and should never need to be
+# regenerated from a tarball.  Hence, we're using the $(MAINTPYTHON) variable here, which is either
+# a python interpreter or the "missing" script.
+
+$(srcdir)/TC1.sh : $(BENCHMARK_SCRIPT_DEPS)
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC1 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+
+$(srcdir)/TC2.sh : $(BENCHMARK_SCRIPT_DEPS)
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC2 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+
+$(srcdir)/TC3.sh : $(BENCHMARK_SCRIPT_DEPS)
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC3 "$${builddir}/500MBLoremIpsum.cpp" -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+
+$(srcdir)/TC4.sh : $(BENCHMARK_SCRIPT_DEPS)
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC4 "$${builddir}/500MBLoremIpsum.cpp" -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+
+$(srcdir)/TC5.sh : $(BENCHMARK_SCRIPT_DEPS)
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC5 '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+
+$(srcdir)/TC6.sh : $(BENCHMARK_SCRIPT_DEPS)
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC6 --opt=exclude_dir_literal=docs '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 

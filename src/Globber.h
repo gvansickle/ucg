@@ -128,8 +128,8 @@ private:
 	sync_queue<FileID>& m_out_queue;
 
 	std::mutex m_dir_mutex;
-	std::set<dev_ino_pair_type> m_dir_has_been_visited;
-	bool HasDirBeenVisited(dev_ino_pair_type di) { std::unique_lock<std::mutex> lock(m_dir_mutex); return !m_dir_has_been_visited.insert(di).second; };
+	std::set<dev_ino_pair> m_dir_has_been_visited;
+	bool HasDirBeenVisited(dev_ino_pair di) { std::unique_lock<std::mutex> lock(m_dir_mutex); return !m_dir_has_been_visited.insert(di).second; };
 
 	DirectoryTraversalStats m_traversal_stats;
 };

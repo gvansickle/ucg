@@ -18,7 +18,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([UniversalCodeGrep], [0.2.2], [https://github.com/gvansickle/ucg/issues],,[https://gvansickle.github.io/ucg/])
+AC_INIT([UniversalCodeGrep],[0.3.0],[https://github.com/gvansickle/ucg/issues],[],[https://gvansickle.github.io/ucg/])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -59,10 +59,6 @@ AM_INIT_AUTOMAKE([1.14
 # @note Must be done before LT_INIT, or it will complain.
 AC_USE_SYSTEM_EXTENSIONS
 
-# Determine how many CPUs we have on the build machine.
-AX_COUNT_CPUS([], [])
-AC_SUBST([CPU_COUNT])
-
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
 AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
@@ -93,7 +89,7 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # NOTE: The odd-looking ordering here (this before AC_PROG_CXXCPP) is required until the next version
 # of this macro gets released.  See http://lists.gnu.org/archive/html/autoconf-archive-maintainers/2016-03/msg00034.html.
 # @note 2016-10-8 Macro has been updated, trying to change the ordering.
-AX_CXX_COMPILE_STDCXX_11([ext],[mandatory])
+AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 
@@ -158,20 +154,6 @@ AS_IF([test "$LN_S" = 'ln -s'],
 	[AC_SUBST([TEST_LN_S], [:])
 	AC_MSG_WARN([couldn't find a real 'ln -s', will not be able to run all tests])])
 	
-# Find a usable "time" command.
-AC_CACHE_CHECK([for suitable time command], [ac_cv_path_PROG_TIME],
-	[AC_PATH_PROGS_FEATURE_CHECK([PROG_TIME], [time],
-		[for posix_option in '' '-p'; do
-	   			timeout=`{ $ac_path_PROG_TIME $posix_option echo hello ; } 2>&1 | $EGREP 'real[[^0123456789]]+[[0123456789\.]]+$'`
-	    	test "x$timeout" != x \
-	    	&& ac_cv_path_PROG_TIME="$ac_path_PROG_TIME $posix_option" ac_path_PROG_TIME_found=: && break
-			done;],
-		[	ac_cv_path_PROG_TIME=time
-			AC_MSG_WARN([could not find a POSIX-compiant time command; some tests may fail])
-		])
-	])
-AC_SUBST([PROG_TIME], [$ac_cv_path_PROG_TIME])
-
 # Try to find GNU grep.
 AC_CACHE_CHECK([for GNU grep], [ac_cv_path_PROG_GNU_GREP],
 [
@@ -208,20 +190,30 @@ AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 ###
 
 # Python, for generation of test suite.
-### @note Python >= 2.7 is actually required to run the benchmarks in the testsuite at the moment, and hence is 
-### not a maintainer-only tool.  My hope is that this will soon become a pre-"make distcheck" requirement.
 AM_PATH_PYTHON([2.7],,[:])
-AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])  #<< Automake conditional for skipping tests which require python.
+AM_CONDITIONAL([HAVE_PYTHON], [test "x$PYTHON" != "x"])  #<< Automake conditional for skipping tests which require python.
+AM_COND_IF([HAVE_PYTHON],
+	[AX_PYTHON_MODULE([sqlite3],,[python])],
+	[])
+# @todo If we don't have the Python Sqlite3 library, we might as well not have python at all for
+# our purposes here.  This is intended to scuttle the AM_MISSING_PROG([MAINTPYTHON]...) below, but
+# it likely could be done better. 
+AS_IF([test $HAVE_PYMOD_SQLITE3 = no], [PYTHON=:])
+
+# Define a maintainer-only version of python, so a tarball builder doesn't need
+# a real python runtime.
+AM_MISSING_PROG([MAINTPYTHON], [$PYTHON])
 
 # Autotest needs autom4te, or 'missing's stub for it post-distribution. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 # Add Valgrind support.
-AX_VALGRIND_DFLT([memcheck], [off])
-AX_VALGRIND_DFLT([helgrind], [off])
-AX_VALGRIND_DFLT([drd], [off])
-AX_VALGRIND_DFLT([sgcheck], [off])
-AX_VALGRIND_CHECK
+# @todo Note that this expands to GNU-make-only constructs, which fails on the BSDs.
+#AX_VALGRIND_DFLT([memcheck], [off])
+#AX_VALGRIND_DFLT([helgrind], [off])
+#AX_VALGRIND_DFLT([drd], [off])
+#AX_VALGRIND_DFLT([sgcheck], [off])
+#AX_VALGRIND_CHECK
 
 # Doxygen support.
 DX_DOXYGEN_FEATURE(ON)
@@ -247,28 +239,19 @@ AC_LANG_PUSH([C++])
 # or even exist (clang has no Linux <regex> support) for production use.
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 	[
-		AC_SUBST([HAVE_LIBPCRE],[yes])
+		# Found it.  Remember to add $PCRE_LIBS, $PCRE_CFLAGS, and $PCRE_CPPFLAGS to the appropriate automake vars.
+		AC_SUBST([HAVE_LIBPCRE], [yes])
 		AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])
 	],
-	[AC_MSG_WARN([Unable to find libpcre: $PCRE_PKG_ERRORS])])
-AC_MSG_NOTICE([PCRE_LIBS=${PCRE_LIBS}])
-AC_MSG_NOTICE([PCRE_CFLAGS=${PCRE_CFLAGS}])
-CPPFLAGS="$PCRE_CFLAGS $CPPFLAGS"
-LIBS="$PCRE_LIBS $LIBS"
+	[AC_SUBST([HAVE_LIBPCRE], [no])])
 
-PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.0],
+PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
 	[
-		AC_SUBST([HAVE_LIBPCRE2],[yes])
+		# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
+		AC_SUBST([HAVE_LIBPCRE2], [yes])
 		AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
 	],
-	[AC_MSG_WARN([Unable to find libpcre2: $PCRE2_PKG_ERRORS])])
-CPPFLAGS="$PCRE2_CFLAGS $CPPFLAGS"
-LIBS="$PCRE2_LIBS $LIBS"
-
-# Make sure we found at least one of them.
-AS_IF([test "x$HAVE_LIBPCRE" = x -a "x$HAVE_LIBPCRE2" = x],
-	[AC_MSG_ERROR([unable to find a suitable pcre library.])],
-	[AC_MSG_NOTICE([found at least one usable pcre library.])])
+	[AC_SUBST([HAVE_LIBPCRE2], [no])])
 
 AC_LANG_POP([C++])
 
@@ -325,9 +308,9 @@ AC_LANG_PUSH([C++])
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does.
 AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
-#AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm 
+#AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm
 #AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be. @note Doesn't seem to do anything.
-AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CXXFLAGS]) # -fopt-info-optimized -msse4.2], [AM_CXXFLAGS]) #  -fopt-info-vec-all
+AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CXXFLAGS]) # -fopt-info-optimized -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security], [AM_CXXFLAGS])
@@ -399,6 +382,10 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
+AC_FUNC_STRNLEN
+AS_IF([test "x$ac_cv_func_strnlen_working" = "xyes"],
+	[AC_DEFINE([HAVE_STRNLEN], [1], [Defined if strnlen() exists and is not broken.])])
+
 # There's an issue with at least Cygwin's std lib and/or gcc itself which makes to_string() unavailable
 # (see e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580 (fixed on gcc trunk 2015-11-13),
 # https://sourceware.org/ml/cygwin/2015-01/msg00251.html).  Check for existence here and we'll roll our own
@@ -408,6 +395,7 @@ AC_CHECK_DECLS([std::to_string(int)],
 				],
 				[], [#include <string>])
 
+# We need the argp library.
 AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
 
 AC_CHECK_FUNCS([sched_setaffinity])
@@ -489,7 +477,7 @@ AC_CONFIG_TESTDIR([tests])
 AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 
 ### Valgrind support.
-### @todo Fix this.
+### @todo Put this in.
 #AH_BOTTOM([#include <valgrind_support.h>])
 
 ###
@@ -501,4 +489,30 @@ AC_CONFIG_FILES([Makefile
 	src/libext/Makefile
 	third_party/Makefile])
 AC_OUTPUT
+
+# Print a configure summary.
+AC_MSG_NOTICE([
+*** Configuration Summary ***
+
+  C compiler:                 $CC
+  C++ compiler:               $CXX
+  
+  PCRE Info
+  ---------
+  HAVE_LIBPCRE                $HAVE_LIBPCRE
+  HAVE_LIBPCRE2               $HAVE_LIBPCRE2
+  
+  libtool info
+  ------------
+  sys_lib_search_path_spec:   $sys_lib_search_path_spec
+  sys_lib_dlsearch_path_spec: $sys_lib_dlsearch_path_spec
+  runpath_var:                $runpath_var
+
+])
+
+
+# Make sure we found at least one of the PCRE libs.
+AS_IF([test "x$HAVE_LIBPCRE" = x -a "x$HAVE_LIBPCRE2" = x],
+	[AC_MSG_ERROR([unable to find a suitable pcre library.])],
+	[AC_MSG_NOTICE([found at least one usable pcre library.])])
 
