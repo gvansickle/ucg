@@ -56,8 +56,8 @@ private:
 	sync_queue<FileID>& m_out_queue;
 
 	std::mutex m_dir_mutex;
-	std::set<dev_ino_pair_type> m_dir_has_been_visited;
-	bool HasDirBeenVisited(dev_ino_pair_type di) { std::unique_lock<std::mutex> lock(m_dir_mutex); return !m_dir_has_been_visited.insert(di).second; };
+	std::set<dev_ino_pair> m_dir_has_been_visited;
+	bool HasDirBeenVisited(dev_ino_pair di) { std::unique_lock<std::mutex> lock(m_dir_mutex); return !m_dir_has_been_visited.insert(di).second; };
 
 	void ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent *de,
 			const file_basename_filter_type &file_basename_filter,

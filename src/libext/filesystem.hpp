@@ -70,24 +70,6 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 /// @}
 
 
-using dev_ino_pair_type = uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast;
-
-/// @name Take care of some portability issues.
-/// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
-/// - No AT_FDCWD, no openat, no fdopendir, no fstatat.
-/// Cygwin:
-/// - No O_NOATIME, no AT_NO_AUTOMOUNT.
-/// Linux:
-/// - No O_SEARCH.
-/// @{
-#ifndef O_SEARCH
-// O_SEARCH is POSIX.1-2008, but not defined on at least Linux/glibc 2.24.
-// Possible reason, quoted from the standard: "Since O_RDONLY has historically had the value zero, implementations are not able to distinguish
-// between O_SEARCH and O_SEARCH | O_RDONLY, and similarly for O_EXEC."
-#define O_SEARCH 0
-#endif
-/// @}
-
 using dev_ino_pair_type = std::conditional<
 		sizeof(__int128) < (sizeof(dev_t)+sizeof(ino_t)),
 		/*static_assert(false, "uintmax_t not big enough.")*/ int,
@@ -99,7 +81,9 @@ struct dev_ino_pair
 	dev_ino_pair() = default;
 	dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
 
-	constexpr bool operator<(const dev_ino_pair& other) const { return m_val < other.m_val; };
+	constexpr bool operator<(const dev_ino_pair& other) const noexcept { return m_val < other.m_val; };
+
+	constexpr bool empty() const noexcept { return m_val == 0; };
 
 private:
 	dev_ino_pair_type m_val { 0 };

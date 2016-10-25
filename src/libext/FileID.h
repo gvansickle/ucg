@@ -110,7 +110,7 @@ public:
 		return m_block_size;
 	};
 
-	const dev_ino_pair GetUniqueFileIdentifier() const noexcept { if(m_unique_file_identifier.m_val == 0) { LazyLoadStatInfo(); }; return m_unique_file_identifier; };
+	const dev_ino_pair GetUniqueFileIdentifier() const noexcept { if(!m_unique_file_identifier.empty()) { LazyLoadStatInfo(); }; return m_unique_file_identifier; };
 
 	dev_t GetDev() const noexcept { if(m_dev == 0xFFFFFFFF) { LazyLoadStatInfo(); }; return m_dev; };
 	void SetDevIno(dev_t d, ino_t i) noexcept;

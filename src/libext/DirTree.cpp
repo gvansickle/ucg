@@ -260,7 +260,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, st
 			dir_atfd.SetDevIno(dse->GetDev(), current_dirent->d_ino);
 
 			// We have to detect any symlink cycles ourselves.
-			if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier().m_val))
+			if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier()))
 			{
 				// Found cycle.
 				WARN() << "\'" << dir_atfd.GetPath() << "\': recursive directory loop";
