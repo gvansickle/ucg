@@ -8,36 +8,25 @@
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
     <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-	<script>
-	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-	  ga('create', 'UA-71934244-1', 'auto');
-	  ga('send', 'pageview');
-
-	</script>
   </head>
   <body>
     <section class="page-header">
       <h1 class="project-name">UniversalCodeGrep</h1>
-      <h2 class="project-tagline">Easy as Ack, Faster than grep</h2>
+      <h2 class="project-tagline">ucg - UniversalCodeGrep</h2>
       <a href="https://github.com/gvansickle/ucg" class="btn">View on GitHub</a>
-	  <a href="https://github.com/gvansickle/ucg/releases/latest" class="btn">Latest Release: 0.2.2</a>
-      <br/>
-      NEW!: 2016-04-16: Version 0.2.2 released.  See <a href="https://github.com/gvansickle/ucg/blob/0.2.2/NEWS.md">NEWS</a> for a list of fixes and changes.
-      <br/>
-      NEW!: 2016-02-08: Version 0.2.1 released.  See <a href="https://github.com/gvansickle/ucg/blob/0.2.1/NEWS.md">NEWS</a> for a list of fixes and changes.
-	  <br/>
-	  NEW!: 2016-01-29: Ubuntu users can now install the latest UniversalCodeGrep releases from ucg's <a href="https://launchpad.net/~grvs/+archive/ubuntu/ucg">PPA</a>.
-	  <br/>
-	  NEW!: 2016-01-10: Red Hat / Fedora / CentOS users can now install the latest UniversalCodeGrep releases from ucg's <a href="https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep/">COPR</a> dnf/yum repository.
+      <a href="https://github.com/gvansickle/ucg/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/gvansickle/ucg/tarball/master" class="btn">Download .tar.gz</a>
     </section>
 
     <section class="main-content">
       <h1>
 <a id="universalcodegrep" class="anchor" href="#universalcodegrep" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>UniversalCodeGrep</h1>
+
+<p><a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL3-red.svg" alt="License"></a>
+<a href="https://travis-ci.org/gvansickle/ucg"><img src="https://travis-ci.org/gvansickle/ucg.svg?branch=master" alt="Travis-CI Build Status"></a>
+<a href="https://scan.coverity.com/projects/gvansickle-ucg">
+  <img alt="Coverity Scan Build Status" src="https://scan.coverity.com/projects/7451/badge.svg">
+</a></p>
 
 <p>UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.</p>
 
@@ -49,7 +38,13 @@
 <a href="#introduction">Introduction</a>
 
 <ul>
-<li><a href="#speed">Speed</a></li>
+<li>
+<a href="#speed">Speed</a>
+
+<ul>
+<li><a href="#benchmark-includes-on-boost-source">Benchmark: '#include\s+".*"' on Boost source</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#license">License</a></li>
@@ -57,21 +52,21 @@
 <a href="#installation">Installation</a>
 
 <ul>
-<li><a href="#ubuntu-ppa">Ubuntu PPA</a></li>
-<li><a href="#red-hatfedoracentos-dnfyum-repository">Red Hat/Fedora/CentOS dnf/yum Repository</a></li>
-<li><a href="#opensuse-binary-rpms">openSUSE Binary RPMs</a></li>
+<li><a href="#fedoracentos-copr-repository">Fedora/CentOS Copr Repository</a></li>
 <li>
 <a href="#building-the-source-tarball">Building the Source Tarball</a>
 
 <ul>
+<li><a href="#bsd-note">*BSD Note</a></li>
 <li>
 <a href="#build-prerequisites">Build Prerequisites</a>
 
 <ul>
-<li><a href="#gcc-version-48-or-greater">gcc version 4.8 or greater.</a></li>
-<li><a href="#pcre-version-821-or-greater">pcre version 8.21 or greater.</a></li>
+<li><a href="#gcc-and-g-versions-48-or-greater">gcc and g++ versions 4.8 or greater.</a></li>
+<li><a href="#pcre-libpcre2-8-version-1020-or-greater-or-libpcre-version-821-or-greater">PCRE: libpcre2-8 version 10.20 or greater, or libpcre version 8.21 or greater.</a></li>
 </ul>
 </li>
+<li><a href="#os-x-prerequisites">OS X Prerequisites</a></li>
 </ul>
 </li>
 <li><a href="#supported-oses-and-distributions">Supported OSes and Distributions</a></li>
@@ -88,8 +83,9 @@
 <li><a href="#searching">Searching</a></li>
 <li><a href="#search-output">Search Output</a></li>
 <li><a href="#file-presentation">File presentation</a></li>
-<li><a href="#file-inclusionexclusion">File inclusion/exclusion:</a></li>
+<li><a href="#filedirectory-inclusionexclusion">File/directory inclusion/exclusion:</a></li>
 <li><a href="#file-type-specification">File type specification:</a></li>
+<li><a href="#performance-tuning">Performance Tuning:</a></li>
 <li><a href="#miscellaneous">Miscellaneous:</a></li>
 <li><a href="#informational-options">Informational options:</a></li>
 </ul>
@@ -110,6 +106,7 @@
 <ul>
 <li><a href="#extension-list-filter">Extension List Filter</a></li>
 <li><a href="#literal-filename-filter">Literal Filename Filter</a></li>
+<li><a href="#glob-filter">Glob filter</a></li>
 </ul>
 </li>
 <li><a href="#author">Author</a></li>
@@ -118,60 +115,75 @@
 <h2>
 <a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Introduction</h2>
 
-<p>UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with <a href="http://beyondgrep.com/"><code>Ack</code></a>, to some extent with <a href="http://geoff.greer.fm/ag/"><code>ag</code></a>, and where appropriate with <code>grep</code>.  Search patterns are specified as PCRE regexes. </p>
+<p>UniversalCodeGrep (<code>ucg</code>) is an extremely fast grep-like tool specialized for searching large bodies of source code.  It is intended to be largely command-line compatible with <a href="http://beyondgrep.com/"><code>Ack</code></a>, to some extent with <a href="http://geoff.greer.fm/ag/"><code>ag</code></a>, and where appropriate with <code>grep</code>.  Search patterns are specified as PCRE regexes. </p>
 
 <h3>
 <a id="speed" class="anchor" href="#speed" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Speed</h3>
 
-<p><code>ucg</code> is intended to address the impatient programmer's code searching needs.  <code>ucg</code> is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the <a href="http://www.pcre.org/">PCRE library</a>, with its <a href="http://www.pcre.org/original/doc/html/pcrejit.html">JIT compilation feature</a> providing a huge performance gain on most platforms.</p>
+<p><code>ucg</code> is intended to address the impatient programmer's code searching needs.  <code>ucg</code> is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the <a href="http://www.pcre.org/">PCRE2 library</a>, with its <a href="http://www.pcre.org/current/doc/html/pcre2jit.html">JIT compilation feature</a> providing a huge performance gain on most platforms.  Directory tree traversal is performed by multiple threads, reducing the impact of waiting for I/O completions.  Critical functions are implemented with hand-rolled vectorized (SSE2/4.2/etc.) versions selected at program load-time based on what the system supports, with non-vectorized fallbacks.  </p>
 
-<p>As a consequence of its use of these facilities and its overall design for maximum concurrency and speed, <code>ucg</code> is extremely fast.  Under Fedora 23, scanning the Boost 1.58.0 source tree with <code>ucg</code> 0.2.2, <a href="http://geoff.greer.fm/ag/"><code>ag</code></a> 0.31.0, and <code>ack</code> 2.14 produces the following results:</p>
+<p>As a consequence of its overall design for maximum concurrency and speed, <code>ucg</code> is extremely fast.  As an example, under Fedora 24, one of the benchmarks in the test suite which scans the Boost 1.58.0 source tree with <code>ucg</code> and a selection of similar utilities yields the following results:</p>
 
-<table>
-<thead>
-<tr>
-<th>Command</th>
-<th>Elapsed Real Time, Average of 5 Runs</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>time ucg --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
-<td>~ 0.404 seconds</td>
-</tr>
-<tr>
-<td><code>time ag --cpp 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
-<td>~ 5.8862 seconds</td>
-</tr>
-<tr>
-<td><code>time ack --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
-<td>~ 12.0398 seconds</td>
-</tr>
-</tbody>
-</table>
-
-<p>UniversalCodeGrep is in fact somewhat faster than <code>grep</code> itself.  Again under Fedora 23 and searching the Boost 1.58.0 source tree, <code>ucg</code> bests grep 2.22 not only in ease-of-use but in raw speed:</p>
+<h4>
+<a id="benchmark-includes-on-boost-source" class="anchor" href="#benchmark-includes-on-boost-source" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Benchmark: '#include\s+".*"' on Boost source</h4>
 
 <table>
 <thead>
 <tr>
 <th>Command</th>
-<th>Elapsed Real Time, Average of 5 Runs</th>
+<th>Program Version</th>
+<th>Elapsed Real Time, Average of 10 Runs</th>
+<th>Num Matched Lines</th>
+<th>Num Diff Chars</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>time grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
-<td>~ 0.9852 seconds</td>
+<td><code>ucg --noenv --cpp '#include\s+.*' ~/src/boost_1_58_0</code></td>
+<td>0.3.0</td>
+<td>0.212767</td>
+<td>9511</td>
+<td>189</td>
 </tr>
 <tr>
-<td><code>time ucg --noenv --cpp 'BOOST.*HPP' ~/src/boost_1_58_0</code></td>
-<td>~ 0.404 seconds</td>
+<td><code>/usr/bin/ucg --noenv --cpp '#include\s+.*' ~/src/boost_1_58_0</code></td>
+<td>0.2.2</td>
+<td>0.262368</td>
+<td>9511</td>
+<td>189</td>
+</tr>
+<tr>
+<td><code>/usr/bin/rg -n -t cpp '#include\s+.*' ~/src/boost_1_58_0</code></td>
+<td>0.2.3</td>
+<td>0.262967</td>
+<td>9509</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx '#include\s+.*' ~/src/boost_1_58_0</code></td>
+<td>grep (GNU grep) 2.25</td>
+<td>0.366634</td>
+<td>9509</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>/usr/bin/pcre2grep -rn --color '--exclude=^.*(?&lt;!\.cpp|\.hpp|\.h|\.cc|\.cxx)$' '#include\s+.*' ~/src/boost_1_58_0</code></td>
+<td>10.21 2016-01-12</td>
+<td>0.818627</td>
+<td>9527</td>
+<td>1386</td>
+</tr>
+<tr>
+<td><code>/usr/bin/ag  --cpp '#include\s+.*' ~/src/boost_1_58_0</code></td>
+<td>0.32.0</td>
+<td>1.90161</td>
+<td>9511</td>
+<td>189</td>
 </tr>
 </tbody>
 </table>
 
-<p>The resulting matches are identical.</p>
+<p>Note that UniversalCodeGrep is in fact somewhat faster than <code>grep</code> itself, even when <code>grep</code> is only using <a href="http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_04">Extended Regular Expressions</a>.  And <code>ucg</code> certainly wins the ease-of-use contest.</p>
 
 <h2>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
@@ -181,40 +193,29 @@
 <h2>
 <a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
 
-<h3>
-<a id="ubuntu-ppa" class="anchor" href="#ubuntu-ppa" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Ubuntu PPA</h3>
+<p>UniversalCodeGrep binaries are currently available for Fedora 23/24/25/rawhide and Centos 7.  Binaries for other platforms (Ubuntu, Arch, openSUSE) are coming soon.</p>
 
-<p>If you are a Ubuntu user, the easiest way to install UniversalCodeGrep is from the Launchpad PPA <a href="https://launchpad.net/%7Egrvs/+archive/ubuntu/ucg">here</a>.  To install from the command line:</p>
 
-<div class="highlight highlight-source-shell"><pre><span class="pl-c"># Add the PPA to your system:</span>
-sudo add-apt-repository ppa:grvs/ucg
-<span class="pl-c"># Pull down the latest lists of software from all archives:</span>
-sudo apt-get update
-<span class="pl-c"># Install ucg:</span>
-sudo apt-get install universalcodegrep</pre></div>
 
 <h3>
-<a id="red-hatfedoracentos-dnfyum-repository" class="anchor" href="#red-hatfedoracentos-dnfyum-repository" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Red Hat/Fedora/CentOS dnf/yum Repository</h3>
+<a id="fedoracentos-copr-repository" class="anchor" href="#fedoracentos-copr-repository" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Fedora/CentOS Copr Repository</h3>
 
-<p>If you are a Red Hat, Fedora, or CentOS user, the easiest way to install UniversalCodeGrep is from the Fedora Copr-hosted dnf/yum repository <a href="https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep">here</a>.  Installation is as simple as:</p>
+<p>If you are a Fedora or CentOS user, the easiest way to install UniversalCodeGrep is from the Fedora Copr-hosted dnf/yum repository <a href="https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep">here</a>.  Installation is as simple as:</p>
 
 <div class="highlight highlight-source-shell"><pre><span class="pl-c"># Add the Copr repo to your system:</span>
 sudo dnf copr <span class="pl-c1">enable</span> grvs/UniversalCodeGrep
 <span class="pl-c"># Install UniversalCodeGrep:</span>
 sudo dnf install universalcodegrep</pre></div>
 
-<h3>
-<a id="opensuse-binary-rpms" class="anchor" href="#opensuse-binary-rpms" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>openSUSE Binary RPMs</h3>
 
-<p>Binary RPMs for openSUSE are available <a href="https://github.com/gvansickle/ucg/releases/tag/0.2.2">here</a>.</p>
 
 <h3>
 <a id="building-the-source-tarball" class="anchor" href="#building-the-source-tarball" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Building the Source Tarball</h3>
 
-<p>UniversalCodeGrep can be built and installed from the distribution tarball (available <a href="https://github.com/gvansickle/ucg/releases/download/0.2.2/universalcodegrep-0.2.2.tar.gz">here</a>) in the standard autotools manner:</p>
+<p>UniversalCodeGrep can be built and installed from the distribution tarball (available <a href="https://github.com/gvansickle/ucg/releases/download/0.3.0/universalcodegrep-0.3.0.tar.gz">here</a>) in the standard autotools manner:</p>
 
-<div class="highlight highlight-source-shell"><pre>tar -xaf universalcodegrep-0.2.2.tar.gz
-<span class="pl-c1">cd</span> universalcodegrep-0.2.2.tar.gz
+<div class="highlight highlight-source-shell"><pre>tar -xaf universalcodegrep-0.3.0.tar.gz
+<span class="pl-c1">cd</span> universalcodegrep-0.3.0.tar.gz
 ./configure
 make
 make install</pre></div>
@@ -223,40 +224,66 @@ make install</pre></div>
 
 <div class="highlight highlight-source-shell"><pre>./configure --prefix=<span class="pl-k">~</span>/<span class="pl-k">&lt;</span>install-root-dir<span class="pl-k">&gt;</span></pre></div>
 
+<blockquote>
+<h4>
+<a id="bsd-note" class="anchor" href="#bsd-note" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>*BSD Note</h4>
+
+<p>On at least PC-BSD 10.3, g++48 can't find its own libstdc++ without a little help.  Configure the package like this:</p>
+
+<div class="highlight highlight-source-shell"><pre>./configure LDFLAGS=<span class="pl-s"><span class="pl-pds">'</span>-Wl,-rpath=/usr/local/lib/gcc48<span class="pl-pds">'</span></span></pre></div>
+</blockquote>
+
 <h4>
 <a id="build-prerequisites" class="anchor" href="#build-prerequisites" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Build Prerequisites</h4>
 
 <h5>
-<a id="gcc-version-48-or-greater" class="anchor" href="#gcc-version-48-or-greater" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>gcc</code> version 4.8 or greater.</h5>
+<a id="gcc-and-g-versions-48-or-greater" class="anchor" href="#gcc-and-g-versions-48-or-greater" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>gcc</code> and <code>g++</code> versions 4.8 or greater.</h5>
 
-<p>Versions of <code>gcc</code> prior to 4.8 do not have sufficiently complete C++11 support to build <code>ucg</code>.</p>
+<p>Versions of <code>gcc</code> prior to 4.8 do not have sufficiently complete C++11 support to build <code>ucg</code>.  <code>clang</code>/<code>clang++</code> is also known to work, but is not the primary development compiler.</p>
 
 <h5>
-<a id="pcre-version-821-or-greater" class="anchor" href="#pcre-version-821-or-greater" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>pcre</code> version 8.21 or greater.</h5>
+<a id="pcre-libpcre2-8-version-1020-or-greater-or-libpcre-version-821-or-greater" class="anchor" href="#pcre-libpcre2-8-version-1020-or-greater-or-libpcre-version-821-or-greater" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>PCRE: <code>libpcre2-8</code> version 10.20 or greater, or <code>libpcre</code> version 8.21 or greater.</h5>
 
-<p>This should be available from your Linux distro.</p>
+<p>One or both of these should be available from your Linux/OS X/*BSD distro's package manager. You'll need the <code>-devel</code> versions if they're separate.  Prefer <code>libpcre2-8</code>; while <code>ucg</code> will currently work with either PCRE2 or PCRE, you'll get better performance with PCRE2.</p>
+
+<blockquote>
+<h4>
+<a id="os-x-prerequisites" class="anchor" href="#os-x-prerequisites" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>OS X Prerequisites</h4>
+
+<p>OS X additionally requires the installation of <code>argp-standalone</code>, which is normally part of the <code>glibc</code> library on Linux systems.  This can
+be installed along with a pcre library from Homebrew:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ brew update
+$ brew install pcre argp-standalone</pre></div>
+</blockquote>
 
 <h3>
 <a id="supported-oses-and-distributions" class="anchor" href="#supported-oses-and-distributions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Supported OSes and Distributions</h3>
 
-<p>UniversalCodeGrep should build and function anywhere the prerequisites are available.  It has been built and tested on the following OSes/distros:</p>
+<p>UniversalCodeGrep 0.3.0 should build and run anywhere the prerequisites are available.  It has been built and tested on the following OSes/distros:</p>
 
 <ul>
 <li>Linux
 
 <ul>
-<li>Ubuntu 15.04</li>
+<li>Fedora 22, 23, 24, rawhide</li>
 <li>CentOS 7</li>
-<li>Fedora 22</li>
-<li>Fedora 23</li>
-<li>RHEL 7</li>
-<li>SLE 12</li>
-<li>openSUSE 13.2</li>
-<li>openSUSE Leap 42.1</li>
+<li>Ubuntu 16.04 (Xenial), 15.04, 14.04 (Trusty Tahr)</li>
 </ul>
 </li>
-<li>Windows 7 + Cygwin 64-bit (Note however that speed here is comparable to <code>ag</code>)</li>
+<li>Windows 7 + Cygwin 64-bit</li>
+<li>OS X
+
+<ul>
+<li>Xcode 8gm/OS X 10.11</li>
+<li>Xcode 7.1.1 GM/OSX 10.10</li>
+<li>Xcode 6.1/OS X 10.9</li>
 </ul>
+</li>
+<li>PC-BSD 10.3</li>
+</ul>
+
+<p>Note that at this time, only x86-64/amd64 architectures are supported.</p>
 
 <h2>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h2>
@@ -272,7 +299,8 @@ make install</pre></div>
 <h3>
 <a id="command-line-options" class="anchor" href="#command-line-options" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Command Line Options</h3>
 
-<p>Version 0.2.2 of <code>ucg</code> supports a significant subset of the options supported by <code>ack</code>.  Future releases will have support for more options.</p>
+<p>Version 0.3.0 of <code>ucg</code> supports a significant subset of the options supported by <code>ack</code>.  In general, options specified later
+on the command line override options specified earlier on the command line.</p>
 
 <h4>
 <a id="searching" class="anchor" href="#searching" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Searching</h4>
@@ -349,7 +377,7 @@ make install</pre></div>
 </table>
 
 <h4>
-<a id="file-inclusionexclusion" class="anchor" href="#file-inclusionexclusion" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>File inclusion/exclusion:</h4>
+<a id="filedirectory-inclusionexclusion" class="anchor" href="#filedirectory-inclusionexclusion" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>File/directory inclusion/exclusion:</h4>
 
 <table>
 <thead>
@@ -360,12 +388,20 @@ make install</pre></div>
 </thead>
 <tbody>
 <tr>
-<td><code>--ignore-dir=name, --ignore-directory=name</code></td>
-<td>Exclude directories with this name.</td>
+<td><code>--[no]ignore-dir=name, --[no]ignore-directory=name</code></td>
+<td>[Do not] exclude directories with this name.</td>
 </tr>
 <tr>
-<td><code>--noignore-dir=name, --noignore-directory=name</code></td>
-<td>Do not exclude directories with this name.</td>
+<td><code>--exclude=GLOB, --ignore=GLOB</code></td>
+<td>Files matching GLOB will be ignored.</td>
+</tr>
+<tr>
+<td><code>--ignore-file=FILTER:FILTERARGS</code></td>
+<td>Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored.</td>
+</tr>
+<tr>
+<td><code>--include=GLOB</code></td>
+<td>Only files matching GLOB will be searched.</td>
 </tr>
 <tr>
 <td><code>-k, --known-types</code></td>
@@ -381,7 +417,7 @@ make install</pre></div>
 </tr>
 <tr>
 <td><code>--type=[no]TYPE</code></td>
-<td>Include only [exclude all] TYPE files.  Types may also be specified as <code>--[no]TYPE</code>.</td>
+<td>Include only [exclude all] TYPE files.  Types may also be specified as <code>--[no]TYPE</code>: e.g., <code>--cpp</code> is equivalent to <code>--type=cpp</code>.  May be specified multiple times.</td>
 </tr>
 </tbody>
 </table>
@@ -413,7 +449,7 @@ make install</pre></div>
 </table>
 
 <h4>
-<a id="miscellaneous" class="anchor" href="#miscellaneous" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Miscellaneous:</h4>
+<a id="performance-tuning" class="anchor" href="#performance-tuning" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Performance Tuning:</h4>
 
 <table>
 <thead>
@@ -424,9 +460,27 @@ make install</pre></div>
 </thead>
 <tbody>
 <tr>
-<td><code>-j, --jobs=NUM_JOBS</code></td>
-<td>Number of scanner jobs (std::thread&lt;&gt;s) to use.</td>
+<td><code>--dirjobs=NUM_JOBS</code></td>
+<td>Number of directory traversal jobs (std::thread&lt;&gt;s) to use.  Default is 2.</td>
 </tr>
+<tr>
+<td><code>-j, --jobs=NUM_JOBS</code></td>
+<td>Number of scanner jobs (std::thread&lt;&gt;s) to use.  Default is the number of cores on the system.</td>
+</tr>
+</tbody>
+</table>
+
+<h4>
+<a id="miscellaneous" class="anchor" href="#miscellaneous" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Miscellaneous:</h4>
+
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td><code>--noenv</code></td>
 <td>Ignore .ucgrc files.</td>
@@ -495,7 +549,7 @@ make install</pre></div>
 <h2>
 <a id="user-defined-file-types" class="anchor" href="#user-defined-file-types" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>User-Defined File Types</h2>
 
-<p><code>ucg</code> supports user-defined file types with the <code>--type-set=TYPE:FILTER:FILTERARGS</code> and <code>--type-add=TYPE:FILTER:FILTERARGS</code> command-line options.  Only two FILTERs are currently supported, <code>ext</code> (extension list) and <code>is</code> (literal filename).</p>
+<p><code>ucg</code> supports user-defined file types with the <code>--type-set=TYPE:FILTER:FILTERARGS</code> and <code>--type-add=TYPE:FILTER:FILTERARGS</code> command-line options.  Three FILTERs are currently supported, <code>ext</code> (extension list), <code>is</code> (literal filename), and <code>glob</code> (glob pattern).</p>
 
 <h3>
 <a id="extension-list-filter" class="anchor" href="#extension-list-filter" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Extension List Filter</h3>
@@ -510,6 +564,13 @@ Example:
 <p>The literal filename filter simply specifies a single literal filename which is to be considered as belonging to file type TYPE.
 Example:
 <code>--type-add=autoconf:is:configure.ac</code></p>
+
+<h3>
+<a id="glob-filter" class="anchor" href="#glob-filter" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Glob filter</h3>
+
+<p>The glob filter allows you to specify a glob pattern to match against filenames.  If the glob matches, the file is considered as belonging to the file type TYPE.
+Example:
+<code>--type-set=mk:glob:?akefile*</code></p>
 
 <h2>
 <a id="author" class="anchor" href="#author" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Author</h2>
