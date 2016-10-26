@@ -491,11 +491,20 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT
 
 # Print a configure summary.
-AC_MSG_NOTICE([
-*** Configuration Summary ***
+AC_MSG_RESULT([
+  Configuration Summary for $PACKAGE $VERSION
+  ===========================================
 
+  prefix:                     ${prefix}
+  sysconfdir:                 ${sysconfdir}
+  libdir:                     ${libdir}
+  includedir:                 ${includedir}
+  
   C compiler:                 $CC
   C++ compiler:               $CXX
+  [AM_CXXFLAGS]:                $AM_CXXFLAGS
+  CXXFLAGS:                   $CXXFLAGS
+  LDFLAGS:                    $AM_LDFLAGS $LDFLAGS
   
   PCRE Info
   ---------
