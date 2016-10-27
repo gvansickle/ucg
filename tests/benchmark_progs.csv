@@ -3,7 +3,7 @@ built_ucg,ucg,true,--noenv,--dirjobs=,-j,--ignore-dir=,only_cpp_ack
 inst_ucg,${PROG_INST_UCG},true,--noenv,--dirjobs=,-j,--ignore-dir=,only_cpp_ack
 fake_for_test,nosuchprog,true,-Abc,,,--exclude-dir=,only_cpp_ack
 inst_ag,${PROG_INST_AG},true,,,,--ignore-dir=,only_cpp_ack
-inst_ripgrep,${PROG_INST_RIPGREP},false,-n,,-j,--glob !,only_cpp_rg
+inst_ripgrep,${PROG_INST_RIPGREP},false,-u -n,,-j,--glob !,only_cpp_rg
 inst_pcre2grep,${PROG_PCRE2GREP},true,-rn --color,,,--exclude-dir=,only_cpp_pcre2grep
 inst_system_grep,grep,false,-Ern --color,,,--exclude-dir=,only_cpp_grep
 inst_gnu_grep_e,${PROG_GNU_GREP},false,-Ern --color,,,--exclude-dir=,only_cpp_grep
