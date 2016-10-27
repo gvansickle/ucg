@@ -22,20 +22,27 @@
 #ifndef SRC_LIBEXT_MICROSTRING_HPP_
 #define SRC_LIBEXT_MICROSTRING_HPP_
 
+#include <config.h>
+
+#include "integer.hpp"
+#include "hints.hpp"
+
+
 /**
  * Class for very short strings.  Basically a thin facade over a built-in integral type which allows very fast comparisons, copies, and moves.
  */
-class microstring
+template <typename UnderlyingType>
+class basic_microstring
 {
 public:
 
-	using underlying_storage_type = uint32_t;
+	using underlying_storage_type = UnderlyingType;
 
-	microstring() = default;
-	microstring(const std::string &other) : microstring(other.cbegin(), other.cend()) {};
-	microstring(std::string::const_iterator b, std::string::const_iterator e) : microstring(&*b, &*e) {};
+	basic_microstring() = default;
+	basic_microstring(const std::string &other) : basic_microstring(other.cbegin(), other.cend()) {};
+	basic_microstring(std::string::const_iterator b, std::string::const_iterator e) : basic_microstring(&*b, &*e) {};
 
-	microstring(const char * __restrict__ start, const char * __restrict__ end)
+	basic_microstring(const char * __restrict__ start, const char * __restrict__ end)
 	{
 		size_t num_chars = end - start;
 		if(unlikely(num_chars > sizeof(underlying_storage_type)))
@@ -66,7 +73,7 @@ public:
 		}
 	}
 
-	~microstring() noexcept = default;
+	~basic_microstring() noexcept = default;
 
 	/**
 	 * Return the number of characters in the microstring.
@@ -76,7 +83,7 @@ public:
 	 *
 	 * @return Length of string.
 	 */
-	size_t length() const noexcept
+	constexpr inline size_t length() const noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
 		auto tmp = m_storage;
 
@@ -88,10 +95,13 @@ public:
 		return strnlen(ptr, 4);
 	};
 
-	inline bool operator <(const microstring other) const noexcept { return m_storage < other.m_storage; };
+	constexpr inline bool operator <(const basic_microstring other) const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	{
+		return m_storage < other.m_storage;
+	};
 
 	/// Implicitly convert to a std::string.
-	operator std::string() const
+	inline operator std::string() const ATTR_ARTIFICIAL
 	{
 		underlying_storage_type tmp = host_to_be(m_storage);
 		return std::string(reinterpret_cast<const char *>(&tmp), length());
@@ -102,6 +112,13 @@ public:
 private:
 	underlying_storage_type m_storage;  // No member initializer, would make the class non-trivial.
 };
+
+
+using microstring = basic_microstring<uint32_t>;
+
+
+
+
 
 #ifdef HAVE_IS_TRIVIAL
 static_assert(std::is_trivial<microstring>::value, "microstring is not trivial");
