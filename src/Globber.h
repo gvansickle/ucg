@@ -123,7 +123,7 @@ private:
 
 	bool m_recurse_subdirs;
 
-	bool m_logical {false};
+	bool m_logical {true};
 
 	int m_dirjobs;
 
