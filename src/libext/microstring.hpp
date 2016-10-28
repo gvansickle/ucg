@@ -83,7 +83,7 @@ public:
 	 *
 	 * @return Length of string.
 	 */
-	constexpr inline size_t length() const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	inline size_t length() const noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
 		auto tmp = m_storage;
 
