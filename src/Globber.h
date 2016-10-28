@@ -123,6 +123,8 @@ private:
 
 	bool m_recurse_subdirs;
 
+	bool m_logical {false};
+
 	int m_dirjobs;
 
 	sync_queue<FileID>& m_out_queue;
