@@ -69,60 +69,6 @@ std::string ftsent_path(FTSENT*p)
 	}
 }
 
-/**
- * @todo OBSOLETE, REMOVE.
- */
-class ExtraFTSENTDirInfo
-{
-public:
-	ExtraFTSENTDirInfo(FTSENT *owning_ftsent) : m_ptr_to_ftsent(owning_ftsent), m_full_path() {};
-	~ExtraFTSENTDirInfo();
-
-	std::string GetDirName()
-	{
-		if(m_full_path.empty())
-		{
-			// Get, possibly recursively, this directory's parent's path.
-			if(m_ptr_to_ftsent->fts_level == 0)
-			{
-				// At the top level, our parent's path/name is empty and our full name is our fts_path, including possible trailing backslashes.
-				// E.g.: given a single path, "../", to fts_open():
-				// INFO: GLOBBER_0: Considering file path/name '../ /// ' at depth = 0, With parent path/name:  ///
-				// INFO: GLOBBER_0: ... directory.
-				// INFO: GLOBBER_0: Pre-order visit to dir '../', setting fts_pointer==0x7fbe0c001f20
-				// INFO: GLOBBER_0: Considering file path/name '../tests /// tests' at depth = 1, With parent path/name: ../ ///
-				// INFO: GLOBBER_0: ... directory.
-
-				m_full_path.assign(m_ptr_to_ftsent->fts_path, m_ptr_to_ftsent->fts_pathlen);
-			}
-			else
-			{
-				auto parent = reinterpret_cast<ExtraFTSENTDirInfo*>(m_ptr_to_ftsent->fts_parent->fts_pointer);
-				if(parent == nullptr)
-				{
-					// No parent.
-					m_full_path.assign(m_ptr_to_ftsent->fts_name, m_ptr_to_ftsent->fts_namelen);
-				}
-				else
-				{
-					m_full_path = parent->GetDirName() + "/" + ftsent_name(m_ptr_to_ftsent);
-				}
-			}
-		}
-		LOG(INFO) << "GENERATED FULL DIR PATH: " << m_full_path;
-		return m_full_path;
-	}
-
-private:
-
-	/// Backref to the FTSENT the instance belongs to.
-	FTSENT *m_ptr_to_ftsent { nullptr };
-
-	/// Cached full path to the directory as a std::string.
-	std::string m_full_path;
-
-};
-
 
 Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
@@ -229,9 +175,26 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		/// check for these and use them if they exist.  Note the following though regarding O_NOATIME from the GNU libc
 		/// docs <https://www.gnu.org/software/libc/manual/html_node/Operating-Modes.html#Operating-Modes>:
 		/// "Only the owner of the file or the superuser may use this bit. This is a GNU extension."
-		int fts_options = FTS_LOGICAL /*| FTS_NOSTAT*/;
-#if defined(FTS_CWDFD)
-		fts_options |= FTS_CWDFD | FTS_TIGHT_CYCLE_CHECK | FTS_DEFER_STAT | FTS_NOATIME;
+		int fts_options = 0;
+		if(m_logical)
+		{
+			// Do a logical traversal (follow symlinks).
+			fts_options |= FTS_LOGICAL;
+		}
+		else
+		{
+			// Do a physical traversal (don't follow symlinks).
+			fts_options |= FTS_PHYSICAL;
+		}
+#if defined(FTS_DEFER_STAT)
+		fts_options |= FTS_DEFER_STAT;
+#endif
+#if defined(FTS_NOATIME)
+		// According to GNU libc docs, this is best-effort.  According to Linux docs, it only applies if you're root.
+		fts_options |= FTS_NOATIME;
+#endif
+#if defined(FTS_CWDFD) && defined(FTS_TIGHT_CYCLE_CHECK)
+		fts_options |= FTS_CWDFD | FTS_TIGHT_CYCLE_CHECK;
 #else
 		fts_options |= FTS_NOCHDIR;
 #endif
@@ -311,7 +274,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				// We possibly have some more work to do if we're doing a multithreaded traversal.
 				if(m_dirjobs > 1)
 				{
-					if(ftsent->fts_level == FTS_ROOTLEVEL)
+					if(m_logical && ftsent->fts_level == FTS_ROOTLEVEL)
 					{
 						// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
 						if(HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino)))
@@ -327,7 +290,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 						if(num_dirs_found_this_loop == 0)
 						{
 							// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
-							if(HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino)))
+							if(m_logical && HasDirBeenVisited(dev_ino_pair(ftsent->fts_dev, ftsent->fts_ino)))
 							{
 								// Found cycle.
 								WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
