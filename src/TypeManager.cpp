@@ -134,7 +134,7 @@ TypeManager::TypeManager()
 	}
 }
 
-bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
+bool TypeManager::FileShouldBeScanned(const string_type& name) const noexcept
 {
 	// Find the name's extension.
 	auto last_period_offset = name.find_last_of('.');
@@ -152,7 +152,7 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 			if(ext_plus_period_size <= 5)
 			{
 				// Use the 4-byte fast map.
-				microstring mext(last_period+1, name.cend());
+				microstring mext(last_period+1, name.end());
 				include_it = std::binary_search(m_fast_include_extensions.cbegin(), m_fast_include_extensions.cend(), mext);
 			}
 			else if(m_include_extensions.find(std::string(last_period, name.cend())) != m_include_extensions.end())
@@ -164,7 +164,8 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 			if(include_it)
 			{
 				// Now check that a glob pattern doesn't subsequently exclude it.
-				if(IsExcludedByAnyGlob(name))
+				std::string name_str = std::string(name);
+				if(IsExcludedByAnyGlob(name_str))
 				{
 					return false;
 				}
@@ -177,10 +178,11 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 	}
 
 	// Check if the filename is one of the literal filenames we're supposed to look at.
-	if(m_included_literal_filenames.find(name) != m_included_literal_filenames.end())
+	std::string name_str = std::string(name);
+	if(m_included_literal_filenames.find(name_str) != m_included_literal_filenames.end())
 	{
 		// It matches a literal filename, but now check that a glob pattern doesn't subsequently exclude it.
-		if(IsExcludedByAnyGlob(name))
+		if(IsExcludedByAnyGlob(name_str))
 		{
 			return false;
 		}
@@ -196,7 +198,8 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 	enum { nomatch, include, exclude } glob_verdict = nomatch;
 	for(auto glob : m_include_exclude_globs)
 	{
-		int result = fnmatch(glob.first.c_str(), name.c_str(), 0);
+		std::string name_str = std::string(name);
+		int result = fnmatch(glob.first.c_str(), name_str.c_str(), 0);
 		if(result == 0)
 		{
 			// Glob matched, return whether we should include this file or not.

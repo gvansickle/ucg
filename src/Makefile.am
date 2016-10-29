@@ -65,7 +65,7 @@ libsrc_la_LIBADD =
 # We essentially do two things:
 #
 # 1. Create a new make variable, CXXFLAGS_MULTIVERSION, which is equal to the user's CXXFLAGS, but with
-#   any options which would change the ISA and/or extensions required for these functions filtered out.
+#    any options which would change the ISA and/or extensions required for these functions filtered out.
 # 2. Build the source file for a given ISA+extension set by invoking $(MAKE) on this same Makefile,
 #    but passing CXXFLAGS_MULTIVERSION for CXXFLAGS.
 #
@@ -93,7 +93,6 @@ CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | $(STRIP_ARCH_FLAGS))
 FORCE:
 $(libsrc_la_LIBADD): FORCE
 	@echo "MULTIVERSIONING BUILD START: Building $@"
-#	#echo "CFMV: $(CXXFLAGS_MULTIVERSION)"
 	$(MAKE) "CPPFLAGS=$(CPPFLAGS_MULTIVERSION)" "CFLAGS=$(CFLAGS_MULTIVERSION)" "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
 	$(CXXLINK) $(@:.fmv.la=.la)
 	@echo "MULTIVERSIONING BUILD END: Built $@"
