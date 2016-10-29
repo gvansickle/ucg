@@ -38,7 +38,7 @@ class FileID
 {
 public:
 	FileID() = default;
-	FileID(const FTSENT *ftsent);
+	FileID(const FTSENT *ftsent, bool stat_info_known_valid);
 	FileID(const FileID&) = default;
 	FileID& operator=(const FileID&) = default;
 	FileID(FileID&&) = default;

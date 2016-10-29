@@ -38,6 +38,7 @@
 class TypeManager;
 class DirInclusionManager;
 
+
 /**
  * Helper class to collect up and communicate directory tree traversal stats.
  * The idea is that each thread will maintain its own instance of this class,
@@ -47,14 +48,16 @@ class DirInclusionManager;
 class DirectoryTraversalStats
 {
 #define M_STATLIST \
-	X("", "")
+	X("Number of directories found", m_num_directories_found) \
+	X("Number of directories rejected", m_num_dirs_rejected) \
+	X("Number of files found", m_num_files_found) \
+	X("Number of files rejected", m_num_files_rejected) \
+	X("Number of files sent for scanning", m_num_files_scanned)
 
 public:
-	size_t m_num_directories_found { 0 };
-	size_t m_num_dirs_rejected { 0 };
-	size_t m_num_files_found { 0 };
-	size_t m_num_files_rejected { 0 };
-	size_t m_num_files_scanned { 0 };
+#define X(d,s) size_t s {0};
+				M_STATLIST
+#undef X
 
 	/**
 	 * Atomic compound assignment by sum.
@@ -65,11 +68,9 @@ public:
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 
-		m_num_directories_found += other.m_num_directories_found;
-		m_num_dirs_rejected += other.m_num_dirs_rejected;
-		m_num_files_found += other.m_num_files_found;
-		m_num_files_rejected += other.m_num_files_rejected;
-		m_num_files_scanned += other.m_num_files_scanned;
+#define X(d,s) s += other. s;
+				M_STATLIST
+#undef X
 	}
 
 	/**
@@ -82,13 +83,10 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const DirectoryTraversalStats &dts)
 	{
 		return os
-			<< "\nNumber of directories found: " << dts.m_num_directories_found
-			<< "\nNumber of directories rejected: " << dts.m_num_dirs_rejected
-			<< "\nNumber of files found: " << dts.m_num_files_found
-			<< "\nNumber of files rejected: " << dts.m_num_files_rejected
-			<< "\nNumber of files sent for scanning: " << dts.m_num_files_scanned
+#define X(d,s) << "\n" d ": " << dts. s
+				M_STATLIST
+#undef X
 		;
-
 	};
 
 private:
@@ -132,6 +130,8 @@ private:
 	bool m_recurse_subdirs;
 
 	bool m_logical {true};
+
+	bool m_using_nostat {false};
 
 	int m_dirjobs;
 
