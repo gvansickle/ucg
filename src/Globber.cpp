@@ -46,7 +46,7 @@
 #define TRAVERSE_ONLY 0
 #define USE_DIRTREE 0
 
-std::string ftsent_name(FTSENT*p)
+std::string ftsent_name(FTSENT* p)
 {
 	if(p != nullptr)
 	{
@@ -57,7 +57,7 @@ std::string ftsent_name(FTSENT*p)
 		return "<nullptr>";
 	}
 }
-std::string ftsent_path(FTSENT*p)
+std::string ftsent_path(FTSENT* p)
 {
 	if(p != nullptr)
 	{
@@ -175,7 +175,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		/// check for these and use them if they exist.  Note the following though regarding O_NOATIME from the GNU libc
 		/// docs <https://www.gnu.org/software/libc/manual/html_node/Operating-Modes.html#Operating-Modes>:
 		/// "Only the owner of the file or the superuser may use this bit. This is a GNU extension."
-		int fts_options = 0;
+		int fts_options = FTS_COMFOLLOW | FTS_NOSTAT;
 		if(m_logical)
 		{
 			// Do a logical traversal (follow symlinks).
@@ -263,7 +263,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 				// Now we need the name in a std::string.
 				name.assign(ftsent->fts_name, ftsent->fts_namelen);
 
-				if(!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
+				if(!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name.c_str()))
 				{
 					// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 					LOG(INFO) << "... should be ignored.";

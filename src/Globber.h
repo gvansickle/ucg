@@ -40,15 +40,21 @@ class DirInclusionManager;
 
 /**
  * Helper class to collect up and communicate directory tree traversal stats.
+ * The idea is that each thread will maintain its own instance of this class,
+ * and only when that thread is complete will it add its statistics to a single, "global"
+ * instance.  This avoids any locking concerns other than at that final, one-time sum.
  */
 class DirectoryTraversalStats
 {
+#define M_STATLIST \
+	X("", "")
+
 public:
-	size_t m_num_files_found { 0 };
 	size_t m_num_directories_found { 0 };
+	size_t m_num_dirs_rejected { 0 };
+	size_t m_num_files_found { 0 };
 	size_t m_num_files_rejected { 0 };
 	size_t m_num_files_scanned { 0 };
-	size_t m_num_dirs_rejected { 0 };
 
 	/**
 	 * Atomic compound assignment by sum.
@@ -59,11 +65,11 @@ public:
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 
-		m_num_files_found += other.m_num_files_found;
 		m_num_directories_found += other.m_num_directories_found;
+		m_num_dirs_rejected += other.m_num_dirs_rejected;
+		m_num_files_found += other.m_num_files_found;
 		m_num_files_rejected += other.m_num_files_rejected;
 		m_num_files_scanned += other.m_num_files_scanned;
-		m_num_dirs_rejected += other.m_num_dirs_rejected;
 	}
 
 	/**
@@ -75,11 +81,13 @@ public:
 	 */
 	friend std::ostream& operator<<(std::ostream& os, const DirectoryTraversalStats &dts)
 	{
-		return os << "Number of files found: " << dts.m_num_files_found
-				<< "\nNumber of directories found: " << dts.m_num_directories_found
-				<< "\nNumber of files rejected: " << dts.m_num_files_rejected
-				<< "\nNumber of files sent for scanning: " << dts.m_num_files_scanned
-				<< "\nNumber of directories rejected: " << dts.m_num_dirs_rejected;
+		return os
+			<< "\nNumber of directories found: " << dts.m_num_directories_found
+			<< "\nNumber of directories rejected: " << dts.m_num_dirs_rejected
+			<< "\nNumber of files found: " << dts.m_num_files_found
+			<< "\nNumber of files rejected: " << dts.m_num_files_rejected
+			<< "\nNumber of files sent for scanning: " << dts.m_num_files_scanned
+		;
 
 	};
 

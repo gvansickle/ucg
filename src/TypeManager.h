@@ -30,6 +30,10 @@
 #include <unordered_map>
 #include <libext/string.hpp>
 
+#include <experimental/string_view>
+//#include <ext/vstring.h>
+//using string_type = __gnu_cxx::__vstring;
+using string_type = std::experimental::string_view;
 
 /**
  * TypeManager will throw this in certain circumstances.
@@ -55,7 +59,7 @@ public:
 	 * @param name
 	 * @return true if file should be scanned, false otherwise.
 	 */
-	bool FileShouldBeScanned(const std::string &name) const noexcept;
+	bool FileShouldBeScanned(const string_type &name) const noexcept;
 
 	/**
 	 * Add the given file type to the types which will be scanned.  For handling the
