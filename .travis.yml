@@ -17,11 +17,8 @@ matrix:
           compiler: gcc
         - os: linux
           compiler: clang
-          env: CC=clang CXX='clang++ -std=gnu++14 -stdlib=libc++'
-
-#compiler:
-#  - clang
-#  - gcc
+          env: CFG_CC=clang CFG_CXX='clang++ -std=gnu++14 -stdlib=libc++'
+          
 
 before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
@@ -56,7 +53,7 @@ script:
  - autoreconf -i
  - mkdir build
  - cd build
- - ../configure
+ - ../configure CC=$CFG_CC CXX=$CFG_CXX
  - make
  - make check 'TESTSUITEFLAGS=--keywords=!performance,!characterize'
  - find . -iname '*.log' -exec cat "{}" \; 
