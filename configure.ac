@@ -416,8 +416,8 @@ AS_IF([test "x$ax_pthread_ok" = xyes],
 
 # @temp? Tell clang to use its own library.
 AS_IF([test "x$ax_cv_PTHREAD_CLANG" = "xyes"],
-[CPPFLAGS=$CPPFLAGS -stdlib=libc++
-LDFLAGS=$LDFLAGS -stdlib=libc++])
+[CPPFLAGS="$CPPFLAGS -stdlib=libc++"
+LDFLAGS="$LDFLAGS -stdlib=libc++"])
 
 AC_LANG_POP([C++])
 
