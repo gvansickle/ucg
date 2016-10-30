@@ -26,6 +26,6 @@ libfuture_la_SOURCES = \
 	memory.hpp \
 	string.hpp
 
-libfuture_la_CPPFLAGS = $(AM_CPPFLAGS)
+libfuture_la_CPPFLAGS = -I $(srcdir)/../libext $(AM_CPPFLAGS)
 libfuture_la_CFLAGS = $(AM_CFLAGS)
 libfuture_la_CXXFLAGS = $(AM_CXXFLAGS)

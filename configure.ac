@@ -73,6 +73,7 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 ###
 
 ## Checks for the programs needed to do a build.
+AS_BOX([Checking for programs needed to do the build...])
 
 AC_PROG_INSTALL
 AC_PROG_CC_C99
@@ -124,9 +125,7 @@ AS_IF([ test "x$ac_path_ESED_found" = "x:" ],
 ##
 ## Checks for programs needed to run the testsuite.
 ##
-AC_MSG_NOTICE([])
-AC_MSG_NOTICE([Checking for programs needed to run the testsuite...])
-AC_MSG_NOTICE([])
+AS_BOX([Checking for programs needed to run the testsuite...])
 
 # The testsuite needs a way to invoke "script", to fool ucg into thinking it's outputting to a tty.
 # Of course, Linux and *BSD (including OSX) "script"'s take different options and parameters, so we
@@ -194,9 +193,7 @@ AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 ### Checks for maintainer tools.
 ###
 
-AC_MSG_NOTICE([])
-AC_MSG_NOTICE([Checking for maintainer tools...])
-AC_MSG_NOTICE([])
+AS_BOX([Checking for maintainer tools...])
 
 # Python, for generation of test suite.
 AM_PATH_PYTHON([2.7],,[:])
@@ -243,9 +240,7 @@ DX_INIT_DOXYGEN([UniversalCodeGrep])
 
 AC_LANG_PUSH([C++])
 
-AC_MSG_NOTICE([])
-AC_MSG_NOTICE([Checking for libraries...])
-AC_MSG_NOTICE([])
+AS_BOX([Checking for libraries...])
 
 # We use libpcre or libpcre2 for regex matching.  As of this writing there are no C++11 implementations
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
@@ -275,9 +270,7 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
-AC_MSG_NOTICE([])
-AC_MSG_NOTICE([Checking for the existence and usability of necessary headers...])
-AC_MSG_NOTICE([])
+AS_BOX([Checking for the existence and usability of necessary headers...])
 
 # We don't have this header on MinGW.
 AC_CHECK_HEADERS([pwd.h])
@@ -290,16 +283,15 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
-AC_MSG_NOTICE([])
-AC_MSG_NOTICE([Checking for the existence of needed types...])
-AC_MSG_NOTICE([])
+AS_BOX([Checking for the existence of needed types...])
 
 AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL], [1],
 	[Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
 AC_CHECK_TYPES([std::is_trivially_copyable<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1],
 	[Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
-	
-AC_CHECK_TYPES([std::string_view], [], [], [#include <experimental/string_view>])
+
+# See if we have a pre-standardization string_view class available.	
+AC_CHECK_TYPES([std::experimental::string_view], [], [], [#include <experimental/string_view>])
 
 AC_LANG_POP([C++])
 
@@ -313,6 +305,8 @@ AC_LANG_POP([C++])
 ###
 ### Checks for compiler characteristics.
 ###
+
+AS_BOX([Checking compiler characteristics...])
 
 # Check if the C compiler supports some flags we'd like to set.
 # Append them to AM_CFLAGS if it does.
@@ -340,9 +334,8 @@ AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'], [AM_CXXFLAGS], [-Wformat -Wformat-security])
 
 # Check for GCC-style built-ins and attributes we can use.
-AC_MSG_NOTICE([])
-AC_MSG_NOTICE([Checking for attributes and builtins supported by the compiler...])
-AC_MSG_NOTICE([])
+AS_BOX([Checking for attributes and builtins supported by the C++ compiler...])
+
 AX_C___ATTRIBUTE__	# Defines "HAVE___ATTRIBUTE__" if the compiler supports __attribute__(()) syntax.  The macro specifically checks for
 					# the function attribute __attribute__((unused))
 AX_GCC_FUNC_ATTRIBUTE([artificial])
@@ -356,14 +349,25 @@ AX_GCC_BUILTIN(__builtin_popcount)
 AX_GCC_BUILTIN(__builtin_bswap32)
 AX_GCC_BUILTIN(__builtin_ctzll)
 
+# Detect __has_include() support.
+AC_MSG_CHECKING([for __has_include])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+#if __has_include(<iostream>)
+#include <iostream>
+#endif
+], [std::cout << "Have __has_include()" << std::endl;])],
+	[AC_MSG_RESULT([yes])],
+	[# Not defined, define a substitute in config.h.
+	AC_MSG_RESULT([no])
+	AC_DEFINE([__has_include(h)], [0], [Defined to a dummy replacement if __has_include() doesn't exist.])
+	])
+
 # Check for x86-64 ISA extensions we can use for function multiversioning.
-AC_MSG_NOTICE([])
-AC_MSG_NOTICE([Checking for ISA extensions supported by the compiler...])
-AC_MSG_NOTICE([])
-GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse2])
-GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse4.2])
-GRVS_CHECK_COMPILE_FLAG([X86_64], [-mpopcnt], [-msse4.2])
-GRVS_CHECK_COMPILE_FLAG([X86_64], [-mno-popcnt], [-msse4.2])
+AS_BOX([Checking for ISA extensions supported by the compiler...])
+AXUCG_CHECK_COMPILE_FLAG([X86_64], [-msse2])
+AXUCG_CHECK_COMPILE_FLAG([X86_64], [-msse4.2])
+AXUCG_CHECK_COMPILE_FLAG([X86_64], [-mpopcnt], [-msse4.2])
+AXUCG_CHECK_COMPILE_FLAG([X86_64], [-mno-popcnt], [-msse4.2])
 AM_CONDITIONAL([BUILD_X86_64_ISA_EXTENSIONS], [test "x$HAVE_X86_64_ISA_EXTENSIONS" != "x"])
 AM_COND_IF([BUILD_X86_64_ISA_EXTENSIONS],
 	[AC_MSG_NOTICE([Compiler supports x86-64 ISA extensions, will use them.])],
@@ -523,7 +527,10 @@ AC_OUTPUT
 AC_MSG_RESULT([
 *** Configuration Summary ***
 
+  Compilers
+  ---------
   C compiler:                 $CC
+  C preprocessor:             $CPP
   C++ compiler:               $CXX
   C++ preprocessor:           $CXXCPP
   

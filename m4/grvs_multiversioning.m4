@@ -38,7 +38,8 @@
 # $1 == Base ISA (currently only "X86_64" supported)
 # $2 == Compile flag to check.
 # $3 == EXTRA-FLAGS
-AC_DEFUN([GRVS_CHECK_COMPILE_FLAG],
+AX_REQUIRE_DEFINED([AX_CHECK_COMPILE_FLAG])
+AC_DEFUN([AXUCG_CHECK_COMPILE_FLAG],
 [
 	AS_VAR_PUSHDEF([ac_var], [grvs_cv_have_$1_$2])[]dnl
 	AS_VAR_PUSHDEF([sh_var_postfix], [m4_substr(m4_toupper($2), 2)])[]dnl
@@ -75,7 +76,7 @@ AC_DEFUN([GRVS_CHECK_COMPILE_FLAG],
 ])
 
 ### @todo
-AC_DEFUN([GRVS_ADD_MULTIVERSIONING_SUPPORT], [
+AC_DEFUN([AXUCG_ADD_MULTIVERSIONING_SUPPORT], [
 	
 	m4_define([x86_64_exts],
 		[[-msse2],

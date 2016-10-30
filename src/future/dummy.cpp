@@ -17,8 +17,26 @@
 
 /** @file Dummy cpp file to get this otherwise header-only lib to build portably. */
 
+#include <config.h>
+
+#include <static_diagnostics.hpp>
 
 const char *link_me = "dummy";
 
+// Use this file for printing out some info at compile time regarding our compile-time environment.
+#ifdef __SSE2__
+STATIC_MSG("Have SSE2")
+#endif
+#ifdef __SSE4_2__
+STATIC_MSG("Have SSE4_2")
+#endif
+#ifdef __POPCNT__
+STATIC_MSG("Have POPCNT")
+#endif
 
+#if defined(__has_include)
+STATIC_MSG("__has_include is defined.")
+#else
+STATIC_MSG_WARN("__has_include is not defined.")
+#endif
 
