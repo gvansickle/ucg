@@ -369,6 +369,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 
 # Check for x86-64 ISA extensions we can use for function multiversioning.
 AS_BOX([Checking for ISA extensions supported by the compiler...])
+
 AXUCG_CHECK_COMPILE_FLAG([X86_64], [-msse2])
 AXUCG_CHECK_COMPILE_FLAG([X86_64], [-msse4.2])
 AXUCG_CHECK_COMPILE_FLAG([X86_64], [-mpopcnt], [-msse4.2])
@@ -412,6 +413,11 @@ AS_IF([test "x$ax_pthread_ok" = xyes],
 	[
 		AC_MSG_NOTICE([no pthreads found])
 	])
+
+# @temp? Tell clang to use its own library.
+AS_IF([test "x$ax_cv_PTHREAD_CLANG" = "xyes"],
+[CPPFLAGS=$CPPFLAGS -stdlib=libc++
+LDFLAGS=$LDFLAGS -stdlib=libc++])
 
 AC_LANG_POP([C++])
 
