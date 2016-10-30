@@ -175,11 +175,14 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		/// check for these and use them if they exist.  Note the following though regarding O_NOATIME from the GNU libc
 		/// docs <https://www.gnu.org/software/libc/manual/html_node/Operating-Modes.html#Operating-Modes>:
 		/// "Only the owner of the file or the superuser may use this bit. This is a GNU extension."
-		int fts_options = FTS_COMFOLLOW | FTS_NOSTAT;
+		int fts_options = FTS_COMFOLLOW | (m_using_nostat * FTS_NOSTAT);
 		if(m_logical)
 		{
-			// Do a logical traversal (follow symlinks).
+			// Do a logical traversal (follow symlinks).  If available, this needs FTS_TIGHT_CYCLE_CHECK.
 			fts_options |= FTS_LOGICAL;
+#if defined(FTS_TIGHT_CYCLE_CHECK)
+			fts_options |= FTS_TIGHT_CYCLE_CHECK;
+#endif
 		}
 		else
 		{
@@ -193,8 +196,8 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		// According to GNU libc docs, this is best-effort.  According to Linux docs, it only applies if you're root.
 		fts_options |= FTS_NOATIME;
 #endif
-#if defined(FTS_CWDFD) && defined(FTS_TIGHT_CYCLE_CHECK)
-		fts_options |= FTS_CWDFD | FTS_TIGHT_CYCLE_CHECK;
+#if defined(FTS_CWDFD)
+		fts_options |= FTS_CWDFD;
 #else
 		fts_options |= FTS_NOCHDIR;
 #endif
@@ -209,7 +212,8 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 
 			bool skip_inclusion_checks = false;
 
-			LOG(INFO) << "Considering file path/name \'" << ftsent_path(ftsent) << " /// " << ftsent_name(ftsent) << "\' at depth = " << ftsent->fts_level;
+			LOG(INFO) << "Considering file path/name \'" << ftsent_path(ftsent) << " /// " << ftsent_name(ftsent)
+					<< "\' at depth = " << ftsent->fts_level;
 
 			// Determine if we should skip the inclusion/exclusion checks for this file/dir.  We should only do this
 			// for files/dirs specified on the command line, which will have an fts_level of FTS_ROOTLEVEL (0), and the
@@ -235,7 +239,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 
 					LOG(INFO) << "... should be scanned.";
 
-					m_out_queue.wait_push(FileID(ftsent));
+					m_out_queue.wait_push(FileID(ftsent, !m_using_nostat));
 
 					// Count the number of files we found that were included in the search.
 					stats.m_num_files_scanned++;

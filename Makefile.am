@@ -106,3 +106,13 @@ MOSTLYCLEANFILES+=$(DX_CLEANFILES)
 # "verify-provenance" rule.
 dist-hook:
 	printf '%s' "$$(cd $(top_srcdir) && git describe --long --dirty --always | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
+
+##-------------------##
+## Maintainer rules. ##
+##-------------------## 
+
+# Short rule to rebuild configure if necessary and reconfigure, but not build the rest of the project.
+.PHONY: reconf
+reconf: ./config.status
+	$(SHELL) ./config.status --recheck
+
