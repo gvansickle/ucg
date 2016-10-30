@@ -28,7 +28,9 @@ before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew install pcre pcre2 argp-standalone the_silver_searcher; fi
  # Install gnu grep to test against. @todo Make things work so this can be installed only after a successful build.
  - if [ $TRAVIS_OS_NAME == osx ]; then brew tap homebrew/dupes; brew install grep; fi
- - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev && sudo apt-get install -qq silversearcher-ag && sudo apt-get install -qq argp-standalone; fi
+ - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev && sudo apt-get install -qq silversearcher-ag; fi
+ - [$TRAVIS_OS_NAME == linux] && echo "it's linux";
+ - [false] && sudo apt-get install -qq argp-standalone
 
 before_script:
  - echo "g++ --version:" && g++ --version && autoreconf --version && automake --version && echo "===="
