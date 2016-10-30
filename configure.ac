@@ -290,8 +290,13 @@ AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL],
 AC_CHECK_TYPES([std::is_trivially_copyable<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1],
 	[Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
 
-# See if we have a pre-standardization string_view class available.	
-AC_CHECK_TYPES([std::experimental::string_view], [], [], [#include <experimental/string_view>])
+# See if we have std::string_view.
+AC_CHECK_TYPES([std::string_view], [],
+[
+	# No std::string_view, see if we have a pre-standardization string_view class available.
+	AC_CHECK_TYPES([std::experimental::string_view], [], [], [#include <experimental/string_view>])
+	
+], [#include <string_view>])
 
 AC_LANG_POP([C++])
 
@@ -374,7 +379,9 @@ AM_COND_IF([BUILD_X86_64_ISA_EXTENSIONS],
 	[AC_MSG_NOTICE([Compiler does not support x86-64 ISA extensions, will not use them.])])
 
 
-# Check if the implementation underlying C++11's std::thread<> is pthreads.  Note that we don't actually require pthreads,
+# Check if the implementation underlying C++11's std::thread<> is pthreads.
+AS_BOX([Checking if the implementation underlying C++11's std::thread<> is pthreads])
+#  Note that we don't actually require pthreads,
 # we require and use C++11's std::thread<>, whatever its implementation details.  However, if C++11 is using pthreads, we can
 # optionally use some pthreads functionality, e.g. naming threads for diagnostic, logging, and other purposes.
 # Macro docs: http://www.gnu.org/software/autoconf-archive/ax_pthread.html#ax_pthread
@@ -414,6 +421,8 @@ AC_LANG_POP([C++])
 ###
 
 AC_LANG_PUSH([C++])
+
+AS_BOX([Checking for library functions])
 
 AC_FUNC_STRNLEN
 AS_IF([test "x$ac_cv_func_strnlen_working" = "xyes"],

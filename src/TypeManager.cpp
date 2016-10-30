@@ -134,7 +134,7 @@ TypeManager::TypeManager()
 	}
 }
 
-bool TypeManager::FileShouldBeScanned(const string_type& name) const noexcept
+bool TypeManager::FileShouldBeScanned(const std::string_view& name) const noexcept
 {
 	// Find the name's extension.
 	auto last_period_offset = name.find_last_of('.');
