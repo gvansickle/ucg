@@ -292,10 +292,8 @@ AC_CHECK_TYPES([std::is_trivially_copyable<int>::value_type], [AC_DEFINE([HAVE_I
 
 # See if we have std::string_view.
 AC_CHECK_TYPES([std::string_view], [],
-[
-	# No std::string_view, see if we have a pre-standardization string_view class available.
+[	# No std::string_view, see if we have a pre-standardization string_view class available.
 	AC_CHECK_TYPES([std::experimental::string_view], [], [], [#include <experimental/string_view>])
-	
 ], [#include <string_view>])
 
 AC_LANG_POP([C++])

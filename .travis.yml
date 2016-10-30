@@ -4,9 +4,7 @@ language: cpp
 dist: trusty
 sudo: required
 
-# For OS X builds:
-# @note xcode7.3 and above are OSX 10.11, removed until we have a fix for #103, tabs->spaces.
-
+# Build matrix:
 matrix:
     include:
         - os: osx
@@ -19,6 +17,7 @@ matrix:
           compiler: gcc
         - os: linux
           compiler: clang
+          env: CC=clang CXX='clang++ -std=gnu++14 -stdlib=libc++'
 
 #compiler:
 #  - clang
