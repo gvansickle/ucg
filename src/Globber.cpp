@@ -39,6 +39,7 @@
 #include <utility>
 #include <system_error>
 #include <string>
+#include <algorithm>
 #include <future/string.hpp>
 #include <libext/string.hpp>
 
@@ -180,6 +181,11 @@ void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_ind
 			/// @todo Throw here.
 		}
 		// Set the parent dir's fts_number field to its level.
+		LOG(INFO) << "fts->cur reports level=" << fts->fts_cur->fts_level << ", setting fts_number to " << dqe.m_level;
+		if(fts->fts_cur->fts_level > dqe.m_level)
+		{
+			WARN() << "fts->fts_cur->fts_level > dqe.m_level";
+		}
 		fts->fts_cur->fts_number = dqe.m_level;
 
 		// Scan the paths which came in on the command line.
@@ -188,11 +194,13 @@ void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_ind
 		FTSENT *ftsent;
 		while((ftsent = fts_read(fts)) != nullptr)
 		{
-			LOG(INFO) << "fts_read() called with fts->fts_path='" << fts->fts_path << "', returned...";
-			if(ftsent == nullptr) {LOG(INFO) << "... ftsent==nullptr"; }
-			else {LOG(INFO) << "ftsent->fts_path=" << ftsent->fts_path; };
-
-			ftsent->fts_number = dqe.m_level;
+			LOG(INFO) << "fts_read() called with fts->fts_path='" << fts->fts_path << "', returned ftsent->fts_path=" << ftsent_path(ftsent);
+			LOG(INFO) << "... ftsent reports level=" << ftsent->fts_level << ", setting fts_number to max(" << dqe.m_level << ", " << ftsent->fts_level << ")";
+			if(ftsent->fts_level > dqe.m_level)
+			{
+				//WARN() << "ftsent->fts_level > dqe.m_level";
+			}
+			ftsent->fts_number = std::max(ftsent->fts_level, (short int)dqe.m_level);
 
 			ScanOneDirectory(fts, dir_queue, stats);
 		}
@@ -227,7 +235,7 @@ void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, 
 		bool skip_inclusion_checks = false;
 
 		LOG(INFO) << "Considering file path/name \'" << ftsent_path(child) << " /// " << ftsent_name(child)
-				<< "\' at depth = " << child->fts_level;
+				<< "\' at depth = " << ftsent_level(child);
 
 		// Determine if we should skip the inclusion/exclusion checks for this file/dir.  We should only do this
 		// for files/dirs specified on the command line, which will have an fts_level of FTS_ROOTLEVEL (0), and the
@@ -271,7 +279,7 @@ void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, 
 			stats.m_num_directories_found++;
 
 			// It's a directory.  Check if we should descend into it.
-			if(!m_recurse_subdirs && child->fts_level > FTS_ROOTLEVEL)
+			if(!m_recurse_subdirs && ftsent_level(child) > FTS_ROOTLEVEL)
 			{
 				// We were told not to recurse into subdirectories.
 				LOG(INFO) << "... --no-recurse specified, skipping.";
@@ -292,18 +300,18 @@ void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, 
 			// We possibly have some more work to do if we're doing a multithreaded traversal.
 			if(m_dirjobs > 1)
 			{
-				if(m_logical && child->fts_level == FTS_ROOTLEVEL)
+				if(m_logical && ftsent_level(child) == FTS_ROOTLEVEL)
 				{
 					// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
 					if(HasDirBeenVisited(dev_ino_pair(child->fts_dev, child->fts_ino)))
 					{
 						// Found cycle.
-						WARN() << "\'" << child->fts_path << "\': recursive directory loop";
+						WARN() << "'" << ftsent_path(child) << "': recursive directory loop";
 						fts_set(tree, child, FTS_SKIP);
 						continue;
 					}
 				}
-				if(m_recurse_subdirs && (child->fts_level > FTS_ROOTLEVEL))
+				if(m_recurse_subdirs && (ftsent_level(child) > FTS_ROOTLEVEL))
 				{
 					if(num_dirs_found_this_loop == 0)
 					{
@@ -311,7 +319,7 @@ void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, 
 						if(m_logical && HasDirBeenVisited(dev_ino_pair(child->fts_dev, child->fts_ino)))
 						{
 							// Found cycle.
-							WARN() << "\'" << child->fts_path << "\': recursive directory loop";
+							WARN() << "'" << ftsent_path(child) << "': recursive directory loop";
 							fts_set(tree, child, FTS_SKIP);
 							continue;
 						}
@@ -331,13 +339,13 @@ void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, 
 				}
 			}
 
-			LOG(INFO) << "Pre-order visit to dir \'" << ftsent_path(child) << "\', setting fts_pointer==" << std::hex << child->fts_pointer;
+			LOG(INFO) << "Pre-order visit to dir '" << ftsent_path(child) << "', fts_level==" << ftsent_level(child);
 
 			break;
 		}
 		case FTS_DP:
 		{
-			LOG(INFO) << "Post-order visit to dir \'" << ftsent_path(child) << "\', fts_pointer==" << std::hex << child->fts_pointer;
+			LOG(INFO) << "Post-order visit to dir '" << ftsent_path(child) << "', fts_level==" << ftsent_level(child);
 			break;
 		}
 		case FTS_NSOK:

@@ -22,6 +22,7 @@
 
 #include <config.h>
 
+#include <cassert>
 #include <cstdio>  // For perror() on FreeBSD.
 #include <fcntl.h> // For openat() etc.
 #include <unistd.h> // For close().
@@ -224,6 +225,18 @@ inline DIR* opendirat(int at_dir, const char *name)
 /// @name FTS helpers.
 /// @{
 
+
+inline int64_t ftsent_level(const FTSENT* p)
+{
+	// We store the "real level" of the parent directory in the fts_number member.
+	if(p->fts_parent == nullptr)
+	{
+		assert(p->fts_level == -1);
+		return p->fts_level + 1;
+	}
+	return p->fts_parent->fts_number + 1;
+}
+
 /**
  * Returns just the basename of the file represented by #p.
  * @param p
@@ -253,22 +266,19 @@ inline std::string ftsent_path(const FTSENT* p)
 		std::string retval;
 		if(p->fts_parent != nullptr)
 		{
-			retval.assign(p->fts_parent->fts_path, p->fts_parent->fts_pathlen);
-			retval += '/';
+			if(p->fts_parent->fts_pathlen > 0)
+			{
+				retval.assign(p->fts_parent->fts_path, p->fts_parent->fts_pathlen);
+				retval += '/';
+			}
 		}
 		retval.append(p->fts_name, p->fts_namelen);
-		return retval; //std::string(p->fts_path);//, p->fts_pathlen);
+		return retval;
 	}
 	else
 	{
 		return "<nullptr>";
 	}
-}
-
-inline int64_t ftsent_level(const FTSENT* p)
-{
-	// We store the "real level" of the parent directory in the fts_number member.
-	return p->fts_parent->fts_number + 1;
 }
 
 ///@}
