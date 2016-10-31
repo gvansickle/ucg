@@ -47,10 +47,10 @@
 #define USE_DIRTREE 0
 
 
-Globber::DirQueueEntry::DirQueueEntry(FTSENT *ftsent)
+DirQueueEntry::DirQueueEntry(FTSENT *ftsent)
 {
 	m_pathname = ftsent_path(ftsent);
-	m_level = ftsent->fts_number += ftsent->fts_level;
+	m_level = ftsent_level(ftsent);
 }
 
 
@@ -73,7 +73,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 
 void Globber::Run()
 {
-	sync_queue<Globber::DirQueueEntry> dir_queue;
+	sync_queue<DirQueueEntry> dir_queue;
 	std::vector<std::thread> threads;
 
 #if USE_DIRTREE == 1 /// @todo TEMP
@@ -99,7 +99,7 @@ void Globber::Run()
 	{
 		DirQueueEntry dqe;
 		dqe.m_pathname = path;
-		dqe.m_level = 0;
+		dqe.m_level = FTS_ROOTLEVEL;
 		dir_queue.wait_push(std::move(dqe));
 	}
 
@@ -179,10 +179,11 @@ void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_ind
 			perror("fts error");
 			/// @todo Throw here.
 		}
+		// Set the parent dir's fts_number field to its level.
+		fts->fts_cur->fts_number = dqe.m_level;
 
 		// Scan the paths which came in on the command line.
-		ScanOneDirectory(fts, dir_queue, false, stats);
-		LOG(INFO) << "All start paths consumed.";
+		ScanOneDirectory(fts, dir_queue, stats);
 
 		FTSENT *ftsent;
 		while((ftsent = fts_read(fts)) != nullptr)
@@ -191,7 +192,9 @@ void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_ind
 			if(ftsent == nullptr) {LOG(INFO) << "... ftsent==nullptr"; }
 			else {LOG(INFO) << "ftsent->fts_path=" << ftsent->fts_path; };
 
-			ScanOneDirectory(fts, dir_queue, false, stats);
+			ftsent->fts_number = dqe.m_level;
+
+			ScanOneDirectory(fts, dir_queue, stats);
 		}
 
 		fts_close(fts);
@@ -201,10 +204,9 @@ void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_ind
 	m_traversal_stats += stats;
 }
 
-void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, bool skip_inclusion_checks, DirectoryTraversalStats &stats)
+void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, DirectoryTraversalStats &stats)
 {
 	size_t num_dirs_found_this_loop {0};
-	bool start_paths_have_been_consumed = false; ///@todo
 
 	// Iterate through all entries in this directory.
 	FTSENT *child = fts_children(tree, 0);
@@ -230,7 +232,7 @@ void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, 
 		// Determine if we should skip the inclusion/exclusion checks for this file/dir.  We should only do this
 		// for files/dirs specified on the command line, which will have an fts_level of FTS_ROOTLEVEL (0), and the
 		// start_paths_have_been_consumed flag will still be false.
-		if((child->fts_level == FTS_ROOTLEVEL) && !start_paths_have_been_consumed)
+		if(ftsent_level(child) == FTS_ROOTLEVEL)
 		{
 			skip_inclusion_checks = true;
 		}

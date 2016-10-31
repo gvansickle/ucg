@@ -265,6 +265,12 @@ inline std::string ftsent_path(const FTSENT* p)
 	}
 }
 
+inline int64_t ftsent_level(const FTSENT* p)
+{
+	// We store the "real level" of the parent directory in the fts_number member.
+	return p->fts_parent->fts_number + 1;
+}
+
 ///@}
 
 #endif /* SRC_LIBEXT_FILESYSTEM_HPP_ */
