@@ -116,7 +116,7 @@ private:
 
 	void RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index);
 
-	void ScanOneDirectory(FTS *tree, const char *filename, int *flags);
+	void ScanOneDirectory(FTS *tree, sync_queue<std::string> &dir_queue, bool skip_inclusion_checks, DirectoryTraversalStats &stats);
 
 	/// Vector of the paths which the user gave on the command line.
 	std::vector<std::string> m_start_paths;
@@ -131,7 +131,7 @@ private:
 
 	bool m_recurse_subdirs;
 
-	bool m_logical {true};
+	bool m_logical {false};
 
 	bool m_using_nostat {false};
 

@@ -115,9 +115,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 	char * dirs[2];
 	std::string dir;
 
-	// Local for optimizing the determination of whether the paths specified on the command line have been consumed.
-	bool start_paths_have_been_consumed = false;
-
 	// Local copy of a stats struct that we'll use to collect up stats just for this thread.
 	DirectoryTraversalStats stats;
 
@@ -128,20 +125,6 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 	{
 		dirs[0] = const_cast<char*>(dir.c_str());
 		dirs[1] = 0;
-		size_t old_val {0};
-		size_t num_dirs_found_this_loop {0};
-
-		// If we haven't seen m_num_start_paths_remaining == 0 yet...
-		if(!start_paths_have_been_consumed)
-		{
-			// Compare-and-Exchange loop to decrement the m_num_start_paths_remaining counter by 1.
-			size_t old_val = m_num_start_paths_remaining.load();
-			while(old_val != 0 && !m_num_start_paths_remaining.compare_exchange_weak(old_val, old_val - 1))
-			{
-				// Spin until we get a successful compare and exchange.  If old_val was already 0, we're done decrementing,
-				// so skip the spin here entirely.
-			}
-		}
 
 		/// @todo We can't use FS_NOSTAT here.  OSX at least isn't able to determine regular
 		/// files without the stat, so they get returned as FTS_NSOK / 11 /	no stat(2) requested.
@@ -185,6 +168,11 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 			perror("fts error");
 			/// @todo Throw here.
 		}
+
+		// Scan the paths which came in on the command line.
+		ScanOneDirectory(fts, dir_queue, false, stats);
+		LOG(INFO) << "All start paths consumed.";
+
 		FTSENT *ftsent;
 		while((ftsent = fts_read(fts)) != nullptr)
 		{
@@ -192,216 +180,203 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 			if(ftsent == nullptr) {LOG(INFO) << "... ftsent==nullptr"; }
 			else {LOG(INFO) << "ftsent->fts_path=" << ftsent->fts_path; };
 
-			// Iterate through all entries in this directory.
-			FTSENT *child = fts_children(fts, 0);
-			if(errno != 0)
-			{
-				perror("error calling fts_children()");
-			}
-			if((child == nullptr) && (errno == 0))
-			{
-				// The FTSENT most recently returned by fts_read() is not a directory being visited in preorder,
-				// or the directory does not contain any files.  Skip it.
-				continue;
-			}
-
-			while(nullptr != child)
-			{
-				std::string name;
-
-				bool skip_inclusion_checks = false;
-
-				LOG(INFO) << "Considering file path/name \'" << ftsent_path(child) << " /// " << ftsent_name(child)
-						<< "\' at depth = " << child->fts_level;
-
-				// Determine if we should skip the inclusion/exclusion checks for this file/dir.  We should only do this
-				// for files/dirs specified on the command line, which will have an fts_level of FTS_ROOTLEVEL (0), and the
-				// start_paths_have_been_consumed flag will still be false.
-				if((child->fts_level == FTS_ROOTLEVEL) && !start_paths_have_been_consumed)
-				{
-					skip_inclusion_checks = true;
-				}
-
-				switch(child->fts_info)
-				{
-				case FTS_F:
-				{
-					// It's a normal file.
-					LOG(INFO) << "... normal file.";
-					stats.m_num_files_found++;
-
-					// Check for inclusion.
-					name.assign(child->fts_name, child->fts_namelen);
-					if(skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
-					{
-						// Based on the file name, this file should be scanned.
-
-						LOG(INFO) << "... should be scanned.";
-
-						m_out_queue.wait_push(FileID(child, !m_using_nostat));
-
-						// Count the number of files we found that were included in the search.
-						stats.m_num_files_scanned++;
-					}
-					else
-					{
-						stats.m_num_files_rejected++;
-					}
-
-					break;
-				}
-				case FTS_D:
-				{
-					LOG(INFO) << "... directory.";
-					stats.m_num_directories_found++;
-
-					// It's a directory.  Check if we should descend into it.
-					if(!m_recurse_subdirs && child->fts_level > FTS_ROOTLEVEL)
-					{
-						// We were told not to recurse into subdirectories.
-						LOG(INFO) << "... --no-recurse specified, skipping.";
-						fts_set(fts, child, FTS_SKIP);
-					}
-
-					// Now we need the name in a std::string.
-					name.assign(child->fts_name, child->fts_namelen);
-
-					if(!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name.c_str()))
-					{
-						// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
-						LOG(INFO) << "... should be ignored.";
-						stats.m_num_dirs_rejected++;
-						fts_set(fts, child, FTS_SKIP);
-					}
-
-					// We possibly have some more work to do if we're doing a multithreaded traversal.
-					if(m_dirjobs > 1)
-					{
-						if(m_logical && child->fts_level == FTS_ROOTLEVEL)
-						{
-							// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
-							if(HasDirBeenVisited(dev_ino_pair(child->fts_dev, child->fts_ino)))
-							{
-								// Found cycle.
-								WARN() << "\'" << child->fts_path << "\': recursive directory loop";
-								fts_set(fts, child, FTS_SKIP);
-								continue;
-							}
-						}
-						if(m_recurse_subdirs && (child->fts_level > FTS_ROOTLEVEL))
-						{
-							if(num_dirs_found_this_loop == 0)
-							{
-								// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
-								if(m_logical && HasDirBeenVisited(dev_ino_pair(child->fts_dev, child->fts_ino)))
-								{
-									// Found cycle.
-									WARN() << "\'" << child->fts_path << "\': recursive directory loop";
-									fts_set(fts, child, FTS_SKIP);
-									continue;
-								}
-
-								// Handle this one ourselves.
-								LOG(INFO) << "... subdir, not queuing it up for multithreaded scanning, handling it from same FTS stream.";
-								num_dirs_found_this_loop++;
-							}
-							else
-							{
-								// We're doing the directory traversal multithreaded, so queue it up for scanning.
-								LOG(INFO) << "... subdir, queuing it up for multithreaded scanning.";
-								dir_queue.wait_push(ftsent_path(child));
-								fts_set(fts, child, FTS_SKIP);
-								num_dirs_found_this_loop++;
-							}
-						}
-					}
-
-					LOG(INFO) << "Pre-order visit to dir \'" << ftsent_path(child) << "\', setting fts_pointer==" << std::hex << child->fts_pointer;
-
-					break;
-				}
-				case FTS_DP:
-				{
-					LOG(INFO) << "Post-order visit to dir \'" << ftsent_path(child) << "\', fts_pointer==" << std::hex << child->fts_pointer;
-					break;
-				}
-				case FTS_NSOK:
-				{
-					// No stat info was requested because fts_open() was called with FTS_NOSTAT, and we didn't get any.
-					// Otherwise, we shouldn't get here.
-					NOTICE() << "No stat info requested for \'" << ftsent_path(child) << "\'.  Skipping.";
-					break;
-				}
-				/// @note Only FTS_DNR, FTS_ERR, and FTS_NS have valid fts_errno information.
-				case FTS_DNR:
-				{
-					// A directory that couldn't be read.
-					NOTICE() << "Unable to read directory \'" << ftsent_path(child) << "\': "
-							<< LOG_STRERROR(child->fts_errno) << ". Skipping.";
-					break;
-				}
-				case FTS_ERR:
-				{
-					ERROR() << "Directory traversal error at path \'" << ftsent_path(child) << "\': "
-							<< LOG_STRERROR(child->fts_errno) << ".";
-
-					/// @todo Break out of loop entirely?
-					break;
-				}
-				case FTS_NS:
-				{
-					// No stat info.
-					NOTICE() << "Could not get stat info at path \'" << ftsent_path(child) << "\': "
-										<< LOG_STRERROR(child->fts_errno) << ". Skipping.";
-					break;
-				}
-				case FTS_DC:
-				{
-					// Directory that causes cycles.
-					WARN() << "\'" << child->fts_path << "\': recursive directory loop";
-					break;
-				}
-				case FTS_SLNONE:
-				{
-					// Broken symlink.
-					WARN() << "Broken symlink: \'" << ftsent_path(child) << "\'";
-					break;
-				}
-				default:
-				{
-					LOG(INFO) << "... unknown file type:" << child->fts_info;
-					break;
-				}
-				}
-
-				if(child->fts_link != nullptr)
-				{
-					// Go to the next FTSENT in the linked list.
-					child = child->fts_link;
-				}
-				else
-				{
-					// No more entries, break out of the linked-list loop, and back to the fts_read() loop.
-					goto THIS_DIR_COMPLETE;
-				}
-			}
+			ScanOneDirectory(fts, dir_queue, false, stats);
 		}
-THIS_DIR_COMPLETE:
+
 		fts_close(fts);
-
-		if(old_val == 0)
-		{
-			// We've consumed all of the paths given on the command line, we no longer need to do the check.
-			LOG(INFO) << "All start paths consumed.";
-			start_paths_have_been_consumed = true;
-		}
 	}
 
 	// Add the local stats to the class's stats.
 	m_traversal_stats += stats;
 }
 
-void Globber::ScanOneDirectory(FTS *tree, const char *filename, int *flags)
+void Globber::ScanOneDirectory(FTS *tree, sync_queue<std::string> &dir_queue, bool skip_inclusion_checks, DirectoryTraversalStats &stats)
 {
+	size_t num_dirs_found_this_loop {0};
+	bool start_paths_have_been_consumed = false; ///@todo
 
+	// Iterate through all entries in this directory.
+	FTSENT *child = fts_children(tree, 0);
+	if(errno != 0)
+	{
+		perror("error calling fts_children()");
+	}
+
+	// child could still be a nullptr here.  That means one of two things:
+	// The FTSENT most recently returned by fts_read() is not a directory being visited in preorder,
+	// or the directory does not contain any files.  In either case what we should do here is just return
+	// and let the fts_read() loop iterate again, which the while() will take care of for us.
+
+	while(nullptr != child)
+	{
+		std::string basename;
+
+		bool skip_inclusion_checks = false;
+
+		LOG(INFO) << "Considering file path/name \'" << ftsent_path(child) << " /// " << ftsent_name(child)
+				<< "\' at depth = " << child->fts_level;
+
+		// Determine if we should skip the inclusion/exclusion checks for this file/dir.  We should only do this
+		// for files/dirs specified on the command line, which will have an fts_level of FTS_ROOTLEVEL (0), and the
+		// start_paths_have_been_consumed flag will still be false.
+		if((child->fts_level == FTS_ROOTLEVEL) && !start_paths_have_been_consumed)
+		{
+			skip_inclusion_checks = true;
+		}
+
+		switch(child->fts_info)
+		{
+		case FTS_F:
+		{
+			// It's a normal file.
+			LOG(INFO) << "... normal file.";
+			stats.m_num_files_found++;
+
+			// Check for inclusion.
+			basename.assign(child->fts_name, child->fts_namelen);
+			if(skip_inclusion_checks || m_type_manager.FileShouldBeScanned(basename))
+			{
+				// Based on the file name, this file should be scanned.
+
+				LOG(INFO) << "... should be scanned.";
+
+				m_out_queue.wait_push(FileID(child, !m_using_nostat));
+
+				// Count the number of files we found that were included in the search.
+				stats.m_num_files_scanned++;
+			}
+			else
+			{
+				stats.m_num_files_rejected++;
+			}
+
+			break;
+		}
+		case FTS_D:
+		{
+			LOG(INFO) << "... directory.";
+			stats.m_num_directories_found++;
+
+			// It's a directory.  Check if we should descend into it.
+			if(!m_recurse_subdirs && child->fts_level > FTS_ROOTLEVEL)
+			{
+				// We were told not to recurse into subdirectories.
+				LOG(INFO) << "... --no-recurse specified, skipping.";
+				fts_set(tree, child, FTS_SKIP);
+			}
+
+			// Now we need the name in a std::string.
+			basename.assign(child->fts_name, child->fts_namelen);
+
+			if(!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(basename.c_str()))
+			{
+				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
+				LOG(INFO) << "... should be ignored.";
+				stats.m_num_dirs_rejected++;
+				fts_set(tree, child, FTS_SKIP);
+			}
+
+			// We possibly have some more work to do if we're doing a multithreaded traversal.
+			if(m_dirjobs > 1)
+			{
+				if(m_logical && child->fts_level == FTS_ROOTLEVEL)
+				{
+					// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
+					if(HasDirBeenVisited(dev_ino_pair(child->fts_dev, child->fts_ino)))
+					{
+						// Found cycle.
+						WARN() << "\'" << child->fts_path << "\': recursive directory loop";
+						fts_set(tree, child, FTS_SKIP);
+						continue;
+					}
+				}
+				if(m_recurse_subdirs && (child->fts_level > FTS_ROOTLEVEL))
+				{
+					if(num_dirs_found_this_loop == 0)
+					{
+						// We're doing the directory traversal multithreaded, so we have to detect cycles ourselves.
+						if(m_logical && HasDirBeenVisited(dev_ino_pair(child->fts_dev, child->fts_ino)))
+						{
+							// Found cycle.
+							WARN() << "\'" << child->fts_path << "\': recursive directory loop";
+							fts_set(tree, child, FTS_SKIP);
+							continue;
+						}
+
+						// Handle this one ourselves.
+						LOG(INFO) << "... subdir, not queuing it up for multithreaded scanning, handling it from same FTS stream.";
+						num_dirs_found_this_loop++;
+					}
+					else
+					{
+						// We're doing the directory traversal multithreaded, so queue it up for scanning.
+						LOG(INFO) << "... subdir, queuing it up for multithreaded scanning.";
+						dir_queue.wait_push(ftsent_path(child));
+						fts_set(tree, child, FTS_SKIP);
+						num_dirs_found_this_loop++;
+					}
+				}
+			}
+
+			LOG(INFO) << "Pre-order visit to dir \'" << ftsent_path(child) << "\', setting fts_pointer==" << std::hex << child->fts_pointer;
+
+			break;
+		}
+		case FTS_DP:
+		{
+			LOG(INFO) << "Post-order visit to dir \'" << ftsent_path(child) << "\', fts_pointer==" << std::hex << child->fts_pointer;
+			break;
+		}
+		case FTS_NSOK:
+		{
+			// No stat info was requested because fts_open() was called with FTS_NOSTAT, and we didn't get any.
+			// Otherwise, we shouldn't get here.
+			NOTICE() << "No stat info requested for \'" << ftsent_path(child) << "\'.  Skipping.";
+			break;
+		}
+		/// @note Only FTS_DNR, FTS_ERR, and FTS_NS have valid fts_errno information.
+		case FTS_DNR:
+		{
+			// A directory that couldn't be read.
+			NOTICE() << "Unable to read directory \'" << ftsent_path(child) << "\': "
+					<< LOG_STRERROR(child->fts_errno) << ". Skipping.";
+			break;
+		}
+		case FTS_ERR:
+		{
+			ERROR() << "Directory traversal error at path \'" << ftsent_path(child) << "\': "
+					<< LOG_STRERROR(child->fts_errno) << ".";
+
+			/// @todo Break out of loop entirely?
+			break;
+		}
+		case FTS_NS:
+		{
+			// No stat info.
+			NOTICE() << "Could not get stat info at path \'" << ftsent_path(child) << "\': "
+								<< LOG_STRERROR(child->fts_errno) << ". Skipping.";
+			break;
+		}
+		case FTS_DC:
+		{
+			// Directory that causes cycles.
+			WARN() << "\'" << child->fts_path << "\': recursive directory loop";
+			break;
+		}
+		case FTS_SLNONE:
+		{
+			// Broken symlink.
+			WARN() << "Broken symlink: \'" << ftsent_path(child) << "\'";
+			break;
+		}
+		default:
+		{
+			LOG(INFO) << "... unknown file type:" << child->fts_info;
+			break;
+		}
+		}
+
+		// Go to the next FTSENT in the linked list.
+		child = child->fts_link;
+	}
 }
