@@ -47,6 +47,12 @@
 #define USE_DIRTREE 0
 
 
+Globber::DirQueueEntry::DirQueueEntry(FTSENT *ftsent)
+{
+	m_pathname = ftsent_path(ftsent);
+	m_level = ftsent->fts_number += ftsent->fts_level;
+}
+
 
 Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
@@ -67,7 +73,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 
 void Globber::Run()
 {
-	sync_queue<std::string> dir_queue;
+	sync_queue<Globber::DirQueueEntry> dir_queue;
 	std::vector<std::thread> threads;
 
 #if USE_DIRTREE == 1 /// @todo TEMP
@@ -91,7 +97,10 @@ void Globber::Run()
 	LOG(INFO) << "Number of start paths = " << m_start_paths.size();
 	for(auto path : m_start_paths)
 	{
-		dir_queue.wait_push(path);
+		DirQueueEntry dqe;
+		dqe.m_pathname = path;
+		dqe.m_level = 0;
+		dir_queue.wait_push(std::move(dqe));
 	}
 
 	// Wait for the producer+consumer threads to finish.
@@ -110,10 +119,11 @@ void Globber::Run()
 }
 
 
-void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index)
+void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_index)
 {
 	char * dirs[2];
 	std::string dir;
+	DirQueueEntry dqe;
 
 	// Local copy of a stats struct that we'll use to collect up stats just for this thread.
 	DirectoryTraversalStats stats;
@@ -121,8 +131,9 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 	// Set the name of the thread.
 	set_thread_name("GLOBBER_" + std::to_string(thread_index));
 
-	while(dir_queue.wait_pull(std::move(dir)) != queue_op_status::closed)
+	while(dir_queue.wait_pull(std::move(dqe)) != queue_op_status::closed)
 	{
+		dir = dqe.m_pathname;
 		dirs[0] = const_cast<char*>(dir.c_str());
 		dirs[1] = 0;
 
@@ -190,7 +201,7 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 	m_traversal_stats += stats;
 }
 
-void Globber::ScanOneDirectory(FTS *tree, sync_queue<std::string> &dir_queue, bool skip_inclusion_checks, DirectoryTraversalStats &stats)
+void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, bool skip_inclusion_checks, DirectoryTraversalStats &stats)
 {
 	size_t num_dirs_found_this_loop {0};
 	bool start_paths_have_been_consumed = false; ///@todo
@@ -311,7 +322,7 @@ void Globber::ScanOneDirectory(FTS *tree, sync_queue<std::string> &dir_queue, bo
 					{
 						// We're doing the directory traversal multithreaded, so queue it up for scanning.
 						LOG(INFO) << "... subdir, queuing it up for multithreaded scanning.";
-						dir_queue.wait_push(ftsent_path(child));
+						dir_queue.wait_push(DirQueueEntry(child));
 						fts_set(tree, child, FTS_SKIP);
 						num_dirs_found_this_loop++;
 					}

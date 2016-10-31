@@ -114,9 +114,23 @@ public:
 
 private:
 
-	void RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index);
+	struct DirQueueEntry
+	{
+		DirQueueEntry() = default;
+		DirQueueEntry(FTSENT *ftsent);
+		DirQueueEntry(DirQueueEntry&&) = default;
+		~DirQueueEntry() = default;
 
-	void ScanOneDirectory(FTS *tree, sync_queue<std::string> &dir_queue, bool skip_inclusion_checks, DirectoryTraversalStats &stats);
+		DirQueueEntry& operator=(DirQueueEntry&&) = default;
+		DirQueueEntry& operator=(const DirQueueEntry&) = default;
+
+		std::string m_pathname;
+		uint64_t m_level {0};
+	};
+
+	void RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_index);
+
+	void ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, bool skip_inclusion_checks, DirectoryTraversalStats &stats);
 
 	/// Vector of the paths which the user gave on the command line.
 	std::vector<std::string> m_start_paths;
