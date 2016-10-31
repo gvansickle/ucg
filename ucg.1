@@ -1,8 +1,6 @@
-.TH UCG 1
+.TH UCG 1 2016-10-31
 .SH NAME
-ucg - a
-.BR grep (1)
--like tool for searching bodies of source code.
+ucg \- a grep-like tool for searching source code
 .SH SYNOPSIS
 .B ucg
 [
@@ -14,121 +12,114 @@ ucg - a
 ]
 .SH DESCRIPTION
 .B ucg
-(UniversalCodeGrep) is an extremely fast
-.BR grep (1)
--like tool specialized for searching large bodies of source code.
+(UniversalCodeGrep) is an extremely fast grep-like 
+tool specialized for searching large bodies of source code.
 It is intended to be largely command-line compatible with ack,
 to some extent with ag, and - where appropriate - with
 .BR grep (1).
 Search patterns are specified as
-.BR PCRE (3)
+.BR pcre (3)
 regular expressions.
 .SH OPTIONS
 .SS Searching:
-.LP
 .TP
-.BR \-\-[no]\-smart\-case
+.B \-\-[no]\-smart\-case
 Ignore case if 
 .B PATTERN
 is all lowercase (default: enabled).
 .TP
-.BR \-i ", " \-\-ignore-case
+.B \-i, \-\-ignore\-case
 Ignore case distinctions in
 .B PATTERN
 .
 .TP
-.BR \-n ", " \-\-no\=recurse
+.B \-n, \-\-no\=recurse
 Do not recurse into subdirectories.
 .TP
-.BR \-Q ", " \-\-literal
+.B \-Q, \-\-literal
 Treat all characters in
 .B PATTERN
 as literal.
 .TP
-.BR \-r ", " \-R ", " \-\-recurse
+.B \-r, \-R , \-\-recurse
 Recurse into subdirectories (default: on).
 .TP
-.BR \-w ", " \-\-word\-regexp
-.B PATTERN
-must match a complete word.
-.SS
-Search Output:
+.B \-w, \-\-word\-regexp PATTERN
+Must match a complete word.
+.SS Search Output:
 .TP
-.BR \-\-column
+.B \-\-column
 Print column of first match after line number.
 .TP
-.BR \-\-no\-column
+.B \-\-no\-column
 Don't print column of first match (default).
 .TP
-.BR \-\-color ", " \-\-colour
+.B \-\-color, \-\-colour
 Render the output with ANSI color codes.
 .TP
-.BR \-\-nocolor ", " \-\-nocolour
+.B \-\-nocolor, \-\-nocolour
 Render the output without ANSI color codes.
-.SS
-Inclusion and exclusion:
+.SS Inclusion and exclusion:
 .TP
-.BR \-\-[no]ignore\-dir=NAME ", " \-\-[no]ignore\-directory=NAME
+.B \-\-[no]ignore\-dir=NAME, \-\-[no]ignore\-directory=NAME
 [Do not] exclude directories with this NAME.
 .TP
-.BR \-\-exclude=GLOB ", " \-\-ignore=GLOB
+.B \-\-exclude=GLOB, \-\-ignore=GLOB
 Files matching GLOB will be ignored.
 .TP
-.BR \-\-ignore\-file=FILTER:FILTERARGS
+.B \-\-ignore\-file=FILTER:FILTERARGS
 Files matching FILTER:FILTERARGS
 (e.g. ext:txt,cpp) will be ignored.
 .TP
-.BR \-\-include=GLOB
+.B \-\-include=GLOB
 Only files matching GLOB will be searched.
 .TP
-.BR \-k ", " \-\-known\-types
+.B \-k, \-\-known\-types
 Only search in files of recognized types (default: on).
 .TP
-.BR \-\-type=[no]TYPE
+.B \-\-type=[no]TYPE
 Include only [exclude all] TYPE files.
 Types may also be specified as \-\-[no]TYPE.
-.SS
-File type specifications:
+.SS File type specifications:
 .TP
-.BR \-\-type\-add=TYPE:FILTER:FILTERARGS
+.B \-\-type\-add=TYPE:FILTER:FILTERARGS
 Files FILTERed with the given FILTERARGS are treated as
 belonging to type TYPE. Any existing definition of type
 TYPE is appended to.
 .TP
-.BR \-\-type\-del=TYPE
+.B \-\-type\-del=TYPE
 Remove any existing definition of type TYPE.
 .TP
-.BR \-\-type\-set=TYPE:FILTER:FILTERARGS
+.B \-\-type\-set=TYPE:FILTER:FILTERARGS
 Files FILTERed with the given FILTERARGS are treated as
 belonging to type TYPE. Any existing definition of type
 TYPE is replaced.
-.SS
-Performance tuning:
+.SS Performance tuning:
 .TP
-.BR \-\-dirjobs=NUM_JOBS
+.B \-\-dirjobs=NUM_JOBS
 Number of directory traversal jobs (std::thread<>s)
 to use.
 .TP
-.BR \-j ", " \-\-jobs=NUM_JOBS
+.B \-j, \-\-jobs=NUM_JOBS
 Number of scanner jobs (std::thread<>s) to use.
-.SS
-Miscellaneous:
+.SS Miscellaneous:
 .TP
-.BR \-\-noenv
-Ignore .ucgrc files.
-.SS
-Informational options:
+.B \-\-noenv
+Ignore
+.B .ucgrc
+files.
+.SS Informational options:
 .TP
-.BR \-? ", " \-\-help
+.B \-?, \-\-help
 Print a list of options.
 .TP
-.BR \-\-help\-types ", " \-\-list\-file\-types
+.B \-\-help\-types, \-\-list\-file\-types
 Print a list of supported file types.
 .TP
-.BR \-\-usage
+.B \-\-usage
 Print a brief usage message.
 .TP
-.BR \-V ", " \-\-version
+.B \-V, \-\-version
 Print program version.
 .PP
 Mandatory or optional arguments to long options are also
@@ -137,12 +128,12 @@ mandatory or optional for any corresponding short options.
 Exit status is 0 if any matches were found, 1 if no matches,
 2 or greater on error.
 .SH FILES
-UniversalCodeGrep supports configuration files with the name
+.B ucg
+supports configuration files with the name
 .B .ucgrc
-, in which command-line options can be stored on a per-user
+in which command-line options can be stored on a per-user
 and per-directory-hierarchy basis.
-.SS
-Format:
+.SS Format:
 .B .ucgrc
 files are text files with a simple format. Each line of text 
 can be either:
@@ -152,31 +143,33 @@ comment continues for the rest of the line.
 .IP
 A command-line parameter. This must be exactly as if it was
 given on the command line.
-.SS
-Location and Read Order:
-When ucg is invoked, it looks for command-line options from
+.SS Location and Read Order:
+When
+.B ucg
+is invoked, it looks for command-line options from
 the following locations in the following order:
 .IP
-The 
+1. The 
 .B .ucgrc
 file in the user's $HOME directory, if any.
 .IP
-The first
+2. The first
 .B .ucgrc
 file found, if any, by walking up the component directories
 of the current working directory. This traversal stops at either
-the user's $HOME directory or the root directory. This is called
-the project config file, and is intended to live in the top-level
+the user's $HOME directory or the root directory. This is the
+project config file, and is intended to live in the top-level
 directory of a project directory hierarchy.
 .IP
-The command line itself.
+3. The command line itself.
 .PP
 Options read later will override earlier options.
-.SS
-User-Defined File Types:
+.SS User-Defined File Types:
 .B ucg
 supports user-defined file types with the
+.PP
 \-\-type\-set=TYPE:FILTER:FILTERARGS and
+.PP
 \-\-type\-add=TYPE:FILTER:FILTERARGS command-line options.
 .PP
 Three FILTERs are currently supported:
@@ -187,23 +180,20 @@ is (literal filename)
 .IP
 glob (glob pattern)
 .IP
-.SS
-Extension List Filter
+.SS Extension List Filter
 .IP
 The extension list filter allows you to specify a comma-separated
 list of file extensions which are to be considered as belonging to
 file type TYPE.
 .IP
 Example: \-\-type\-set=type1:ext:abc,xqz,def
-.SS
-Literal Filename Filter
+.SS Literal Filename Filter
 .IP
 The literal filename filter simply specifies a single literal
 filename which is to be considered as belonging to file type TYPE.
 .IP
 Example: \-\-type\-add=autoconf:is:configure.ac
-.SS
-Glob filter
+.SS Glob filter
 .IP
 The glob filter allows you to specify a glob pattern to match
 against filenames. If the glob matches, the file is considered
@@ -217,3 +207,4 @@ Report bugs to https://github.com/gvansickle/ucg/issues
 is written by Gary R. Van Sickle <grvs@users.sourceforge.net>
 .SH SEE ALSO
 .BR grep (1)
+.BR pcre (3)
