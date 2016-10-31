@@ -83,6 +83,12 @@ AC_USE_SYSTEM_EXTENSIONS
 #AM_PROG_CC_C_O
 AC_PROG_CXX
 AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
+
+# @temp? Tell clang to use its own library.
+#AS_IF([test "x$ax_cv_PTHREAD_CLANG" = "xyes"],
+#[CPPFLAGS="$CPPFLAGS -stdlib=libc++"
+#[LDFLAGS="$LDFLAGS -stdlib=libc++"])
+
 ## Make sure we get a C++ compiler which supports C++11.
 # Determine what switches we need to get at least some level of C++11 support.
 # We do this here because this macro will replace $CXX with "$CXX -c++11switch", so we'll use this
@@ -411,11 +417,6 @@ AS_IF([test "x$ax_pthread_ok" = xyes],
 	[
 		AC_MSG_NOTICE([no pthreads found])
 	])
-
-# @temp? Tell clang to use its own library.
-#AS_IF([test "x$ax_cv_PTHREAD_CLANG" = "xyes"],
-#[CPPFLAGS="$CPPFLAGS -stdlib=libc++"
-#[LDFLAGS="$LDFLAGS -stdlib=libc++"])
 
 AC_LANG_POP([C++])
 

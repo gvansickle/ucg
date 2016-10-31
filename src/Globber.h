@@ -116,6 +116,8 @@ private:
 
 	void RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index);
 
+	void ScanOneDirectory(FTS *tree, const char *filename, int *flags);
+
 	/// Vector of the paths which the user gave on the command line.
 	std::vector<std::string> m_start_paths;
 

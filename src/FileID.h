@@ -60,7 +60,7 @@ private:
 
 	void LazyLoadStatInfo() const;
 
-	/// The path to this file.
+	/// The full pathname of this file.
 	std::string m_path;
 
 	/// @name Info normally gathered from a stat() call.
