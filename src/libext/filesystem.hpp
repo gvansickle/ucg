@@ -229,12 +229,7 @@ inline DIR* opendirat(int at_dir, const char *name)
 inline int64_t ftsent_level(const FTSENT* p)
 {
 	// We store the "real level" of the parent directory in the fts_number member.
-	if(p->fts_parent == nullptr)
-	{
-		assert(p->fts_level == -1);
-		return p->fts_level + 1;
-	}
-	return p->fts_parent->fts_number + 1;
+	return p->fts_level + p->fts_number;
 }
 
 /**

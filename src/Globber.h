@@ -145,7 +145,7 @@ private:
 
 	bool m_recurse_subdirs;
 
-	bool m_logical {false};
+	bool m_logical {true};
 
 	bool m_using_nostat {false};
 
