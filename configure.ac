@@ -54,11 +54,6 @@ AM_INIT_AUTOMAKE([1.14
 	-Werror
 ])
 
-# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
-# This will do that for us.
-# @note Must be done before LT_INIT, or it will complain.
-AC_USE_SYSTEM_EXTENSIONS
-
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
 AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
@@ -77,12 +72,23 @@ AS_BOX([Checking for programs needed to do the build...])
 
 AC_PROG_INSTALL
 AC_PROG_CC_C99
+# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
+# This will do that for us.
+# @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
+#       calling LT_INIT, or it will complain.
+AC_USE_SYSTEM_EXTENSIONS
 # Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
 #AM_PROG_CC_C_O
 AC_PROG_CXX
 AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
+
+# @temp? Tell clang to use its own library.
+#AS_IF([test "x$ax_cv_PTHREAD_CLANG" = "xyes"],
+#[CPPFLAGS="$CPPFLAGS -stdlib=libc++"
+#[LDFLAGS="$LDFLAGS -stdlib=libc++"])
+
 ## Make sure we get a C++ compiler which supports C++11.
 # Determine what switches we need to get at least some level of C++11 support.
 # We do this here because this macro will replace $CXX with "$CXX -c++11switch", so we'll use this
@@ -411,11 +417,6 @@ AS_IF([test "x$ax_pthread_ok" = xyes],
 	[
 		AC_MSG_NOTICE([no pthreads found])
 	])
-
-# @temp? Tell clang to use its own library.
-#AS_IF([test "x$ax_cv_PTHREAD_CLANG" = "xyes"],
-#[CPPFLAGS="$CPPFLAGS -stdlib=libc++"
-#[LDFLAGS="$LDFLAGS -stdlib=libc++"])
 
 AC_LANG_POP([C++])
 

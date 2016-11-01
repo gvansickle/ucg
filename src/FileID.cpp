@@ -21,10 +21,11 @@
 
 #include "FileID.h"
 
+#include <libext/filesystem.hpp>
 #include <sys/stat.h>
 #include <fts.h>
 
-FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid): m_path(ftsent->fts_path, ftsent->fts_pathlen)
+FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid): m_path(ftsent_path(ftsent))
 {
 	// Initialize the stat fields if possible.
 	if(stat_info_known_valid)

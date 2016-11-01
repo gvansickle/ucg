@@ -95,6 +95,20 @@ private:
 	std::mutex m_mutex;
 };
 
+struct DirQueueEntry
+{
+	DirQueueEntry() = default;
+	DirQueueEntry(FTSENT *ftsent);
+	DirQueueEntry(DirQueueEntry&&) = default;
+	~DirQueueEntry() = default;
+
+	DirQueueEntry& operator=(DirQueueEntry&&) = default;
+	DirQueueEntry& operator=(const DirQueueEntry&) = default;
+
+	std::string m_pathname;
+	int64_t m_level {FTS_ROOTPARENTLEVEL};
+};
+
 
 /**
  * This class does the directory tree traversal.
@@ -114,7 +128,9 @@ public:
 
 private:
 
-	void RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index);
+	void RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_index);
+
+	void ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, DirectoryTraversalStats &stats);
 
 	/// Vector of the paths which the user gave on the command line.
 	std::vector<std::string> m_start_paths;
@@ -129,7 +145,7 @@ private:
 
 	bool m_recurse_subdirs;
 
-	bool m_logical {true};
+	bool m_logical {false};
 
 	bool m_using_nostat {false};
 
