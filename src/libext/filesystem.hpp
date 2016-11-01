@@ -83,7 +83,8 @@ struct dev_ino_pair
 	dev_ino_pair() = default;
 	dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
 
-	constexpr bool operator<(const dev_ino_pair& other) const { return m_val < other.m_val; };
+	constexpr bool operator<(dev_ino_pair other) const { return m_val < other.m_val; };
+	constexpr bool operator==(dev_ino_pair other) const { return m_val == other.m_val; };
 
 private:
 	dev_ino_pair_type m_val { 0 };

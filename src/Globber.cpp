@@ -48,13 +48,6 @@
 #define USE_DIRTREE 0
 
 
-DirQueueEntry::DirQueueEntry(FTSENT *ftsent)
-{
-	m_pathname = ftsent_path(ftsent);
-	m_level = ftsent_level(ftsent);
-}
-
-
 Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
 		DirInclusionManager &dir_inc_manager,
@@ -66,7 +59,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 		  m_type_manager(type_manager),
 		  m_dir_inc_manager(dir_inc_manager),
 		  m_recurse_subdirs(recurse_subdirs),
-		  m_dirjobs(1),//dirjobs),
+		  m_dirjobs(dirjobs),
 		  m_out_queue(out_queue)
 {
 
@@ -134,6 +127,8 @@ void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_ind
 
 	while(dir_queue.wait_pull(std::move(dqe)) != queue_op_status::closed)
 	{
+		LOG(INFO) << "DEBUG: PULLED DIR. FILENAME: " << dqe.m_pathname << " LEVEL: " << dqe.m_level;
+
 		dir = dqe.m_pathname;
 		dirs[0] = const_cast<char*>(dir.c_str());
 		dirs[1] = 0;
@@ -186,18 +181,54 @@ void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_ind
 		fts->fts_cur->fts_number = dqe.m_level;
 
 		// Scan the paths which came in on the command line.
-		ScanOneDirectory(fts, dir_queue, stats);
+		ScanOneDirectory(fts, fts_children(fts, 0), dir_queue, stats);
 
 		FTSENT *ftsent;
 		while((ftsent = fts_read(fts)) != nullptr)
 		{
-			// This ftsent due to the fts_read() should always be the parent directory for everything we look at in ScanOneDirectory().
-			LOG(INFO) << "fts_read() called with fts->fts_path='" << fts->fts_path << "', returned ftsent->fts_path=" << ftsent_path(ftsent);
-			LOG(INFO) << "... ftsent reports level=" << ftsent->fts_level << ", setting fts_number to " << dqe.m_level << "\n";
+			if(errno)
+			{
+				ERROR() << "Directory traversal error: " << LOG_STRERROR(errno) << ".";
+				break;
+			}
+			switch(ftsent->fts_info)
+			{
+			case FTS_DC:
+			{
+				// Directory that causes cycles.
+				WARN() << "\'" << ftsent->fts_path << "\': recursive directory loop";
+				break;
+			}
+			case FTS_DNR:
+			{
+				// A directory that couldn't be read.
+				NOTICE() << "Unable to read directory \'" << ftsent_path(ftsent) << "\': "
+						<< LOG_STRERROR(ftsent->fts_errno) << ". Skipping.";
+				break;
+			}
+			case FTS_ERR:
+			{
+				ERROR() << "Directory traversal error at path \'" << ftsent_path(ftsent) << "\': "
+						<< LOG_STRERROR(ftsent->fts_errno) << ".";
+				break;
+			}
+			case FTS_D:
+			{
+				// This ftsent due to the fts_read() should always be the parent directory for everything we look at in ScanOneDirectory().
+				LOG(INFO) << "fts_read() called with fts->fts_path='" << fts->fts_path << "', returned ftsent->fts_path=" << ftsent_path(ftsent);
+				LOG(INFO) << "... ftsent reports level=" << ftsent->fts_level << ", setting fts_number to " << dqe.m_level << "\n";
 
-			ftsent->fts_number = (short int)dqe.m_level;
+				ftsent->fts_number = (short int)dqe.m_level;
 
-			ScanOneDirectory(fts, dir_queue, stats);
+				FTSENT *child_list = fts_children(fts, 0);
+				if(errno != 0)
+				{
+					perror("error calling fts_children()");
+				}
+				ScanOneDirectory(fts, child_list, dir_queue, stats);
+				break;
+			}
+			}
 		}
 
 		fts_close(fts);
@@ -207,18 +238,13 @@ void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_ind
 	m_traversal_stats += stats;
 }
 
-void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, DirectoryTraversalStats &stats)
+void Globber::ScanOneDirectory(FTS *tree, FTSENT *child, sync_queue<DirQueueEntry> &dir_queue, DirectoryTraversalStats &stats)
 {
 	size_t num_dirs_found_this_loop {0};
 
 	// Iterate through all entries in this directory.
-	FTSENT *child = fts_children(tree, 0);
-	if(errno != 0)
-	{
-		perror("error calling fts_children()");
-	}
 
-	// child could still be a nullptr here.  That means one of two things:
+	// child could be a nullptr here.  That means one of two things:
 	// The FTSENT most recently returned by fts_read() is not a directory being visited in preorder,
 	// or the directory does not contain any files.  In either case what we should do here is just return
 	// and let the fts_read() loop iterate again, which the while() will take care of for us.
@@ -240,6 +266,7 @@ void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, 
 		// start_paths_have_been_consumed flag will still be false.
 		if(ftsent_level(child) == FTS_ROOTLEVEL)
 		{
+			LOG(INFO) << "DEBUG: SKIPPING INCLUSION CHECKS. FILENAME: " << ftsent_name(child) << " LEVEL: " << ftsent_level(child);
 			skip_inclusion_checks = true;
 		}
 
@@ -249,6 +276,7 @@ void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, 
 		{
 			// It's a normal file.
 			LOG(INFO) << "... normal file.";
+			LOG(INFO) << "DEBUG: REG FILE.  FILENAME: " << ftsent_name(child) << " LEVEL: " << ftsent_level(child);
 			stats.m_num_files_found++;
 
 			// Check for inclusion.
@@ -274,6 +302,7 @@ void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, 
 		case FTS_D:
 		{
 			LOG(INFO) << "... directory.";
+			LOG(INFO) << "DEBUG: DIRECTORY. FILENAME: " << ftsent_name(child) << " LEVEL: " << ftsent_level(child);
 			stats.m_num_directories_found++;
 
 			// It's a directory.  Check if we should descend into it.
@@ -330,6 +359,8 @@ void Globber::ScanOneDirectory(FTS *tree, sync_queue<DirQueueEntry> &dir_queue, 
 					{
 						// We're doing the directory traversal multithreaded, so queue it up for scanning.
 						LOG(INFO) << "... subdir, queuing it up for multithreaded scanning.";
+						DirQueueEntry newdqe(child);
+						newdqe.m_level += 1;
 						dir_queue.wait_push(DirQueueEntry(child));
 						fts_set(tree, child, FTS_SKIP);
 						num_dirs_found_this_loop++;
