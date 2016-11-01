@@ -461,18 +461,16 @@ AC_CHECK_FUNCS([posix_fadvise])
 AC_MSG_CHECKING([if the GNU C library program_invocation{_short}_name strings are defined])
 AC_COMPILE_IFELSE(
         [AC_LANG_PROGRAM([#include <errno.h>],
-                         [program_invocation_short_name = "test";])],
+                         [const char * test = program_invocation_short_name;])],
         [
         	AC_DEFINE([HAVE_GNU_C_LIB_PROGRAM_INVOCATION_NAMES], [1],
 				[Define if the GNU C library program_invocation{_short}_name strings are defined])
         	AC_MSG_RESULT([yes])
         ],
-        [
-        	AC_MSG_RESULT([no])
-        ])
+        [AC_MSG_RESULT([no])])
 
 ### Find a pthread_setname_np() we can use, and #define a macro M_pthread_setname_np() which will call it.
-AC_MSG_CHECKING([how to set pthread names])
+AC_MSG_NOTICE([Checking how to set pthread names])
 ptsetname=no
 # For Linux.
 AC_CHECK_DECLS([pthread_setname_np(pthread_t, const char *)],
@@ -502,7 +500,7 @@ AC_CHECK_DECLS([pthread_setname_np(const char *)],
 fi
 AS_IF([test $ptsetname != no],
 	[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro M_pthread_setname_np() can be used to set the current thread's name])
-	AC_MSG_RESULT([$ptsetname])],
+	AC_MSG_NOTICE([pthread name setting is $ptsetname style])],
 	[AC_MSG_RESULT([none found])])
 
 AC_LANG_POP([C++])
