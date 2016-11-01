@@ -54,11 +54,6 @@ AM_INIT_AUTOMAKE([1.14
 	-Werror
 ])
 
-# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
-# This will do that for us.
-# @note Must be done before LT_INIT, or it will complain.
-AC_USE_SYSTEM_EXTENSIONS
-
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
 AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
@@ -73,9 +68,15 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 ###
 
 ## Checks for the programs needed to do a build.
+AS_BOX([Checking for programs needed to do the build...])
 
 AC_PROG_INSTALL
 AC_PROG_CC_C99
+# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
+# This will do that for us.
+# @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
+#       calling LT_INIT, or it will complain.
+AC_USE_SYSTEM_EXTENSIONS
 # Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
@@ -122,6 +123,7 @@ AS_IF([ test "x$ac_path_ESED_found" = "x:" ],
 ##
 ## Checks for programs needed to run the testsuite.
 ##
+AS_BOX([Checking for programs needed to run the testsuite...])
 
 # The testsuite needs a way to invoke "script", to fool ucg into thinking it's outputting to a tty.
 # Of course, Linux and *BSD (including OSX) "script"'s take different options and parameters, so we
@@ -189,6 +191,8 @@ AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 ### Checks for maintainer tools.
 ###
 
+AS_BOX([Checking for maintainer tools...])
+
 # Python, for generation of test suite.
 AM_PATH_PYTHON([2.7],,[:])
 AM_CONDITIONAL([HAVE_PYTHON], [test "x$PYTHON" != "x"])  #<< Automake conditional for skipping tests which require python.
@@ -234,6 +238,8 @@ DX_INIT_DOXYGEN([UniversalCodeGrep])
 
 AC_LANG_PUSH([C++])
 
+AS_BOX([Checking for libraries...])
+
 # We use libpcre or libpcre2 for regex matching.  As of this writing there are no C++11 implementations
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
@@ -262,6 +268,8 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
+AS_BOX([Checking for the existence and usability of necessary headers...])
+
 # We don't have this header on MinGW.
 AC_CHECK_HEADERS([pwd.h])
 
@@ -272,6 +280,8 @@ AC_LANG_POP([C++])
 ###
 
 AC_LANG_PUSH([C++])
+
+AS_BOX([Checking for the existence of needed types...])
 
 AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL], [1],
 	[Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
@@ -290,6 +300,8 @@ AC_LANG_POP([C++])
 ###
 ### Checks for compiler characteristics.
 ###
+
+AS_BOX([Checking compiler characteristics...])
 
 # Check if the C compiler supports some flags we'd like to set.
 # Append them to AM_CFLAGS if it does.
@@ -317,6 +329,8 @@ AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'], [AM_CXXFLAGS], [-Wformat -Wformat-security])
 
 # Check for GCC-style built-ins and attributes we can use.
+AS_BOX([Checking for attributes and builtins supported by the C++ compiler...])
+
 AX_C___ATTRIBUTE__	# Defines "HAVE___ATTRIBUTE__" if the compiler supports __attribute__(()) syntax.  The macro specifically checks for
 					# the function attribute __attribute__((unused))
 AX_GCC_FUNC_ATTRIBUTE([artificial])
@@ -330,18 +344,35 @@ AX_GCC_BUILTIN(__builtin_popcount)
 AX_GCC_BUILTIN(__builtin_bswap32)
 AX_GCC_BUILTIN(__builtin_ctzll)
 
+# Detect __has_include() support.
+AC_MSG_CHECKING([for __has_include])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+#if __has_include(<iostream>)
+#include <iostream>
+#endif
+], [std::cout << "Have __has_include()" << std::endl;])],
+	[AC_MSG_RESULT([yes])],
+	[# Not defined, define a substitute in config.h.
+	AC_MSG_RESULT([no])
+	AC_DEFINE([__has_include(h)], [0], [Defined to a dummy replacement if __has_include() doesn't exist.])
+	])
+
 # Check for x86-64 ISA extensions we can use for function multiversioning.
-GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse2])
-GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse4.2])
-GRVS_CHECK_COMPILE_FLAG([X86_64], [-mpopcnt], [-msse4.2])
-GRVS_CHECK_COMPILE_FLAG([X86_64], [-mno-popcnt], [-msse4.2])
+AS_BOX([Checking for ISA extensions supported by the compiler...])
+
+AXUCG_CHECK_COMPILE_FLAG([X86_64], [-msse2])
+AXUCG_CHECK_COMPILE_FLAG([X86_64], [-msse4.2])
+AXUCG_CHECK_COMPILE_FLAG([X86_64], [-mpopcnt], [-msse4.2])
+AXUCG_CHECK_COMPILE_FLAG([X86_64], [-mno-popcnt], [-msse4.2])
 AM_CONDITIONAL([BUILD_X86_64_ISA_EXTENSIONS], [test "x$HAVE_X86_64_ISA_EXTENSIONS" != "x"])
 AM_COND_IF([BUILD_X86_64_ISA_EXTENSIONS],
 	[AC_MSG_NOTICE([Compiler supports x86-64 ISA extensions, will use them.])],
 	[AC_MSG_NOTICE([Compiler does not support x86-64 ISA extensions, will not use them.])])
 
 
-# Check if the implementation underlying C++11's std::thread<> is pthreads.  Note that we don't actually require pthreads,
+# Check if the implementation underlying C++11's std::thread<> is pthreads.
+AS_BOX([Checking if the implementation underlying C++11's std::thread<> is pthreads])
+#  Note that we don't actually require pthreads,
 # we require and use C++11's std::thread<>, whatever its implementation details.  However, if C++11 is using pthreads, we can
 # optionally use some pthreads functionality, e.g. naming threads for diagnostic, logging, and other purposes.
 # Macro docs: http://www.gnu.org/software/autoconf-archive/ax_pthread.html#ax_pthread
@@ -382,6 +413,8 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
+AS_BOX([Checking for library functions])
+
 AC_FUNC_STRNLEN
 AS_IF([test "x$ac_cv_func_strnlen_working" = "xyes"],
 	[AC_DEFINE([HAVE_STRNLEN], [1], [Defined if strnlen() exists and is not broken.])])
@@ -414,18 +447,16 @@ AC_CHECK_FUNCS([posix_fadvise])
 AC_MSG_CHECKING([if the GNU C library program_invocation{_short}_name strings are defined])
 AC_COMPILE_IFELSE(
         [AC_LANG_PROGRAM([#include <errno.h>],
-                         [program_invocation_short_name = "test";])],
+                         [const char * test = program_invocation_short_name;])],
         [
         	AC_DEFINE([HAVE_GNU_C_LIB_PROGRAM_INVOCATION_NAMES], [1],
 				[Define if the GNU C library program_invocation{_short}_name strings are defined])
         	AC_MSG_RESULT([yes])
         ],
-        [
-        	AC_MSG_RESULT([no])
-        ])
+        [AC_MSG_RESULT([no])])
 
 ### Find a pthread_setname_np() we can use, and #define a macro M_pthread_setname_np() which will call it.
-AC_MSG_CHECKING([how to set pthread names])
+AC_MSG_NOTICE([Checking how to set pthread names])
 ptsetname=no
 # For Linux.
 AC_CHECK_DECLS([pthread_setname_np(pthread_t, const char *)],
@@ -455,7 +486,7 @@ AC_CHECK_DECLS([pthread_setname_np(const char *)],
 fi
 AS_IF([test $ptsetname != no],
 	[AC_DEFINE([HAVE_PTHREAD_SETNAME_SUPPORT], [1], [If defined, the macro M_pthread_setname_np() can be used to set the current thread's name])
-	AC_MSG_RESULT([$ptsetname])],
+	AC_MSG_NOTICE([pthread name setting is $ptsetname style])],
 	[AC_MSG_RESULT([none found])])
 
 AC_LANG_POP([C++])
@@ -491,11 +522,15 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT
 
 # Print a configure summary.
-AC_MSG_NOTICE([
+AC_MSG_RESULT([
 *** Configuration Summary ***
 
+  Compilers
+  ---------
   C compiler:                 $CC
+  C preprocessor:             $CPP
   C++ compiler:               $CXX
+  C++ preprocessor:           $CXXCPP
   
   PCRE Info
   ---------
