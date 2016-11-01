@@ -220,6 +220,8 @@ void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_ind
 
 				ftsent->fts_number = (short int)dqe.m_level;
 
+				/// @todo Need to handle other dir work here?
+
 				FTSENT *child_list = fts_children(fts, 0);
 				if(errno != 0)
 				{
@@ -316,7 +318,7 @@ void Globber::ScanOneDirectory(FTS *tree, FTSENT *parent, FTSENT *child, sync_qu
 						// Found cycle.
 						WARN() << "'" << ftsent_path(child) << "': recursive directory loop";
 						fts_set(tree, child, FTS_SKIP);
-						continue;
+						break;
 					}
 				}
 			}
@@ -327,6 +329,7 @@ void Globber::ScanOneDirectory(FTS *tree, FTSENT *parent, FTSENT *child, sync_qu
 				// We were told not to recurse into subdirectories.
 				LOG(INFO) << "... --no-recurse specified, skipping.";
 				fts_set(tree, child, FTS_SKIP);
+				break;
 			}
 
 			// Now we need the name in a std::string.
@@ -338,6 +341,7 @@ void Globber::ScanOneDirectory(FTS *tree, FTSENT *parent, FTSENT *child, sync_qu
 				LOG(INFO) << "... should be ignored.";
 				stats.m_num_dirs_rejected++;
 				fts_set(tree, child, FTS_SKIP);
+				break;
 			}
 
 			// We possibly have some more work to do if we're doing a multithreaded traversal.
