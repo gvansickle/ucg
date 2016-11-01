@@ -83,7 +83,8 @@ struct dev_ino_pair
 	dev_ino_pair() = default;
 	dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
 
-	constexpr bool operator<(const dev_ino_pair& other) const { return m_val < other.m_val; };
+	constexpr bool operator<(dev_ino_pair other) const { return m_val < other.m_val; };
+	constexpr bool operator==(dev_ino_pair other) const { return m_val == other.m_val; };
 
 private:
 	dev_ino_pair_type m_val { 0 };
@@ -229,12 +230,7 @@ inline DIR* opendirat(int at_dir, const char *name)
 inline int64_t ftsent_level(const FTSENT* p)
 {
 	// We store the "real level" of the parent directory in the fts_number member.
-	if(p->fts_parent == nullptr)
-	{
-		assert(p->fts_level == -1);
-		return p->fts_level + 1;
-	}
-	return p->fts_parent->fts_number + 1;
+	return p->fts_level + p->fts_number;
 }
 
 /**

@@ -34,6 +34,7 @@ static const std::string f_builtin_dir_excludes[] =
 	"CMakeFiles",
 	"CVS",
 	"autom4te.cache",
+	".deps",
 	""
 };
 
