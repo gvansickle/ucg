@@ -24,7 +24,7 @@ ACLOCAL_AMFLAGS = -I m4 --install
 # The subdirectories containing the source code, docs, and tests.
 # Note: The code in src depends on the libraries in third_party, so make sure the latter is always listed before the former.
 # Note that we can't list these other libraries in e.g. *_DEPENDENCIES because that replaces all Automake-generated dependencies.
-SUBDIRS = third_party src . tests
+SUBDIRS = third_party src . doc tests
 
 # Set these *CLEANFILES Automake vars to empty, so that we can simply always append (+=) to them later.
 CLEANFILES =

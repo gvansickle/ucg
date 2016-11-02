@@ -512,13 +512,15 @@ AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 #AH_BOTTOM([#include <valgrind_support.h>])
 
 ###
-### Create the Makefiles for the program.
+### Create the Makefiles for the program and docs.
 ###
 AC_CONFIG_FILES([Makefile
 	src/Makefile
 	src/future/Makefile
 	src/libext/Makefile
-	third_party/Makefile])
+	third_party/Makefile
+	doc/Makefile
+	])
 AC_OUTPUT
 
 # Print a configure summary.
