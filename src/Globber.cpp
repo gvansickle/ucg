@@ -112,6 +112,48 @@ void Globber::Run()
 	LOG(INFO) << m_traversal_stats;
 }
 
+/**
+ * Returns the fts_options to pass to fts_open().  This is only its own function because of all the #if's involved.
+ * @return
+ */
+int Globber::GetFTSOptions() const noexcept
+{
+	/// @note Per looking at the fts_open() source, FTS_LOGICAL turns on FTS_NOCHDIR, but since we're traversing
+	/// in multiple threads, and there's only a process-wide cwd, we'll specify it anyway.
+	/// @todo Current gnulib supports additional flags here: FTS_CWDFD | FTS_DEFER_STAT | FTS_NOATIME.  We should
+	/// check for these and use them if they exist.  Note the following though regarding O_NOATIME from the GNU libc
+	/// docs <https://www.gnu.org/software/libc/manual/html_node/Operating-Modes.html#Operating-Modes>:
+	/// "Only the owner of the file or the superuser may use this bit. This is a GNU extension."
+
+	int fts_options = (m_using_nostat ? FTS_NOSTAT : 0);
+	if(m_logical)
+	{
+		// Do a logical traversal (follow symlinks).  If available, this needs FTS_TIGHT_CYCLE_CHECK.
+		fts_options |= FTS_LOGICAL;
+#if defined(FTS_TIGHT_CYCLE_CHECK)
+		fts_options |= FTS_TIGHT_CYCLE_CHECK;
+#endif
+	}
+	else
+	{
+		// Do a physical traversal (don't follow symlinks).
+		fts_options |= FTS_PHYSICAL;
+	}
+#if defined(FTS_DEFER_STAT)
+		fts_options |= FTS_DEFER_STAT;
+#endif
+#if defined(FTS_NOATIME)
+		// According to GNU libc docs, this is best-effort.  According to Linux docs, it only applies if you're root.
+		fts_options |= FTS_NOATIME;
+#endif
+#if defined(FTS_CWDFD)
+		fts_options |= FTS_CWDFD;
+#else
+		fts_options |= FTS_NOCHDIR;
+#endif
+
+	return fts_options;
+}
 
 void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_index)
 {
@@ -133,42 +175,8 @@ void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_ind
 		dirs[0] = const_cast<char*>(dir.c_str());
 		dirs[1] = 0;
 
-		/// @todo We can't use FS_NOSTAT here.  OSX at least isn't able to determine regular
-		/// files without the stat, so they get returned as FTS_NSOK / 11 /	no stat(2) requested.
-		/// Does not seem to affect performance on Linux, but might be having an effect on Cygwin.
-		/// Look into workarounds.
-		/// @note Per looking at the fts_open() source, FTS_LOGICAL turns on FTS_NOCHDIR, but since we're traversing
-		/// in multiple threads, and there's only a process-wide cwd, we'll specify it anyway.
-		/// @todo Current gnulib supports additional flags here: FTS_CWDFD | FTS_DEFER_STAT | FTS_NOATIME.  We should
-		/// check for these and use them if they exist.  Note the following though regarding O_NOATIME from the GNU libc
-		/// docs <https://www.gnu.org/software/libc/manual/html_node/Operating-Modes.html#Operating-Modes>:
-		/// "Only the owner of the file or the superuser may use this bit. This is a GNU extension."
-		int fts_options = FTS_COMFOLLOW | (m_using_nostat * FTS_NOSTAT);
-		if(m_logical)
-		{
-			// Do a logical traversal (follow symlinks).  If available, this needs FTS_TIGHT_CYCLE_CHECK.
-			fts_options |= FTS_LOGICAL;
-#if defined(FTS_TIGHT_CYCLE_CHECK)
-			fts_options |= FTS_TIGHT_CYCLE_CHECK;
-#endif
-		}
-		else
-		{
-			// Do a physical traversal (don't follow symlinks).
-			fts_options |= FTS_PHYSICAL;
-		}
-#if defined(FTS_DEFER_STAT)
-		fts_options |= FTS_DEFER_STAT;
-#endif
-#if defined(FTS_NOATIME)
-		// According to GNU libc docs, this is best-effort.  According to Linux docs, it only applies if you're root.
-		fts_options |= FTS_NOATIME;
-#endif
-#if defined(FTS_CWDFD)
-		fts_options |= FTS_CWDFD;
-#else
-		fts_options |= FTS_NOCHDIR;
-#endif
+		int fts_options = FTS_COMFOLLOW | GetFTSOptions();
+
 		FTS *fts = fts_open(dirs, fts_options, NULL);
 		if(fts == nullptr)
 		{
