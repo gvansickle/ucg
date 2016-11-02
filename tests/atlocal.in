@@ -17,9 +17,9 @@
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
-## Process this file with autoconf to produce atlocal.
+dnl Process this file with autoconf to produce atlocal.
 
-# We need this so we're able to find the binary we built.
+# We need this so we're able to find the binary we built, and find it prior to any already-installed versions.
 PATH=@abs_builddir@:@abs_top_builddir@/src:@abs_top_srcdir@/build-aux:$top_srcdir:$srcdir:$PATH
 
 XFAILFILE=$abs_builddir/.badversion
@@ -37,7 +37,6 @@ export TEST_LN_S="@TEST_LN_S@"
 export FGREP="@FGREP@"
 export EGREP="@EGREP@"
 export PROG_GREP_P="@PROG_GREP_P@"
-export PROG_PCRE2GREP="@PROG_PCRE2GREP@"
 export PROG_GNU_GREP="@PROG_GNU_GREP@"
 export AWK="@AWK@"
 export PYTHON="@PYTHON@"
@@ -48,10 +47,10 @@ if PROG_INST_UCG="$(which ucg 2>/dev/null)";
 then
 	PROGLIST=$PROGLIST,inst_ucg:$PROG_INST_UCG
 fi
-#if PROG_INST_AG="$(which ag 2>/dev/null)";
-#then
-#	PROGLIST=$PROGLIST,inst_ag:$PROG_INST_AG
-#fi
+if PROG_INST_AG="$(which ag 2>/dev/null)";
+then
+	PROGLIST=$PROGLIST,inst_ag:$PROG_INST_AG
+fi
 #if PROG_ACK="$(which ack)";
 #then
 #fi
@@ -59,10 +58,10 @@ if PROG_INST_RIPGREP="$(which rg 2>/dev/null)";
 then
 	PROGLIST=$PROGLIST,inst_ripgrep:$PROG_INST_RIPGREP
 fi
-#if test -x "${PROG_PCRE2GREP}";
-#then
-#	PROGLIST=$PROGLIST,inst_pcre2grep:$PROG_PCRE2GREP
-#fi
+if PROG_INST_PCRE2GREP="$(which pcre2grep 2>/dev/null)";
+then
+	PROGLIST=$PROGLIST,inst_pcre2grep:$PROG_INST_PCRE2GREP
+fi
 PROGLIST=$PROGLIST,inst_system_grep:grep
 if test -x "${PROG_GNU_GREP}";
 then

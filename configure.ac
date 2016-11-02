@@ -192,8 +192,6 @@ AC_CACHE_CHECK([for a grep which supports PCREs], [ac_cv_path_PROG_GREP_P],
 ])
 AC_SUBST([PROG_GREP_P], [$ac_cv_path_PROG_GREP_P])
 
-# See if we have a pcre2grep.
-AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 
 ###
 ### Checks for maintainer tools.
@@ -203,7 +201,7 @@ AS_BOX([Checking for maintainer tools...])
 
 # Python, for generation of test suite.
 AM_PATH_PYTHON([2.7],,[:])
-AM_CONDITIONAL([HAVE_PYTHON], [test "x$PYTHON" != "x"])  #<< Automake conditional for skipping tests which require python.
+AM_CONDITIONAL([HAVE_PYTHON], [test "x$PYTHON" != "x"])  #<< Automake conditional for skipping anything which requires Python.
 AM_COND_IF([HAVE_PYTHON],
 	[AX_PYTHON_MODULE([sqlite3],,[python])],
 	[])
@@ -403,20 +401,15 @@ AS_IF([test "x$ax_pthread_ok" = xyes],
         				],
                          [
                          	static_assert(std::is_same<std::thread::native_handle_type, pthread_t>::value, "C++11 underlying thread implementation is not pthreads");
-                         ])],
-        [
-        	AC_DEFINE([CXX11_THREADS_ARE_PTHREADS], [1],
-				[Define if the C++11 underlying thread implementation is pthreads])
-        	AC_MSG_RESULT([yes])
+                         ])
         ],
         [
-        	AC_MSG_RESULT([no])
-        ])
-		
+        	AC_DEFINE([CXX11_THREADS_ARE_PTHREADS], [1], [Define if the C++11 underlying thread implementation is pthreads])
+        	AC_MSG_RESULT([yes])
+        ],
+        [AC_MSG_RESULT([no])])
 	],
-	[
-		AC_MSG_NOTICE([no pthreads found])
-	])
+	[AC_MSG_NOTICE([no pthreads found])])
 
 AC_LANG_POP([C++])
 
