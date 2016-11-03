@@ -4,9 +4,7 @@ language: cpp
 dist: trusty
 sudo: required
 
-# For OS X builds:
-# @note xcode7.3 and above are OSX 10.11, removed until we have a fix for #103, tabs->spaces.
-
+# Build matrix:
 matrix:
     include:
         - os: osx
@@ -19,10 +17,8 @@ matrix:
           compiler: gcc
         - os: linux
           compiler: clang
-
-#compiler:
-#  - clang
-#  - gcc
+          env: CFG_CC=clang CFG_CXX='clang++ -std=c++14 -stdlib=libc++'
+          
 
 before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
@@ -47,17 +43,18 @@ before_script:
  - git fetch --unshallow  # Travis limits its pull by default to 50 revs.  The build then can't do a proper "git describe".
 
 script:
- - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
- - if [ $TRAVIS_OS_NAME == linux ]; then IS_LINUX=1; fi
  - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help; fi 
  - #if [ $TRAVIS_OS_NAME == osx ]; then ls -l -R $(brew --prefix pcre); fi
+ - pkg-config --list-all | grep argp || true
+ - find /usr -iname '*argp*' || true
  - pkg-config --list-all | grep pcre
  - pkg-config libpcre --print-variables
  - pkg-config libpcre --print-provides
+ - # Actual build starts here.
  - autoreconf -i
  - mkdir build
  - cd build
- - ../configure
+ - ../configure CC="$CFG_CC" CXX="$CFG_CXX"
  - make
  - make check 'TESTSUITEFLAGS=--keywords=!performance,!characterize'
  - find . -iname '*.log' -exec cat "{}" \; 

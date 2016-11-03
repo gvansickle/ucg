@@ -91,7 +91,9 @@ File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> st
 	if(m_file_descriptor == -1)
 	{
 		// Couldn't open the file, throw exception.
-		throw std::system_error(errno, std::generic_category());
+		int temp_errno = errno;
+		errno = 0;
+		throw std::system_error(temp_errno, std::generic_category());
 	}
 
 	// Check the file size.
@@ -102,7 +104,9 @@ File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> st
 		// fstat() failed, throw an exception.
 		close(m_file_descriptor);
 		m_file_descriptor = -1;
-		throw std::system_error(errno, std::generic_category());
+		int temp_errno = errno;
+		errno = 0;
+		throw std::system_error(temp_errno, std::generic_category());
 	}
 
 	// Make sure this is a regular file.

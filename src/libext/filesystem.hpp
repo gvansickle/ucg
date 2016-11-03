@@ -22,6 +22,7 @@
 
 #include <config.h>
 
+#include <cassert>
 #include <cstdio>  // For perror() on FreeBSD.
 #include <fcntl.h> // For openat() etc.
 #include <unistd.h> // For close().
@@ -35,6 +36,7 @@
 /// And at least NetBSD behaves similarly.  So, include the POSIX versions and we'll try to clean this mess up below.
 #include <libgen.h>
 #include <dirent.h>
+#include <fts.h>
 
 /// @note Because we included libgen.h above, we shouldn't get the GNU version from this #include of string.h.
 #include <string.h>
@@ -82,6 +84,8 @@ struct dev_ino_pair
 	dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
 
 	constexpr bool operator<(const dev_ino_pair& other) const noexcept { return m_val < other.m_val; };
+
+	constexpr bool operator==(dev_ino_pair other) const { return m_val == other.m_val; };
 
 	constexpr bool empty() const noexcept { return m_val == 0; };
 
@@ -365,5 +369,63 @@ inline DIR* opendirat(int at_dir, const char *name)
 
 	return d;
 }
+
+
+/// @name FTS helpers.
+/// @{
+
+
+inline int64_t ftsent_level(const FTSENT* p)
+{
+	// We store the "real level" of the parent directory in the fts_number member.
+	return p->fts_level + p->fts_number;
+}
+
+/**
+ * Returns just the basename of the file represented by #p.
+ * @param p
+ * @return
+ */
+inline std::string ftsent_name(const FTSENT* p)
+{
+	if(p != nullptr)
+	{
+		return std::string(p->fts_name, p->fts_namelen);
+	}
+	else
+	{
+		return "<nullptr>";
+	}
+}
+
+/**
+ * Returns the full path (dirname + basename) of the file/dir represented by #p.
+ * @param p
+ * @return
+ */
+inline std::string ftsent_path(const FTSENT* p)
+{
+	//return ftsent_name(p);
+	if(p != nullptr)
+	{
+		std::string retval;
+		if(p->fts_parent != nullptr)
+		{
+			if(p->fts_parent->fts_pathlen > 0)
+			{
+				retval.assign(p->fts_parent->fts_path, p->fts_parent->fts_pathlen);
+				retval += '/';
+			}
+		}
+		retval.append(p->fts_name, p->fts_namelen);
+		return retval;
+	}
+	else
+	{
+		return "<nullptr>";
+	}
+}
+
+///@}
 
 #endif /* SRC_LIBEXT_FILESYSTEM_HPP_ */

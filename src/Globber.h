@@ -38,17 +38,26 @@
 class TypeManager;
 class DirInclusionManager;
 
+
 /**
  * Helper class to collect up and communicate directory tree traversal stats.
+ * The idea is that each thread will maintain its own instance of this class,
+ * and only when that thread is complete will it add its statistics to a single, "global"
+ * instance.  This avoids any locking concerns other than at that final, one-time sum.
  */
 class DirectoryTraversalStats
 {
+#define M_STATLIST \
+	X("Number of directories found", m_num_directories_found) \
+	X("Number of directories rejected", m_num_dirs_rejected) \
+	X("Number of files found", m_num_files_found) \
+	X("Number of files rejected", m_num_files_rejected) \
+	X("Number of files sent for scanning", m_num_files_scanned)
+
 public:
-	size_t m_num_files_found { 0 };
-	size_t m_num_directories_found { 0 };
-	size_t m_num_files_rejected { 0 };
-	size_t m_num_files_scanned { 0 };
-	size_t m_num_dirs_rejected { 0 };
+#define X(d,s) size_t s {0};
+				M_STATLIST
+#undef X
 
 	/**
 	 * Atomic compound assignment by sum.
@@ -59,11 +68,9 @@ public:
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 
-		m_num_files_found += other.m_num_files_found;
-		m_num_directories_found += other.m_num_directories_found;
-		m_num_files_rejected += other.m_num_files_rejected;
-		m_num_files_scanned += other.m_num_files_scanned;
-		m_num_dirs_rejected += other.m_num_dirs_rejected;
+#define X(d,s) s += other. s;
+				M_STATLIST
+#undef X
 	}
 
 	/**
@@ -75,18 +82,31 @@ public:
 	 */
 	friend std::ostream& operator<<(std::ostream& os, const DirectoryTraversalStats &dts)
 	{
-		return os << "Number of files found: " << dts.m_num_files_found
-				<< "\nNumber of directories found: " << dts.m_num_directories_found
-				<< "\nNumber of files rejected: " << dts.m_num_files_rejected
-				<< "\nNumber of files sent for scanning: " << dts.m_num_files_scanned
-				<< "\nNumber of directories rejected: " << dts.m_num_dirs_rejected;
-
+		return os
+#define X(d,s) << "\n" d ": " << dts. s
+				M_STATLIST
+#undef X
+		;
 	};
 
 private:
 
 	/// Mutex for making the compound assignment by sum operator thread-safe.
 	std::mutex m_mutex;
+};
+
+struct DirQueueEntry
+{
+	DirQueueEntry() = default;
+	DirQueueEntry(FTSENT *ftsent) : m_pathname(ftsent_path(ftsent)), m_level(ftsent_level(ftsent)) {};
+	DirQueueEntry(DirQueueEntry&&) = default;
+	~DirQueueEntry() = default;
+
+	DirQueueEntry& operator=(DirQueueEntry&&) = default;
+	DirQueueEntry& operator=(const DirQueueEntry&) = default;
+
+	std::string m_pathname;
+	int64_t m_level {FTS_ROOTPARENTLEVEL};
 };
 
 
@@ -108,7 +128,11 @@ public:
 
 private:
 
-	void RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index);
+	void RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_index);
+
+	int GetFTSOptions() const noexcept;
+
+	void ScanOneDirectory(FTS *tree, FTSENT *parent, FTSENT *child_list, sync_queue<DirQueueEntry> &dir_queue, DirectoryTraversalStats &stats);
 
 	/// Vector of the paths which the user gave on the command line.
 	std::vector<std::string> m_start_paths;
@@ -122,6 +146,10 @@ private:
 	DirInclusionManager &m_dir_inc_manager;
 
 	bool m_recurse_subdirs;
+
+	bool m_logical {false};
+
+	bool m_using_nostat {false};
 
 	int m_dirjobs;
 
