@@ -67,18 +67,17 @@ Globber::Globber(std::vector<std::string> start_paths,
 
 void Globber::Run()
 {
-	sync_queue<DirQueueEntry> dir_queue;
-
 #if USE_DIRTREE == 1 /// @todo TEMP
 	auto file_basename_filter = [this](const std::string &basename) noexcept { return m_type_manager.FileShouldBeScanned(basename); };
 	auto dir_basename_filter = [this](const std::string &basename) noexcept { return m_dir_inc_manager.DirShouldBeExcluded(basename); };
 
 	DirTree dt(m_out_queue, file_basename_filter, dir_basename_filter);
-	//DirTree::file_basename_filter_type file_basename_filter = std::bind(&TypeManager::FileShouldBeScanned, m_type_manager, std::placeholders::_1);
-	//DirTree::dir_basename_filter_type dir_basename_filter = std::bind(&DirInclusionManager::DirShouldBeExcluded, m_dir_inc_manager, std::placeholders::_1);
-	dt.Scandir(m_start_paths/*, file_basename_filter, dir_basename_filter*/);
+
+	dt.Scandir(m_start_paths);
 	return;
 #endif
+
+	sync_queue<DirQueueEntry> dir_queue;
 
 	/// @todo It looks like OSX needs any trailing slashes to be removed from the m_start_paths here, or its fts lib will double them up.
 	/// Doesn't seem to affect the overall scanning results though.

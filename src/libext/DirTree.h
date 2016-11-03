@@ -48,9 +48,7 @@ public:
 			const dir_basename_filter_type &dir_basename_filter);
 	~DirTree();
 
-	void Scandir(std::vector<std::string> start_paths/*,
-			const file_basename_filter_type &file_basename_filter,
-			const dir_basename_filter_type &dir_basename_filter*/);
+	void Scandir(std::vector<std::string> start_paths);
 
 private:
 
@@ -64,8 +62,6 @@ private:
 	bool HasDirBeenVisited(dev_ino_pair di) { std::unique_lock<std::mutex> lock(m_dir_mutex); return !m_dir_has_been_visited.insert(di).second; };
 
 	void ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent *de,
-			const file_basename_filter_type &file_basename_filter,
-			const dir_basename_filter_type &dir_basename_filter,
 			std::queue<std::shared_ptr<FileID>>& dir_stack);
 
 };
