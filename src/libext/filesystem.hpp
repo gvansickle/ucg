@@ -257,6 +257,7 @@ inline std::string ftsent_name(const FTSENT* p)
  */
 inline std::string ftsent_path(const FTSENT* p)
 {
+	//return ftsent_name(p);
 	if(p != nullptr)
 	{
 		std::string retval;
