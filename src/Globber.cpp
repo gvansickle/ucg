@@ -22,6 +22,8 @@
 #include "Globber.h"
 
 /// @todo
+/// @deleteme
+extern void mainish(int argc, char *argv[]);
 #include <libext/DirTree.h>
 
 
@@ -68,6 +70,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 
 void Globber::Run()
 {
+	sync_queue<DirQueueEntry> dir_queue_1;
 	sync_queue<DirQueueEntry> dir_queue;
 
 #if USE_DIRTREE == 1 /// @todo TEMP
@@ -91,13 +94,14 @@ void Globber::Run()
 		DirQueueEntry dqe;
 		dqe.m_pathname = path;
 		dqe.m_level = FTS_ROOTLEVEL;
-		dir_queue.wait_push(std::move(dqe));
+		dir_queue_1.wait_push(std::move(dqe));
 	}
+
 	// Process those files/directories.  This call will push the root-level directories onto the dir_queue,
 	// and the files onto the m_out_queue.  It will not loop and pull more dirs off the dir_queue and keep processing.
-	RunSubdirScan(dir_queue, 9999);
+	RunSubdirScan(dir_queue_1, 9999);
 
-	if(dir_queue.size() > 0)
+	if(dir_queue_1.size() > 0)
 	{
 		// Create and start the directory traversal threads.
 		std::vector<std::thread> threads;
@@ -108,6 +112,13 @@ void Globber::Run()
 		}
 
 		LOG(INFO) << "Globber threads = " << threads.size();
+
+		while(dir_queue_1.size() > 0)
+		{
+			DirQueueEntry de;
+			dir_queue_1.wait_pull(de);
+			dir_queue.wait_push(std::move(de));
+		}
 
 		// Wait for the producer+consumer threads to finish.
 		dir_queue.wait_for_worker_completion(m_dirjobs);
@@ -201,6 +212,8 @@ void Globber::RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_ind
 
 		dirs[0] = (char *)dqe.m_pathname.c_str();
 		dirs[1] = nullptr;
+///@todo
+mainish(1, dirs);
 
 		/// @todo skip the comfollow if this is called on a tree deeper than the initial root level.
 		int fts_options = FTS_COMFOLLOW | GetFTSOptions();
