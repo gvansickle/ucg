@@ -71,7 +71,7 @@ public:
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
-	FileID(const FTSENT *ftsent);
+	FileID(const FTSENT *ftsent, bool stat_info_known_valid);
 	FileID(const FileID&) = default;
 	FileID(FileID&&) = default;
 	/// @}

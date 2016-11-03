@@ -74,10 +74,10 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	}
 }
 
-FileID::FileID(const FTSENT *ftsent): m_path(ftsent->fts_path, ftsent->fts_pathlen)
+FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid): m_path(ftsent->fts_path, ftsent->fts_pathlen)
 {
 	// Initialize the stat fields if possible.
-	if(ftsent->fts_statp != nullptr)
+	if(stat_info_known_valid)
 	{
 		m_stat_info_valid = true;
 		m_unique_file_identifier = dev_ino_pair(ftsent->fts_statp->st_dev, ftsent->fts_statp->st_ino);
