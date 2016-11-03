@@ -70,12 +70,13 @@ void Globber::Run()
 	sync_queue<DirQueueEntry> dir_queue;
 
 #if USE_DIRTREE == 1 /// @todo TEMP
-	DirTree dt(m_out_queue);
-	//DirTree::file_basename_filter_type file_basename_filter = std::bind(&TypeManager::FileShouldBeScanned, m_type_manager, std::placeholders::_1);
-	//DirTree::dir_basename_filter_type dir_basename_filter = std::bind(&DirInclusionManager::DirShouldBeExcluded, m_dir_inc_manager, std::placeholders::_1);
 	auto file_basename_filter = [this](const std::string &basename) noexcept { return m_type_manager.FileShouldBeScanned(basename); };
 	auto dir_basename_filter = [this](const std::string &basename) noexcept { return m_dir_inc_manager.DirShouldBeExcluded(basename); };
-	dt.Scandir(m_start_paths, file_basename_filter, dir_basename_filter);
+
+	DirTree dt(m_out_queue, file_basename_filter, dir_basename_filter);
+	//DirTree::file_basename_filter_type file_basename_filter = std::bind(&TypeManager::FileShouldBeScanned, m_type_manager, std::placeholders::_1);
+	//DirTree::dir_basename_filter_type dir_basename_filter = std::bind(&DirInclusionManager::DirShouldBeExcluded, m_dir_inc_manager, std::placeholders::_1);
+	dt.Scandir(m_start_paths/*, file_basename_filter, dir_basename_filter*/);
 	return;
 #endif
 
@@ -485,8 +486,5 @@ void Globber::ScanOneDirectory(FTS *tree, FTSENT *parent, FTSENT *child, sync_qu
 			break;
 		}
 		}
-
-		// Go to the next FTSENT in the linked list.
-		//child = child->fts_link;
-	} // while
+	} // for()
 }

@@ -45,10 +45,6 @@ inline DIR *fdopendir(int fd) { return nullptr; };
 inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags) { return -1; };
 #endif
 
-#define EXPAND_MACRO_HELPER(x) #x
-#define EXPAND_MACRO(p) EXPAND_MACRO_HELPER(p)
-#define STATIC_MESSAGE_HELPER(m) _Pragma(#m)
-#define STATIC_MESSAGE(m) STATIC_MESSAGE_HELPER(message #m)
 
 /// @name Take care of some portability issues.
 /// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
@@ -73,16 +69,12 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 #define O_SEARCH 0
 #endif
 
-#ifdef _POSIX_OPEN_MAX
-// Posix specifies the minimum of this to be 20.
-//STATIC_MESSAGE(Posix open max is _POSIX_OPEN_MAX)
-//STATIC_MESSAGE("_POSIX_OPEN_MAX=" EXPAND_MACRO(_POSIX_OPEN_MAX))
-//#pragma message "_POSIX_OPEN_MAX=" EXPAND_MACRO(_POSIX_OPEN_MAX)
-#endif
-
 ///@}
 
-DirTree::DirTree(sync_queue<FileID>& output_queue) : m_out_queue(output_queue)
+DirTree::DirTree(sync_queue<FileID>& output_queue,
+		const file_basename_filter_type &file_basename_filter,
+		const dir_basename_filter_type &dir_basename_filter)
+	: m_out_queue(output_queue), m_file_basename_filter(file_basename_filter), m_dir_basename_filter(dir_basename_filter)
 {
 }
 
@@ -90,9 +82,9 @@ DirTree::~DirTree()
 {
 }
 
-void DirTree::Scandir(std::vector<std::string> start_paths,
+void DirTree::Scandir(std::vector<std::string> start_paths/*,
 		const file_basename_filter_type& file_basename_filter,
-		const dir_basename_filter_type& dir_basename_filter)
+		const dir_basename_filter_type& dir_basename_filter*/)
 {
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
@@ -143,7 +135,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths,
 			errno = 0;
 			if((dp = readdir(d)) != NULL)
 			{
-				ProcessDirent(dse, d, dp, file_basename_filter, dir_basename_filter, dir_stack);
+				ProcessDirent(dse, d, dp, m_file_basename_filter, m_dir_basename_filter, dir_stack);
 			}
 		} while(dp != NULL);
 
@@ -155,6 +147,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths,
 		closedir(d);
 	}
 }
+
 
 void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, struct dirent* current_dirent,
 		const file_basename_filter_type& file_basename_filter,

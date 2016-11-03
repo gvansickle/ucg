@@ -29,6 +29,10 @@
 #define TOKEN_APPEND(tok1, ...) TOKEN_APPEND_HELPER(tok1, __VA_ARGS__)
 ///@}
 
+/// @todo Not sure if we need these, we probably do.
+//#define EXPAND_MACRO_HELPER(x) #x
+//#define EXPAND_MACRO(p) EXPAND_MACRO_HELPER(p)
+
 
 /// For passing in arguments to macros which may contain commas.
 #define SINGLE_ARG(...)  __VA_ARGS__

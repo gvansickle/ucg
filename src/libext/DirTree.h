@@ -39,21 +39,25 @@
 class DirTree
 {
 public:
-	DirTree(sync_queue<FileID>& output_queue);
-	~DirTree();
-
-	/// Type of the file include/exclude predicate.
+	/// Type of the file and directory include/exclude predicates.
 	using file_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
-
 	using dir_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
 
-	void Scandir(std::vector<std::string> start_paths,
+	DirTree(sync_queue<FileID>& output_queue,
 			const file_basename_filter_type &file_basename_filter,
 			const dir_basename_filter_type &dir_basename_filter);
+	~DirTree();
+
+	void Scandir(std::vector<std::string> start_paths/*,
+			const file_basename_filter_type &file_basename_filter,
+			const dir_basename_filter_type &dir_basename_filter*/);
 
 private:
 
 	sync_queue<FileID>& m_out_queue;
+
+	file_basename_filter_type m_file_basename_filter;
+	dir_basename_filter_type m_dir_basename_filter;
 
 	std::mutex m_dir_mutex;
 	std::set<dev_ino_pair> m_dir_has_been_visited;
