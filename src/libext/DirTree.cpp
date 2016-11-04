@@ -82,9 +82,7 @@ DirTree::~DirTree()
 {
 }
 
-void DirTree::Scandir(std::vector<std::string> start_paths/*,
-		const file_basename_filter_type& file_basename_filter,
-		const dir_basename_filter_type& dir_basename_filter*/)
+void DirTree::Scandir(std::vector<std::string> start_paths)
 {
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
@@ -127,6 +125,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths/*,
 		{
 			// At a minimum, this wasn't a directory.
 			perror("fdopendir");
+			errno = 0;
 			continue;
 		}
 
@@ -135,13 +134,14 @@ void DirTree::Scandir(std::vector<std::string> start_paths/*,
 			errno = 0;
 			if((dp = readdir(d)) != NULL)
 			{
-				ProcessDirent(dse, d, dp, m_file_basename_filter, m_dir_basename_filter, dir_stack);
+				ProcessDirent(dse, d, dp, dir_stack);
 			}
 		} while(dp != NULL);
 
 		if(errno != 0)
 		{
 			WARN() << "Could not read directory: " << LOG_STRERROR(errno) << ". Skipping.";
+			errno = 0;
 		}
 
 		closedir(d);
@@ -150,9 +150,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths/*,
 
 
 void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, struct dirent* current_dirent,
-		const file_basename_filter_type& file_basename_filter,
-		const dir_basename_filter_type& dir_basename_filter,
-		std::queue<std::shared_ptr<FileID>>& dir_stack)
+		std::queue<std::shared_ptr<FileID>>& dir_queue)
 {
 	bool is_dir {false};
 	bool is_file {false};
@@ -176,7 +174,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, st
 	// Skip "." and "..".
 	if(dname[0] == '.' && (dname[1] == 0 || (dname[1] == '.' && dname[2] == 0)))
 	{
-		//std::cerr << "skipping: " << dname << '\n';
+		// Always skip "." amd "..", unless they're specified on the command line.
 		return;
 	}
 
@@ -190,7 +188,8 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, st
 		/// @todo Capture this info in the FileID object.
 		is_dir = S_ISDIR(statbuf.st_mode);
 		is_file = S_ISREG(statbuf.st_mode);
-		// This shouldn't ever come back as a symlink; fstatat() follows symlinks.
+		/// @todo This shouldn't ever come back as a symlink as-is; fstatat() follows symlinks by default.
+		///       Need to add the AT_SYMLINK_NOFOLLOW flag and then traverse symlinks manually.
 		is_symlink = S_ISLNK(statbuf.st_mode);
 		if(is_dir || is_file || is_symlink)
 		{
@@ -222,7 +221,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, st
 
 			// Check for inclusion.
 			///name.assign(ftsent->fts_name, ftsent->fts_namelen);
-			if(file_basename_filter(basename)) //skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
+			if(m_file_basename_filter(basename)) //skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
 			{
 				// Based on the file name, this file should be scanned.
 
@@ -241,7 +240,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, st
 		else if(is_dir)
 		{
 			//std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
-			if(dir_basename_filter(basename)) //!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
+			if(m_dir_basename_filter(basename)) //!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
 			{
 				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 				LOG(INFO) << "... should be ignored.";
@@ -256,16 +255,16 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, st
 			if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier()))
 			{
 				// Found cycle.
-				WARN() << "\'" << dir_atfd.GetPath() << "\': recursive directory loop";
+				WARN() << "'" << dir_atfd.GetPath() << "': recursive directory loop";
 				return;
 			}
 
-
-			dir_stack.push(std::make_shared<FileID>(dir_atfd));
+			dir_queue.push(std::make_shared<FileID>(dir_atfd));
 		}
 		else if(is_symlink)
 		{
-			WARN() << "FOUND SYMLINK: " << dse->GetPath() << "/" << basename;
+			/// @todo this isn't correct; the symlink is just a symlink at this point, not known to be recursive.
+			WARN() << "'" << dse->GetPath() << "/" << basename << "': recursive directory loop";
 		}
 	}
 }

@@ -47,6 +47,9 @@ class DirInclusionManager;
  */
 class DirectoryTraversalStats
 {
+	/**
+	 * Using X-macros to make fields easier to add/rearrange/remove.
+	 */
 #define M_STATLIST \
 	X("Number of directories found", m_num_directories_found) \
 	X("Number of directories rejected", m_num_dirs_rejected) \
@@ -56,7 +59,7 @@ class DirectoryTraversalStats
 
 public:
 #define X(d,s) size_t s {0};
-				M_STATLIST
+	M_STATLIST
 #undef X
 
 	/**
@@ -69,7 +72,7 @@ public:
 		std::lock_guard<std::mutex> lock(m_mutex);
 
 #define X(d,s) s += other. s;
-				M_STATLIST
+		M_STATLIST
 #undef X
 	}
 
@@ -84,7 +87,7 @@ public:
 	{
 		return os
 #define X(d,s) << "\n" d ": " << dts. s
-				M_STATLIST
+		M_STATLIST
 #undef X
 		;
 	};
@@ -157,7 +160,11 @@ private:
 
 	std::mutex m_dir_mutex;
 	std::set<dev_ino_pair> m_dir_has_been_visited;
-	bool HasDirBeenVisited(dev_ino_pair di) { std::unique_lock<std::mutex> lock(m_dir_mutex); return !m_dir_has_been_visited.insert(di).second; };
+	bool HasDirBeenVisited(dev_ino_pair di)
+	{
+		std::unique_lock<std::mutex> lock(m_dir_mutex);
+		return !m_dir_has_been_visited.insert(di).second;
+	};
 
 	DirectoryTraversalStats m_traversal_stats;
 };

@@ -72,26 +72,42 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 /// @}
 
 
-using dev_ino_pair_type = std::conditional<
-		sizeof(__int128) < (sizeof(dev_t)+sizeof(ino_t)),
-		/*static_assert(false, "uintmax_t not big enough.")*/ int,
-		uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast
-		>::type;
-
+/**
+ * Class intended to abstract the concept of a UUID for a file or directory.
+ * @todo Currently only supports POSIX-like OSes, and not necessarily all filesystems.  Needs to be expanded.
+ */
 struct dev_ino_pair
 {
 	dev_ino_pair() = default;
-	dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
+	dev_ino_pair(dev_t d, ino_t i) noexcept : m_dev(d), m_ino(i) { };
 
-	constexpr bool operator<(const dev_ino_pair& other) const noexcept { return m_val < other.m_val; };
+	constexpr bool operator<(const dev_ino_pair& other) const noexcept { return m_dev < other.m_dev || m_ino < other.m_ino; };
 
-	constexpr bool operator==(dev_ino_pair other) const { return m_val == other.m_val; };
+	constexpr bool operator==(dev_ino_pair other) const noexcept { return m_dev == other.m_dev && m_ino == other.m_ino; };
 
-	constexpr bool empty() const noexcept { return m_val == 0; };
-
+	constexpr bool empty() const noexcept { return m_dev == 0 && m_ino == 0; };
 private:
-	dev_ino_pair_type m_val { 0 };
+	friend struct std::hash<dev_ino_pair>;
+
+	//dev_ino_pair_type m_val { 0 };
+	dev_t m_dev {0};
+	ino_t m_ino {0};
 };
+
+namespace std
+{
+	// Inject a specialization of std::hash<> into std:: for dev_ino_pair.
+	template <>
+	struct hash<dev_ino_pair>
+	{
+		std::size_t operator()(const dev_ino_pair p) const
+		{
+			const std::size_t h1 (std::hash<dev_t>{}(p.m_dev));
+			const std::size_t h2 (std::hash<dev_t>{}(p.m_ino));
+			return h1 ^ (h2 << 1);
+		}
+	};
+}
 
 /**
  * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as posible.

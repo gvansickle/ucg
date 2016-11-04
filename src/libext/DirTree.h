@@ -25,7 +25,7 @@
 #include <vector>
 #include <string>
 #include <functional>
-#include <set>
+#include <unordered_set>
 
 /// @todo Break this dependency on the output queue class.
 #include "../sync_queue_impl_selector.h"
@@ -48,9 +48,7 @@ public:
 			const dir_basename_filter_type &dir_basename_filter);
 	~DirTree();
 
-	void Scandir(std::vector<std::string> start_paths/*,
-			const file_basename_filter_type &file_basename_filter,
-			const dir_basename_filter_type &dir_basename_filter*/);
+	void Scandir(std::vector<std::string> start_paths);
 
 private:
 
@@ -59,14 +57,26 @@ private:
 	file_basename_filter_type m_file_basename_filter;
 	dir_basename_filter_type m_dir_basename_filter;
 
+	using visited_set = std::unordered_set<dev_ino_pair>;
 	std::mutex m_dir_mutex;
-	std::set<dev_ino_pair> m_dir_has_been_visited;
-	bool HasDirBeenVisited(dev_ino_pair di) { std::unique_lock<std::mutex> lock(m_dir_mutex); return !m_dir_has_been_visited.insert(di).second; };
+	visited_set m_dir_has_been_visited;
+	bool HasDirBeenVisited(dev_ino_pair di)
+	{
+		std::unique_lock<std::mutex> lock(m_dir_mutex);
+		return !m_dir_has_been_visited.insert(di).second;
+	}
 
+	/**
+	 * Process a single directory entry (dirent) structure #de, with parent DIR #d.  Push any files found on the #m_out_queue,
+	 * push any directories found on the #dir_queue.
+	 *
+	 * @param dse
+	 * @param d
+	 * @param de
+	 * @param dir_stack
+	 */
 	void ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent *de,
-			const file_basename_filter_type &file_basename_filter,
-			const dir_basename_filter_type &dir_basename_filter,
-			std::queue<std::shared_ptr<FileID>>& dir_stack);
+			std::queue<std::shared_ptr<FileID>>& dir_queue);
 
 };
 

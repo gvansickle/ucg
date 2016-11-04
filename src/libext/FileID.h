@@ -150,7 +150,7 @@ private:
 
 	mutable dev_ino_pair m_unique_file_identifier;
 
-	mutable dev_t m_dev { 0xFFFFFFFF };
+	mutable dev_t m_dev { static_cast<dev_t>(-1) };
 
 	/// File size in bytes.
 	mutable off_t m_size { 0 };
