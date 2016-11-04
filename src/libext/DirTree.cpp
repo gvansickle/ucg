@@ -150,7 +150,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 
 
 void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, struct dirent* current_dirent,
-		std::queue<std::shared_ptr<FileID>>& dir_stack)
+		std::queue<std::shared_ptr<FileID>>& dir_queue)
 {
 	bool is_dir {false};
 	bool is_file {false};
@@ -174,7 +174,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, st
 	// Skip "." and "..".
 	if(dname[0] == '.' && (dname[1] == 0 || (dname[1] == '.' && dname[2] == 0)))
 	{
-		//std::cerr << "skipping: " << dname << '\n';
+		// Always skip "." amd "..", unless they're specified on the command line.
 		return;
 	}
 
@@ -255,16 +255,16 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, st
 			if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier()))
 			{
 				// Found cycle.
-				WARN() << "\'" << dir_atfd.GetPath() << "\': recursive directory loop";
+				WARN() << "'" << dir_atfd.GetPath() << "': recursive directory loop";
 				return;
 			}
 
-
-			dir_stack.push(std::make_shared<FileID>(dir_atfd));
+			dir_queue.push(std::make_shared<FileID>(dir_atfd));
 		}
 		else if(is_symlink)
 		{
-			WARN() << "FOUND SYMLINK: " << dse->GetPath() << "/" << basename;
+			/// @todo this isn't correct; the symlink is just a symlink at this point, not known to be recursive.
+			WARN() << "'" << dse->GetPath() << "/" << basename << "': recursive directory loop";
 		}
 	}
 }
