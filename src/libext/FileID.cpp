@@ -301,10 +301,15 @@ FileID::~FileID()
 }
 
 
+const std::string& FileID::UnsynchronizedFileID::GetBasename() const noexcept
+{
+	return m_basename;
+};
+
 const std::string& FileID::GetBasename() const noexcept
 {
 	ReaderLock(m_mutex);
-	return m_data->m_basename;
+	return m_data->GetBasename();
 };
 
 
@@ -408,6 +413,12 @@ const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 	WriterLock(m_mutex);
 	return m_data->GetUniqueFileIdentifier();
 };
+
+FileDescriptor FileID::GetFileDescriptor()
+{
+	WriterLock(m_mutex);
+	return m_data->GetFileDescriptor();
+}
 
 dev_t FileID::GetDev() const noexcept
 {
