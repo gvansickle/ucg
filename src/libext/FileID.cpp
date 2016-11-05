@@ -167,14 +167,14 @@ public:
 	/// @note POSIX doesn't define the units for this.  Linux is documented to use 512-byte units, as is GNU libc.
 	mutable blkcnt_t m_blocks { 0 };
 	///@}
-
-	/// @name Compile-time invariants for the UnsynchronizedFileID class.
-	/// @{
-	//static_assert(std::is_assignable<FileID::UnsynchronizedFileID, FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be assignable to itself.");
-	//static_assert(std::is_copy_assignable<FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be copy assignable to itself.");
-	//static_assert(std::is_move_assignable<FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be move assignable to itself.");
-	/// @}
 };
+
+/// @name Compile-time invariants for the UnsynchronizedFileID class.
+/// @{
+static_assert(std::is_assignable<FileID::UnsynchronizedFileID, FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be assignable to itself.");
+static_assert(std::is_copy_assignable<FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be copy assignable to itself.");
+static_assert(std::is_move_assignable<FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be move assignable to itself.");
+/// @}
 
 // Default constructor.
 // Note that it's defined here in the cpp vs. in the header because it needs to be able to see the full definition of UnsynchronizedFileID.
