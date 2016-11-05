@@ -53,6 +53,7 @@ public:
 	/// Move assignment.
 	UnsynchronizedFileID& operator=(UnsynchronizedFileID&& other) = default;
 
+	UnsynchronizedFileID(const FTSENT *ftsent, bool stat_info_known_valid);
 	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
 	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname, const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 
@@ -175,6 +176,11 @@ public:
 	/// @}
 };
 
+// Default constructor.
+// Note that it's defined here in the cpp vs. in the header because it needs to be able to see the full definition of UnsynchronizedFileID.
+FileID::FileID()
+{
+}
 
 // Copy constructor.
 FileID::FileID(const FileID& other) : m_data((ReaderLock(other.m_mutex), std::make_unique<FileID::UnsynchronizedFileID>(*other.m_data))) {};
@@ -185,9 +191,10 @@ FileID::FileID(path_known_cwd_tag)
 	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(nullptr, ".", ".", nullptr, FT_DIR))
 	/*: m_data.m_basename("."),
 	  m_data.m_path("."),
-	  m_data.m_file_descriptor(make_shared_fd(AT_FDCWD)),
+
 	  m_data.m_file_type(FT_DIR)*/
 {
+	m_data->m_file_descriptor = make_shared_fd(AT_FDCWD);
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
@@ -208,6 +215,12 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
+FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
+	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, pathname))
+{
+
+}
+
 FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
 	: m_basename(pathname), m_at_dir(at_dir_fileid)
 {
@@ -224,9 +237,12 @@ FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_di
 
 FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
 		const struct stat *stat_buf, FileType type)
-		: m_at_dir(at_dir_fileid), m_basename(basename), m_path(pathname)
+		: m_at_dir(at_dir_fileid), m_basename(basename), m_path(pathname), m_file_type(type)
 {
-
+	if(stat_buf != nullptr)
+	{
+		UnsyncedSetStatInfo(*stat_buf);
+	}
 }
 
 
@@ -240,7 +256,9 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	}
 }
 
-FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid): m_path(ftsent->fts_path, ftsent->fts_pathlen)
+#if 0
+FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid)
+	: m_path(ftsent->fts_path, ftsent->fts_pathlen)
 {
 	// Initialize the stat fields if possible.
 	if(stat_info_known_valid)
@@ -252,6 +270,7 @@ FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid): m_path(ftsent-
 		m_blocks = ftsent->fts_statp->st_blocks;
 	}
 }
+#endif
 
 FileID& FileID::operator=(const FileID& other)
 {

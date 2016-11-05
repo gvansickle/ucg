@@ -74,7 +74,7 @@ public:
 	struct path_type_tag {};
 	struct path_known_relative_tag : path_type_tag {};
 	struct path_known_absolute_tag : path_type_tag {};
-	struct path_known_cwd_tag : path_type_tag {};
+	struct path_known_cwd_tag : path_type_tag {}; 	/// Our equivalent for AT_FDCWD, the cwd of the process.
 	static constexpr path_known_relative_tag path_known_relative = path_known_relative_tag();
 	static constexpr path_known_absolute_tag path_known_absolute = path_known_absolute_tag();
 	static constexpr path_known_cwd_tag path_known_cwd = path_known_cwd_tag();
@@ -82,7 +82,10 @@ public:
 
 	/// @name Constructors.
 	/// @{
-	FileID() = default;
+	FileID();
+
+	/// Our equivalent for AT_FDCWD, the cwd of the process.
+	/// Different in that each FileID created with this constructor holds a real file handle to the "." directory.
 	FileID(path_known_cwd_tag tag);
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type = FT_UNINITIALIZED);
