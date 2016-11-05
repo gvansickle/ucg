@@ -47,10 +47,10 @@ if PROG_INST_UCG="$(which ucg 2>/dev/null)";
 then
 	PROGLIST=$PROGLIST,inst_ucg:$PROG_INST_UCG
 fi
-if PROG_INST_AG="$(which ag 2>/dev/null)";
-then
-	PROGLIST=$PROGLIST,inst_ag:$PROG_INST_AG
-fi
+#if PROG_INST_AG="$(which ag 2>/dev/null)";
+#then
+#	PROGLIST=$PROGLIST,inst_ag:$PROG_INST_AG
+#fi
 #if PROG_ACK="$(which ack)";
 #then
 #fi
@@ -58,10 +58,10 @@ if PROG_INST_RIPGREP="$(which rg 2>/dev/null)";
 then
 	PROGLIST=$PROGLIST,inst_ripgrep:$PROG_INST_RIPGREP
 fi
-if PROG_INST_PCRE2GREP="$(which pcre2grep 2>/dev/null)";
-then
-	PROGLIST=$PROGLIST,inst_pcre2grep:$PROG_INST_PCRE2GREP
-fi
+#if PROG_INST_PCRE2GREP="$(which pcre2grep 2>/dev/null)";
+#then
+#	PROGLIST=$PROGLIST,inst_pcre2grep:$PROG_INST_PCRE2GREP
+#fi
 PROGLIST=$PROGLIST,inst_system_grep:grep
 if test -x "${PROG_GNU_GREP}";
 then

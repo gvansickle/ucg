@@ -22,6 +22,8 @@
 
 #include <config.h>
 
+#include "hints.hpp"
+
 #include <sys/stat.h> // For the stat types.
 #include <fts.h>
 
@@ -40,6 +42,17 @@ struct dirent;
  */
 class FileID
 {
+private:
+
+	using MutexType = std::mutex;  /// @todo C++17, use std::shared_mutex.  C++14, use std::shared_timed_mutex.
+	using ReaderLock = std::unique_lock<MutexType>;  /// @todo C++14+, use std::shared_lock.
+	using WriterLock = std::unique_lock<MutexType>;
+
+	/// Mutex for locking in copy and move constructors and some operations.
+	mutable std::mutex m_mutex;
+	ReaderLock m_reader_lock;
+	WriterLock m_writer_lock;
+
 public:
 	/// @name Tag types for selecting FileID() constructors when the given path is known to be relative or absolute.
 	/// @{
@@ -72,13 +85,28 @@ public:
 	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
 	FileID(const FTSENT *ftsent, bool stat_info_known_valid);
-	FileID(const FileID&) = default;
-	FileID(FileID&&) = default;
+	FileID(const FileID& other) : FileID(other, ReaderLock(other.m_mutex)) {};
+	FileID(FileID&& other) : FileID(other, WriterLock(other.m_mutex)) {};
 	/// @}
 
-	FileID& operator=(const FileID&) = default;
+	// Copy assignment.
+	FileID& operator=(FileID other)
+	{
 
-	FileID& operator=(FileID&&) = default;
+	};
+
+	FileID& operator=(FileID&& other)
+	{
+		if(this != &other)
+		{
+			WriterLock this_lock(m_mutex, std::defer_lock);
+			WriterLock other_lock(other.m_mutex, std::defer_lock);
+			std::lock(this_lock, other_lock);
+			/// @todo member-wise move.
+			*this = other;
+		}
+		return *this;
+	};
 
 	/// Destructor.
 	~FileID();
@@ -112,10 +140,40 @@ public:
 
 	const dev_ino_pair GetUniqueFileIdentifier() const noexcept { if(!m_unique_file_identifier.empty()) { LazyLoadStatInfo(); }; return m_unique_file_identifier; };
 
-	dev_t GetDev() const noexcept { if(m_dev == 0xFFFFFFFF) { LazyLoadStatInfo(); }; return m_dev; };
+	dev_t GetDev() const noexcept { if(m_dev == static_cast<dev_t>(-1)) { LazyLoadStatInfo(); }; return m_dev; };
 	void SetDevIno(dev_t d, ino_t i) noexcept;
 
 private:
+
+	/// Private copy constructor to make copies threadsafe.
+	/// The public copy constructor delegates to this private one, which locks around the copy.
+	FileID(const FileID& other, [[maybe_unused]] ReaderLock other_mutex)
+		: m_basename(other.m_basename),
+		  m_at_dir(other.m_at_dir),
+		  m_path(other.m_path),
+		  m_file_descriptor(other.m_file_descriptor),
+		  m_file_type(other.m_file_type),
+		  m_stat_info_valid(other.m_stat_info_valid),
+		  m_unique_file_identifier(other.m_unique_file_identifier),
+		  m_dev(other.m_dev),
+		  m_size(other.m_size),
+		  m_block_size(other.m_block_size),
+		  m_blocks(other.m_blocks)
+	{ };
+
+	FileID(FileID&& other, [[maybe_unused]] WriterLock other_mutex)
+		: m_basename(std::move(other.m_basename)),
+		  m_at_dir(std::move(other.m_at_dir)),
+		  m_path(std::move(other.m_path)),
+		  m_file_descriptor(std::move(other.m_file_descriptor)),
+		  m_file_type(std::move(other.m_file_type)),
+		  m_stat_info_valid(std::move(other.m_stat_info_valid)),
+		  m_unique_file_identifier(std::move(other.m_unique_file_identifier)),
+		  m_dev(std::move(other.m_dev)),
+		  m_size(std::move(other.m_size)),
+		  m_block_size(std::move(other.m_block_size)),
+		  m_blocks(std::move(other.m_blocks))
+	{ };
 
 	/// The basename of this file.
 	/// We define this somewhat differently here: This is either:
@@ -127,16 +185,9 @@ private:
 	/// Shared pointer to the directory this FileID is in.
 	std::shared_ptr<FileID> m_at_dir;
 
-	void UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept;
-
-	void LazyLoadStatInfo() const;
-
-	const std::string& UnsyncedGetPath() const;
-
 	/// The absolute path to this file.
 	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
 	mutable std::string m_path;
-
 
 	mutable FileDescriptor m_file_descriptor { make_shared_fd(cm_invalid_file_descriptor) };
 
@@ -164,12 +215,15 @@ private:
 	mutable blkcnt_t m_blocks { 0 };
 	///@}
 
-	static std::mutex sm_mutables_mutex;
+	void UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept;
 
+	void LazyLoadStatInfo() const;
+
+	const std::string& UnsyncedGetPath() const;
 };
 
-static_assert(std::is_assignable<FileID, FileID>::value, "FileID must be assignable to itself.");
-static_assert(std::is_copy_assignable<FileID>::value, "FileID must be copy assignable to itself.");
-static_assert(std::is_move_assignable<FileID>::value, "FileID must be move assignable to itself.");
+//static_assert(std::is_assignable<FileID, FileID>::value, "FileID must be assignable to itself.");
+//static_assert(std::is_copy_assignable<FileID>::value, "FileID must be copy assignable to itself.");
+//static_assert(std::is_move_assignable<FileID>::value, "FileID must be move assignable to itself.");
 
 #endif /* SRC_LIBEXT_FILEID_H_ */

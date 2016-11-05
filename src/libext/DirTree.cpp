@@ -89,7 +89,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 	// AT_FDCWD == Start at the cwd of the process.
 	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(FileID::path_known_cwd_tag());
 
-	std::queue<std::shared_ptr<FileID>> dir_stack;
+	std::queue<std::shared_ptr<FileID>> dir_queue;
 
 	for(auto p : start_paths)
 	{
@@ -102,7 +102,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 		}
 		else if(type == FileID::FT_DIR)
 		{
-			dir_stack.push(file_or_dir);
+			dir_queue.push(file_or_dir);
 		}
 		else if(type == FileID::FT_STAT_FAILED)
 		{
@@ -112,10 +112,10 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 		}
 	}
 
-	while(!dir_stack.empty())
+	while(!dir_queue.empty())
 	{
-		std::shared_ptr<FileID> dse = dir_stack.front();
-		dir_stack.pop();
+		std::shared_ptr<FileID> dse = dir_queue.front();
+		dir_queue.pop();
 
 		FileDescriptor open_at_fd = dse->GetAtDir()->GetFileDescriptor();
 		const char *open_at_path = dse->GetAtDirRelativeBasename().c_str();
@@ -134,7 +134,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 			errno = 0;
 			if((dp = readdir(d)) != NULL)
 			{
-				ProcessDirent(dse, d, dp, dir_stack);
+				ProcessDirent(dse, dp, dir_queue);
 			}
 		} while(dp != NULL);
 
@@ -149,7 +149,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 }
 
 
-void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, struct dirent* current_dirent,
+void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_dirent,
 		std::queue<std::shared_ptr<FileID>>& dir_queue)
 {
 	bool is_dir {false};
@@ -181,15 +181,22 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, st
 	struct stat statbuf;
 	struct stat *statbuff_ptr = nullptr;
 
-	if(is_unknown)
+	if((is_unknown) || (m_logical && is_symlink))
 	{
+		// We now have one of two situations:
+		// - The dirent didn't know what the type of the file was, or
+		// - The dirent told us this was a symlink, and we're doing a logical traversal.
+		//   Now we have to actually stat this entry and see where it goes.
+
 		// Stat the filename using the directory as the at-descriptor.
-		fstatat(dirfd(current_at_dir), dname, &statbuf, AT_NO_AUTOMOUNT);
+		fstatat(*(dse->GetFileDescriptor()), dname, &statbuf,
+				AT_NO_AUTOMOUNT | (!m_logical ? AT_SYMLINK_NOFOLLOW : 0));
 		/// @todo Capture this info in the FileID object.
 		is_dir = S_ISDIR(statbuf.st_mode);
 		is_file = S_ISREG(statbuf.st_mode);
-		/// @todo This shouldn't ever come back as a symlink as-is; fstatat() follows symlinks by default.
-		///       Need to add the AT_SYMLINK_NOFOLLOW flag and then traverse symlinks manually.
+		/// @todo This shouldn't ever come back as a symlink if we're doing a logical traversal, since
+		///       fstatat() follows symlinks by default.  We add the AT_SYMLINK_NOFOLLOW flag and then
+		///       ignore any symlinks returned if we're doing a physical traversal.
 		is_symlink = S_ISLNK(statbuf.st_mode);
 		if(is_dir || is_file || is_symlink)
 		{
@@ -251,20 +258,32 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, DIR *current_at_dir, st
 			FileID dir_atfd(FileID::path_known_relative, dse, basename, FileID::FT_DIR);
 			dir_atfd.SetDevIno(dse->GetDev(), current_dirent->d_ino);
 
-			// We have to detect any symlink cycles ourselves.
-			if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier()))
+			if(m_logical)
 			{
-				// Found cycle.
-				WARN() << "'" << dir_atfd.GetPath() << "': recursive directory loop";
-				return;
+				// We have to detect any symlink cycles ourselves.
+				if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier()))
+				{
+					// Found cycle.
+					WARN() << "'" << dir_atfd.GetPath() << "': recursive directory loop";
+					return;
+				}
 			}
 
 			dir_queue.push(std::make_shared<FileID>(dir_atfd));
 		}
 		else if(is_symlink)
 		{
-			/// @todo this isn't correct; the symlink is just a symlink at this point, not known to be recursive.
-			WARN() << "'" << dse->GetPath() << "/" << basename << "': recursive directory loop";
+			if(m_logical)
+			{
+				// Logical traversal, should never get here.
+				ERROR() << "found unresolved symlink during logical traversal";
+			}
+			else
+			{
+				// Physical traversal, just ignore the symlink.
+				LOG(INFO) << "Found symlink during physical traversal: '" << dse->GetPath() << "/" << basename << "'";
+			}
+			return;
 		}
 	}
 }

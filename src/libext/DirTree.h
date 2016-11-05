@@ -52,6 +52,9 @@ public:
 
 private:
 
+	/// Flag indicating whether we should traverse symlinks or not.
+	bool m_logical {true};
+
 	sync_queue<FileID>& m_out_queue;
 
 	file_basename_filter_type m_file_basename_filter;
@@ -67,15 +70,14 @@ private:
 	}
 
 	/**
-	 * Process a single directory entry (dirent) structure #de, with parent DIR #d.  Push any files found on the #m_out_queue,
+	 * Process a single directory entry (dirent) structure #de, with parent #dse.  Push any files found on the #m_out_queue,
 	 * push any directories found on the #dir_queue.
 	 *
 	 * @param dse
-	 * @param d
 	 * @param de
 	 * @param dir_stack
 	 */
-	void ProcessDirent(std::shared_ptr<FileID> dse, DIR *d, struct dirent *de,
+	void ProcessDirent(std::shared_ptr<FileID> dse, struct dirent *de,
 			std::queue<std::shared_ptr<FileID>>& dir_queue);
 
 };

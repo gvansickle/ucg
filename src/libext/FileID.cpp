@@ -26,8 +26,6 @@
 #include <sys/stat.h>
 #include <fts.h>
 
-std::mutex FileID::sm_mutables_mutex;
-
 FileID::FileID(path_known_cwd_tag) : m_basename("."), m_path("."), m_file_descriptor(make_shared_fd(AT_FDCWD)), m_file_type(FT_DIR)
 {
 }
@@ -94,7 +92,7 @@ FileID::~FileID()
 
 const std::string& FileID::GetPath() const
 {
-	std::lock_guard<std::mutex> lg(sm_mutables_mutex);
+	std::lock_guard<std::mutex> lg(m_mutex);
 	return UnsyncedGetPath();
 }
 
@@ -193,8 +191,13 @@ void FileID::LazyLoadStatInfo() const
 
 	// We don't have stat info and now we need it.
 	// Get it from the filename.
+	if(!m_at_dir)
+	{
+		throw std::runtime_error("should have an at-dir");
+	}
+
 	struct stat stat_buf;
-	if(stat(GetPath().c_str(), &stat_buf) != 0)
+	if(fstatat(*(m_at_dir->GetFileDescriptor()), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
 	{
 		// Error.
 		m_file_type = FT_STAT_FAILED;

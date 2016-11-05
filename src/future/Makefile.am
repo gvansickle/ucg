@@ -24,7 +24,9 @@ noinst_LTLIBRARIES = libfuture.la
 libfuture_la_SOURCES = \
 	dummy.cpp \
 	memory.hpp \
-	string.hpp
+	string.hpp \
+	string_view.hpp \
+	type_traits.hpp
 
 libfuture_la_CPPFLAGS = -I $(srcdir)/../libext $(AM_CPPFLAGS)
 libfuture_la_CFLAGS = $(AM_CFLAGS)
