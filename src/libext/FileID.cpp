@@ -230,13 +230,6 @@ FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid): m_path(ftsent-
 	}
 }
 
-/**
-FileID::~FileID()
-{
-
-}
-*/
-
 FileID& FileID::operator=(const FileID& other)
 {
 	if(this != &other)
@@ -258,6 +251,12 @@ FileID& FileID::operator=(FileID&& other)
 	}
 	return *this;
 };
+
+
+FileID::~FileID()
+{
+
+}
 
 
 const std::string& FileID::GetBasename() const noexcept
@@ -354,6 +353,23 @@ bool FileID::IsAtFDCWD() const noexcept
 	ReaderLock(m_mutex);
 	return m_data->IsAtFDCWD();
 };
+
+off_t FileID::GetFileSize() const noexcept
+{
+	ReaderLock(m_mutex);
+	LazyLoadStatInfo();
+	return m_size;
+};
+
+blksize_t FileID::GetBlockSize() const noexcept
+{
+	WriterLock(m_mutex);
+	return m_data->GetBlockSize();
+};
+
+const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept { if(!m_unique_file_identifier.empty()) { LazyLoadStatInfo(); }; return m_unique_file_identifier; };
+
+dev_t FileID::GetDev() const noexcept { if(m_dev == static_cast<dev_t>(-1)) { LazyLoadStatInfo(); }; return m_dev; };
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {

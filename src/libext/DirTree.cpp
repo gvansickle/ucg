@@ -95,16 +95,16 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 	{
 		auto file_or_dir = std::make_shared<FileID>(FileID(root_file_id, p));
 		auto type = file_or_dir->GetFileType();
-		if(type == FileID::FT_REG)
+		if(type == FT_REG)
 		{
 			/// @todo filter-out mechanism?
 			m_out_queue.wait_push(FileID(*file_or_dir));
 		}
-		else if(type == FileID::FT_DIR)
+		else if(type == FT_DIR)
 		{
 			dir_queue.push(file_or_dir);
 		}
-		else if(type == FileID::FT_STAT_FAILED)
+		else if(type == FT_STAT_FAILED)
 		{
 			// Couldn't get any info on this path.
 			NOTICE() << "Could not get stat info at path \'" << file_or_dir->GetPath() << "\': "
@@ -234,7 +234,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 
 				LOG(INFO) << "... should be scanned.";
 
-				m_out_queue.wait_push({FileID::path_known_relative, dse, basename, statbuff_ptr, FileID::FT_REG});
+				m_out_queue.wait_push({FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG});
 
 				// Count the number of files we found that were included in the search.
 				///stats.m_num_files_scanned++;
