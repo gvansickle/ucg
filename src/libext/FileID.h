@@ -22,6 +22,8 @@
 
 #include <config.h>
 
+#include "hints.hpp"
+
 #include <sys/stat.h> // For the stat types.
 #include <fts.h>
 
@@ -32,14 +34,40 @@
 #include "filesystem.hpp"
 
 
-// Forward declaration.
+// Forward declarations.
 struct dirent;
+class FileID;  // UnsynchronizedFileID keeps a ptr to its parent directory's FileID.
+
+/// File Types enum.
+enum FileType
+{
+	FT_UNINITIALIZED,
+	FT_UNKNOWN,
+	FT_REG,
+	FT_DIR,
+	FT_SYMLINK,
+	FT_STAT_FAILED
+};
+
 
 /**
- *
+ * The public interface to the underlying UnsynchronizedFileID instance.  This class adds thread safety.
  */
 class FileID
 {
+	/// pImpl forward declaration.
+	class UnsynchronizedFileID;
+private:
+
+	using MutexType = std::mutex;  /// @todo C++17, use std::shared_mutex.  C++14, use std::shared_timed_mutex.
+	using ReaderLock = std::unique_lock<MutexType>;  /// @todo C++14+, use std::shared_lock.
+	using WriterLock = std::unique_lock<MutexType>;
+
+	/// Mutex for locking in copy and move constructors and some operations.
+	mutable std::mutex m_mutex;
+	ReaderLock m_reader_lock;
+	WriterLock m_writer_lock;
+
 public:
 	/// @name Tag types for selecting FileID() constructors when the given path is known to be relative or absolute.
 	/// @{
@@ -52,17 +80,6 @@ public:
 	static constexpr path_known_cwd_tag path_known_cwd = path_known_cwd_tag();
 	/// @}
 
-	/// File Types enum.
-	enum FileType
-	{
-		FT_UNINITIALIZED,
-		FT_UNKNOWN,
-		FT_REG,
-		FT_DIR,
-		FT_SYMLINK,
-		FT_STAT_FAILED
-	};
-
 	/// @name Constructors.
 	/// @{
 	FileID() = default;
@@ -72,18 +89,20 @@ public:
 	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
 	FileID(const FTSENT *ftsent, bool stat_info_known_valid);
-	FileID(const FileID&) = default;
-	FileID(FileID&&) = default;
+	FileID(const FileID& other);
+	FileID(FileID&& other);
 	/// @}
 
-	FileID& operator=(const FileID&) = default;
+	/// Copy assignment.
+	FileID& operator=(const FileID& other);
 
-	FileID& operator=(FileID&&) = default;
+	/// Move assignment.
+	FileID& operator=(FileID&& other);
 
 	/// Destructor.
-	~FileID();
+	~FileID() = default;
 
-	const std::string& GetBasename() const noexcept { return m_basename; };
+	const std::string& GetBasename() const noexcept;
 	const std::string& GetPath() const;
 
 	FileDescriptor GetFileDescriptor();
@@ -92,11 +111,11 @@ public:
 	bool IsRegularFile() const noexcept { return GetFileType() == FT_REG; };
 	bool IsDir() const noexcept { return GetFileType() == FT_DIR; };
 
-	bool IsAtFDCWD() const noexcept { return *m_file_descriptor == AT_FDCWD; };
+	bool IsAtFDCWD() const noexcept;
 
 	/// @todo This should maybe be weak_ptr.
 	const std::shared_ptr<FileID>& GetAtDirCRef() const noexcept;
-	std::shared_ptr<FileID> GetAtDir() const noexcept { return m_at_dir; };
+	std::shared_ptr<FileID> GetAtDir() const noexcept;
 
 	const std::string& GetAtDirRelativeBasename() const noexcept;
 
@@ -112,20 +131,42 @@ public:
 
 	const dev_ino_pair GetUniqueFileIdentifier() const noexcept { if(!m_unique_file_identifier.empty()) { LazyLoadStatInfo(); }; return m_unique_file_identifier; };
 
-	dev_t GetDev() const noexcept { if(m_dev == 0xFFFFFFFF) { LazyLoadStatInfo(); }; return m_dev; };
+	dev_t GetDev() const noexcept { if(m_dev == static_cast<dev_t>(-1)) { LazyLoadStatInfo(); }; return m_dev; };
 	void SetDevIno(dev_t d, ino_t i) noexcept;
 
 private:
+#if 0
+	/// Private copy constructor to make copies threadsafe.
+	/// The public copy constructor delegates to this private one, which locks around the copy.
+	FileID(const FileID& other, [[maybe_unused]] ReaderLock other_mutex)
+		: m_basename(other.m_basename),
+		  m_at_dir(other.m_at_dir),
+		  m_path(other.m_path),
+		  m_file_descriptor(other.m_file_descriptor),
+		  m_file_type(other.m_file_type),
+		  m_stat_info_valid(other.m_stat_info_valid),
+		  m_unique_file_identifier(other.m_unique_file_identifier),
+		  m_dev(other.m_dev),
+		  m_size(other.m_size),
+		  m_block_size(other.m_block_size),
+		  m_blocks(other.m_blocks)
+	{ };
 
-	/// The basename of this file.
-	/// We define this somewhat differently here: This is either:
-	/// - The full absolute path, or
-	/// - The path relative to m_at_dir, which may consist of more than one path element.
-	/// In any case, it is always equal to the string passed into the constructor.
-	std::string m_basename;
+	FileID(FileID&& other, [[maybe_unused]] WriterLock other_mutex)
+		: m_basename(std::move(other.m_basename)),
+		  m_at_dir(std::move(other.m_at_dir)),
+		  m_path(std::move(other.m_path)),
+		  m_file_descriptor(std::move(other.m_file_descriptor)),
+		  m_file_type(std::move(other.m_file_type)),
+		  m_stat_info_valid(std::move(other.m_stat_info_valid)),
+		  m_unique_file_identifier(std::move(other.m_unique_file_identifier)),
+		  m_dev(std::move(other.m_dev)),
+		  m_size(std::move(other.m_size)),
+		  m_block_size(std::move(other.m_block_size)),
+		  m_blocks(std::move(other.m_blocks))
+	{ };
+#endif
 
-	/// Shared pointer to the directory this FileID is in.
-	std::shared_ptr<FileID> m_at_dir;
 
 	void UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept;
 
@@ -133,39 +174,8 @@ private:
 
 	const std::string& UnsyncedGetPath() const;
 
-	/// The absolute path to this file.
-	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
-	mutable std::string m_path;
-
-
-	mutable FileDescriptor m_file_descriptor { make_shared_fd(cm_invalid_file_descriptor) };
-
-	/// @name Info normally gathered from a stat() call.
-	///@{
-
-	mutable FileType m_file_type { FT_UNINITIALIZED };
-
-	/// Indicator of whether the stat info is valid or not.
-	mutable bool m_stat_info_valid { false };
-
-	mutable dev_ino_pair m_unique_file_identifier;
-
-	mutable dev_t m_dev { static_cast<dev_t>(-1) };
-
-	/// File size in bytes.
-	mutable off_t m_size { 0 };
-
-	/// The preferred I/O block size for this file.
-	/// @note GNU libc documents the units on this as bytes.
-	mutable blksize_t m_block_size { 0 };
-
-	/// Number of blocks allocated for this file.
-	/// @note POSIX doesn't define the units for this.  Linux is documented to use 512-byte units, as is GNU libc.
-	mutable blkcnt_t m_blocks { 0 };
-	///@}
-
-	static std::mutex sm_mutables_mutex;
-
+	/// The data.
+	std::unique_ptr<UnsynchronizedFileID> m_data;
 };
 
 static_assert(std::is_assignable<FileID, FileID>::value, "FileID must be assignable to itself.");

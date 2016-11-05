@@ -26,14 +26,157 @@
 #include <sys/stat.h>
 #include <fts.h>
 
-std::mutex FileID::sm_mutables_mutex;
+#include <memory> // For std::make_unique<>
 
-FileID::FileID(path_known_cwd_tag) : m_basename("."), m_path("."), m_file_descriptor(make_shared_fd(AT_FDCWD)), m_file_type(FT_DIR)
+#if __cpp_lib_make_unique
+STATIC_MSG("Have make_unique")
+#else
+#error "No make_unique."
+#endif
+
+/**
+ * Factorization of the FileID class.  This is the unsynchronized "pImpl" part which holds all the data.
+ * It does not concern itself with concurrency issues with respect to copying, moving, or assigning.
+ * As such, its interface is not intended to be directly exposed to the world.
+ * @see FileID
+ */
+class FileID::UnsynchronizedFileID
+{
+public:
+	UnsynchronizedFileID() = default;
+	UnsynchronizedFileID(const UnsynchronizedFileID& other) = default;
+	UnsynchronizedFileID(UnsynchronizedFileID&& other) = default;
+	~UnsynchronizedFileID() = default;
+
+	/// Copy assignment.
+	UnsynchronizedFileID& operator=(const UnsynchronizedFileID &other) = default;
+
+	/// Move assignment.
+	UnsynchronizedFileID& operator=(UnsynchronizedFileID&& other) = default;
+
+	bool IsAtFDCWD() const noexcept { return *m_file_descriptor == AT_FDCWD; };
+
+	FileType GetFileType() const noexcept
+	{
+		if(m_file_type == FT_UNINITIALIZED)
+		{
+			// We don't know the file type yet.  We'll have to get it from a stat() call.
+			LazyLoadStatInfo();
+		}
+
+		return m_file_type;
+	}
+
+//private:
+
+	void LazyLoadStatInfo() const
+	{
+		if(IsStatInfoValid())
+		{
+			// Already set.
+			return;
+		}
+
+		// We don't have stat info and now we need it.
+		// Get it from the filename.
+		if(!m_at_dir)
+		{
+			throw std::runtime_error("should have an at-dir");
+		}
+
+		struct stat stat_buf;
+		if(fstatat(*(m_at_dir->GetFileDescriptor()), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
+		{
+			// Error.
+			m_file_type = FT_STAT_FAILED;
+		}
+		else
+		{
+			UnsyncedSetStatInfo(stat_buf);
+		}
+	}
+
+	std::shared_ptr<FileID> GetAtDir() const noexcept { return m_at_dir; };
+
+	const std::string& GetAtDirRelativeBasename() const noexcept;
+
+	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
+
+	off_t GetFileSize() const noexcept { LazyLoadStatInfo(); return m_size; };
+
+	blksize_t GetBlockSize() const noexcept
+	{
+		LazyLoadStatInfo();
+		return m_block_size;
+	};
+
+	const dev_ino_pair GetUniqueFileIdentifier() const noexcept { if(!m_unique_file_identifier.empty()) { LazyLoadStatInfo(); }; return m_unique_file_identifier; };
+
+	dev_t GetDev() const noexcept { if(m_dev == static_cast<dev_t>(-1)) { LazyLoadStatInfo(); }; return m_dev; };
+	void SetDevIno(dev_t d, ino_t i) noexcept;
+
+	/// The basename of this file.
+	/// We define this somewhat differently here: This is either:
+	/// - The full absolute path, or
+	/// - The path relative to m_at_dir, which may consist of more than one path element.
+	/// In any case, it is always equal to the string passed into the constructor.
+	mutable std::string m_basename;
+
+	/// Shared pointer to the directory this FileID is in.
+	mutable std::shared_ptr<FileID> m_at_dir;
+
+	/// The absolute path to this file.
+	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
+	mutable std::string m_path;
+
+	mutable FileDescriptor m_file_descriptor { make_shared_fd(cm_invalid_file_descriptor) };
+
+	/// @name Info normally gathered from a stat() call.
+	///@{
+
+	mutable FileType m_file_type { FT_UNINITIALIZED };
+
+	/// Indicator of whether the stat info is valid or not.
+	mutable bool m_stat_info_valid { false };
+
+	mutable dev_ino_pair m_unique_file_identifier;
+
+	mutable dev_t m_dev { static_cast<dev_t>(-1) };
+
+	/// File size in bytes.
+	mutable off_t m_size { 0 };
+
+	/// The preferred I/O block size for this file.
+	/// @note GNU libc documents the units on this as bytes.
+	mutable blksize_t m_block_size { 0 };
+
+	/// Number of blocks allocated for this file.
+	/// @note POSIX doesn't define the units for this.  Linux is documented to use 512-byte units, as is GNU libc.
+	mutable blkcnt_t m_blocks { 0 };
+	///@}
+};
+
+/// @name Compile-time invariants for the UnsynchronizedFileID class.
+/// @{
+static_assert(std::is_assignable<FileID::UnsynchronizedFileID, FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be assignable to itself.");
+static_assert(std::is_copy_assignable<FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be copy assignable to itself.");
+static_assert(std::is_move_assignable<FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be move assignable to itself.");
+/// @}
+
+FileID::FileID(const FileID& other) : m_data((ReaderLock(other.m_mutex), other.m_data)) {};
+
+FileID::FileID(FileID&& other) : m_data((WriterLock(other.m_mutex), std::move(other.m_data))) {};
+
+FileID::FileID(path_known_cwd_tag)
+	: m_data.m_basename("."),
+	  m_data.m_path("."),
+	  m_data.m_file_descriptor(make_shared_fd(AT_FDCWD)),
+	  m_data.m_file_type(FT_DIR)
 {
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
-	: m_basename(basename), m_at_dir(at_dir_fileid), m_file_type(type)
+	: m_data.m_basename(basename), m_data.m_at_dir(at_dir_fileid), m_data.m_file_type(type)
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
@@ -87,35 +230,68 @@ FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid): m_path(ftsent-
 	}
 }
 
+/**
 FileID::~FileID()
 {
 
 }
+*/
+
+FileID& FileID::operator=(const FileID& other)
+{
+	if(this != &other)
+	{
+		m_data = std::make_unique(other.m_data);
+	}
+	return *this;
+};
+
+FileID& FileID::operator=(FileID&& other)
+{
+	if(this != &other)
+	{
+		WriterLock this_lock(m_mutex, std::defer_lock);
+		WriterLock other_lock(other.m_mutex, std::defer_lock);
+		std::lock(this_lock, other_lock);
+		/// @todo member-wise move.
+		m_data = std::move(other.m_data);
+	}
+	return *this;
+};
+
+
+const std::string& FileID::GetBasename() const noexcept
+{
+	ReaderLock(m_mutex);
+	return m_data->m_basename;
+};
+
 
 const std::string& FileID::GetPath() const
 {
-	std::lock_guard<std::mutex> lg(sm_mutables_mutex);
 	return UnsyncedGetPath();
 }
 
+/// @todo Rename this because it's synchronized now.
 const std::string& FileID::UnsyncedGetPath() const
 {
-	if(m_path.empty())
+	ReaderLock(m_mutex);
+	if(m_data->m_path.empty())
 	{
 		// Build the full path.
-		if(!m_at_dir->IsAtFDCWD())
+		if(!m_data->m_at_dir->IsAtFDCWD())
 		{
-			auto at_path = m_at_dir->UnsyncedGetPath();
-			m_path.reserve(at_path.size() + m_basename.size() + 2);
-			m_path = at_path + '/' + m_basename;
+			auto at_path = m_data->m_at_dir->UnsyncedGetPath();
+			m_data->m_path.reserve(at_path.size() + m_data->m_basename.size() + 2);
+			m_data->m_path = at_path + '/' + m_data->m_basename;
 		}
 		else
 		{
-			m_path = m_basename;
+			m_data->m_path = m_data->m_basename;
 		}
 	}
 
-	return m_path;
+	return m_data->m_path;
 }
 
 const std::shared_ptr<FileID>& FileID::GetAtDirCRef() const noexcept
@@ -127,7 +303,26 @@ const std::shared_ptr<FileID>& FileID::GetAtDirCRef() const noexcept
 	return m_at_dir;
 };
 
+std::shared_ptr<FileID> FileID::GetAtDir() const noexcept\
+{
+	ReaderLock(m_mutex);
+	return m_data->GetAtDir();
+};
+
 const std::string& FileID::GetAtDirRelativeBasename() const noexcept
+{
+	ReaderLock(m_mutex);
+	return m_data->GetAtDirRelativeBasename();
+}
+
+bool FileID::IsStatInfoValid() const noexcept
+{
+	ReaderLock(m_mutex);
+	return m_data->IsStatInfoValid();
+};
+
+
+const std::string& FileID::UnsynchronizedFileID::GetAtDirRelativeBasename() const noexcept
 {
 	if(m_basename.empty())
 	{
@@ -136,7 +331,7 @@ const std::string& FileID::GetAtDirRelativeBasename() const noexcept
 	return m_basename;
 }
 
-FileID::FileType FileID::GetFileType() const noexcept
+FileType FileID::UnsynchronizedFileID::GetFileType() const noexcept
 {
 	if(m_file_type == FT_UNINITIALIZED)
 	{
@@ -147,13 +342,32 @@ FileID::FileType FileID::GetFileType() const noexcept
 	return m_file_type;
 }
 
+FileType FileID::GetFileType() const noexcept
+{
+	WriterLock(m_mutex);
+
+	return m_data->GetFileType();
+}
+
+bool FileID::IsAtFDCWD() const noexcept
+{
+	ReaderLock(m_mutex);
+	return m_data->IsAtFDCWD();
+};
+
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
+{
+	WriterLock(m_mutex);
+	m_data->SetDevIno(d, i);
+}
+
+void FileID::UnsynchronizedFileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
 	m_dev = d;
 	m_unique_file_identifier = dev_ino_pair(d, i);
 }
 
-void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
+void FileID::UnsynchronizedFileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
 {
 	m_stat_info_valid = true;
 
@@ -183,27 +397,12 @@ void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
 	m_blocks = stat_buf.st_blocks;
 }
 
-void FileID::LazyLoadStatInfo() const
+void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
 {
-	if(IsStatInfoValid())
-	{
-		// Already set.
-		return;
-	}
-
-	// We don't have stat info and now we need it.
-	// Get it from the filename.
-	struct stat stat_buf;
-	if(stat(GetPath().c_str(), &stat_buf) != 0)
-	{
-		// Error.
-		m_file_type = FT_STAT_FAILED;
-	}
-	else
-	{
-		UnsyncedSetStatInfo(stat_buf);
-	}
+	WriterLock(m_mutex);
+	m_data->UnsyncedSetStatInfo(stat_buf);
 }
+
 
 FileDescriptor FileID::GetFileDescriptor()
 {
