@@ -43,9 +43,6 @@ STATIC_MSG("Have make_unique")
 class FileID::UnsynchronizedFileID
 {
 public:
-
-
-public:
 	UnsynchronizedFileID() = default;
 	UnsynchronizedFileID(const UnsynchronizedFileID& other) = default;
 	UnsynchronizedFileID(UnsynchronizedFileID&& other) = default;
@@ -57,7 +54,67 @@ public:
 	/// Move assignment.
 	UnsynchronizedFileID& operator=(UnsynchronizedFileID&& other) = default;
 
+	bool IsAtFDCWD() const noexcept { return *m_file_descriptor == AT_FDCWD; };
+
+	FileType GetFileType() const noexcept
+	{
+		if(m_file_type == FT_UNINITIALIZED)
+		{
+			// We don't know the file type yet.  We'll have to get it from a stat() call.
+			LazyLoadStatInfo();
+		}
+
+		return m_file_type;
+	}
+
 //private:
+
+	void LazyLoadStatInfo() const
+	{
+		if(IsStatInfoValid())
+		{
+			// Already set.
+			return;
+		}
+
+		// We don't have stat info and now we need it.
+		// Get it from the filename.
+		if(!m_at_dir)
+		{
+			throw std::runtime_error("should have an at-dir");
+		}
+
+		struct stat stat_buf;
+		if(fstatat(*(m_at_dir->GetFileDescriptor()), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
+		{
+			// Error.
+			m_file_type = FT_STAT_FAILED;
+		}
+		else
+		{
+			UnsyncedSetStatInfo(stat_buf);
+		}
+	}
+
+	std::shared_ptr<FileID> GetAtDir() const noexcept { return m_at_dir; };
+
+	const std::string& GetAtDirRelativeBasename() const noexcept;
+
+	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
+
+	off_t GetFileSize() const noexcept { LazyLoadStatInfo(); return m_size; };
+
+	blksize_t GetBlockSize() const noexcept
+	{
+		LazyLoadStatInfo();
+		return m_block_size;
+	};
+
+	const dev_ino_pair GetUniqueFileIdentifier() const noexcept { if(!m_unique_file_identifier.empty()) { LazyLoadStatInfo(); }; return m_unique_file_identifier; };
+
+	dev_t GetDev() const noexcept { if(m_dev == static_cast<dev_t>(-1)) { LazyLoadStatInfo(); }; return m_dev; };
+	void SetDevIno(dev_t d, ino_t i) noexcept;
+
 	/// The basename of this file.
 	/// We define this somewhat differently here: This is either:
 	/// - The full absolute path, or
@@ -108,7 +165,7 @@ static_assert(std::is_move_assignable<FileID::UnsynchronizedFileID>::value, "Uns
 
 FileID::FileID(const FileID& other) : m_data((ReaderLock(other.m_mutex), other.m_data)) {};
 
-FileID::FileID(FileID&& other) : m_data((WriterLock(other.m_mutex), std::move(other.m_data)) {};
+FileID::FileID(FileID&& other) : m_data((WriterLock(other.m_mutex), std::move(other.m_data))) {};
 
 FileID::FileID(path_known_cwd_tag)
 	: m_data.m_basename("."),
@@ -173,10 +230,12 @@ FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid): m_path(ftsent-
 	}
 }
 
+/**
 FileID::~FileID()
 {
 
 }
+*/
 
 FileID& FileID::operator=(const FileID& other)
 {
@@ -201,30 +260,38 @@ FileID& FileID::operator=(FileID&& other)
 };
 
 
+const std::string& FileID::GetBasename() const noexcept
+{
+	ReaderLock(m_mutex);
+	return m_data->m_basename;
+};
+
+
 const std::string& FileID::GetPath() const
 {
-	std::lock_guard<std::mutex> lg(m_mutex);
 	return UnsyncedGetPath();
 }
 
+/// @todo Rename this because it's synchronized now.
 const std::string& FileID::UnsyncedGetPath() const
 {
-	if(m_path.empty())
+	ReaderLock(m_mutex);
+	if(m_data->m_path.empty())
 	{
 		// Build the full path.
-		if(!m_at_dir->IsAtFDCWD())
+		if(!m_data->m_at_dir->IsAtFDCWD())
 		{
-			auto at_path = m_at_dir->UnsyncedGetPath();
-			m_path.reserve(at_path.size() + m_basename.size() + 2);
-			m_path = at_path + '/' + m_basename;
+			auto at_path = m_data->m_at_dir->UnsyncedGetPath();
+			m_data->m_path.reserve(at_path.size() + m_data->m_basename.size() + 2);
+			m_data->m_path = at_path + '/' + m_data->m_basename;
 		}
 		else
 		{
-			m_path = m_basename;
+			m_data->m_path = m_data->m_basename;
 		}
 	}
 
-	return m_path;
+	return m_data->m_path;
 }
 
 const std::shared_ptr<FileID>& FileID::GetAtDirCRef() const noexcept
@@ -238,6 +305,12 @@ const std::shared_ptr<FileID>& FileID::GetAtDirCRef() const noexcept
 
 const std::string& FileID::GetAtDirRelativeBasename() const noexcept
 {
+	ReaderLock(m_mutex);
+	return m_data->GetAtDirRelativeBasename();
+}
+
+const std::string& FileID::UnsynchronizedFileID::GetAtDirRelativeBasename() const noexcept
+{
 	if(m_basename.empty())
 	{
 		throw std::runtime_error("basename was empty");
@@ -245,7 +318,7 @@ const std::string& FileID::GetAtDirRelativeBasename() const noexcept
 	return m_basename;
 }
 
-FileID::FileType FileID::GetFileType() const noexcept
+FileType FileID::UnsynchronizedFileID::GetFileType() const noexcept
 {
 	if(m_file_type == FT_UNINITIALIZED)
 	{
@@ -255,6 +328,19 @@ FileID::FileType FileID::GetFileType() const noexcept
 
 	return m_file_type;
 }
+
+FileType FileID::GetFileType() const noexcept
+{
+	WriterLock(m_mutex);
+
+	return m_data->GetFileType();
+}
+
+bool FileID::IsAtFDCWD() const noexcept
+{
+	ReaderLock(m_mutex);
+	return m_data->IsAtFDCWD();
+};
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
@@ -290,33 +376,6 @@ void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
 	m_size = stat_buf.st_size;
 	m_block_size = stat_buf.st_blksize;
 	m_blocks = stat_buf.st_blocks;
-}
-
-void FileID::LazyLoadStatInfo() const
-{
-	if(IsStatInfoValid())
-	{
-		// Already set.
-		return;
-	}
-
-	// We don't have stat info and now we need it.
-	// Get it from the filename.
-	if(!m_at_dir)
-	{
-		throw std::runtime_error("should have an at-dir");
-	}
-
-	struct stat stat_buf;
-	if(fstatat(*(m_at_dir->GetFileDescriptor()), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
-	{
-		// Error.
-		m_file_type = FT_STAT_FAILED;
-	}
-	else
-	{
-		UnsyncedSetStatInfo(stat_buf);
-	}
 }
 
 FileDescriptor FileID::GetFileDescriptor()

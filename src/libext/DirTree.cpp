@@ -255,7 +255,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				return;
 			}
 
-			FileID dir_atfd(FileID::path_known_relative, dse, basename, FileID::FT_DIR);
+			FileID dir_atfd(FileID::path_known_relative, dse, basename, FT_DIR);
 			dir_atfd.SetDevIno(dse->GetDev(), current_dirent->d_ino);
 
 			if(m_logical)

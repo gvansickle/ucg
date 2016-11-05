@@ -100,9 +100,9 @@ public:
 	FileID& operator=(FileID&& other);
 
 	/// Destructor.
-	~FileID();
+	~FileID() = default;
 
-	const std::string& GetBasename() const noexcept { return m_basename; };
+	const std::string& GetBasename() const noexcept;
 	const std::string& GetPath() const;
 
 	FileDescriptor GetFileDescriptor();
@@ -111,7 +111,7 @@ public:
 	bool IsRegularFile() const noexcept { return GetFileType() == FT_REG; };
 	bool IsDir() const noexcept { return GetFileType() == FT_DIR; };
 
-	bool IsAtFDCWD() const noexcept { return *m_file_descriptor == AT_FDCWD; };
+	bool IsAtFDCWD() const noexcept;
 
 	/// @todo This should maybe be weak_ptr.
 	const std::shared_ptr<FileID>& GetAtDirCRef() const noexcept;
