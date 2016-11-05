@@ -72,9 +72,9 @@ public:
 	/// @name Tag types for selecting FileID() constructors when the given path is known to be relative or absolute.
 	/// @{
 	struct path_type_tag {};
-	struct path_known_relative_tag {};
-	struct path_known_absolute_tag {};
-	struct path_known_cwd_tag {};
+	struct path_known_relative_tag : path_type_tag {};
+	struct path_known_absolute_tag : path_type_tag {};
+	struct path_known_cwd_tag : path_type_tag {};
 	static constexpr path_known_relative_tag path_known_relative = path_known_relative_tag();
 	static constexpr path_known_absolute_tag path_known_absolute = path_known_absolute_tag();
 	static constexpr path_known_cwd_tag path_known_cwd = path_known_cwd_tag();
@@ -171,7 +171,7 @@ private:
 
 	const std::string& UnsyncedGetPath() const;
 
-	/// The data.
+	/// The pImpl.
 	std::unique_ptr<UnsynchronizedFileID> m_data;
 };
 
