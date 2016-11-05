@@ -303,11 +303,24 @@ const std::shared_ptr<FileID>& FileID::GetAtDirCRef() const noexcept
 	return m_at_dir;
 };
 
+std::shared_ptr<FileID> FileID::GetAtDir() const noexcept\
+{
+	ReaderLock(m_mutex);
+	return m_data->GetAtDir();
+};
+
 const std::string& FileID::GetAtDirRelativeBasename() const noexcept
 {
 	ReaderLock(m_mutex);
 	return m_data->GetAtDirRelativeBasename();
 }
+
+bool FileID::IsStatInfoValid() const noexcept
+{
+	ReaderLock(m_mutex);
+	return m_data->IsStatInfoValid();
+};
+
 
 const std::string& FileID::UnsynchronizedFileID::GetAtDirRelativeBasename() const noexcept
 {
@@ -344,11 +357,17 @@ bool FileID::IsAtFDCWD() const noexcept
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
+	WriterLock(m_mutex);
+	m_data->SetDevIno(d, i);
+}
+
+void FileID::UnsynchronizedFileID::SetDevIno(dev_t d, ino_t i) noexcept
+{
 	m_dev = d;
 	m_unique_file_identifier = dev_ino_pair(d, i);
 }
 
-void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
+void FileID::UnsynchronizedFileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
 {
 	m_stat_info_valid = true;
 
@@ -377,6 +396,13 @@ void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
 	m_block_size = stat_buf.st_blksize;
 	m_blocks = stat_buf.st_blocks;
 }
+
+void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
+{
+	WriterLock(m_mutex);
+	m_data->UnsyncedSetStatInfo(stat_buf);
+}
+
 
 FileDescriptor FileID::GetFileDescriptor()
 {

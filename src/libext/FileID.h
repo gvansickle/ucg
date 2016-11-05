@@ -115,7 +115,7 @@ public:
 
 	/// @todo This should maybe be weak_ptr.
 	const std::shared_ptr<FileID>& GetAtDirCRef() const noexcept;
-	std::shared_ptr<FileID> GetAtDir() const noexcept { return m_at_dir; };
+	std::shared_ptr<FileID> GetAtDir() const noexcept;
 
 	const std::string& GetAtDirRelativeBasename() const noexcept;
 
