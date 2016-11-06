@@ -63,8 +63,8 @@ public:
 	const std::string& GetPath() const;
 	FileDescriptor GetFileDescriptor();
 
-
-	bool IsAtFDCWD() const noexcept { return *m_file_descriptor == AT_FDCWD; };
+	/// @todo This is probably not correct.  Our "AT_FDCWD" will be a real directory.
+	bool IsAtFDCWD() const noexcept { return m_file_descriptor.GetFD() == AT_FDCWD; };
 
 	FileType GetFileType() const noexcept
 	{
@@ -95,7 +95,7 @@ public:
 		}
 
 		struct stat stat_buf;
-		if(fstatat(*(m_at_dir->GetFileDescriptor()), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
+		if(fstatat(m_at_dir->GetFileDescriptor().GetFD(), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
 		{
 			// Error.
 			m_file_type = FT_STAT_FAILED;
@@ -142,7 +142,7 @@ public:
 	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
 	mutable std::string m_path;
 
-	mutable FileDescriptor m_file_descriptor { make_shared_fd(cm_invalid_file_descriptor) };
+	mutable FileDescriptor m_file_descriptor;
 
 	/// @name Info normally gathered from a stat() call.
 	///@{
@@ -210,7 +210,7 @@ FileDescriptor FileID::UnsynchronizedFileID::GetFileDescriptor()
 	/// @todo This needs rethinking.  The FD would be opened differently depending on the file type etc.
 
 
-	if(*m_file_descriptor == cm_invalid_file_descriptor)
+	if(m_file_descriptor.empty())
 	{
 		// File hasn't been opened.
 
@@ -220,10 +220,10 @@ FileDescriptor FileID::UnsynchronizedFileID::GetFileDescriptor()
 		}
 		else
 		{
-			m_file_descriptor = make_shared_fd(openat(*(m_at_dir->GetFileDescriptor()), GetBasename().c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
+			m_file_descriptor = make_shared_fd(openat(m_at_dir->GetFileDescriptor().GetFD(), GetBasename().c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
 		}
 
-		if(*m_file_descriptor < 0)
+		if(m_file_descriptor.empty())
 		{
 			throw std::runtime_error("Bad fd");
 		}
@@ -332,7 +332,7 @@ FileID::FileID(FileID&& other) : m_data((WriterLock(other.m_mutex), std::move(ot
 FileID::FileID(path_known_cwd_tag)
 	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(nullptr, ".", ".", nullptr, FT_DIR))
 {
-	m_data->m_file_descriptor = make_shared_fd(AT_FDCWD);
+	m_data->m_file_descriptor = make_shared_fd(open(".", O_SEARCH | O_NOCTTY));
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)

@@ -28,6 +28,6 @@ libext_la_SOURCES = \
 	static_diagnostics.hpp \
 	string.hpp
 
-libext_la_CPPFLAGS = $(AM_CPPFLAGS)
+libext_la_CPPFLAGS = -I$(top_srcdir)/src $(AM_CPPFLAGS)
 libext_la_CFLAGS = $(AM_CFLAGS)
 libext_la_CXXFLAGS = $(AM_CXXFLAGS)

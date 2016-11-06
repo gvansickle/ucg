@@ -43,6 +43,7 @@
 #include <cstdlib>   // For free().
 #include <string>
 #include <type_traits>
+#include <future/memory.hpp>
 
 #include "integer.hpp"
 #include "../Logger.h"
@@ -134,7 +135,7 @@ inline std::string dirent_get_name(const dirent* de) noexcept
 }
 
 
-#if 1 /// @todo
+#if 0 /// @todo
 constexpr int cm_invalid_file_descriptor = -987;
 struct FileDescriptorDeleter
 {
@@ -148,7 +149,15 @@ struct FileDescriptorDeleter
 		delete fd;
 	}
 };
-using FileDescriptor = std::shared_ptr<int>;
+//using FileDescriptor = std::shared_ptr<int>;
+using FileDescriptor = std::unique_ptr<int, FileDescriptorDeleter>;
+
+inline FileDescriptor make_unique_fd(int fd) ATTR_ARTIFICIAL;
+inline FileDescriptor make_unique_fd(int fd)
+{
+	return std::unique_ptr<int, FileDescriptorDeleter>(new int(fd));
+}
+
 inline std::shared_ptr<int> make_shared_fd(int fd) ATTR_ARTIFICIAL;
 inline std::shared_ptr<int> make_shared_fd(int fd)
 {
@@ -163,41 +172,72 @@ inline std::shared_ptr<int> make_shared_fd(int fd)
  */
 class FileDescriptor
 {
+	using MutexType = std::mutex;  /// @todo C++17, use std::shared_mutex.  C++14, use std::shared_timed_mutex.
+	using ReaderLock = std::unique_lock<MutexType>;  /// @todo C++14+, use std::shared_lock.
+	using WriterLock = std::unique_lock<MutexType>;
+
+	/// Mutex for locking in copy and move constructors and some operations.
+	mutable std::mutex m_mutex;
+
 public:
 	FileDescriptor() noexcept = default;
 
-	explicit FileDescriptor(int fd) noexcept { m_file_descriptor = fd; };
+	explicit FileDescriptor(int fd) noexcept : FileDescriptor()
+	{
+		WriterLock(m_mutex);
+		m_file_descriptor = fd;
+	};
 
-	/// Copy constructor will dup the file descriptor.
+	/// Copy constructor will dup the other's file descriptor.
 	FileDescriptor(const FileDescriptor &other) noexcept : FileDescriptor()
 	{
-		*this = other;
+		ReaderLock(other.m_mutex);
+		if(!other.empty())
+		{
+			if(!empty())
+			{
+				close(m_file_descriptor);
+			}
+			m_file_descriptor = dup(other.m_file_descriptor);
+		}
 	}
 
-	/// Move constructor.
-	/// For a move, the #moved_from FileDescriptor has to be invalidated.  Otherwise,
+	/// Move constructor.  Ownership of the fd will be transferred from other to this.
+	/// For a move, the #other FileDescriptor has to be invalidated.  Otherwise,
 	/// when it is destroyed, it will close the file, which it no longer owns.
-	FileDescriptor(FileDescriptor&& moved_from) noexcept : FileDescriptor()
+	FileDescriptor(FileDescriptor&& other) noexcept
 	{
-		// Implement in terms of move-assignment.
-		*this = std::move(moved_from);
+		ReaderLock(other.m_mutex);
+		if(!other.empty())
+		{
+			if(!empty())
+			{
+				close(m_file_descriptor);
+			}
+			m_file_descriptor = other.m_file_descriptor;
+			other.m_file_descriptor = cm_invalid_file_descriptor;
+		}
 	}
 
 	/// Destructor.  Closes #m_file_descriptor if it's valid.
-	~FileDescriptor()
+	~FileDescriptor() noexcept
 	{
-		if((m_file_descriptor >= 0) && (m_file_descriptor != cm_invalid_file_descriptor))
+		if(!empty())
 		{
 			close(m_file_descriptor);
 		}
 	};
 
 	/// The default copy-assignment operator won't do the right thing.
-	const FileDescriptor& operator=(const FileDescriptor& other) noexcept
+	FileDescriptor& operator=(const FileDescriptor& other) noexcept
 	{
 		if(this != &other)
 		{
-			if((m_file_descriptor >= 0) && (m_file_descriptor != cm_invalid_file_descriptor))
+			WriterLock this_lock(m_mutex, std::defer_lock);
+			ReaderLock other_lock(other.m_mutex, std::defer_lock);
+			std::lock(this_lock, other_lock);
+
+			if(!empty())
 			{
 				close(m_file_descriptor);
 			}
@@ -223,8 +263,12 @@ public:
 	{
 		if(this != &other)
 		{
+			WriterLock this_lock(m_mutex, std::defer_lock);
+			WriterLock other_lock(other.m_mutex, std::defer_lock);
+			std::lock(this_lock, other_lock);
+
 			// Step 1: Release any resources this owns.
-			if((m_file_descriptor >= 0) && (m_file_descriptor != cm_invalid_file_descriptor))
+			if(!empty())
 			{
 				close(m_file_descriptor);
 			}
@@ -243,16 +287,28 @@ public:
 	}
 
 	/// Allow read access to the underlying int.
-	int GetInt() const noexcept { return m_file_descriptor; };
+	int GetFD() const noexcept { return m_file_descriptor; };
 
 	/// Returns true if this FileDescriptor has never been assigned a valid file descriptor.
 	bool IsInvalid() const noexcept { return m_file_descriptor == cm_invalid_file_descriptor; };
+
+	inline bool empty() const noexcept
+	{
+		ReaderLock(m_mutex);
+		return m_file_descriptor < 0;
+	}
 
 private:
 	static constexpr int cm_invalid_file_descriptor = -987;
 
 	int m_file_descriptor { cm_invalid_file_descriptor };
 };
+
+inline FileDescriptor make_shared_fd(int fd)
+{
+	return FileDescriptor(fd);
+}
+
 #endif
 
 

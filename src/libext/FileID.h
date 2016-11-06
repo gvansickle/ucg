@@ -63,8 +63,6 @@ private:
 
 	/// Mutex for locking in copy and move constructors and some operations.
 	mutable std::mutex m_mutex;
-	//ReaderLock m_reader_lock;
-	//WriterLock m_writer_lock;
 
 public:
 

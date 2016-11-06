@@ -120,7 +120,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 		FileDescriptor open_at_fd = dse->GetAtDir()->GetFileDescriptor();
 		const char *open_at_path = dse->GetAtDirRelativeBasename().c_str();
 
-		d = opendirat(*open_at_fd, open_at_path);
+		d = opendirat(open_at_fd.GetFD(), open_at_path);
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
@@ -189,7 +189,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 		//   Now we have to actually stat this entry and see where it goes.
 
 		// Stat the filename using the directory as the at-descriptor.
-		fstatat(*(dse->GetFileDescriptor()), dname, &statbuf,
+		fstatat(dse->GetFileDescriptor().GetFD(), dname, &statbuf,
 				AT_NO_AUTOMOUNT | (!m_logical ? AT_SYMLINK_NOFOLLOW : 0));
 		/// @todo Capture this info in the FileID object.
 		is_dir = S_ISDIR(statbuf.st_mode);
