@@ -355,11 +355,14 @@ AX_GCC_BUILTIN(__builtin_expect)
 AX_GCC_BUILTIN(__builtin_popcount)
 AX_GCC_BUILTIN(__builtin_bswap32)
 AX_GCC_BUILTIN(__builtin_ctzll)
-# C++14
+## The checks below for C++ feature-test macros are mainly for diagnostic purposes.  The way they're defined
+## <https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations> makes them mostly
+## usable directly from the C++ code; using them by way of configure isn't required or helpful.
+# C++14 features
 AC_CHECK_DECLS([__cpp_alias_templates])
 AC_CHECK_DECLS([__cpp_lib_make_unique], [], [], [#include <memory>])
 AC_CHECK_DECLS([__cpp_lib_transformation_trait_aliases], [], [], [#include <type_traits>])
-# C++17
+# C++17 features
 AC_CHECK_DECLS([__cpp_lib_type_trait_variable_templates], [], [], [#include <type_traits>])
 
 # Detect __has_include() support.

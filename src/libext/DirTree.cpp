@@ -23,7 +23,6 @@
 
 #include "../Logger.h" ///< @todo Break this root-ward dependency.
 
-#include <fcntl.h> // For AT_FDCWD, AT_NO_AUTOMOUNT
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -36,40 +35,8 @@
 #include <memory>
 #include <algorithm>
 
-#if !defined(HAVE_OPENAT) || HAVE_OPENAT == 0
-// No native openat() support.  Assume no *at() functions at all.  Stubs to allow this to compile for now.
-#define AT_FDCWD -200
-#define AT_NO_AUTOMOUNT 0
-inline int openat(int at_fd, const char *fn, int flags) { return -1; };
-inline DIR *fdopendir(int fd) { return nullptr; };
-inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags) { return -1; };
-#endif
+#include <libext/filesystem.hpp> // For AT_FDCWD, AT_NO_AUTOMOUNT, openat(), etc.
 
-
-/// @name Take care of some portability issues.
-/// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
-/// - No AT_FDCWD, no openat, no fdopendir, no fstatat.
-/// Cygwin:
-/// - No O_NOATIME, no AT_NO_AUTOMOUNT.
-/// Linux:
-/// - No O_SEARCH.
-/// @{
-#ifndef AT_NO_AUTOMOUNT
-#define AT_NO_AUTOMOUNT 0  // Not defined on at least Cygwin.
-#endif
-#ifndef O_NOATIME
-// From "The GNU C Library" manual <https://www.gnu.org/software/libc/manual/html_mono/libc.html#toc-File-System-Interface-1>
-// 13.14.3 I/O Operating Modes: "Only the owner of the file or the superuser may use this bit."
-#define O_NOATIME 0  // Not defined on at least Cygwin.
-#endif
-#ifndef O_SEARCH
-// O_SEARCH is POSIX.1-2008, but not defined on at least Linux/glibc 2.24.
-// Possible reason, quoted from the standard: "Since O_RDONLY has historically had the value zero, implementations are not able to distinguish
-// between O_SEARCH and O_SEARCH | O_RDONLY, and similarly for O_EXEC."
-#define O_SEARCH 0
-#endif
-
-///@}
 
 DirTree::DirTree(sync_queue<FileID>& output_queue,
 		const file_basename_filter_type &file_basename_filter,

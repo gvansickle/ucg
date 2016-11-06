@@ -49,6 +49,15 @@
 #include "integer.hpp"
 #include "../Logger.h"
 
+
+/// @name Take care of some portability issues.
+/// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
+/// - No AT_FDCWD, no openat, no fdopendir, no fstatat.
+/// Cygwin:
+/// - No O_NOATIME, no AT_NO_AUTOMOUNT.
+/// Linux:
+/// - No O_SEARCH.
+/// @{
 #if !defined(HAVE_OPENAT) || HAVE_OPENAT == 0
 // No native openat() support.  Assume no *at() functions at all.  Stubs to allow this to compile for now.
 #define AT_FDCWD -200
@@ -62,15 +71,11 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 #if !defined(AT_NO_AUTOMOUNT)
 #define AT_NO_AUTOMOUNT 0
 #endif
-
-/// @name Take care of some portability issues.
-/// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
-/// - No AT_FDCWD, no openat, no fdopendir, no fstatat.
-/// Cygwin:
-/// - No O_NOATIME, no AT_NO_AUTOMOUNT.
-/// Linux:
-/// - No O_SEARCH.
-/// @{
+#ifndef O_NOATIME
+// From "The GNU C Library" manual <https://www.gnu.org/software/libc/manual/html_mono/libc.html#toc-File-System-Interface-1>
+// 13.14.3 I/O Operating Modes: "Only the owner of the file or the superuser may use this bit."
+#define O_NOATIME 0  // Not defined on at least Cygwin.
+#endif
 #ifndef O_SEARCH
 // O_SEARCH is POSIX.1-2008, but not defined on at least Linux/glibc 2.24.
 // Possible reason, quoted from the standard: "Since O_RDONLY has historically had the value zero, implementations are not able to distinguish
