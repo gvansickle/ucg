@@ -43,7 +43,7 @@
 #include <cstdlib>   // For free().
 #include <string>
 #include <iterator>   // For std::distance().
-#include <type_traits>
+#include <future/type_traits.hpp>
 #include <future/memory.hpp>
 
 #include "integer.hpp"

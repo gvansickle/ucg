@@ -23,6 +23,7 @@
 #define SRC_FUTURE_TYPE_TRAITS_HPP_
 
 #include <config.h>
+
 #include <type_traits>
 
 namespace std
