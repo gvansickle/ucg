@@ -62,7 +62,7 @@ private:
 	using WriterLock = std::unique_lock<MutexType>;
 
 	/// Mutex for locking in copy and move constructors and some operations.
-	mutable std::mutex m_mutex;
+	mutable MutexType m_mutex;
 
 public:
 
@@ -137,7 +137,7 @@ private:
 	void SetStatInfo(const struct stat &stat_buf) noexcept;
 
 	/// The pImpl.
-	std::unique_ptr<UnsynchronizedFileID> m_data;
+	std::unique_ptr<UnsynchronizedFileID> m_pimpl;
 };
 
 static_assert(std::is_assignable<FileID, FileID>::value, "FileID must be assignable to itself.");

@@ -183,7 +183,7 @@ FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_di
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 
-	LOG(INFO) << "2-param const., m_basename=" << m_basename << ", m_at_dir=" << m_at_dir->m_data->GetPath();
+	LOG(INFO) << "2-param const., m_basename=" << m_basename << ", m_at_dir=" << m_at_dir->m_pimpl->GetPath();
 
 	if(is_pathname_absolute(pathname))
 	{
@@ -317,25 +317,25 @@ FileID::FileID()
 }
 
 // Copy constructor.
-FileID::FileID(const FileID& other) : m_data((ReaderLock(other.m_mutex), std::make_unique<FileID::UnsynchronizedFileID>(*other.m_data)))
+FileID::FileID(const FileID& other) : m_pimpl((ReaderLock(other.m_mutex), std::make_unique<FileID::UnsynchronizedFileID>(*other.m_pimpl)))
 {
 	LOG(DEBUG) << "Copy constructor called";
 };
 
 // Move constructor.
-FileID::FileID(FileID&& other) : m_data((WriterLock(other.m_mutex), std::move(other.m_data)))
+FileID::FileID(FileID&& other) : m_pimpl((WriterLock(other.m_mutex), std::move(other.m_pimpl)))
 {
 	LOG(DEBUG) << "Move constructor called";
 };
 
 FileID::FileID(path_known_cwd_tag)
-	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(nullptr, ".", ".", nullptr, FT_DIR))
+	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(nullptr, ".", ".", nullptr, FT_DIR))
 {
-	m_data->m_file_descriptor = make_shared_fd(open(".", (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
+	m_pimpl->m_file_descriptor = make_shared_fd(open(".", (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
-	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, basename, "", nullptr, type))
+	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, basename, "", nullptr, type))
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
@@ -344,7 +344,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type)
-	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, pathname /*==basename*/, pathname, nullptr, type))
+	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, pathname /*==basename*/, pathname, nullptr, type))
 {
 	/// @note Taking pathname by value since we are always storing it.
 	/// Full openat() semantics:
@@ -353,7 +353,7 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
-	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, pathname))
+	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, pathname))
 {
 
 }
@@ -391,7 +391,7 @@ FileID& FileID::operator=(const FileID& other)
 		WriterLock this_lock(m_mutex, std::defer_lock);
 		ReaderLock other_lock(other.m_mutex, std::defer_lock);
 		std::lock(this_lock, other_lock);
-		m_data = std::make_unique<FileID::UnsynchronizedFileID>(*other.m_data);
+		m_pimpl = std::make_unique<FileID::UnsynchronizedFileID>(*other.m_pimpl);
 	}
 	return *this;
 };
@@ -404,94 +404,95 @@ FileID& FileID::operator=(FileID&& other)
 		WriterLock other_lock(other.m_mutex, std::defer_lock);
 		std::lock(this_lock, other_lock);
 
-		m_data = std::move(other.m_data);
+		m_pimpl = std::move(other.m_pimpl);
 	}
 	return *this;
 };
 
 FileID::~FileID()
 {
+	// Make sure we lock during destruction.
 	WriterLock(m_mutex);
 }
 
 const std::string& FileID::GetBasename() const noexcept
 {
 	ReaderLock(m_mutex);
-	return m_data->GetBasename();
+	return m_pimpl->GetBasename();
 };
 
 
 const std::string& FileID::GetPath() const
 {
 	WriterLock(m_mutex);
-	return m_data->GetPath();
+	return m_pimpl->GetPath();
 }
 
 std::shared_ptr<FileID> FileID::GetAtDir() const noexcept
 {
 	ReaderLock(m_mutex);
-	return m_data->GetAtDir();
+	return m_pimpl->GetAtDir();
 };
 
 const std::string& FileID::GetAtDirRelativeBasename() const noexcept
 {
 	ReaderLock(m_mutex);
-	return m_data->GetAtDirRelativeBasename();
+	return m_pimpl->GetAtDirRelativeBasename();
 }
 
 bool FileID::IsStatInfoValid() const noexcept
 {
 	ReaderLock(m_mutex);
-	return m_data->IsStatInfoValid();
+	return m_pimpl->IsStatInfoValid();
 };
 
 FileType FileID::GetFileType() const noexcept
 {
 	WriterLock(m_mutex);
 
-	return m_data->GetFileType();
+	return m_pimpl->GetFileType();
 }
 
 off_t FileID::GetFileSize() const noexcept
 {
 	ReaderLock(m_mutex);
-	return m_data->GetFileSize();
+	return m_pimpl->GetFileSize();
 };
 
 blksize_t FileID::GetBlockSize() const noexcept
 {
 	WriterLock(m_mutex);
-	return m_data->GetBlockSize();
+	return m_pimpl->GetBlockSize();
 };
 
 const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
 	WriterLock(m_mutex);
-	return m_data->GetUniqueFileIdentifier();
+	return m_pimpl->GetUniqueFileIdentifier();
 };
 
 FileDescriptor FileID::GetFileDescriptor()
 {
 	WriterLock(m_mutex);
-	return m_data->GetFileDescriptor();
+	return m_pimpl->GetFileDescriptor();
 }
 
 dev_t FileID::GetDev() const noexcept
 {
 	WriterLock(m_mutex);
-	return m_data->GetDev();
+	return m_pimpl->GetDev();
 };
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
 	WriterLock(m_mutex);
-	m_data->SetDevIno(d, i);
+	m_pimpl->SetDevIno(d, i);
 }
 
 void FileID::SetStatInfo(const struct stat &stat_buf) noexcept
 {
 	WriterLock(m_mutex);
-	m_data->UnsyncedSetStatInfo(stat_buf);
+	m_pimpl->UnsyncedSetStatInfo(stat_buf);
 }
 
 
