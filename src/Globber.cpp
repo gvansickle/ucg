@@ -344,9 +344,9 @@ void Globber::ScanOneDirectory(FTS *tree, FTSENT *parent, FTSENT *child, sync_qu
 				// Based on the file name, this file should be scanned.
 
 				LOG(INFO) << "... should be scanned.";
-
+#if 0 /// @todo REMOVE OR FIX
 				m_out_queue.wait_push(FileID(child, !m_using_nostat));
-
+#endif
 				// Count the number of files we found that were included in the search.
 				stats.m_num_files_scanned++;
 			}

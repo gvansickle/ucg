@@ -15,30 +15,23 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SRC_FUTURE_MEMORY_HPP_
-#define SRC_FUTURE_MEMORY_HPP_
+/** @file type_traits.hpp
+ * Post-C++11 additions to the <type_traits> facilities.
+ */
+
+#ifndef SRC_FUTURE_TYPE_TRAITS_HPP_
+#define SRC_FUTURE_TYPE_TRAITS_HPP_
 
 #include <config.h>
-
-#include <memory>
-
-#include "type_traits.hpp"
+#include <type_traits>
 
 namespace std
 {
+	template< class T >
+	constexpr bool is_class_v = is_class<T>::value;
 
-#if defined(__cpp_lib_make_unique)
-// We have a std::make_unique<>().
-#else
-/// Define our own make_unique<>() substitute.
-/// @todo Doesn't work with array types.
-template <typename T, typename... Args>
-std::enable_if_t<std::is_array<T>::value,std::unique_ptr<T>> make_unique(Args&&.. args)
-{
-	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-#endif
-
+	template< bool B, class T = void >
+	using enable_if_t = typename enable_if<B,T>::type;
 }
 
-#endif /* SRC_FUTURE_MEMORY_HPP_ */
+#endif /* SRC_FUTURE_TYPE_TRAITS_HPP_ */

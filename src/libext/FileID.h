@@ -55,8 +55,6 @@ enum FileType
  */
 class FileID
 {
-	/// pImpl forward declaration.
-	class UnsynchronizedFileID;
 private:
 
 	using MutexType = std::mutex;  /// @todo C++17, use std::shared_mutex.  C++14, use std::shared_timed_mutex.
@@ -65,16 +63,19 @@ private:
 
 	/// Mutex for locking in copy and move constructors and some operations.
 	mutable std::mutex m_mutex;
-	ReaderLock m_reader_lock;
-	WriterLock m_writer_lock;
 
 public:
+
+	/// pImpl forward declaration.
+	/// Not private: only because we want to do some static_assert() checks on it.
+	class UnsynchronizedFileID;
+
 	/// @name Tag types for selecting FileID() constructors when the given path is known to be relative or absolute.
 	/// @{
 	struct path_type_tag {};
-	struct path_known_relative_tag {};
-	struct path_known_absolute_tag {};
-	struct path_known_cwd_tag {};
+	struct path_known_relative_tag : path_type_tag {};
+	struct path_known_absolute_tag : path_type_tag {};
+	struct path_known_cwd_tag : path_type_tag {}; 	/// Our equivalent for AT_FDCWD, the cwd of the process.
 	static constexpr path_known_relative_tag path_known_relative = path_known_relative_tag();
 	static constexpr path_known_absolute_tag path_known_absolute = path_known_absolute_tag();
 	static constexpr path_known_cwd_tag path_known_cwd = path_known_cwd_tag();
@@ -82,7 +83,10 @@ public:
 
 	/// @name Constructors.
 	/// @{
-	FileID() = default;
+	FileID();
+
+	/// Our equivalent for AT_FDCWD, the cwd of the process.
+	/// Different in that each FileID created with this constructor holds a real file handle to the "." directory.
 	FileID(path_known_cwd_tag tag);
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type = FT_UNINITIALIZED);
@@ -132,38 +136,6 @@ public:
 	void SetDevIno(dev_t d, ino_t i) noexcept;
 
 private:
-#if 0
-	/// Private copy constructor to make copies threadsafe.
-	/// The public copy constructor delegates to this private one, which locks around the copy.
-	FileID(const FileID& other, [[maybe_unused]] ReaderLock other_mutex)
-		: m_basename(other.m_basename),
-		  m_at_dir(other.m_at_dir),
-		  m_path(other.m_path),
-		  m_file_descriptor(other.m_file_descriptor),
-		  m_file_type(other.m_file_type),
-		  m_stat_info_valid(other.m_stat_info_valid),
-		  m_unique_file_identifier(other.m_unique_file_identifier),
-		  m_dev(other.m_dev),
-		  m_size(other.m_size),
-		  m_block_size(other.m_block_size),
-		  m_blocks(other.m_blocks)
-	{ };
-
-	FileID(FileID&& other, [[maybe_unused]] WriterLock other_mutex)
-		: m_basename(std::move(other.m_basename)),
-		  m_at_dir(std::move(other.m_at_dir)),
-		  m_path(std::move(other.m_path)),
-		  m_file_descriptor(std::move(other.m_file_descriptor)),
-		  m_file_type(std::move(other.m_file_type)),
-		  m_stat_info_valid(std::move(other.m_stat_info_valid)),
-		  m_unique_file_identifier(std::move(other.m_unique_file_identifier)),
-		  m_dev(std::move(other.m_dev)),
-		  m_size(std::move(other.m_size)),
-		  m_block_size(std::move(other.m_block_size)),
-		  m_blocks(std::move(other.m_blocks))
-	{ };
-#endif
-
 
 	void UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept;
 
@@ -171,7 +143,7 @@ private:
 
 	const std::string& UnsyncedGetPath() const;
 
-	/// The data.
+	/// The pImpl.
 	std::unique_ptr<UnsynchronizedFileID> m_data;
 };
 
