@@ -189,9 +189,11 @@ public:
 
 /// @name Macros for output intended for the end user.
 ///@{
-#define NOTICE() LOG(STDERR)
-#define WARN()   LOG(STDERR) << "warning: "
-#define ERROR()  LOG(STDERR) << "error: "
+/// @note CERR() doesn't capture the function name, unlike LOG().
+#define CERR(logger) logger::IsEnabled() && logger().m_tempstream
+#define NOTICE() CERR(STDERR)
+#define WARN()   CERR(STDERR) << "warning: "
+#define ERROR()  CERR(STDERR) << "error: "
 ///@}
 
 #endif /* SRC_LOGGER_H_ */

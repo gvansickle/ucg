@@ -97,7 +97,8 @@ public:
 			// Error.
 			m_file_type = FT_STAT_FAILED;
 			LOG(INFO) << "fstatat() failed" << LOG_STRERROR();
-			errno = 0;
+			// Note: We don't clear errno here, we want to be able to look at it in the caller.
+			//errno = 0;
 		}
 		else
 		{

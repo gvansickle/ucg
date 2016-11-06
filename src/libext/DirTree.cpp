@@ -186,7 +186,9 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 		// We now have one of two situations:
 		// - The dirent didn't know what the type of the file was, or
 		// - The dirent told us this was a symlink, and we're doing a logical traversal.
-		//   Now we have to actually stat this entry and see where it goes.
+		//   Now we have to actually stat this entry and see what it is.
+		//   Note that if the situation is m_logical+is_symlink, we want to find out
+		//   where it goes, so we follow the symlink.
 
 		// Stat the filename using the directory as the at-descriptor.
 		fstatat(dse->GetFileDescriptor().GetFD(), dname, &statbuf,
