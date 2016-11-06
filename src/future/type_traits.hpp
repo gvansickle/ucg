@@ -27,11 +27,15 @@
 
 namespace std
 {
+#if !defined(__cpp_lib_type_trait_variable_templates) //  Library Fundamentals TS/C++17.
 	template< class T >
 	constexpr bool is_class_v = is_class<T>::value;
+#endif
 
+#if !defined(__cpp_lib_transformation_trait_aliases) // C++14 feature.
 	template< bool B, class T = void >
 	using enable_if_t = typename enable_if<B,T>::type;
+#endif
 }
 
 #endif /* SRC_FUTURE_TYPE_TRAITS_HPP_ */
