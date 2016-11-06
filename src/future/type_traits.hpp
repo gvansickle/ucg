@@ -28,9 +28,11 @@
 
 namespace std
 {
+#if 0 /// @todo gcc 4.8.4 chokes on this.  Portability for another time.
 #if !defined(__cpp_lib_type_trait_variable_templates) //  Library Fundamentals TS/C++17.
 	template< class T >
 	constexpr bool is_class_v = std::is_class<T>::value;
+#endif
 #endif
 
 #if !defined(__cpp_lib_transformation_trait_aliases) // C++14 feature ///@todo There's some sort of issue with this on OS X/clang.
