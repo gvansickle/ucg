@@ -200,6 +200,121 @@ FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_di
 	}
 }
 
+const std::string& FileID::UnsynchronizedFileID::GetBasename() const noexcept
+{
+	return m_basename;
+};
+
+FileDescriptor FileID::UnsynchronizedFileID::GetFileDescriptor()
+{
+	/// @todo This needs rethinking.  The FD would be opened differently depending on the file type etc.
+
+
+	if(*m_file_descriptor == cm_invalid_file_descriptor)
+	{
+		// File hasn't been opened.
+
+		if(m_basename.empty() && !m_path.empty())
+		{
+			m_file_descriptor = make_shared_fd(openat(AT_FDCWD, m_path.c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
+		}
+		else
+		{
+			m_file_descriptor = make_shared_fd(openat(*(m_at_dir->GetFileDescriptor()), GetBasename().c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
+		}
+
+		if(*m_file_descriptor < 0)
+		{
+			throw std::runtime_error("Bad fd");
+		}
+	}
+
+	return m_file_descriptor;
+}
+
+
+const std::string& FileID::UnsynchronizedFileID::GetAtDirRelativeBasename() const noexcept
+{
+	if(m_basename.empty())
+	{
+		throw std::runtime_error("basename was empty");
+	}
+	return m_basename;
+}
+
+const std::shared_ptr<FileID>& FileID::UnsynchronizedFileID::GetAtDirCRef() const noexcept
+{
+	if(!m_at_dir)
+	{
+		throw std::runtime_error("no atdir");
+	}
+	return m_at_dir;
+};
+void FileID::UnsynchronizedFileID::SetDevIno(dev_t d, ino_t i) noexcept
+{
+	m_dev = d;
+	m_unique_file_identifier = dev_ino_pair(d, i);
+}
+
+void FileID::UnsynchronizedFileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
+{
+	m_stat_info_valid = true;
+
+	// Determine file type.
+	if(S_ISREG(stat_buf.st_mode))
+	{
+		m_file_type = FT_REG;
+	}
+	else if(S_ISDIR(stat_buf.st_mode))
+	{
+		m_file_type = FT_DIR;
+	}
+	else if(S_ISLNK(stat_buf.st_mode))
+	{
+		m_file_type = FT_SYMLINK;
+	}
+	else
+	{
+		// Those are the only types we know or care about.
+		m_file_type = FT_UNKNOWN;
+	}
+
+	m_dev = stat_buf.st_dev;
+	m_unique_file_identifier = dev_ino_pair(stat_buf.st_dev, stat_buf.st_ino);
+	m_size = stat_buf.st_size;
+	m_block_size = stat_buf.st_blksize;
+	m_blocks = stat_buf.st_blocks;
+}
+
+/// @todo Rename this because it's synchronized now.
+const std::string& FileID::UnsynchronizedFileID::GetPath() const
+{
+	if(m_path.empty())
+	{
+		// Build the full path.
+		if(!m_at_dir->IsAtFDCWD())
+		{
+			auto at_path = m_at_dir->GetPath();
+			m_path.reserve(at_path.size() + m_basename.size() + 2);
+			m_path = at_path + '/' + m_basename;
+		}
+		else
+		{
+			m_path = m_basename;
+		}
+	}
+
+	return m_path;
+}
+
+
+void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
+{
+	WriterLock(m_mutex);
+	m_data->UnsyncedSetStatInfo(stat_buf);
+}
+
+
 
 
 // Default constructor.
@@ -211,6 +326,7 @@ FileID::FileID()
 // Copy constructor.
 FileID::FileID(const FileID& other) : m_data((ReaderLock(other.m_mutex), std::make_unique<FileID::UnsynchronizedFileID>(*other.m_data))) {};
 
+// Move constructor.
 FileID::FileID(FileID&& other) : m_data((WriterLock(other.m_mutex), std::move(other.m_data))) {};
 
 FileID::FileID(path_known_cwd_tag)
@@ -294,17 +410,10 @@ FileID& FileID::operator=(FileID&& other)
 	return *this;
 };
 
-
 FileID::~FileID()
 {
 
 }
-
-
-const std::string& FileID::UnsynchronizedFileID::GetBasename() const noexcept
-{
-	return m_basename;
-};
 
 const std::string& FileID::GetBasename() const noexcept
 {
@@ -315,39 +424,9 @@ const std::string& FileID::GetBasename() const noexcept
 
 const std::string& FileID::GetPath() const
 {
-	return UnsyncedGetPath();
+	WriterLock(m_mutex);
+	return m_data->GetPath();
 }
-
-/// @todo Rename this because it's synchronized now.
-const std::string& FileID::UnsyncedGetPath() const
-{
-	ReaderLock(m_mutex);
-	if(m_data->m_path.empty())
-	{
-		// Build the full path.
-		if(!m_data->m_at_dir->IsAtFDCWD())
-		{
-			auto at_path = m_data->m_at_dir->UnsyncedGetPath();
-			m_data->m_path.reserve(at_path.size() + m_data->m_basename.size() + 2);
-			m_data->m_path = at_path + '/' + m_data->m_basename;
-		}
-		else
-		{
-			m_data->m_path = m_data->m_basename;
-		}
-	}
-
-	return m_data->m_path;
-}
-
-const std::shared_ptr<FileID>& FileID::UnsynchronizedFileID::GetAtDirCRef() const noexcept
-{
-	if(!m_at_dir)
-	{
-		throw std::runtime_error("no atdir");
-	}
-	return m_at_dir;
-};
 
 const std::shared_ptr<FileID>& FileID::GetAtDirCRef() const noexcept
 {
@@ -372,16 +451,6 @@ bool FileID::IsStatInfoValid() const noexcept
 	ReaderLock(m_mutex);
 	return m_data->IsStatInfoValid();
 };
-
-
-const std::string& FileID::UnsynchronizedFileID::GetAtDirRelativeBasename() const noexcept
-{
-	if(m_basename.empty())
-	{
-		throw std::runtime_error("basename was empty");
-	}
-	return m_basename;
-}
 
 FileType FileID::GetFileType() const noexcept
 {
@@ -432,72 +501,3 @@ void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 	m_data->SetDevIno(d, i);
 }
 
-void FileID::UnsynchronizedFileID::SetDevIno(dev_t d, ino_t i) noexcept
-{
-	m_dev = d;
-	m_unique_file_identifier = dev_ino_pair(d, i);
-}
-
-void FileID::UnsynchronizedFileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
-{
-	m_stat_info_valid = true;
-
-	// Determine file type.
-	if(S_ISREG(stat_buf.st_mode))
-	{
-		m_file_type = FT_REG;
-	}
-	else if(S_ISDIR(stat_buf.st_mode))
-	{
-		m_file_type = FT_DIR;
-	}
-	else if(S_ISLNK(stat_buf.st_mode))
-	{
-		m_file_type = FT_SYMLINK;
-	}
-	else
-	{
-		// Those are the only types we know or care about.
-		m_file_type = FT_UNKNOWN;
-	}
-
-	m_dev = stat_buf.st_dev;
-	m_unique_file_identifier = dev_ino_pair(stat_buf.st_dev, stat_buf.st_ino);
-	m_size = stat_buf.st_size;
-	m_block_size = stat_buf.st_blksize;
-	m_blocks = stat_buf.st_blocks;
-}
-
-void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
-{
-	WriterLock(m_mutex);
-	m_data->UnsyncedSetStatInfo(stat_buf);
-}
-
-
-FileDescriptor FileID::UnsynchronizedFileID::GetFileDescriptor()
-{
-	/// @todo This needs rethinking.  The FD would be opened differently depending on the file type etc.
-
-
-	if(*m_file_descriptor == cm_invalid_file_descriptor)
-	{
-		// File hasn't been opened.
-
-		if(m_basename.empty() && !m_path.empty())
-		{
-			m_file_descriptor = make_shared_fd(openat(AT_FDCWD, m_path.c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
-		}
-		else
-		{
-			m_file_descriptor = make_shared_fd(openat(*(m_at_dir->GetFileDescriptor()), GetBasename().c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
-		}
-
-		if(*m_file_descriptor < 0)
-		{
-			throw std::runtime_error("Bad fd");
-		}
-	}
-
-	return m_file_descriptor;
-}
