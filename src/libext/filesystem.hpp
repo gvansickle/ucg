@@ -24,7 +24,7 @@
 
 #include <cassert>
 #include <cstdio>  // For perror() on FreeBSD.
-#include <fcntl.h> // For openat() etc.
+#include <fcntl.h> // For openat() and other *at() functions, AT_* defines.
 #include <unistd.h> // For close().
 #include <sys/stat.h>
 #include <sys/types.h> // for dev_t, ino_t
@@ -57,6 +57,12 @@ inline int openat(int at_fd, const char *fn, int flags) { return -1; };
 inline DIR *fdopendir(int fd) { return nullptr; };
 inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags) { return -1; };
 #endif
+
+// Cygwin has *at() functions, but is missing some AT_* defines.
+#if !defined(AT_NO_AUTOMOUNT)
+#define AT_NO_AUTOMOUNT 0
+#endif
+
 /// @name Take care of some portability issues.
 /// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
 /// - No AT_FDCWD, no openat, no fdopendir, no fstatat.
