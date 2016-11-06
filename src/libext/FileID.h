@@ -63,6 +63,8 @@ private:
 
 	/// Mutex for locking in copy and move constructors and some operations.
 	mutable std::mutex m_mutex;
+	ReaderLock m_reader_lock;
+	WriterLock m_writer_lock;
 
 public:
 
@@ -84,6 +86,8 @@ public:
 	/// @name Constructors.
 	/// @{
 	FileID();
+	FileID(const FileID& other);
+	FileID(FileID&& other);
 
 	/// Our equivalent for AT_FDCWD, the cwd of the process.
 	/// Different in that each FileID created with this constructor holds a real file handle to the "." directory.
@@ -93,8 +97,7 @@ public:
 	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
 	FileID(const FTSENT *ftsent, bool stat_info_known_valid);
-	FileID(const FileID& other);
-	FileID(FileID&& other);
+
 	/// @}
 
 	/// Copy assignment.
@@ -115,10 +118,6 @@ public:
 	bool IsRegularFile() const noexcept { return GetFileType() == FT_REG; };
 	bool IsDir() const noexcept { return GetFileType() == FT_DIR; };
 
-	bool IsAtFDCWD() const noexcept;
-
-	/// @todo This should maybe be weak_ptr.
-	const std::shared_ptr<FileID>& GetAtDirCRef() const noexcept;
 	std::shared_ptr<FileID> GetAtDir() const noexcept;
 
 	const std::string& GetAtDirRelativeBasename() const noexcept;
@@ -137,11 +136,9 @@ public:
 
 private:
 
-	void UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept;
+	void SetStatInfo(const struct stat &stat_buf) noexcept;
 
-	void LazyLoadStatInfo() const;
-
-	const std::string& UnsyncedGetPath() const;
+	void LazyLoadStatInfo();
 
 	/// The pImpl.
 	std::unique_ptr<UnsynchronizedFileID> m_data;

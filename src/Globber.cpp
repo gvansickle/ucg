@@ -130,10 +130,10 @@ void Globber::Run()
 		LOG(INFO) << "No paths below root level to process.";
 		dir_queue.close();
 	}
-
+#endif
 	// Log the traversal stats.
 	LOG(INFO) << m_traversal_stats;
-#endif
+
 }
 
 /**

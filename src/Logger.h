@@ -109,11 +109,16 @@ private:
 	static std::mutex m_cerr_mutex;
 };
 
-
+/**
+ * A Logger which can be enabled or disabled.
+ */
 template <typename T>
 class EnableableLogger : public Logger
 {
 public:
+	/// Primary constructor.
+	/// @param reporting_name  This is something like "INFO" or "DEBUG", indicating the severity level.  It gets set
+	///                        automatically in the INFO, DEBUG, etc. subclasses below.
 	EnableableLogger(const char *reporting_name) { m_tempstream << reporting_name << ": " << get_thread_name() << ": "; };
 	~EnableableLogger() noexcept override  = default;
 
@@ -179,7 +184,7 @@ public:
 
 /// @name Macros for logging messages which are not intended for end-user consumption.
 ///@{
-#define LOG(logger) logger::IsEnabled() && logger().m_tempstream
+#define LOG(logger) logger::IsEnabled() && logger().m_tempstream << __PRETTY_FUNCTION__ << ":"
 ///@}
 
 /// @name Macros for output intended for the end user.

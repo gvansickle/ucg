@@ -408,6 +408,11 @@ inline DIR* opendirat(int at_dir, const char *name)
 		perror("openat() failed");
 	}
 	DIR* d = fdopendir(file_fd);
+	if(d == nullptr)
+	{
+		perror("fdopendir failed");
+		errno = 0;
+	}
 
 	return d;
 }

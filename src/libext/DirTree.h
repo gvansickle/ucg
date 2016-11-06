@@ -53,7 +53,7 @@ public:
 private:
 
 	/// Flag indicating whether we should traverse symlinks or not.
-	bool m_logical {true};
+	bool m_logical {false};
 
 	sync_queue<FileID>& m_out_queue;
 
