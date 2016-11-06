@@ -33,7 +33,7 @@ namespace std
 	constexpr bool is_class_v = std::is_class<T>::value;
 #endif
 
-#if !defined(__cpp_lib_transformation_trait_aliases) // C++14 feature.
+#if !defined(__cpp_lib_transformation_trait_aliases) // C++14 feature ///@todo There's some sort of issue with this on OS X/clang.
 	template< bool B, class T = void >
 	using enable_if_t = typename std::enable_if<B,T>::type;
 #endif

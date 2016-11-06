@@ -531,7 +531,7 @@ AC_OUTPUT
 # Print a configure summary.
 AC_MSG_RESULT([
   Configuration Summary for $PACKAGE $VERSION
-  ===========================================
+  =================================================
 
   Compilers
   ---------

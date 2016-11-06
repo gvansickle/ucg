@@ -33,7 +33,8 @@ namespace std
 /// Define our own make_unique<>() substitute.
 /// @todo Doesn't work with array types.
 template <typename T, typename... Args>
-std::enable_if_t<std::is_array<T>::value,std::unique_ptr<T>> make_unique(Args&&.. args)
+typename std::enable_if<std::is_array<T>::value, std::unique_ptr<T>>::type
+	make_unique(Args&&.. args)
 {
 	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
