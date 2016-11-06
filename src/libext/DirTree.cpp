@@ -191,8 +191,14 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 		//   where it goes, so we follow the symlink.
 
 		// Stat the filename using the directory as the at-descriptor.
-		fstatat(dse->GetFileDescriptor().GetFD(), dname, &statbuf,
+		int retval = fstatat(dse->GetFileDescriptor().GetFD(), dname, &statbuf,
 				AT_NO_AUTOMOUNT | (!m_logical ? AT_SYMLINK_NOFOLLOW : 0));
+		if(retval == -1)
+		{
+			WARN() << "Attempt to stat file '" << dname << "' in directory '" << dse->GetPath() << "' failed: " << LOG_STRERROR();
+			errno = 0;
+			return;
+		}
 		/// @todo Capture this info in the FileID object.
 		is_dir = S_ISDIR(statbuf.st_mode);
 		is_file = S_ISREG(statbuf.st_mode);
@@ -210,7 +216,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 	// Is the file type still unknown?
 	if(is_unknown)
 	{
-		std::cerr << "cannot determine file type: " << dname << ", " << statbuf.st_mode << '\n';
+		WARN() << "cannot determine file type: " << dname << ", " << statbuf.st_mode << '\n';
 		return;
 	}
 
