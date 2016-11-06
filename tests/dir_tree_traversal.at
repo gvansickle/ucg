@@ -17,7 +17,7 @@
 
 AT_BANNER([UniversalCodeGrep directory traversal checks])
 
-# Create a cross-linked directory tree.
+# Macro which creates a cross-linked directory tree.
 m4_define([UCG_CREATE_CROSSLINKED_DIR], [
 AS_MKDIR_P([dir1/dir2])
 AS_MKDIR_P([dir1/dir3])
@@ -33,7 +33,7 @@ line 6
 (cd dir1/dir3 && $TEST_LN_S ../dir2 link_to_dir2) 
 ])
 
-# Create a normal directory tree.
+# Macro which creates a normal directory tree.
 m4_define([UCG_CREATE_NORMAL_DIRTREE], [
 AS_MKDIR_P([dir1/dir2])
 AS_MKDIR_P([dir1/dir3])
@@ -59,7 +59,9 @@ UCG_CREATE_CROSSLINKED_DIR
 AT_CHECK([ucg --noenv --dirjobs=1 'line'], [0], [stdout], [stderr])
 
 # Check the results.
-AT_CHECK([cat stdout | LCT], [0], [12])
+# Results now match ack and ag here, and also the multithreaded case, in that we get 6 matches, not the 12
+# we got previously due to the way the fts.h library handled crosslinked symlinks. 
+AT_CHECK([cat stdout | LCT], [0], [6])
 AT_CHECK([cat stderr | LCT], [0], [2])
 AT_CHECK([cat stdout | $EGREP '.*file1.py:2:line2'], [0], [ignore], [ignore])
 AT_CHECK([cat stderr | $EGREP 'ucg: warning: .*/link_to_dir2.*recursive directory loop'], [0], [ignore], [ignore])
