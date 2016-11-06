@@ -176,6 +176,32 @@ static_assert(std::is_copy_assignable<FileID::UnsynchronizedFileID>::value, "Uns
 static_assert(std::is_move_assignable<FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be move assignable to itself.");
 /// @}
 
+FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
+	: m_basename(pathname), m_at_dir(at_dir_fileid)
+{
+	/// @note Taking pathname by value since we are always storing it.
+	/// Full openat() semantics:
+	/// - If pathname is absolute, at_dir_fd is ignored.
+	/// - If pathname is relative, it's relative to at_dir_fd.
+
+	if(is_pathname_absolute(pathname))
+	{
+		m_path = pathname;
+	}
+}
+
+FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
+		const struct stat *stat_buf, FileType type)
+		: m_at_dir(at_dir_fileid), m_basename(basename), m_path(pathname), m_file_type(type)
+{
+	if(stat_buf != nullptr)
+	{
+		UnsyncedSetStatInfo(*stat_buf);
+	}
+}
+
+
+
 // Default constructor.
 // Note that it's defined here in the cpp vs. in the header because it needs to be able to see the full definition of UnsynchronizedFileID.
 FileID::FileID()
@@ -189,10 +215,6 @@ FileID::FileID(FileID&& other) : m_data((WriterLock(other.m_mutex), std::move(ot
 
 FileID::FileID(path_known_cwd_tag)
 	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(nullptr, ".", ".", nullptr, FT_DIR))
-	/*: m_data.m_basename("."),
-	  m_data.m_path("."),
-
-	  m_data.m_file_type(FT_DIR)*/
 {
 	m_data->m_file_descriptor = make_shared_fd(AT_FDCWD);
 }
@@ -220,31 +242,6 @@ FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
 {
 
 }
-
-FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
-	: m_basename(pathname), m_at_dir(at_dir_fileid)
-{
-	/// @note Taking pathname by value since we are always storing it.
-	/// Full openat() semantics:
-	/// - If pathname is absolute, at_dir_fd is ignored.
-	/// - If pathname is relative, it's relative to at_dir_fd.
-
-	if(is_pathname_absolute(pathname))
-	{
-		m_path = pathname;
-	}
-}
-
-FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
-		const struct stat *stat_buf, FileType type)
-		: m_at_dir(at_dir_fileid), m_basename(basename), m_path(pathname), m_file_type(type)
-{
-	if(stat_buf != nullptr)
-	{
-		UnsyncedSetStatInfo(*stat_buf);
-	}
-}
-
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf, FileType type)
 	: FileID::FileID(path_known_relative, at_dir_fileid, basename, type)
@@ -276,6 +273,9 @@ FileID& FileID::operator=(const FileID& other)
 {
 	if(this != &other)
 	{
+		WriterLock this_lock(m_mutex, std::defer_lock);
+		ReaderLock other_lock(other.m_mutex, std::defer_lock);
+		std::lock(this_lock, other_lock);
 		m_data = std::make_unique<FileID::UnsynchronizedFileID>(*other.m_data);
 	}
 	return *this;
