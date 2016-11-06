@@ -26,13 +26,8 @@
 #include <sys/stat.h>
 #include <fts.h>
 
-#include <memory> // For std::make_unique<>
+#include <future/memory.hpp> // For std::make_unique<>
 
-#if __cpp_lib_make_unique
-STATIC_MSG("Have make_unique")
-#else
-#error "No make_unique."
-#endif
 
 /**
  * Factorization of the FileID class.  This is the unsynchronized "pImpl" part which holds all the data.

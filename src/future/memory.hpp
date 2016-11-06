@@ -27,7 +27,7 @@
 namespace std
 {
 
-#if defined(__cpp_lib_make_unique)
+#if defined(__cpp_lib_make_unique)  // C++14 feature.
 // We have a std::make_unique<>().
 #else
 /// Define our own make_unique<>() substitute.
