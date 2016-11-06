@@ -336,6 +336,7 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case OPT_TEST_LOG_ALL:
 		INFO::Enable(true);
+		DEBUG::Enable(true);
 		break;
 	case OPT_TEST_NOENV_USER:
 		// The --test-noenv-user option is handled specially outside of the argp parser.

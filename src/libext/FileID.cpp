@@ -281,21 +281,26 @@ void FileID::UnsynchronizedFileID::UnsyncedSetStatInfo(const struct stat &stat_b
 const std::string& FileID::UnsynchronizedFileID::GetPath() const
 {
 	// Do we not have a full path already?
+	LOG(DEBUG) << "START";
 	if(m_path.empty())
 	{
+		LOG(DEBUG) << "NO m_path YET";
 		// No.  Build the full path.
 		auto at_path = m_at_dir->GetPath();
+		LOG(DEBUG) << "GOT AT_PATH";
+		LOG(DEBUG) << "AT_PATH=" << at_path << ", size=" << at_path.size();
 		if(at_path != ".")
 		{
-			m_path.reserve(at_path.size() + m_basename.size() + 2);
-			m_path = at_path + '/' + m_basename;
+			//m_path.reserve(at_path.size() + m_basename.size() + 2);
+			m_path = at_path + "/" + m_basename;
 		}
 		else
 		{
 			m_path = m_basename;
 		}
 	}
-
+	LOG(DEBUG) << "M_PATH=" << m_path;
+	LOG(DEBUG) << "END";
 	return m_path;
 }
 
@@ -307,13 +312,20 @@ const std::string& FileID::UnsynchronizedFileID::GetPath() const
 // Note that it's defined here in the cpp vs. in the header because it needs to be able to see the full definition of UnsynchronizedFileID.
 FileID::FileID()
 {
+	LOG(DEBUG) << "Default constructor called";
 }
 
 // Copy constructor.
-FileID::FileID(const FileID& other) : m_reader_lock(other.m_mutex), m_data(std::make_unique<FileID::UnsynchronizedFileID>(*other.m_data)) {};
+FileID::FileID(const FileID& other) : m_data((ReaderLock(other.m_mutex), std::make_unique<FileID::UnsynchronizedFileID>(*other.m_data)))
+{
+	LOG(DEBUG) << "Copy constructor called";
+};
 
 // Move constructor.
-FileID::FileID(FileID&& other) : m_writer_lock(other.m_mutex), m_data(std::move(other.m_data)) {};
+FileID::FileID(FileID&& other) : m_data((WriterLock(other.m_mutex), std::move(other.m_data)))
+{
+	LOG(DEBUG) << "Move constructor called";
+};
 
 FileID::FileID(path_known_cwd_tag)
 	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(nullptr, ".", ".", nullptr, FT_DIR))
@@ -398,7 +410,7 @@ FileID& FileID::operator=(FileID&& other)
 
 FileID::~FileID()
 {
-
+	WriterLock(m_mutex);
 }
 
 const std::string& FileID::GetBasename() const noexcept
