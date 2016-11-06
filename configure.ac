@@ -355,6 +355,10 @@ AX_GCC_BUILTIN(__builtin_expect)
 AX_GCC_BUILTIN(__builtin_popcount)
 AX_GCC_BUILTIN(__builtin_bswap32)
 AX_GCC_BUILTIN(__builtin_ctzll)
+# C++14
+AC_CHECK_DECLS([__cpp_alias_templates, __cpp_lib_make_unique, __cpp_lib_transformation_trait_aliases])
+# C++17
+AC_CHECK_DECLS([__cpp_lib_type_trait_variable_templates])
 
 # Detect __has_include() support.
 AC_MSG_CHECKING([for __has_include])
