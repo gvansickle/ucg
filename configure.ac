@@ -516,7 +516,7 @@ AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 
 ### Valgrind support.
 ### @todo Put this in.
-AH_BOTTOM([#include <valgrind_support.h>])
+#AH_BOTTOM([#include <valgrind_support.h>])
 
 ###
 ### Create the Makefiles for the program.
