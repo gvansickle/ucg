@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
-dnl Process this file with autoconf to produce atlocal.
+# Process this file with autoconf to produce atlocal.
 
 # We need this so we're able to find the binary we built, and find it prior to any already-installed versions.
 PATH=@abs_builddir@:@abs_top_builddir@/src:@abs_top_srcdir@/build-aux:$top_srcdir:$srcdir:$PATH

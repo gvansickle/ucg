@@ -116,3 +116,5 @@ dist-hook:
 reconf: ./config.status
 	$(SHELL) ./config.status --recheck
 
+check-malloc:
+	export MALLOC_CHECK_=3 && $(MAKE) check

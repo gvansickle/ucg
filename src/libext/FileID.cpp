@@ -63,9 +63,6 @@ public:
 	const std::string& GetPath() const;
 	FileDescriptor GetFileDescriptor();
 
-	/// @todo This is probably not correct.  Our "AT_FDCWD" will be a real directory.
-	bool IsAtFDCWD() const noexcept { return m_file_descriptor.GetFD() == AT_FDCWD; };
-
 	FileType GetFileType() const noexcept
 	{
 		if(m_file_type == FT_UNINITIALIZED)
@@ -99,6 +96,9 @@ public:
 		{
 			// Error.
 			m_file_type = FT_STAT_FAILED;
+			LOG(INFO) << "fstatat() failed" << LOG_STRERROR();
+			// Note: We don't clear errno here, we want to be able to look at it in the caller.
+			//errno = 0;
 		}
 		else
 		{
@@ -108,7 +108,6 @@ public:
 
 	void UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept;
 
-	const std::shared_ptr<FileID>& GetAtDirCRef() const noexcept;
 	std::shared_ptr<FileID> GetAtDir() const noexcept { return m_at_dir; };
 
 	const std::string& GetAtDirRelativeBasename() const noexcept;
@@ -128,15 +127,15 @@ public:
 	dev_t GetDev() const noexcept { if(m_dev == static_cast<dev_t>(-1)) { LazyLoadStatInfo(); }; return m_dev; };
 	void SetDevIno(dev_t d, ino_t i) noexcept;
 
+	/// Shared pointer to the directory this FileID is in.
+	mutable std::shared_ptr<FileID> m_at_dir;
+
 	/// The basename of this file.
 	/// We define this somewhat differently here: This is either:
 	/// - The full absolute path, or
 	/// - The path relative to m_at_dir, which may consist of more than one path element.
 	/// In any case, it is always equal to the string passed into the constructor.
 	mutable std::string m_basename;
-
-	/// Shared pointer to the directory this FileID is in.
-	mutable std::shared_ptr<FileID> m_at_dir;
 
 	/// The absolute path to this file.
 	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
@@ -177,12 +176,14 @@ static_assert(std::is_move_assignable<FileID::UnsynchronizedFileID>::value, "Uns
 /// @}
 
 FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
-	: m_basename(pathname), m_at_dir(at_dir_fileid)
+	: m_at_dir(at_dir_fileid), m_basename(pathname)
 {
 	/// @note Taking pathname by value since we are always storing it.
 	/// Full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
+
+	LOG(INFO) << "2-param const., m_basename=" << m_basename << ", m_at_dir=" << m_at_dir->m_pimpl->GetPath();
 
 	if(is_pathname_absolute(pathname))
 	{
@@ -242,14 +243,6 @@ const std::string& FileID::UnsynchronizedFileID::GetAtDirRelativeBasename() cons
 	return m_basename;
 }
 
-const std::shared_ptr<FileID>& FileID::UnsynchronizedFileID::GetAtDirCRef() const noexcept
-{
-	if(!m_at_dir)
-	{
-		throw std::runtime_error("no atdir");
-	}
-	return m_at_dir;
-};
 void FileID::UnsynchronizedFileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
 	m_dev = d;
@@ -286,33 +279,32 @@ void FileID::UnsynchronizedFileID::UnsyncedSetStatInfo(const struct stat &stat_b
 	m_blocks = stat_buf.st_blocks;
 }
 
-/// @todo Rename this because it's synchronized now.
 const std::string& FileID::UnsynchronizedFileID::GetPath() const
 {
+	// Do we not have a full path already?
+	LOG(DEBUG) << "START";
 	if(m_path.empty())
 	{
-		// Build the full path.
-		if(!m_at_dir->IsAtFDCWD())
+		LOG(DEBUG) << "NO m_path YET";
+		// No.  Build the full path.
+		auto at_path = m_at_dir->GetPath();
+		LOG(DEBUG) << "GOT AT_PATH";
+		LOG(DEBUG) << "AT_PATH=" << at_path << ", size=" << at_path.size();
+		if(at_path != ".")
 		{
-			auto at_path = m_at_dir->GetPath();
-			m_path.reserve(at_path.size() + m_basename.size() + 2);
-			m_path = at_path + '/' + m_basename;
+			//m_path.reserve(at_path.size() + m_basename.size() + 2);
+			m_path = at_path + "/" + m_basename;
 		}
 		else
 		{
 			m_path = m_basename;
 		}
 	}
-
+	LOG(DEBUG) << "M_PATH=" << m_path;
+	LOG(DEBUG) << "END";
 	return m_path;
 }
 
-
-void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
-{
-	WriterLock(m_mutex);
-	m_data->UnsyncedSetStatInfo(stat_buf);
-}
 
 
 
@@ -321,22 +313,29 @@ void FileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
 // Note that it's defined here in the cpp vs. in the header because it needs to be able to see the full definition of UnsynchronizedFileID.
 FileID::FileID()
 {
+	LOG(DEBUG) << "Default constructor called";
 }
 
 // Copy constructor.
-FileID::FileID(const FileID& other) : m_data((ReaderLock(other.m_mutex), std::make_unique<FileID::UnsynchronizedFileID>(*other.m_data))) {};
+FileID::FileID(const FileID& other) : m_pimpl((ReaderLock(other.m_mutex), std::make_unique<FileID::UnsynchronizedFileID>(*other.m_pimpl)))
+{
+	LOG(DEBUG) << "Copy constructor called";
+};
 
 // Move constructor.
-FileID::FileID(FileID&& other) : m_data((WriterLock(other.m_mutex), std::move(other.m_data))) {};
+FileID::FileID(FileID&& other) : m_pimpl((WriterLock(other.m_mutex), std::move(other.m_pimpl)))
+{
+	LOG(DEBUG) << "Move constructor called";
+};
 
 FileID::FileID(path_known_cwd_tag)
-	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(nullptr, ".", ".", nullptr, FT_DIR))
+	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(nullptr, ".", ".", nullptr, FT_DIR))
 {
-	m_data->m_file_descriptor = make_shared_fd(open(".", O_SEARCH | O_NOCTTY));
+	m_pimpl->m_file_descriptor = make_shared_fd(open(".", (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
-	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, basename, "", nullptr, type))
+	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, basename, "", nullptr, type))
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
@@ -345,7 +344,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type)
-	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, pathname /*==basename*/, pathname, nullptr, type))
+	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, pathname /*==basename*/, pathname, nullptr, type))
 {
 	/// @note Taking pathname by value since we are always storing it.
 	/// Full openat() semantics:
@@ -354,7 +353,7 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
-	: m_data(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, pathname))
+	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, pathname))
 {
 
 }
@@ -365,7 +364,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	// basename is a file relative to at_dir_fileid, and we also have stat info for it.
 	if(stat_buf != nullptr)
 	{
-		UnsyncedSetStatInfo(*stat_buf);
+		SetStatInfo(*stat_buf);
 	}
 }
 
@@ -392,7 +391,7 @@ FileID& FileID::operator=(const FileID& other)
 		WriterLock this_lock(m_mutex, std::defer_lock);
 		ReaderLock other_lock(other.m_mutex, std::defer_lock);
 		std::lock(this_lock, other_lock);
-		m_data = std::make_unique<FileID::UnsynchronizedFileID>(*other.m_data);
+		m_pimpl = std::make_unique<FileID::UnsynchronizedFileID>(*other.m_pimpl);
 	}
 	return *this;
 };
@@ -404,100 +403,96 @@ FileID& FileID::operator=(FileID&& other)
 		WriterLock this_lock(m_mutex, std::defer_lock);
 		WriterLock other_lock(other.m_mutex, std::defer_lock);
 		std::lock(this_lock, other_lock);
-		/// @todo member-wise move.
-		m_data = std::move(other.m_data);
+
+		m_pimpl = std::move(other.m_pimpl);
 	}
 	return *this;
 };
 
 FileID::~FileID()
 {
-
+	// Make sure we lock during destruction.
+	WriterLock(m_mutex);
 }
 
 const std::string& FileID::GetBasename() const noexcept
 {
 	ReaderLock(m_mutex);
-	return m_data->GetBasename();
+	return m_pimpl->GetBasename();
 };
 
 
 const std::string& FileID::GetPath() const
 {
 	WriterLock(m_mutex);
-	return m_data->GetPath();
+	return m_pimpl->GetPath();
 }
 
-const std::shared_ptr<FileID>& FileID::GetAtDirCRef() const noexcept
+std::shared_ptr<FileID> FileID::GetAtDir() const noexcept
 {
 	ReaderLock(m_mutex);
-	return m_data->GetAtDirCRef();
-};
-
-std::shared_ptr<FileID> FileID::GetAtDir() const noexcept\
-{
-	ReaderLock(m_mutex);
-	return m_data->GetAtDir();
+	return m_pimpl->GetAtDir();
 };
 
 const std::string& FileID::GetAtDirRelativeBasename() const noexcept
 {
 	ReaderLock(m_mutex);
-	return m_data->GetAtDirRelativeBasename();
+	return m_pimpl->GetAtDirRelativeBasename();
 }
 
 bool FileID::IsStatInfoValid() const noexcept
 {
 	ReaderLock(m_mutex);
-	return m_data->IsStatInfoValid();
+	return m_pimpl->IsStatInfoValid();
 };
 
 FileType FileID::GetFileType() const noexcept
 {
 	WriterLock(m_mutex);
 
-	return m_data->GetFileType();
+	return m_pimpl->GetFileType();
 }
-
-bool FileID::IsAtFDCWD() const noexcept
-{
-	ReaderLock(m_mutex);
-	return m_data->IsAtFDCWD();
-};
 
 off_t FileID::GetFileSize() const noexcept
 {
 	ReaderLock(m_mutex);
-	return m_data->GetFileSize();
+	return m_pimpl->GetFileSize();
 };
 
 blksize_t FileID::GetBlockSize() const noexcept
 {
 	WriterLock(m_mutex);
-	return m_data->GetBlockSize();
+	return m_pimpl->GetBlockSize();
 };
 
 const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
 	WriterLock(m_mutex);
-	return m_data->GetUniqueFileIdentifier();
+	return m_pimpl->GetUniqueFileIdentifier();
 };
 
 FileDescriptor FileID::GetFileDescriptor()
 {
 	WriterLock(m_mutex);
-	return m_data->GetFileDescriptor();
+	return m_pimpl->GetFileDescriptor();
 }
 
 dev_t FileID::GetDev() const noexcept
 {
 	WriterLock(m_mutex);
-	return m_data->GetDev();
+	return m_pimpl->GetDev();
 };
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
 	WriterLock(m_mutex);
-	m_data->SetDevIno(d, i);
+	m_pimpl->SetDevIno(d, i);
 }
+
+void FileID::SetStatInfo(const struct stat &stat_buf) noexcept
+{
+	WriterLock(m_mutex);
+	m_pimpl->UnsyncedSetStatInfo(stat_buf);
+}
+
 

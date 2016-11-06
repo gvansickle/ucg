@@ -42,6 +42,7 @@
 #include <string.h>
 #include <cstdlib>   // For free().
 #include <string>
+#include <iterator>   // For std::distance().
 #include <type_traits>
 #include <future/memory.hpp>
 
@@ -396,6 +397,40 @@ inline bool is_pathname_absolute(const std::string &path) noexcept
 #endif
 }
 
+/**
+ * Takes an absolute or relative path, possibly with trailing slashes, and removes the unnecessary trailing
+ * slashes.
+ *
+ * @param path
+ * @return
+ */
+inline std::string strip_trailing_slashes(const std::string &path)
+{
+	std::string::const_reverse_iterator rbegin = path.rbegin();
+
+	// For Posix, there are three situations we need to consider here:
+	// 1. An absolute path starting with 1 or 2 slashes needs those slashes left alone.
+	// 2. An absolute path with >= 3 slashes can be stripped down to 1 slash.
+	// 3. Any number of slashes not at the beginning of the path should be stripped.
+
+	// Find the last leading slash.
+	std::string::size_type start_idx = path.find_first_not_of("/\\");
+	if(start_idx == std::string::npos)
+	{
+		// Didn't find any slashes in the string.  Nothing to do, just return the given path.
+		return path;
+	}
+
+/// @todo INCOMPLETE.
+#if 0
+	// We stop if there are less than 2 chars left.
+	while((std::distance(rbegin, path.rend()) > 1) && (*rbegin == "/"))
+	{
+		++rbegin;
+	}
+#endif
+}
+
 
 inline DIR* opendirat(int at_dir, const char *name)
 {
@@ -405,9 +440,15 @@ inline DIR* opendirat(int at_dir, const char *name)
 	int file_fd = openat(at_dir, name, openat_dir_search_flags | O_DIRECTORY | O_NOCTTY);
 	if(file_fd < 0)
 	{
-		perror("openat() failed");
+		ERROR() << "openat() failed: " << LOG_STRERROR();
+		errno = 0;
 	}
 	DIR* d = fdopendir(file_fd);
+	if(d == nullptr)
+	{
+		ERROR() << "fdopendir failed: " << LOG_STRERROR();
+		errno = 0;
+	}
 
 	return d;
 }
