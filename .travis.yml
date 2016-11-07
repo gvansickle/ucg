@@ -7,6 +7,11 @@ sudo: required
 # Build matrix:
 matrix:
     include:
+        - os: linux
+          compiler: gcc
+        - os: linux
+          compiler: clang
+          env: CFG_CC=clang CFG_CXX='clang++ -std=c++14 -stdlib=libc++'
         - os: osx
           osx_image: xcode8
         - os: osx
@@ -19,12 +24,6 @@ matrix:
           osx_image: xcode7
         - os: osx
           osx_image: xcode6.4
-        - os: linux
-          compiler: gcc
-        - os: linux
-          compiler: clang
-          env: CFG_CC=clang CFG_CXX='clang++ -std=c++14 -stdlib=libc++'
-          
 
 before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
