@@ -27,14 +27,13 @@
 namespace std
 {
 
-#if defined(__cpp_lib_make_unique)  // C++14 feature.
-// We have a std::make_unique<>().
-#else
+#if !defined(__cpp_lib_make_unique)  // C++14 feature.
 /// Define our own make_unique<>() substitute.
 /// @note SFINAE here to fail this for array types.
+/// @note No need to check for __cpp_variadic_templates, it's C++11 and introduced in gcc 4.3.
 template <typename T, typename... Args>
-typename std::enable_if<std::is_array<T>::value, std::unique_ptr<T>>::type
-	make_unique(Args&&... args)
+//typename std::enable_if<std::is_array<T>::value, std::unique_ptr<T>>::type
+std::unique_ptr<T> make_unique(Args&&... args)
 {
 	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }

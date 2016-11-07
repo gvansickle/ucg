@@ -21,6 +21,8 @@
 
 #include <static_diagnostics.hpp>
 
+#include "memory.hpp"
+
 const char *link_me = "dummy";
 
 // Use this file for printing out some info at compile time regarding our compile-time environment.
@@ -40,3 +42,8 @@ STATIC_MSG("__has_include is defined.")
 STATIC_MSG_WARN("__has_include is not defined.")
 #endif
 
+#if defined(__cpp_lib_make_unique)
+STATIC_MSG("__cpp_lib_make_unique is defined.")
+#else
+STATIC_MSG_WARN("__cpp_lib_make_unique is not defined.")
+#endif
