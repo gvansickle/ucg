@@ -28,7 +28,7 @@
 #include <fts.h>
 
 #include <string>
-#include <memory>
+#include <future/memory.hpp>
 
 #include "integer.hpp"
 #include "filesystem.hpp"
