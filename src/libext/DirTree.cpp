@@ -32,9 +32,9 @@
 #include <iostream>
 #include <queue>
 #include <map>
-#include <memory>
 #include <algorithm>
 
+#include <future/memory.hpp>
 #include <libext/filesystem.hpp> // For AT_FDCWD, AT_NO_AUTOMOUNT, openat(), etc.
 
 
