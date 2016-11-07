@@ -189,7 +189,7 @@ class FileDescriptor
 	using WriterLock = std::unique_lock<MutexType>;
 
 	/// Mutex for locking in copy and move constructors and some operations.
-	mutable std::mutex m_mutex;
+	mutable MutexType m_mutex;
 
 public:
 	FileDescriptor() noexcept = default;
@@ -234,6 +234,7 @@ public:
 	/// Destructor.  Closes #m_file_descriptor if it's valid.
 	~FileDescriptor() noexcept
 	{
+		WriterLock(m_mutex);
 		if(!empty())
 		{
 			close(m_file_descriptor);
