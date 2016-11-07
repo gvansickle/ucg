@@ -27,9 +27,7 @@
 namespace std
 {
 
-#if defined(__cpp_lib_make_unique)  // C++14 feature.
-// We have a std::make_unique<>().
-#else
+#if !defined(__cpp_lib_make_unique)  // C++14 feature.
 /// Define our own make_unique<>() substitute.
 /// @note SFINAE here to fail this for array types.
 /// @note No need to check for __cpp_variadic_templates, it's C++11 and introduced in gcc 4.3.
