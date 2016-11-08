@@ -99,6 +99,11 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 AX_CXX_COMPILE_STDCXX_14([], [optional])
 AS_IF([test "x$HAVE_CXX14" != "x1"],
 	[AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])], [])
+
+# Initialize Libtool.
+LT_INIT([static disable-shared])
+AC_SUBST([LIBTOOL_DEPS])
+
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 
@@ -109,9 +114,6 @@ AM_PROG_AR
 # Shouldn't need ranlib since we're using libtool.
 #AC_PROG_RANLIB
 
-# Initialize Libtool.
-LT_INIT([static disable-shared])
-AC_SUBST([LIBTOOL_DEPS])
 
 PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED
