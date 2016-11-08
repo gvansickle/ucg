@@ -18,6 +18,7 @@
 # This is a proxy Makefile.am which dispatches the Autotools rules to the real makefiles of
 # the third-party libraries/tools we may need.
 
+SUBDIRS = libargp-lgpl
 
 ## Much of this directory is conditionalized at configure time, so we define some vars at the top
 ## which we'll append to later in the sections which are not conditionalized out.
@@ -42,7 +43,6 @@ EXTRA_DIST =
 # Files to clean for "make mostlyclean" and "make clean".
 MOSTLYCLEANFILES =
 CLEANFILES =
-
 
 ###
 ### Include third-party Makefile.am's here.
