@@ -555,12 +555,8 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT
 
 ###
-### Configure subpackages.
+### Print a configure summary.
 ###
-AS_BOX([Configuring libargp])
-AC_CONFIG_SUBDIRS([src/third_party/libargp-lgpl])
-
-# Print a configure summary.
 AC_MSG_RESULT([
   Configuration Summary for $PACKAGE $VERSION
   =================================================
@@ -574,6 +570,8 @@ AC_MSG_RESULT([
   [AM_CXXFLAGS]:                $AM_CXXFLAGS
   CXXFLAGS:                   $CXXFLAGS
   LDFLAGS:                    $AM_LDFLAGS $LDFLAGS
+  LIBS:                       $LIBS
+  
   
   PCRE Info
   ---------
