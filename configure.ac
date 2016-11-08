@@ -100,20 +100,18 @@ AX_CXX_COMPILE_STDCXX_14([], [optional])
 AS_IF([test "x$HAVE_CXX14" != "x1"],
 	[AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])], [])
 
-# Initialize Libtool.
-LT_INIT([static disable-shared])
-AC_SUBST([LIBTOOL_DEPS])
-
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 
 #m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
-# @note We still need AM_PROG_AR when we're using Libtool, or it will complain about a non-POSIX linker.
+# @note We still need AM_PROG_AR before LT_INIT(), or it will complain about a non-POSIX linker.
 # See e.g. https://lists.gnu.org/archive/html/libtool/2012-11/msg00019.html.
 AM_PROG_AR
 # Shouldn't need ranlib since we're using libtool.
 #AC_PROG_RANLIB
-
+# Initialize Libtool.
+LT_INIT([static])
+AC_SUBST([LIBTOOL_DEPS])
 
 PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED
@@ -573,7 +571,6 @@ AC_MSG_RESULT([
   CXXFLAGS:                   $CXXFLAGS
   LDFLAGS:                    $AM_LDFLAGS $LDFLAGS
   LIBS:                       $LIBS
-  
   
   PCRE Info
   ---------
