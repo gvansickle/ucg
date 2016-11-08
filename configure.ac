@@ -456,6 +456,10 @@ AC_CHECK_DECLS([std::to_string(int)],
 				[AC_DEFINE([HAVE_TO_STRING], [1], [If defined, the std::to_string() function exists.])
 				],
 				[], [#include <string>])
+				
+# See if we have a std::make_unique<>().  Note that checking for __cpp_lib_make_unique does not seem to
+# work properly under clang++; i.e., it won't be defined even though a std::make_unique() exists.
+AC_CHECK_DECLS([std::make_unique<int>(int)], [], [], [#include <memory>])
 
 # We need the argp library.
 AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
