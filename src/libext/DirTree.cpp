@@ -60,6 +60,9 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 
 	for(auto p : start_paths)
 	{
+		// Clean up the incoming paths.
+		p = canonicalize_any_path(p);
+
 		auto file_or_dir = std::make_shared<FileID>(FileID(root_file_id, p));
 		auto type = file_or_dir->GetFileType();
 		if(type == FT_REG)
