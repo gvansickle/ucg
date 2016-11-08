@@ -71,12 +71,12 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 AS_BOX([Checking for programs needed to do the build...])
 
 AC_PROG_INSTALL
-AC_PROG_CC_C99
 # To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
 # This will do that for us.
 # @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
 #       calling LT_INIT, or it will complain.
 AC_USE_SYSTEM_EXTENSIONS
+AC_PROG_CC_C99
 # Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
@@ -85,9 +85,9 @@ AC_PROG_CXX
 AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 
 # @temp? Tell clang to use its own library.
-#AS_IF([test "x$ax_cv_PTHREAD_CLANG" = "xyes"],
-#[CPPFLAGS="$CPPFLAGS -stdlib=libc++"
-#[LDFLAGS="$LDFLAGS -stdlib=libc++"])
+AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
+[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -I/usr/local/include"
+LDFLAGS="$LDFLAGS -stdlib=libc++ -L/usr/local/lib"])
 
 ## Make sure we get a C++ compiler which supports C++11.
 # Determine what switches we need to get at least some level of C++11 support.
@@ -100,20 +100,18 @@ AX_CXX_COMPILE_STDCXX_14([], [optional])
 AS_IF([test "x$HAVE_CXX14" != "x1"],
 	[AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])], [])
 
-# Initialize Libtool.
-LT_INIT([static disable-shared])
-AC_SUBST([LIBTOOL_DEPS])
-
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
 # Probably remove this when/if that is fixed. 
 #m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
-# @note We still need AM_PROG_AR when we're using Libtool, or it will complain about a non-POSIX linker.
+# @note We still need AM_PROG_AR before LT_INIT(), or it will complain about a non-POSIX linker.
 # See e.g. https://lists.gnu.org/archive/html/libtool/2012-11/msg00019.html.
 AM_PROG_AR
 # Shouldn't need ranlib since we're using libtool.
 #AC_PROG_RANLIB
-
+# Initialize Libtool.
+LT_INIT([static])
+AC_SUBST([LIBTOOL_DEPS])
 
 PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED
@@ -200,6 +198,8 @@ AC_SUBST([PROG_GREP_P], [$ac_cv_path_PROG_GREP_P])
 ###
 
 AS_BOX([Checking for maintainer tools...])
+
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Python, for generation of test suite.
 AM_PATH_PYTHON([2.7],,[:])
@@ -557,12 +557,8 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT
 
 ###
-### Configure subpackages.
+### Print a configure summary.
 ###
-AS_BOX([Configuring libargp])
-AC_CONFIG_SUBDIRS([src/third_party/libargp-lgpl])
-
-# Print a configure summary.
 AC_MSG_RESULT([
   Configuration Summary for $PACKAGE $VERSION
   =================================================
@@ -576,6 +572,7 @@ AC_MSG_RESULT([
   [AM_CXXFLAGS]:                $AM_CXXFLAGS
   CXXFLAGS:                   $CXXFLAGS
   LDFLAGS:                    $AM_LDFLAGS $LDFLAGS
+  LIBS:                       $LIBS
   
   PCRE Info
   ---------

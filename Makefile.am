@@ -48,7 +48,7 @@ ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) $(PCRE_CPPFLAGS) $(PCRE2_CPPF
 ucg_CFLAGS = $(AM_CFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
 ucg_CXXFLAGS = $(AM_CXXFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la ./src/third_party/libargp-lgpl/libargp.la $(PCRE_LIBS) $(PCRE2_LIBS)
+ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la $(PCRE_LIBS) $(PCRE2_LIBS)
 
 # Collect some make-time info. 
 FORCE:
@@ -71,8 +71,8 @@ build_info.cpp: FORCE verify-provenance
 	echo "const char *g_cxx = \"$(CXX)\";" >> "$@.tmp";
 # This is known to work for g++ and clang++.
 	$(AM_V_GEN) CXX_VERSION_STR=$$(if $$($(CXX) --version > /dev/null); then echo "$$($(CXX) --version | $(ESED) '/^Configured.*$$/d;' | head -n 1)"; else echo "unknown"; fi;); \
-	echo "const char *g_cxx_version_str = \"$${CXX_VERSION_STR}\";" >> "$@.tmp";\
-	mv "$@.tmp" "$@"
+	echo "const char *g_cxx_version_str = \"$${CXX_VERSION_STR}\";" >> "$@.tmp";
+	$(AM_V_GEN) mv "$@.tmp" "$@"
 
 # Make sure we're either trying to build from a git repo or a tarball, and not in some weird state.
 verify-provenance:

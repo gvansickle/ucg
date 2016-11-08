@@ -365,7 +365,7 @@ namespace portable
  * A more usable and portable replacement for glibc and POSIX dirname().
  *
  * @param path  const ref to a path string.  Guaranteed to not be modified in any way by the function call.
- * @return  A std::string representing the path to return the directory of.  Guaranteed to be a normal std::string with which you may do
+ * @return  A std::string representing the dirname part of #path.  Guaranteed to be a normal std::string with which you may do
  *          whatever you can do with any other std::string.
  */
 inline std::string dirname(const std::string &path)
@@ -382,7 +382,26 @@ inline std::string dirname(const std::string &path)
 	return retval;
 }
 
-/// @todo basename().
+/**
+ * A more usable and portable replacement for glibc and POSIX basename().
+ *
+ * @param path  const ref to a path string.  Guaranteed to not be modified in any way by the function call.
+ * @return  A std::string representing the basename part of path.  Guaranteed to be a normal std::string with which you may do
+ *          whatever you can do with any other std::string.
+ */
+inline std::string basename(const std::string &path)
+{
+	// Get a copy of the path string which dirname() can modify all it wants.
+	char * modifiable_path = strdup(path.c_str());
+
+	// Copy the output of dirname into a std:string.  We don't ever free the string dirname() returns
+	// because it's either a static buffer, or it's a pointer to modifiable_path.  The latter we'll free below.
+	std::string retval(::basename(modifiable_path));
+
+	free(modifiable_path);
+
+	return retval;
+}
 
 }
 
@@ -416,8 +435,12 @@ inline bool is_pathname_absolute(const std::string &path) noexcept
  * @param path
  * @return
  */
-inline std::string strip_trailing_slashes(const std::string &path)
+inline std::string canonicalize_any_path(const std::string &path)
 {
+
+	/// @todo The below will add e.g. "./" to a path with no dir.  We need that to not happen.
+	return path;
+#if 0
 	std::string::const_reverse_iterator rbegin = path.rbegin();
 
 	// For Posix, there are three situations we need to consider here:
@@ -425,20 +448,16 @@ inline std::string strip_trailing_slashes(const std::string &path)
 	// 2. An absolute path with >= 3 slashes can be stripped down to 1 slash.
 	// 3. Any number of slashes not at the beginning of the path should be stripped.
 
-	// Find the last leading slash.
-	std::string::size_type start_idx = path.find_first_not_of("/\\");
-	if(start_idx == std::string::npos)
+	auto dir = portable::dirname(path);
+	auto base = portable::basename(path);
+	if(!dir.empty() && dir.find_first_of("/\\", dir.length()-1) != std::string::npos)
 	{
-		// Didn't find any slashes in the string.  Nothing to do, just return the given path.
-		return path;
+		// Ends in a slash (possibly root), just concat.
+		return dir + base;
 	}
-
-/// @todo INCOMPLETE.
-#if 0
-	// We stop if there are less than 2 chars left.
-	while((std::distance(rbegin, path.rend()) > 1) && (*rbegin == "/"))
+	else
 	{
-		++rbegin;
+		return dir + "/" + base;
 	}
 #endif
 }
@@ -446,7 +465,7 @@ inline std::string strip_trailing_slashes(const std::string &path)
 
 inline DIR* opendirat(int at_dir, const char *name)
 {
-	LOG(INFO) << "Attempting to open directory \'" << name << "\' at file descriptor " << at_dir;
+	LOG(INFO) << "Attempting to open directory '" << name << "' at file descriptor " << at_dir;
 	constexpr int openat_dir_search_flags = O_SEARCH ? O_SEARCH : O_RDONLY;
 
 	int file_fd = openat(at_dir, name, openat_dir_search_flags | O_DIRECTORY | O_NOCTTY);
