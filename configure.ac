@@ -533,6 +533,11 @@ AC_LANG_POP([C++])
 
 
 ###
+### Configure subpackages.
+###
+AC_CONFIG_SUBDIRS([src/third_party/libargp-lgpl])
+
+###
 ### Initialize the test suite.
 ###
 # Autoconf-supported test directory.
