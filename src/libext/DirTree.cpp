@@ -85,7 +85,6 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 	// Create and start the directory traversal threads.
 	std::vector<std::thread> threads;
 
-	int m_dirjobs = 2; ///@todo
 	for(int i=0; i<m_dirjobs; i++)
 	{
 		threads.push_back(std::thread(&DirTree::ReaddirLoop, this));
@@ -103,7 +102,6 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 	{
 		thr.join();
 	}
-	//ReaddirLoop();
 
 #if 0
 	while(!dir_queue.empty())

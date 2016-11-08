@@ -55,6 +55,8 @@ private:
 	/// Flag indicating whether we should traverse symlinks or not.
 	bool m_logical {true};
 
+	int m_dirjobs {2}; ///@todo
+
 	/// Directory queue.  Used internally.
 	sync_queue<std::shared_ptr<FileID>> m_dir_queue;
 
