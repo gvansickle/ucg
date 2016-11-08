@@ -71,12 +71,12 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 AS_BOX([Checking for programs needed to do the build...])
 
 AC_PROG_INSTALL
-AC_PROG_CC_C99
 # To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
 # This will do that for us.
 # @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
 #       calling LT_INIT, or it will complain.
 AC_USE_SYSTEM_EXTENSIONS
+AC_PROG_CC_C99
 # Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
@@ -198,6 +198,8 @@ AC_SUBST([PROG_GREP_P], [$ac_cv_path_PROG_GREP_P])
 ###
 
 AS_BOX([Checking for maintainer tools...])
+
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Python, for generation of test suite.
 AM_PATH_PYTHON([2.7],,[:])
