@@ -1,8 +1,16 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([dummy], [0])
+AC_PREREQ([2.69])
+AC_INIT([libargp], [0.0.0])
+AC_CONFIG_SRCDIR([gllib/alloca.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIRS([glm4])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([1.14
+	subdir-objects
+	color-tests
+	std-options
+	-Wall
+	-Werror
+])
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -23,7 +31,7 @@ m4_pattern_allow([^gl_LTLIBOBJS$])dnl a variable
 gl_USE_SYSTEM_EXTENSIONS
 gl_PROG_AR_RANLIB
 
-LT_INIT([win32-dll])
+LT_INIT([static disable-shared])
 LT_LANG([C++])
 AM_CONDITIONAL([GL_COND_LIBTOOL], [true])
 gl_cond_libtool=true

@@ -533,11 +533,6 @@ AC_LANG_POP([C++])
 
 
 ###
-### Configure subpackages.
-###
-AC_CONFIG_SUBDIRS([src/third_party/libargp-lgpl])
-
-###
 ### Initialize the test suite.
 ###
 # Autoconf-supported test directory.
@@ -558,6 +553,12 @@ AC_CONFIG_FILES([Makefile
 	src/libext/Makefile
 	third_party/Makefile])
 AC_OUTPUT
+
+###
+### Configure subpackages.
+###
+AS_BOX([Configuring libargp])
+AC_CONFIG_SUBDIRS([src/third_party/libargp-lgpl])
 
 # Print a configure summary.
 AC_MSG_RESULT([
