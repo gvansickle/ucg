@@ -26,7 +26,7 @@
 
 namespace std
 {
-
+#if 0
 #if !defined(__cpp_lib_make_unique) && (HAVE_DECL_STD__MAKE_UNIQUE_INT_ == 0)  // C++14 feature.
 /// Define our own make_unique<>() substitute.
 /// @note SFINAE here to fail this for array types.
@@ -38,7 +38,7 @@ std::unique_ptr<T> make_unique(Args&&... args)
 	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 #endif
-
+#endif
 }
 
 #endif /* SRC_FUTURE_MEMORY_HPP_ */
