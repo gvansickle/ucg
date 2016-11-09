@@ -55,7 +55,8 @@ namespace std
 {
 	using shared_mutex = std::mutex;
 	using shared_timed_mutex = std::mutex;
-	using shared_lock = std::unique_lock;
+	template < typename T >
+	using shared_lock = std::unique_lock<T>;
 }
 
 #endif
