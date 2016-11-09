@@ -24,6 +24,7 @@ noinst_LTLIBRARIES = libfuture.la
 libfuture_la_SOURCES = \
 	dummy.cpp \
 	memory.hpp \
+	shared_mutex.hpp \
 	string.hpp \
 	string_view.hpp \
 	type_traits.hpp

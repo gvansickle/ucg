@@ -48,14 +48,22 @@ public:
 	/// Move assignment.
 	UnsynchronizedFileID& operator=(UnsynchronizedFileID&& other) = default;
 
+	/// @name Various non-default constructors.
+	/// @{
 	UnsynchronizedFileID(const FTSENT *ftsent, bool stat_info_known_valid);
 	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
-	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname, const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
+	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
+			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
+	///@}
 
+	/// Default destructor.
 	~UnsynchronizedFileID() = default;
 
 	const std::string& GetBasename() const noexcept;
+
 	const std::string& GetPath() const;
+	bool IsPathCaptured() const { return !m_path.empty(); };
+
 	FileDescriptor GetFileDescriptor();
 
 	FileType GetFileType() const noexcept
@@ -326,7 +334,7 @@ FileID::FileID(FileID&& other) : m_pimpl((WriterLock(other.m_mutex), std::move(o
 FileID::FileID(path_known_cwd_tag)
 	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(nullptr, ".", ".", nullptr, FT_DIR))
 {
-	m_pimpl->m_file_descriptor = make_shared_fd(open(".", (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
+	m_pimpl->m_file_descriptor = make_shared_fd(open(".", O_SEARCH | O_DIRECTORY | O_NOCTTY));
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
@@ -407,86 +415,101 @@ FileID& FileID::operator=(FileID&& other)
 FileID::~FileID()
 {
 	// Make sure we lock during destruction.
-	WriterLock(m_mutex);
+	// @note Actually, I think this makes no sense.  If anyone was trying to read or write us, they'd have
+	// (possibly shared) ownership (right?), and hence we wouldn't be getting destroyed.
+	//WriterLock(m_mutex);
 }
 
 const std::string& FileID::GetBasename() const noexcept
 {
-	ReaderLock(m_mutex);
+	ReaderLock rl(m_mutex);
 	return m_pimpl->GetBasename();
 };
 
 
-const std::string& FileID::GetPath() const
+std::string FileID::GetPath() const noexcept
 {
-	WriterLock(m_mutex);
+	{
+		ReaderLock rl(m_mutex);
+
+		if(m_pimpl->IsPathCaptured())
+		{
+			// m_path has already been lazily evaluated and is available in a std::string.
+			return m_pimpl->GetPath();
+		}
+	}
+
+	// Else, we need to get a write lock, and evaluate the path.
+
+	WriterLock wl(m_mutex);
+
 	return m_pimpl->GetPath();
 }
 
 std::shared_ptr<FileID> FileID::GetAtDir() const noexcept
 {
-	ReaderLock(m_mutex);
+	ReaderLock rl(m_mutex);
 	return m_pimpl->GetAtDir();
 };
 
 const std::string& FileID::GetAtDirRelativeBasename() const noexcept
 {
-	ReaderLock(m_mutex);
+	ReaderLock rl(m_mutex);
 	return m_pimpl->GetAtDirRelativeBasename();
 }
 
 bool FileID::IsStatInfoValid() const noexcept
 {
-	ReaderLock(m_mutex);
+	ReaderLock rl(m_mutex);
 	return m_pimpl->IsStatInfoValid();
 };
 
 FileType FileID::GetFileType() const noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock rl(m_mutex);
 
 	return m_pimpl->GetFileType();
 }
 
 off_t FileID::GetFileSize() const noexcept
 {
-	ReaderLock(m_mutex);
+	ReaderLock rl(m_mutex);
 	return m_pimpl->GetFileSize();
 };
 
 blksize_t FileID::GetBlockSize() const noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	return m_pimpl->GetBlockSize();
 };
 
 const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	return m_pimpl->GetUniqueFileIdentifier();
 };
 
 FileDescriptor FileID::GetFileDescriptor()
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	return m_pimpl->GetFileDescriptor();
 }
 
 dev_t FileID::GetDev() const noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	return m_pimpl->GetDev();
 };
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	m_pimpl->SetDevIno(d, i);
 }
 
 void FileID::SetStatInfo(const struct stat &stat_buf) noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	m_pimpl->UnsyncedSetStatInfo(stat_buf);
 }
 

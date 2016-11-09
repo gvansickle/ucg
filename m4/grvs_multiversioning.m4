@@ -9,7 +9,7 @@
 #	If it does, AC_SUBST()'s a variable of the form "CXXFLAGS_EXT_[BASE-ISA]_[FLAGNAME]=[FLAG]",
 #			where [FLAGNAME] is FLAG with the first two chars removed, and [BASE-ISA] and [FLAGNAME]
 #			are transformed by AS_TR_SH() and capitalized.  For instance, a successful test of:
-#				GRVS_CHECK_COMPILE_FLAG([X86_64], [-msse2])
+#				AXUCG_CHECK_COMPILE_FLAG([X86_64], [-msse2])
 #			results in the AC_SUBST variable:
 #				CXXFLAGS_EXT_X86_64_SSE2=-msse2
 #	Also on success, AC_SUBST()'s a variable of the form "HAVE_[BASE-ISA]_ISA_EXTENSIONS=true".  This
@@ -33,7 +33,7 @@
 #	without any warranty.
 #
 
-#XXXserial 0
+#serial 1
 
 # $1 == Base ISA (currently only "X86_64" supported)
 # $2 == Compile flag to check.

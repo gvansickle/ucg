@@ -51,9 +51,6 @@ DirTree::~DirTree()
 
 void DirTree::Scandir(std::vector<std::string> start_paths)
 {
-	DIR *d {nullptr};
-	struct dirent *dp {nullptr};
-
 	// Start at the cwd of the process (~AT_FDCWD)
 	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(FileID::path_known_cwd_tag());
 
@@ -102,43 +99,6 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 	{
 		thr.join();
 	}
-
-#if 0
-	while(!dir_queue.empty())
-	{
-		std::shared_ptr<FileID> dse = dir_queue.front();
-		dir_queue.pop();
-
-		FileDescriptor open_at_fd = dse->GetAtDir()->GetFileDescriptor();
-		const char *open_at_path = dse->GetAtDirRelativeBasename().c_str();
-
-		d = opendirat(open_at_fd.GetFD(), open_at_path);
-		if(d == nullptr)
-		{
-			// At a minimum, this wasn't a directory.
-			WARN() << "opendirat() failed" << LOG_STRERROR();
-			errno = 0;
-			continue;
-		}
-
-		do
-		{
-			errno = 0;
-			if((dp = readdir(d)) != NULL)
-			{
-				ProcessDirent(dse, dp, dir_queue);
-			}
-		} while(dp != NULL);
-
-		if(errno != 0)
-		{
-			WARN() << "Could not read directory: " << LOG_STRERROR(errno) << ". Skipping.";
-			errno = 0;
-		}
-
-		closedir(d);
-	}
-#endif
 }
 
 void DirTree::ReaddirLoop()

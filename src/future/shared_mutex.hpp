@@ -1,0 +1,66 @@
+/*
+ * Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ *
+ * This file is part of UniversalCodeGrep.
+ *
+ * UniversalCodeGrep is free software: you can redistribute it and/or modify it under the
+ * terms of version 3 of the GNU General Public License as published by the Free
+ * Software Foundation.
+ *
+ * UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/** @file */
+
+#ifndef SRC_FUTURE_SHARED_MUTEX_HPP_
+#define SRC_FUTURE_SHARED_MUTEX_HPP_
+
+#include <config.h>
+
+#include <libext/static_diagnostics.hpp>
+
+#if __has_include(<shared_mutex>)
+#	include <shared_mutex> // C++14 feature.  Header check only.
+#	define HAVE_SHARED_MUTEX_HEADER 1
+#	if __cpp_lib_shared_timed_mutex || defined(HAVE_STD__SHARED_TIMED_MUTEX) // C++14 feature which renamed std::shared_mutex to std::shared_timed_mutex.  <shared_mutex> and == 201402.
+
+#		if __cpp_lib_shared_mutex || defined(HAVE_STD__SHARED_MUTEX) // C++17 feature which made the original C++14 std::shared_mutexes untimed and gave them their name back.  <shared_mutex> and == 201505
+			// We have real std::shared_mutex's.  Nothing to do.
+#		else
+			// Use std::shared_timed_mutex's instead.
+			namespace std
+			{
+				using shared_mutex = std::shared_timed_mutex;
+			}
+#		endif
+#	else
+		// Really shouldn't get here.  Means we have <shared_mutex>, but not the required defines.
+		// Guess what?  Clang++/libc++ on OS X (Xcode 8gm) does this: "error: 'shared_mutex' is unavailable: introduced in macOS 10.12".
+		STATIC_MSG_WARN("Faulty header: <shared_mutex>");
+#		define HAVE_BROKEN_SHARED_MUTEX_HEADER 1
+	#endif
+#else
+	// Not even a <shared_mutex> header.
+#endif
+
+#if defined(HAVE_BROKEN_SHARED_MUTEX_HEADER) || !defined(HAVE_SHARED_MUTEX_HEADER)
+
+STATIC_MSG_WARN("Backfilling header <shared_mutex> from future");
+#include <mutex>
+namespace std
+{
+	using shared_mutex = std::mutex;
+	using shared_timed_mutex = std::mutex;
+	template < typename T >
+	using shared_lock = std::unique_lock<T>;
+}
+
+#endif
+
+
+#endif /* SRC_FUTURE_SHARED_MUTEX_HPP_ */

@@ -29,6 +29,7 @@
 
 #include <string>
 #include <future/memory.hpp>
+#include <future/shared_mutex.hpp>
 
 #include "integer.hpp"
 #include "filesystem.hpp"
@@ -57,8 +58,11 @@ class FileID
 {
 private:
 
-	using MutexType = std::mutex;  /// @todo C++17, use std::shared_mutex.  C++14, use std::shared_timed_mutex.
-	using ReaderLock = std::unique_lock<MutexType>;  /// @todo C++14+, use std::shared_lock.
+	/// We're bring this mutex type in from the future: <future/shared_mutex.hpp>.
+	/// Under C++17, this is really a std::shared_mutex.  In C++14, it's a std::shared_timed_mutex.
+	/// In C++11, it's a regular std::mutex.
+	using MutexType = std::shared_mutex;
+	using ReaderLock = std::shared_lock<MutexType>;  /// @todo C++14+, use std::shared_lock.
 	using WriterLock = std::unique_lock<MutexType>;
 
 	/// Mutex for locking in copy and move constructors and some operations.
@@ -90,7 +94,8 @@ public:
 	/// Our equivalent for AT_FDCWD, the cwd of the process.
 	/// Different in that each FileID created with this constructor holds a real file handle to the "." directory.
 	FileID(path_known_cwd_tag tag);
-	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
+	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename,
+			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
@@ -108,7 +113,7 @@ public:
 	~FileID();
 
 	const std::string& GetBasename() const noexcept;
-	const std::string& GetPath() const;
+	std::string GetPath() const noexcept;
 
 	FileDescriptor GetFileDescriptor();
 
