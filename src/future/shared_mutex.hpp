@@ -23,33 +23,41 @@
 #include <libext/static_diagnostics.hpp>
 
 #if __has_include(<shared_mutex>)
-#include <shared_mutex> // C++14 feature.  Header check only.
+#	include <shared_mutex> // C++14 feature.  Header check only.
+#	define HAVE_SHARED_MUTEX_HEADER 1
+#	if __cpp_lib_shared_timed_mutex // C++14 feature which renamed std::shared_mutex to std::shared_timed_mutex.  <shared_mutex> and == 201402.
 
-	#if __cpp_lib_shared_timed_mutex // C++14 feature which renamed std::shared_mutex to std::shared_timed_mutex.  <shared_mutex> and == 201402.
-
-		#if __cpp_lib_shared_mutex // C++17 feature which made the original C++14 std::shared_mutexes untimed and gave them their name back.  <shared_mutex> and == 201505
+#		if __cpp_lib_shared_mutex // C++17 feature which made the original C++14 std::shared_mutexes untimed and gave them their name back.  <shared_mutex> and == 201505
 			// We have real std::shared_mutex's.  Nothing to do.
-		#else
+#		else
 			// Use std::shared_timed_mutex's instead.
 			namespace std
 			{
 				using shared_mutex = std::shared_timed_mutex;
 			}
-		#endif
-	#else
-		// Really shouldn't get here.  Means we have <shared_mutex>, but not the required def.
+#		endif
+#	else
+		// Really shouldn't get here.  Means we have <shared_mutex>, but not the required defines.
+		// Guess what?  Clang++/libc++ on OS X (Xcode 8gm) does this: "error: 'shared_mutex' is unavailable: introduced in macOS 10.12".
 		STATIC_MSG_WARN("Faulty header: <shared_mutex>");
+#		define HAVE_BROKEN_SHARED_MUTEX_HEADER 1
 	#endif
 #else
 	// Not even a <shared_mutex> header.
-	STATIC_MSG_WARN("Backfilling header <shared_mutex> from future");
+#endif
+
+
+#if defined(HAVE_BROKEN_SHARED_MUTEX_HEADER) || !defined(HAVE_SHARED_MUTEX_HEADER)
+
+STATIC_MSG_WARN("Backfilling header <shared_mutex> from future");
 #include <mutex>
-	namespace std
-	{
-		using shared_mutex = decltype(std::mutex);
-		using shared_timed_mutex = decltype(std::mutex);
-		using shared_lock = decltype(std::unique_lock);
-	}
+namespace std
+{
+	using shared_mutex = decltype(std::mutex);
+	using shared_timed_mutex = decltype(std::mutex);
+	using shared_lock = decltype(std::unique_lock);
+}
+
 #endif
 
 

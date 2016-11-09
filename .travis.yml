@@ -38,6 +38,8 @@ before_install:
 
 before_script:
  - echo "g++ --version:" && g++ --version && autoreconf --version && automake --version && echo "===="
+ - libtool --version
+ - glibtool --version
  - # pwd ==> /home/travis/build/gvansickle/ucg
  - #sysctl -a
  - #if [ $TRAVIS_OS_NAME == osx ]; then sysctl -a hw; fi
