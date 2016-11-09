@@ -53,9 +53,9 @@ STATIC_MSG_WARN("Backfilling header <shared_mutex> from future");
 #include <mutex>
 namespace std
 {
-	using shared_mutex = decltype(std::mutex);
-	using shared_timed_mutex = decltype(std::mutex);
-	using shared_lock = decltype(std::unique_lock);
+	using shared_mutex = std::mutex;
+	using shared_timed_mutex = std::mutex;
+	using shared_lock = std::unique_lock;
 }
 
 #endif
