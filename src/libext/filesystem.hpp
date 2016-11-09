@@ -71,16 +71,39 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 #if !defined(AT_NO_AUTOMOUNT)
 #define AT_NO_AUTOMOUNT 0
 #endif
-#ifndef O_NOATIME
+
+#if !defined(O_NOATIME)
 // From "The GNU C Library" manual <https://www.gnu.org/software/libc/manual/html_mono/libc.html#toc-File-System-Interface-1>
 // 13.14.3 I/O Operating Modes: "Only the owner of the file or the superuser may use this bit."
 #define O_NOATIME 0  // Not defined on at least Cygwin.
 #endif
-#ifndef O_SEARCH
+
+#if !defined(O_SEARCH)
 // O_SEARCH is POSIX.1-2008, but not defined on at least Linux/glibc 2.24.
 // Possible reason, quoted from the standard: "Since O_RDONLY has historically had the value zero, implementations are not able to distinguish
 // between O_SEARCH and O_SEARCH | O_RDONLY, and similarly for O_EXEC."
-#define O_SEARCH 0
+//
+// What O_SEARCH does, from POSIX.1-2008 <http://pubs.opengroup.org/onlinepubs/9699919799/functions/open.html>:
+// "The openat() function shall be equivalent to the open() function except in the case where path specifies a relative path. In this case
+// the file to be opened is determined relative to the directory associated with the file descriptor fd instead of the current working
+// directory. If the access mode of the open file description associated with the file descriptor is not O_SEARCH, the function shall check
+// whether directory searches are permitted using the current permissions of the directory underlying the file descriptor. If the access
+// mode is O_SEARCH, the function shall not perform the check."
+// So, it benefits us to specify O_SEARCH when we can.
+#define O_SEARCH O_RDONLY
+#endif
+
+// Per POSIX.1-2008:
+// "If path resolves to a non-directory file, fail and set errno to [ENOTDIR]."
+#if !defined(O_DIRECTORY)
+#define O_DIRECTORY 0
+#endif
+
+// Per POSIX.1-2008:
+// "If set and path identifies a terminal device, open() shall not cause the terminal device to become the controlling terminal
+// for the process. If path does not identify a terminal device, O_NOCTTY shall be ignored."
+#if !defined(O_NOCTTY)
+#define O_NOCTTY 0
 #endif
 /// @}
 

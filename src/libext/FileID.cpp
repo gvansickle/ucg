@@ -48,10 +48,15 @@ public:
 	/// Move assignment.
 	UnsynchronizedFileID& operator=(UnsynchronizedFileID&& other) = default;
 
+	/// @name Various non-default constructors.
+	/// @{
 	UnsynchronizedFileID(const FTSENT *ftsent, bool stat_info_known_valid);
 	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
-	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname, const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
+	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
+			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
+	///@}
 
+	/// Default destructor.
 	~UnsynchronizedFileID() = default;
 
 	const std::string& GetBasename() const noexcept;
@@ -326,7 +331,7 @@ FileID::FileID(FileID&& other) : m_pimpl((WriterLock(other.m_mutex), std::move(o
 FileID::FileID(path_known_cwd_tag)
 	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(nullptr, ".", ".", nullptr, FT_DIR))
 {
-	m_pimpl->m_file_descriptor = make_shared_fd(open(".", (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
+	m_pimpl->m_file_descriptor = make_shared_fd(open(".", O_SEARCH | O_DIRECTORY | O_NOCTTY));
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
@@ -407,7 +412,9 @@ FileID& FileID::operator=(FileID&& other)
 FileID::~FileID()
 {
 	// Make sure we lock during destruction.
-	WriterLock(m_mutex);
+	// @note Actually, I think this makes no sense.  If anyone was trying to read or write us, they'd have
+	// (possibly shared) ownership (right?), and hence we wouldn't be getting destroyed.
+	//WriterLock(m_mutex);
 }
 
 const std::string& FileID::GetBasename() const noexcept
@@ -417,7 +424,7 @@ const std::string& FileID::GetBasename() const noexcept
 };
 
 
-const std::string& FileID::GetPath() const
+const std::string& FileID::GetPath() const noexcept
 {
 	WriterLock(m_mutex);
 	return m_pimpl->GetPath();
