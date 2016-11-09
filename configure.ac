@@ -91,17 +91,34 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 #[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -I/usr/local/include"
 #LDFLAGS="$LDFLAGS -stdlib=libc++ -L/usr/local/lib"])
 
-## Make sure we get a C++ compiler which supports C++11.
+
+AS_BOX([Checking C++ compiler language standard support])
+## Make sure we get a C++ compiler which supports the highest level of C++17/C++14/C++11 available.
 # Determine what switches we need to get at least some level of C++11 support.
 # We do this here because this macro will replace $CXX with "$CXX -c++11switch", so we'll use this
 # in the AC_LANG_PUSH([C++]) tests below.
 # NOTE: The odd-looking ordering here (this before AC_PROG_CXXCPP) is required until the next version
 # of this macro gets released.  See http://lists.gnu.org/archive/html/autoconf-archive-maintainers/2016-03/msg00034.html.
 # @note 2016-10-8 Macro has been updated, trying to change the ordering.
-AX_
-AX_CXX_COMPILE_STDCXX_14([], [optional])
-AS_IF([test "x$HAVE_CXX14" != "x1"],
-	[AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])], [])
+
+# NOTE: No AX_CXX_COMPILE_STDCXX_17() macro yet.
+AC_LANG_PUSH([C++])
+AX_CHECK_COMPILE_FLAG([-std=gnu++1z],
+	[AC_SUBST([HAVE_CXX1Z], [1])
+	AX_APPEND_FLAG([-std=gnu++1z], [CXX])],
+[
+AX_CHECK_COMPILE_FLAG([-std=c++1z],
+	[AC_SUBST([HAVE_CXX1Z], [1])
+	AX_APPEND_FLAG([-std=c++1z], [CXX])])
+])
+AC_SUBST([HAVE_CXX1Z], [0])
+AS_IF([test "x$HAVE_CXX1Z" = "x0"],
+[
+	AX_CXX_COMPILE_STDCXX_14([], [optional])
+	AS_IF([test "x$HAVE_CXX14" != "x1"],
+		[AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])], [])
+], [])
+AC_LANG_POP([C++])
 
 # @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
 # (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
@@ -475,7 +492,7 @@ AC_CHECK_FUNCS([sched_setaffinity])
 
 AC_CHECK_FUNCS([get_current_dir_name])
 
-AC_CHECK_FUNCS([openat])
+AC_CHECK_FUNCS([openat fstatat])
 
 AC_CHECK_FUNCS([aligned_alloc posix_memalign])
 AS_IF([test "x$ac_cv_func_aligned_alloc" = xno -a "x$ac_cv_func_posix_memalign" = xno],
