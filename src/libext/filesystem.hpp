@@ -217,21 +217,18 @@ class FileDescriptor
 public:
 	FileDescriptor() noexcept = default;
 
-	explicit FileDescriptor(int fd) noexcept : FileDescriptor()
+	explicit FileDescriptor(int fd) noexcept
 	{
-		WriterLock(m_mutex);
+		WriterLock wl(m_mutex);
 		m_file_descriptor = fd;
 	};
 
 	/// Copy constructor will dup the other's file descriptor.
-	FileDescriptor(const FileDescriptor &other) noexcept : FileDescriptor()
+	FileDescriptor(const FileDescriptor &other) noexcept
 	{
-		ReaderLock(other.m_mutex);
-		if(m_file_descriptor >= 0)
-		{
-			close(m_file_descriptor);
-		}
-		if(other.m_file_descriptor >= 0)
+		ReaderLock rl(other.m_mutex);
+
+		if(!other.unlocked_empty())
 		{
 			m_file_descriptor = dup(other.m_file_descriptor);
 		}
@@ -247,14 +244,12 @@ public:
 	/// when it is destroyed, it will close the file, which it no longer owns.
 	FileDescriptor(FileDescriptor&& other) noexcept
 	{
-		ReaderLock(other.m_mutex);
-		if(!other.empty())
+		ReaderLock rl(other.m_mutex);
+
+		m_file_descriptor = other.m_file_descriptor;
+
+		if(!other.unlocked_empty())
 		{
-			if(!empty())
-			{
-				close(m_file_descriptor);
-			}
-			m_file_descriptor = other.m_file_descriptor;
 			other.m_file_descriptor = cm_invalid_file_descriptor;
 		}
 	}
@@ -262,8 +257,10 @@ public:
 	/// Destructor.  Closes #m_file_descriptor if it's valid.
 	~FileDescriptor() noexcept
 	{
-		WriterLock(m_mutex);
-		if(!empty())
+		// @note No locking here.  If anyone was trying to read or write us, they'd have
+		// to have (possibly shared) ownership (right?), and hence we wouldn't be getting destroyed.
+		//WriterLock wl(m_mutex);
+		if(!unlocked_empty())
 		{
 			close(m_file_descriptor);
 		}
@@ -278,12 +275,12 @@ public:
 			ReaderLock other_lock(other.m_mutex, std::defer_lock);
 			std::lock(this_lock, other_lock);
 
-			if(m_file_descriptor >= 0)
+			if(!unlocked_empty())
 			{
 				close(m_file_descriptor);
 			}
 
-			if(other.m_file_descriptor < 0)
+			if(other.unlocked_empty())
 			{
 				// Other fd isn't valid, just copy it.
 				m_file_descriptor = other.m_file_descriptor;
@@ -310,7 +307,7 @@ public:
 			std::lock(this_lock, other_lock);
 
 			// Step 1: Release any resources this owns.
-			if(m_file_descriptor >= 0)
+			if(!unlocked_empty())
 			{
 				close(m_file_descriptor);
 			}
@@ -329,19 +326,25 @@ public:
 	}
 
 	/// Allow read access to the underlying int.
-	int GetFD() const noexcept { return m_file_descriptor; };
+	int GetFD() const noexcept
+	{
+		ReaderLock rl(m_mutex);
+		return m_file_descriptor;
+	};
 
 	/// Returns true if this FileDescriptor isn't a valid file descriptor.
 	inline bool empty() const noexcept
 	{
-		ReaderLock(m_mutex);
-		return m_file_descriptor < 0;
+		ReaderLock rl(m_mutex);
+		return unlocked_empty();
 	}
 
 private:
 	static constexpr int cm_invalid_file_descriptor = -987;
 
 	int m_file_descriptor { cm_invalid_file_descriptor };
+
+	inline bool unlocked_empty() const noexcept { return m_file_descriptor < 0; };
 };
 
 inline FileDescriptor make_shared_fd(int fd)
