@@ -42,6 +42,7 @@
 	#endif
 #else
 	// Not even a <shared_mutex> header.
+	STATIC_MSG_WARN("Backfilling header <shared_mutex> from future");
 #include <mutex>
 	namespace std
 	{

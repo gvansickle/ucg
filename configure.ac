@@ -18,6 +18,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
+LT_PREREQ([2.4.6])
 AC_INIT([UniversalCodeGrep],[0.3.0],[https://github.com/gvansickle/ucg/issues],[],[https://gvansickle.github.io/ucg/])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
@@ -85,6 +86,7 @@ AC_PROG_CXX
 AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 
 # @temp? Tell clang to use its own library.
+# Looks like we don't need this after all, maybe.
 #AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
 #[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -I/usr/local/include"
 #LDFLAGS="$LDFLAGS -stdlib=libc++ -L/usr/local/lib"])
@@ -96,6 +98,7 @@ AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 # NOTE: The odd-looking ordering here (this before AC_PROG_CXXCPP) is required until the next version
 # of this macro gets released.  See http://lists.gnu.org/archive/html/autoconf-archive-maintainers/2016-03/msg00034.html.
 # @note 2016-10-8 Macro has been updated, trying to change the ordering.
+AX_
 AX_CXX_COMPILE_STDCXX_14([], [optional])
 AS_IF([test "x$HAVE_CXX14" != "x1"],
 	[AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])], [])
@@ -110,8 +113,10 @@ AM_PROG_AR
 # Shouldn't need ranlib since we're using libtool.
 #AC_PROG_RANLIB
 # Initialize Libtool.
-LT_INIT([static])
+LT_INIT([static disable-fast-install disable-shared])
 AC_SUBST([LIBTOOL_DEPS])
+# Output a libtool script so we can run the rest of the compile checks with it.
+LT_OUTPUT
 
 PKG_PROG_PKG_CONFIG([0.9.0])
 AC_PROG_SED

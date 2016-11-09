@@ -41,7 +41,7 @@ libtool: $(LIBTOOL_DEPS)
 
 # The Automake rules for the ucg executable.
 bin_PROGRAMS=ucg
-ucg_SOURCES=main.cpp build_info.h
+ucg_SOURCES=main.cpp build_info.h libtool
 nodist_ucg_SOURCES=build_info.cpp
 CLEANFILES += build_info.cpp
 ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) $(PCRE_CPPFLAGS) $(PCRE2_CPPFLAGS)
