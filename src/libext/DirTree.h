@@ -55,6 +55,12 @@ private:
 	/// Flag indicating whether we should traverse symlinks or not.
 	bool m_logical {true};
 
+	int m_dirjobs {2}; ///@todo
+
+	/// Directory queue.  Used internally.
+	sync_queue<std::shared_ptr<FileID>> m_dir_queue;
+
+	/// File output queue.
 	sync_queue<FileID>& m_out_queue;
 
 	file_basename_filter_type m_file_basename_filter;
@@ -69,16 +75,16 @@ private:
 		return !m_dir_has_been_visited.insert(di).second;
 	}
 
+	void ReaddirLoop();
+
 	/**
 	 * Process a single directory entry (dirent) structure #de, with parent #dse.  Push any files found on the #m_out_queue,
-	 * push any directories found on the #dir_queue.
+	 * push any directories found on the #m_dir_queue.
 	 *
 	 * @param dse
 	 * @param de
-	 * @param dir_stack
 	 */
-	void ProcessDirent(std::shared_ptr<FileID> dse, struct dirent *de,
-			std::queue<std::shared_ptr<FileID>>& dir_queue);
+	void ProcessDirent(std::shared_ptr<FileID> dse, struct dirent *de);
 
 };
 

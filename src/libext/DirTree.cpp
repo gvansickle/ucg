@@ -53,10 +53,9 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 {
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
-	// AT_FDCWD == Start at the cwd of the process.
-	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(FileID::path_known_cwd_tag());
 
-	std::queue<std::shared_ptr<FileID>> dir_queue;
+	// Start at the cwd of the process (~AT_FDCWD)
+	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(FileID::path_known_cwd_tag());
 
 	for(auto p : start_paths)
 	{
@@ -72,7 +71,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 		}
 		else if(type == FT_DIR)
 		{
-			dir_queue.push(file_or_dir);
+			m_dir_queue.wait_push(file_or_dir);
 		}
 		else if(type == FT_STAT_FAILED)
 		{
@@ -80,8 +79,31 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 			NOTICE() << "Could not get stat info at path \'" << file_or_dir->GetPath() << "\': "
 												<< LOG_STRERROR(errno) << ". Skipping.";
 		}
+		/// @todo Symlinks, COMFOLLOW.
 	}
 
+	// Create and start the directory traversal threads.
+	std::vector<std::thread> threads;
+
+	for(int i=0; i<m_dirjobs; i++)
+	{
+		threads.push_back(std::thread(&DirTree::ReaddirLoop, this));
+	}
+
+	LOG(INFO) << "Globber threads = " << threads.size();
+
+	// Wait for the producer+consumer threads to finish.
+	m_dir_queue.wait_for_worker_completion(m_dirjobs);
+
+	m_dir_queue.close();
+
+	// Wait for all the threads to finish.
+	for(auto &thr : threads)
+	{
+		thr.join();
+	}
+
+#if 0
 	while(!dir_queue.empty())
 	{
 		std::shared_ptr<FileID> dse = dir_queue.front();
@@ -94,7 +116,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
-			perror("fdopendir");
+			WARN() << "opendirat() failed" << LOG_STRERROR();
 			errno = 0;
 			continue;
 		}
@@ -116,11 +138,50 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 
 		closedir(d);
 	}
+#endif
+}
+
+void DirTree::ReaddirLoop()
+{
+	std::shared_ptr<FileID> dse;
+	DIR *d {nullptr};
+	struct dirent *dp {nullptr};
+
+	while(m_dir_queue.wait_pull(std::move(dse)) != queue_op_status::closed)
+	{
+		FileDescriptor open_at_fd = dse->GetAtDir()->GetFileDescriptor();
+		const char *open_at_path = dse->GetAtDirRelativeBasename().c_str();
+
+		d = opendirat(open_at_fd.GetFD(), open_at_path);
+		if(d == nullptr)
+		{
+			// At a minimum, this wasn't a directory.
+			WARN() << "opendirat() failed" << LOG_STRERROR();
+			errno = 0;
+			continue;
+		}
+
+		do
+		{
+			errno = 0;
+			if((dp = readdir(d)) != NULL)
+			{
+				ProcessDirent(dse, dp);
+			}
+		} while(dp != NULL);
+
+		if(errno != 0)
+		{
+			WARN() << "Could not read directory: " << LOG_STRERROR(errno) << ". Skipping.";
+			errno = 0;
+		}
+
+		closedir(d);
+	}
 }
 
 
-void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_dirent,
-		std::queue<std::shared_ptr<FileID>>& dir_queue)
+void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_dirent)
 {
 	bool is_dir {false};
 	bool is_file {false};
@@ -247,7 +308,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				}
 			}
 
-			dir_queue.push(std::make_shared<FileID>(dir_atfd));
+			m_dir_queue.wait_push(std::make_shared<FileID>(dir_atfd));
 		}
 		else if(is_symlink)
 		{

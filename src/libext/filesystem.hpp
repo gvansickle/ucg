@@ -204,13 +204,18 @@ public:
 	FileDescriptor(const FileDescriptor &other) noexcept : FileDescriptor()
 	{
 		ReaderLock(other.m_mutex);
-		if(!other.empty())
+		if(m_file_descriptor >= 0)
 		{
-			if(!empty())
-			{
-				close(m_file_descriptor);
-			}
+			close(m_file_descriptor);
+		}
+		if(other.m_file_descriptor >= 0)
+		{
 			m_file_descriptor = dup(other.m_file_descriptor);
+		}
+		else
+		{
+			// Other has an invalid fd, just copy the value.
+			m_file_descriptor = other.m_file_descriptor;
 		}
 	}
 
@@ -250,13 +255,14 @@ public:
 			ReaderLock other_lock(other.m_mutex, std::defer_lock);
 			std::lock(this_lock, other_lock);
 
-			if(!empty())
+			if(m_file_descriptor >= 0)
 			{
 				close(m_file_descriptor);
 			}
 
 			if(other.m_file_descriptor < 0)
 			{
+				// Other fd isn't valid, just copy it.
 				m_file_descriptor = other.m_file_descriptor;
 			}
 			else
@@ -281,7 +287,7 @@ public:
 			std::lock(this_lock, other_lock);
 
 			// Step 1: Release any resources this owns.
-			if(!empty())
+			if(m_file_descriptor >= 0)
 			{
 				close(m_file_descriptor);
 			}
@@ -302,9 +308,7 @@ public:
 	/// Allow read access to the underlying int.
 	int GetFD() const noexcept { return m_file_descriptor; };
 
-	/// Returns true if this FileDescriptor has never been assigned a valid file descriptor.
-	bool IsInvalid() const noexcept { return m_file_descriptor == cm_invalid_file_descriptor; };
-
+	/// Returns true if this FileDescriptor isn't a valid file descriptor.
 	inline bool empty() const noexcept
 	{
 		ReaderLock(m_mutex);
