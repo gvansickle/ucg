@@ -244,7 +244,7 @@ public:
 	/// when it is destroyed, it will close the file, which it no longer owns.
 	FileDescriptor(FileDescriptor&& other) noexcept
 	{
-		ReaderLock rl(other.m_mutex);
+		WriterLock wl(other.m_mutex);
 
 		m_file_descriptor = other.m_file_descriptor;
 

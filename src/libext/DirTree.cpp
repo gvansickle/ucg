@@ -51,9 +51,6 @@ DirTree::~DirTree()
 
 void DirTree::Scandir(std::vector<std::string> start_paths)
 {
-	DIR *d {nullptr};
-	struct dirent *dp {nullptr};
-
 	// Start at the cwd of the process (~AT_FDCWD)
 	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(FileID::path_known_cwd_tag());
 

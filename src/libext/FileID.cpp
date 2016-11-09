@@ -419,81 +419,82 @@ FileID::~FileID()
 
 const std::string& FileID::GetBasename() const noexcept
 {
-	ReaderLock(m_mutex);
+	ReaderLock rl(m_mutex);
 	return m_pimpl->GetBasename();
 };
 
 
 const std::string& FileID::GetPath() const noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
+	/// @todo Start out with ReaderLock.
 	return m_pimpl->GetPath();
 }
 
 std::shared_ptr<FileID> FileID::GetAtDir() const noexcept
 {
-	ReaderLock(m_mutex);
+	ReaderLock rl(m_mutex);
 	return m_pimpl->GetAtDir();
 };
 
 const std::string& FileID::GetAtDirRelativeBasename() const noexcept
 {
-	ReaderLock(m_mutex);
+	ReaderLock rl(m_mutex);
 	return m_pimpl->GetAtDirRelativeBasename();
 }
 
 bool FileID::IsStatInfoValid() const noexcept
 {
-	ReaderLock(m_mutex);
+	ReaderLock rl(m_mutex);
 	return m_pimpl->IsStatInfoValid();
 };
 
 FileType FileID::GetFileType() const noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock rl(m_mutex);
 
 	return m_pimpl->GetFileType();
 }
 
 off_t FileID::GetFileSize() const noexcept
 {
-	ReaderLock(m_mutex);
+	ReaderLock rl(m_mutex);
 	return m_pimpl->GetFileSize();
 };
 
 blksize_t FileID::GetBlockSize() const noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	return m_pimpl->GetBlockSize();
 };
 
 const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	return m_pimpl->GetUniqueFileIdentifier();
 };
 
 FileDescriptor FileID::GetFileDescriptor()
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	return m_pimpl->GetFileDescriptor();
 }
 
 dev_t FileID::GetDev() const noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	return m_pimpl->GetDev();
 };
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	m_pimpl->SetDevIno(d, i);
 }
 
 void FileID::SetStatInfo(const struct stat &stat_buf) noexcept
 {
-	WriterLock(m_mutex);
+	WriterLock wl(m_mutex);
 	m_pimpl->UnsyncedSetStatInfo(stat_buf);
 }
 
