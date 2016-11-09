@@ -22,6 +22,7 @@
 #include <static_diagnostics.hpp>
 
 #include "memory.hpp"
+#include "shared_mutex.hpp"
 
 const char *link_me = "dummy";
 
@@ -46,4 +47,14 @@ STATIC_MSG_WARN("__has_include is not defined.")
 STATIC_MSG("__cpp_lib_make_unique is defined.")
 #else
 STATIC_MSG_WARN("__cpp_lib_make_unique is not defined.")
+#endif
+
+///
+#if __cpp_lib_shared_timed_mutex
+#else
+STATIC_MSG_WARN("__cpp_lib_shared_timed_mutex not defined")
+#endif
+#if __cpp_lib_shared_mutex
+#else
+STATIC_MSG_WARN("__cpp_lib_shared_mutex not defined")
 #endif

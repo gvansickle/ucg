@@ -325,7 +325,8 @@ AC_CHECK_TYPES([std::string_view], [],
 ], [#include <string_view>])
 
 # shared mutex etc..
-AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex], [std::shared_lock<std::shared_mutex>]], [], [], [#include <shared_mutex>])
+AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex], [ std::shared_lock<std::shared_mutex> ],
+ [ std::shared_lock<std::shared_timed_mutex> ]], [], [], [ #include <shared_mutex> ])
 
 AC_LANG_POP([C++])
 

@@ -20,14 +20,16 @@
 #ifndef SRC_FUTURE_SHARED_MUTEX_HPP_
 #define SRC_FUTURE_SHARED_MUTEX_HPP_
 
+#include <config.h>
+
 #include <libext/static_diagnostics.hpp>
 
 #if __has_include(<shared_mutex>)
 #	include <shared_mutex> // C++14 feature.  Header check only.
 #	define HAVE_SHARED_MUTEX_HEADER 1
-#	if __cpp_lib_shared_timed_mutex // C++14 feature which renamed std::shared_mutex to std::shared_timed_mutex.  <shared_mutex> and == 201402.
+#	if __cpp_lib_shared_timed_mutex || defined(HAVE_STD__SHARED_TIMED_MUTEX) // C++14 feature which renamed std::shared_mutex to std::shared_timed_mutex.  <shared_mutex> and == 201402.
 
-#		if __cpp_lib_shared_mutex // C++17 feature which made the original C++14 std::shared_mutexes untimed and gave them their name back.  <shared_mutex> and == 201505
+#		if __cpp_lib_shared_mutex || defined(HAVE_STD__SHARED_MUTEX) // C++17 feature which made the original C++14 std::shared_mutexes untimed and gave them their name back.  <shared_mutex> and == 201505
 			// We have real std::shared_mutex's.  Nothing to do.
 #		else
 			// Use std::shared_timed_mutex's instead.
@@ -45,7 +47,6 @@
 #else
 	// Not even a <shared_mutex> header.
 #endif
-
 
 #if defined(HAVE_BROKEN_SHARED_MUTEX_HEADER) || !defined(HAVE_SHARED_MUTEX_HEADER)
 
