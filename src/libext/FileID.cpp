@@ -60,7 +60,10 @@ public:
 	~UnsynchronizedFileID() = default;
 
 	const std::string& GetBasename() const noexcept;
+
 	const std::string& GetPath() const;
+	bool IsPathCaptured() const { return !m_path.empty(); };
+
 	FileDescriptor GetFileDescriptor();
 
 	FileType GetFileType() const noexcept
@@ -424,10 +427,22 @@ const std::string& FileID::GetBasename() const noexcept
 };
 
 
-const std::string& FileID::GetPath() const noexcept
+std::string FileID::GetPath() const noexcept
 {
+	{
+		ReaderLock rl(m_mutex);
+
+		if(m_pimpl->IsPathCaptured())
+		{
+			// m_path has already been lazily evaluated and is available in a std::string.
+			return m_pimpl->GetPath();
+		}
+	}
+
+	// Else, we need to get a write lock, and evaluate the path.
+
 	WriterLock wl(m_mutex);
-	/// @todo Start out with ReaderLock.
+
 	return m_pimpl->GetPath();
 }
 

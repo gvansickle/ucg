@@ -113,7 +113,7 @@ public:
 	~FileID();
 
 	const std::string& GetBasename() const noexcept;
-	const std::string& GetPath() const noexcept;
+	std::string GetPath() const noexcept;
 
 	FileDescriptor GetFileDescriptor();
 
