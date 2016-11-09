@@ -85,9 +85,9 @@ AC_PROG_CXX
 AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 
 # @temp? Tell clang to use its own library.
-AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
-[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -I/usr/local/include"
-LDFLAGS="$LDFLAGS -stdlib=libc++ -L/usr/local/lib"])
+#AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
+#[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -I/usr/local/include"
+#LDFLAGS="$LDFLAGS -stdlib=libc++ -L/usr/local/lib"])
 
 ## Make sure we get a C++ compiler which supports C++11.
 # Determine what switches we need to get at least some level of C++11 support.
