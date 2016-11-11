@@ -77,12 +77,12 @@ AC_PROG_INSTALL
 # @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
 #       calling LT_INIT, or it will complain.
 AC_USE_SYSTEM_EXTENSIONS
-AC_PROG_CC_C99
+AC_PROG_CC([gcc clang])
 # Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
 #AM_PROG_CC_C_O
-AC_PROG_CXX
+AC_PROG_CXX([g++ clang++])
 AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 
 # @temp? Tell clang to use its own library.
@@ -325,8 +325,11 @@ AC_CHECK_TYPES([std::string_view], [],
 ], [#include <string_view>])
 
 # shared mutex etc..
-AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex], [ std::shared_lock<std::shared_mutex> ],
- [ std::shared_lock<std::shared_timed_mutex> ]], [], [], [ #include <shared_mutex> ])
+AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex], [std::shared_lock<std::shared_mutex>],
+	[std::shared_lock<std::shared_timed_mutex>]], [], [], [#include <shared_mutex>])
+
+dnl AXUCG_COMPILE_IFELSE([std::shared_lock<std::shared_mutex> testvar;], [std::shared_lock<std::shared_mutex>], [#include <shared_mutex>],
+dnl	[AC_DEFINE([HAVE_MUTEX1], [1], [ANOTHER_TEST_UNQUOTED_2])], [AC_DEFINE([DONT_HAVE_MUTEX1], [1], [ANOTHER_TEST_UNQUOTED_2])])
 
 AC_LANG_POP([C++])
 
