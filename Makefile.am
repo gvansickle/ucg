@@ -115,6 +115,10 @@ dist-hook:
 .PHONY: reconf
 reconf: ./config.status
 	$(SHELL) ./config.status --recheck
+	
+.PHONY: autoreconf
+autoreconf:
+	$(SHELL) cd $(abs_top_srcdir) && autoreconf -if
 
 check-malloc:
 	export MALLOC_CHECK_=3 && $(MAKE) check
