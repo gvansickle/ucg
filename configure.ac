@@ -97,29 +97,41 @@ AC_PROG_CXXCPP([g++ clang++]) # Needed for any C++ AC_PREPROC_IFELSE() checks be
 #[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -I/usr/local/include"
 #LDFLAGS="$LDFLAGS -stdlib=libc++ -L/usr/local/lib"])
 
+AS_BOX([Checking C compiler language standard support])
+
+AC_LANG_PUSH([C])
+AX_CHECK_COMPILE_FLAG([-std=gnu11], [AX_APPEND_FLAG([-std=gnu11], [CC])],
+	[AX_CHECK_COMPILE_FLAG([-std=c11], [AX_APPEND_FLAG([-std=c11], [CC])],
+		[AC_MSG_ERROR([no C11 support])], [], [])
+	], [], [])
+AC_LANG_POP([C])
 
 AS_BOX([Checking C++ compiler language standard support])
 ## Make sure we get a C++ compiler which supports the highest level of C++17/C++14/C++11 available.
-# Determine what switches we need to get at least some level of C++11 support.
+# Determine what switches we need to get the highest level of C++17/C++14/C++11 available.
 # We do this here because this macro will replace $CXX with "$CXX -c++11switch", so we'll use this
 # in the AC_LANG_PUSH([C++]) tests below.
-# NOTE: The odd-looking ordering here (this before AC_PROG_CXXCPP) is required until the next version
-# of this macro gets released.  See http://lists.gnu.org/archive/html/autoconf-archive-maintainers/2016-03/msg00034.html.
-# @note 2016-10-8 Macro has been updated, trying to change the ordering.
-
-# NOTE: No AX_CXX_COMPILE_STDCXX_17() macro yet.
 AC_LANG_PUSH([C++])
+# @note No AX_CXX_COMPILE_STDCXX_17() macro yet, we'll do it manually.
 AX_CHECK_COMPILE_FLAG([-std=gnu++1z],
-	[AC_SUBST([HAVE_CXX1Z], [1])
+	[# action-if-success
+	AC_SUBST([HAVE_CXX1Z], [1])
+	AC_DEFINE([HAVE_CXX1Z], [1], [Define if compiler supports C++1z])
 	AX_APPEND_FLAG([-std=gnu++1z], [CXX])
-	AX_APPEND_FLAG([-std=gnu++1z], [CXXCPP])],
-[
-AX_CHECK_COMPILE_FLAG([-std=c++1z],
-	[AC_SUBST([HAVE_CXX1Z], [1])
-	AX_APPEND_FLAG([-std=c++1z], [CXX])
-	AX_APPEND_FLAG([-std=c++1z], [CXXCPP])])
-])
-AC_SUBST([HAVE_CXX1Z], [0])
+	AX_APPEND_FLAG([-std=gnu++1z], [CXXCPP])
+	],
+	[# action-if-fail
+	AX_CHECK_COMPILE_FLAG([-std=c++1z],
+		[# action-if-success
+		AC_SUBST([HAVE_CXX1Z], [1])
+		AC_DEFINE([HAVE_CXX1Z], [1], [Define if compiler supports C++1z])
+		AX_APPEND_FLAG([-std=c++1z], [CXX])
+		AX_APPEND_FLAG([-std=c++1z], [CXXCPP])
+		],
+		[# action-if-fail
+		AC_SUBST([HAVE_CXX1Z], [0])		
+		])
+	])
 AS_IF([test "x$HAVE_CXX1Z" = "x0"],
 [
 	AX_CXX_COMPILE_STDCXX_14([], [optional])

@@ -187,7 +187,7 @@ class FileDescriptor
 	mutable MutexType m_mutex;
 
 public:
-	FileDescriptor() noexcept = default;
+	FileDescriptor() = default;
 
 	explicit FileDescriptor(int fd) noexcept
 	{

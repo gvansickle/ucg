@@ -62,6 +62,11 @@ public:
 	const std::string& GetBasename() const noexcept;
 
 	const std::string& GetPath() const;
+
+	/**
+	 * Determine if this file's full path has been determined and captured in the m_path string member.
+	 * @return
+	 */
 	bool IsPathCaptured() const { return !m_path.empty(); };
 
 	FileDescriptor GetFileDescriptor();
@@ -285,14 +290,10 @@ void FileID::UnsynchronizedFileID::UnsyncedSetStatInfo(const struct stat &stat_b
 const std::string& FileID::UnsynchronizedFileID::GetPath() const
 {
 	// Do we not have a full path already?
-	LOG(DEBUG) << "START";
 	if(m_path.empty())
 	{
-		LOG(DEBUG) << "NO m_path YET";
 		// No.  Build the full path.
 		auto at_path = m_at_dir->GetPath();
-		LOG(DEBUG) << "GOT AT_PATH";
-		LOG(DEBUG) << "AT_PATH=" << at_path << ", size=" << at_path.size();
 		if(at_path != ".")
 		{
 			//m_path.reserve(at_path.size() + m_basename.size() + 2);
@@ -303,8 +304,7 @@ const std::string& FileID::UnsynchronizedFileID::GetPath() const
 			m_path = m_basename;
 		}
 	}
-	LOG(DEBUG) << "M_PATH=" << m_path;
-	LOG(DEBUG) << "END";
+
 	return m_path;
 }
 
