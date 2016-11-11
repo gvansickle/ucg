@@ -51,10 +51,12 @@ STATIC_MSG_WARN("__cpp_lib_make_unique is not defined.")
 
 ///
 #if __cpp_lib_shared_timed_mutex
+STATIC_MSG("__cpp_lib_shared_timed_mutex is defined")
 #else
 STATIC_MSG_WARN("__cpp_lib_shared_timed_mutex not defined")
 #endif
 #if __cpp_lib_shared_mutex
+STATIC_MSG("__cpp_lib_shared_mutex")
 #else
 STATIC_MSG_WARN("__cpp_lib_shared_mutex not defined")
 #endif

@@ -58,11 +58,12 @@ class FileID
 {
 private:
 
-	/// We're bring this mutex type in from the future: <future/shared_mutex.hpp>.
+	/// We're bringing this mutex type in from the future: @see <future/shared_mutex.hpp>.
 	/// Under C++17, this is really a std::shared_mutex.  In C++14, it's a std::shared_timed_mutex.
 	/// In C++11, it's a regular std::mutex.
 	using MutexType = std::shared_mutex;
-	using ReaderLock = std::shared_lock<MutexType>;  /// @todo C++14+, use std::shared_lock.
+	  /// Likewise with this type.  In C++14+, it's a real std::shared_lock, else it's a std::unique_lock.
+	using ReaderLock = std::shared_lock<MutexType>;
 	using WriterLock = std::unique_lock<MutexType>;
 
 	/// Mutex for locking in copy and move constructors and some operations.
