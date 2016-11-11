@@ -24,7 +24,7 @@
 
 #include <libext/static_diagnostics.hpp>
 
-#if __has_include(<shared_mutex>) // C++14 feature.  Header check only, returns 1.
+#if 1 ///__has_include(<shared_mutex>) // C++14 feature.  Header check only, returns 1.
 #	include <shared_mutex>
 #	define HAVE_SHARED_MUTEX_HEADER 1
 #	if __cpp_lib_shared_timed_mutex || defined(HAVE_STD__SHARED_TIMED_MUTEX) // C++14 feature which renamed std::shared_mutex to std::shared_timed_mutex.  <shared_mutex> and == 201402.
@@ -38,10 +38,16 @@
 				using shared_mutex = std::shared_timed_mutex;
 			}
 #		endif
-#		if __cpp_lib_
-#endif
-#	else
-		// Really shouldn't get here.  Means we have <shared_mutex>, but not the required defines.
+#		if !HAVE_SHARED_LOCK_SHARED_TIMED_MUTEX && !HAVE_SHARED_LOCK_SHARED_MUTEX
+			namespace std
+			{
+				// Use std::unique_lock<> instead.
+				template < typename T >
+				using shared_lock = std::unique_lock<T>;
+			}
+#		endif
+#	else // Found the header, but it didn't define __cpp_lib_shared_timed_mutex.
+		// Really shouldn't get here.
 		// Guess what?  Clang++/libc++ on OS X (Xcode 8gm) does this: "error: 'shared_mutex' is unavailable: introduced in macOS 10.12".
 		STATIC_MSG_WARN("Faulty header: <shared_mutex>");
 #		define HAVE_BROKEN_SHARED_MUTEX_HEADER 1
@@ -49,6 +55,7 @@
 #else
 	// Not even a <shared_mutex> header.
 #	define NO_SHARED_MUTEX_HEADER 1
+	STATIC_MSG_WARN("No <shared_mutex> header found")
 #endif
 
 #if !defined(HAVE_SHARED_MUTEX_HEADER) || defined(HAVE_BROKEN_SHARED_MUTEX_HEADER) || defined(NO_SHARED_MUTEX_HEADER)
