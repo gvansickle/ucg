@@ -60,3 +60,9 @@ STATIC_MSG("__cpp_lib_shared_mutex is defined")
 #else
 STATIC_MSG_WARN("__cpp_lib_shared_mutex not defined")
 #endif
+
+std::shared_mutex i;
+std::shared_timed_mutex j;
+//auto testVar = std::make_tuple(i, j);
+//static_assert(decltype(testVar)::dummy_error, "DUMP MY TYPE" );
+

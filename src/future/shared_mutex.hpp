@@ -24,7 +24,7 @@
 
 #include <libext/static_diagnostics.hpp>
 
-#if 1 ///__has_include(<shared_mutex>) // C++14 feature.  Header check only, returns 1.
+#if __has_include(<shared_mutex>) // C++14 feature.  Header check only, returns 1.
 #	include <shared_mutex>
 #	define HAVE_SHARED_MUTEX_HEADER 1
 #	if __cpp_lib_shared_timed_mutex || defined(HAVE_STD__SHARED_TIMED_MUTEX) // C++14 feature which renamed std::shared_mutex to std::shared_timed_mutex.  <shared_mutex> and == 201402.
@@ -71,6 +71,5 @@ namespace std
 }
 
 #endif
-
 
 #endif /* SRC_FUTURE_SHARED_MUTEX_HPP_ */
