@@ -317,7 +317,7 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
-AS_BOX([Checking for the existence of needed types...])
+AS_BOX([Checking for necessary types...])
 
 AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL], [1],
 	[Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
@@ -330,15 +330,23 @@ AC_CHECK_TYPES([std::string_view], [],
 	AC_CHECK_TYPES([std::experimental::string_view], [], [], [#include <experimental/string_view>])
 ], [#include <string_view>])
 
-# shared mutex etc..
-#AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex],
-#	[std::shared_lock<std::shared_mutex>],
-#	[std::shared_lock<std::shared_timed_mutex>]], [], [], [#include <shared_mutex>])
+# shared mutexes
+AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex]], [], [], [AC_INCLUDES_DEFAULT
+#include <shared_mutex>
+])
 
-AXUCG_CHECK_TYPES([std::shared_lock<std::shared_timed_mutex>], [#include <shared_mutex>])
+AC_CHECK_TYPES([[std::shared_lock<std::shared_mutex>]],
+	[AC_DEFINE([HAVE_SHARED_LOCK_SHARED_MUTEX], [1], [[Define if std::shared_lock<std::shared_mutex> exists.]])], [],
+	[AC_INCLUDES_DEFAULT
+	#include <shared_mutex>
+])
 
-dnl AXUCG_COMPILE_IFELSE([std::shared_lock<std::shared_mutex> testvar;], [std::shared_lock<std::shared_mutex>], [#include <shared_mutex>],
-dnl	[AC_DEFINE([HAVE_MUTEX1], [1], [ANOTHER_TEST_UNQUOTED_2])], [AC_DEFINE([DONT_HAVE_MUTEX1], [1], [ANOTHER_TEST_UNQUOTED_2])])
+AC_CHECK_TYPES([[std::shared_lock<std::shared_timed_mutex>]],
+	[AC_DEFINE([HAVE_SHARED_LOCK_SHARED_TIMED_MUTEX], [1], [[Define if std::shared_lock<std::shared_timed_mutex> exists.]])], [],
+	[AC_INCLUDES_DEFAULT
+	#include <shared_mutex>
+])
+
 
 AC_LANG_POP([C++])
 
@@ -395,28 +403,32 @@ AX_GCC_BUILTIN(__builtin_expect)
 AX_GCC_BUILTIN(__builtin_popcount)
 AX_GCC_BUILTIN(__builtin_bswap32)
 AX_GCC_BUILTIN(__builtin_ctzll)
+
 ## The checks below for C++ feature-test macros are mainly for diagnostic purposes.  The way they're defined
 ## <https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations> makes them mostly
 ## usable directly from the C++ code; using them by way of configure isn't required or helpful.
+
 #
 # C++11 features
 #
 AC_CHECK_DECLS([__cpp_alias_templates, __cpp_variadic_templates, __cpp_attributes])
+
 #
 # C++14 features
 #
-AC_CHECK_DECLS([__cpp_lib_make_unique], [], [],
-[AC_INCLUDES_DEFAULT
-#include <memory>])
-AC_CHECK_DECLS([__cpp_lib_transformation_trait_aliases], [], [],
-[AC_INCLUDES_DEFAULT()
-#include <type_traits>])
+#AC_CHECK_DECLS([__cpp_lib_make_unique], [], [],
+#[[AC_INCLUDES_DEFAULT
+##include <memory>]])
+#AC_CHECK_DECLS([__cpp_lib_transformation_trait_aliases], [], [],
+#[AC_INCLUDES_DEFAULT()
+##include <type_traits>])
+
 #
 # C++17 features
 #
-AC_CHECK_DECLS([__cpp_lib_type_trait_variable_templates], [], [],
-[AC_INCLUDES_DEFAULT()
-#include <type_traits>])
+#AC_CHECK_DECLS([__cpp_lib_type_trait_variable_templates], [], [],
+#[AC_INCLUDES_DEFAULT()
+##include <type_traits>])
 
 # Detect __has_include() support.
 AC_MSG_CHECKING([for __has_include])
