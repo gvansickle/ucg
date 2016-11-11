@@ -143,3 +143,14 @@ AS_VAR_IF(CACHEVAR,yes,
 	
 ])dnl AXUCG_COMPILE_IFELSE
 
+# $1 == types to check for.
+# $2 == header.
+AC_DEFUN([AXUCG_CHECK_TYPES],
+[AC_PREREQ(2.64)
+AS_VAR_PUSHDEF([CONF_MACRO_NAME],[HAVE_TYPE_$1])dnl
+AC_MSG_WARN([CONF_MACRO_NAME])
+AX_CHECK_COMPILE_FLAG([-O2], [AC_DEFINE([CONF_MACRO_NAME], [1], [Define if _AC_LANG std libary supports $1])], [], [],
+	[AC_LANG_PROGRAM([$2], [$1 test_var])])
+AS_VAR_POPDEF([CONF_MACRO_NAME])
+])
+

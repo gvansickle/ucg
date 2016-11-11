@@ -282,18 +282,16 @@ AS_BOX([Checking for libraries...])
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
-	[
-		# Found it.  Remember to add $PCRE_LIBS, $PCRE_CFLAGS, and $PCRE_CPPFLAGS to the appropriate automake vars.
-		AC_SUBST([HAVE_LIBPCRE], [yes])
-		AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])
+	[# Found it.  Remember to add $PCRE_LIBS, $PCRE_CFLAGS, and $PCRE_CPPFLAGS to the appropriate automake vars.
+	AC_SUBST([HAVE_LIBPCRE], [yes])
+	AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])
 	],
 	[AC_SUBST([HAVE_LIBPCRE], [no])])
 
 PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
-	[
-		# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
-		AC_SUBST([HAVE_LIBPCRE2], [yes])
-		AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
+	[# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
+	AC_SUBST([HAVE_LIBPCRE2], [yes])
+	AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
 	],
 	[AC_SUBST([HAVE_LIBPCRE2], [no])])
 
@@ -333,9 +331,11 @@ AC_CHECK_TYPES([std::string_view], [],
 ], [#include <string_view>])
 
 # shared mutex etc..
-AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex],
-	[[std::shared_lock<std::shared_mutex>]],
-	[[std::shared_lock<std::shared_timed_mutex>]]], [], [], [#include <shared_mutex>])
+#AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex],
+#	[std::shared_lock<std::shared_mutex>],
+#	[std::shared_lock<std::shared_timed_mutex>]], [], [], [#include <shared_mutex>])
+
+AXUCG_CHECK_TYPES([std::shared_lock<std::shared_timed_mutex>], [#include <shared_mutex>])
 
 dnl AXUCG_COMPILE_IFELSE([std::shared_lock<std::shared_mutex> testvar;], [std::shared_lock<std::shared_mutex>], [#include <shared_mutex>],
 dnl	[AC_DEFINE([HAVE_MUTEX1], [1], [ANOTHER_TEST_UNQUOTED_2])], [AC_DEFINE([DONT_HAVE_MUTEX1], [1], [ANOTHER_TEST_UNQUOTED_2])])
