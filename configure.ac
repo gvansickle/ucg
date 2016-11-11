@@ -55,6 +55,12 @@ AM_INIT_AUTOMAKE([1.14
 	-Werror
 ])
 
+# Figure out who we're building for.
+case $host_os in
+	*cygwin* ) CYGWIN=yes;;
+    * ) CYGWIN=no;;
+esac
+
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
 AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
@@ -83,7 +89,7 @@ AC_PROG_CC([gcc clang])
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
 #AM_PROG_CC_C_O
 AC_PROG_CXX([g++ clang++])
-AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
+AC_PROG_CXXCPP([g++ clang++]) # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 
 # @temp? Tell clang to use its own library.
 # Looks like we don't need this after all, maybe.
@@ -105,11 +111,13 @@ AS_BOX([Checking C++ compiler language standard support])
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-std=gnu++1z],
 	[AC_SUBST([HAVE_CXX1Z], [1])
-	AX_APPEND_FLAG([-std=gnu++1z], [CXX])],
+	AX_APPEND_FLAG([-std=gnu++1z], [CXX])
+	AX_APPEND_FLAG([-std=gnu++1z], [CXXCPP])],
 [
 AX_CHECK_COMPILE_FLAG([-std=c++1z],
 	[AC_SUBST([HAVE_CXX1Z], [1])
-	AX_APPEND_FLAG([-std=c++1z], [CXX])])
+	AX_APPEND_FLAG([-std=c++1z], [CXX])
+	AX_APPEND_FLAG([-std=c++1z], [CXXCPP])])
 ])
 AC_SUBST([HAVE_CXX1Z], [0])
 AS_IF([test "x$HAVE_CXX1Z" = "x0"],
@@ -325,8 +333,9 @@ AC_CHECK_TYPES([std::string_view], [],
 ], [#include <string_view>])
 
 # shared mutex etc..
-AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex], [std::shared_lock<std::shared_mutex>],
-	[std::shared_lock<std::shared_timed_mutex>]], [], [], [#include <shared_mutex>])
+AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex],
+	[[std::shared_lock<std::shared_mutex>]],
+	[[std::shared_lock<std::shared_timed_mutex>]]], [], [], [#include <shared_mutex>])
 
 dnl AXUCG_COMPILE_IFELSE([std::shared_lock<std::shared_mutex> testvar;], [std::shared_lock<std::shared_mutex>], [#include <shared_mutex>],
 dnl	[AC_DEFINE([HAVE_MUTEX1], [1], [ANOTHER_TEST_UNQUOTED_2])], [AC_DEFINE([DONT_HAVE_MUTEX1], [1], [ANOTHER_TEST_UNQUOTED_2])])
