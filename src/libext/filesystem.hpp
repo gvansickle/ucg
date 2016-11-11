@@ -15,7 +15,9 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file */
+/** @file filesystem.hpp
+ * Take care of some filesystem API portability and convenience issues.
+ */
 
 #ifndef SRC_LIBEXT_FILESYSTEM_HPP_
 #define SRC_LIBEXT_FILESYSTEM_HPP_
@@ -45,12 +47,12 @@
 #include <iterator>   // For std::distance().
 #include <future/type_traits.hpp>
 #include <future/memory.hpp>
+#include <future/shared_mutex.hpp>
 
 #include "integer.hpp"
 #include "../Logger.h"
 
 
-/// @name Take care of some portability issues.
 /// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
 /// - No AT_FDCWD, no openat, no fdopendir, no fstatat.
 /// Cygwin:
@@ -170,45 +172,15 @@ inline std::string dirent_get_name(const dirent* de) noexcept
 }
 
 
-#if 0 /// @todo
-constexpr int cm_invalid_file_descriptor = -987;
-struct FileDescriptorDeleter
-{
-	void operator()(int *fd) const noexcept
-	{
-		if(*fd >= 0)
-		{
-			LOG(INFO) << "Closing file descriptor " << *fd;
-			close(*fd);
-		}
-		delete fd;
-	}
-};
-//using FileDescriptor = std::shared_ptr<int>;
-using FileDescriptor = std::unique_ptr<int, FileDescriptorDeleter>;
-
-inline FileDescriptor make_unique_fd(int fd) ATTR_ARTIFICIAL;
-inline FileDescriptor make_unique_fd(int fd)
-{
-	return std::unique_ptr<int, FileDescriptorDeleter>(new int(fd));
-}
-
-inline std::shared_ptr<int> make_shared_fd(int fd) ATTR_ARTIFICIAL;
-inline std::shared_ptr<int> make_shared_fd(int fd)
-{
-	return FileDescriptor(new int(fd), FileDescriptorDeleter());
-}
-
-#else
-
 /**
  * Wrapper for C's 'int' file descriptor.
- * This class only adds C++ RAII abilities and correct move semantics to a file descriptor.
+ * This class adds C++ RAII abilities and correct copy and move semantics to a POSIX file descriptor.
  */
 class FileDescriptor
 {
-	using MutexType = std::mutex;  /// @todo C++17, use std::shared_mutex.  C++14, use std::shared_timed_mutex.
-	using ReaderLock = std::unique_lock<MutexType>;  /// @todo C++14+, use std::shared_lock.
+	/// @see the similar types in FileID.h for an explanation as to why these types exist even in C++11.
+	using MutexType = std::shared_mutex;
+	using ReaderLock = std::shared_lock<MutexType>;
 	using WriterLock = std::unique_lock<MutexType>;
 
 	/// Mutex for locking in copy and move constructors and some operations.
@@ -351,9 +323,6 @@ inline FileDescriptor make_shared_fd(int fd)
 {
 	return FileDescriptor(fd);
 }
-
-#endif
-
 
 /**
  * Checks two file descriptors (file, dir, whatever) and checks if they are referring to the same entity.
