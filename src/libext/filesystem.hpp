@@ -187,7 +187,9 @@ class FileDescriptor
 	mutable MutexType m_mutex;
 
 public:
-	FileDescriptor() noexcept = default;
+	/// Default constructor.
+	/// @note Can't be noexcept, though only seems to break the compile on Cygwin gcc 5.4.0.
+	FileDescriptor() = default;
 
 	explicit FileDescriptor(int fd) noexcept
 	{
