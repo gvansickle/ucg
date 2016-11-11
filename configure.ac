@@ -19,7 +19,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
 LT_PREREQ([2.4.2])
-AC_INIT([UniversalCodeGrep],[0.3.0],[https://github.com/gvansickle/ucg/issues],[],[https://gvansickle.github.io/ucg/])
+AC_INIT([UniversalCodeGrep], [0.3.0], [https://github.com/gvansickle/ucg/issues], [], [https://gvansickle.github.io/ucg/])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -325,9 +325,11 @@ AC_CHECK_TYPES([std::string_view], [],
 ], [#include <string_view>])
 
 # shared mutex etc..
-AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex], [ std::shared_lock<std::shared_mutex> ],
- [ std::shared_lock<std::shared_timed_mutex> ]], [], [], [ #include <shared_mutex> ])
-
+#AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex], [std::shared_lock<std::shared_mutex>],
+# [std::shared_lock<std::shared_timed_mutex>]], [], [], [#include <shared_mutex>])
+#AC_CHECK_TYPES([std::shared_lock<std::shared_timed_mutex>], [], [], [#include <shared_mutex>])
+AC_CHECK_MEMBERS([std::shared_lock<std::shared_timed_mutex>::lock()], [], [], [#include <shared_mutex>])
+ 
 AC_LANG_POP([C++])
 
 ###
