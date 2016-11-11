@@ -61,8 +61,12 @@ STATIC_MSG("__cpp_lib_shared_mutex is defined")
 STATIC_MSG_WARN("__cpp_lib_shared_mutex not defined")
 #endif
 
+#if 0 /// @note Put this in to see at compile time what types are really being used for the shared locks.
 std::shared_mutex i;
 std::shared_timed_mutex j;
-//auto testVar = std::make_tuple(i, j);
-//static_assert(decltype(testVar)::dummy_error, "DUMP MY TYPE" );
+std::shared_lock<std::shared_timed_mutex> k;
+std::shared_lock<std::shared_mutex> l;
+auto testVar = std::make_tuple(i, j, k, l);
+static_assert(decltype(testVar)::dummy_error, "TYPES" );
+#endif
 
