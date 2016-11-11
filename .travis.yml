@@ -11,7 +11,7 @@ matrix:
           compiler: gcc
         - os: linux
           compiler: clang
-          env: CFG_CC=clang CFG_CXX='clang++ -std=c++14 -stdlib=libc++'
+#          env: CFG_CC=clang CFG_CXX='clang++ -std=c++14 -stdlib=libc++'
         - os: osx
           osx_image: xcode8
         - os: osx
