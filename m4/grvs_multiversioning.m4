@@ -41,16 +41,16 @@
 AX_REQUIRE_DEFINED([AX_CHECK_COMPILE_FLAG])
 AC_DEFUN([AXUCG_CHECK_COMPILE_FLAG],
 [
-	AS_VAR_PUSHDEF([CACHEVAR], [axucg_cv_have_$1_$2])[]dnl
+	AS_VAR_PUSHDEF([ac_var], [axucg_cv_have_$1_$2])[]dnl
 	AS_VAR_PUSHDEF([sh_var_postfix], [m4_substr(m4_toupper($2), 2)])[]dnl
 	AS_VAR_PUSHDEF([flags_var_name], [CXXFLAGS_EXT_$1_]sh_var_postfix)[]dnl
 
 	AX_CHECK_COMPILE_FLAG([$2],
-		[AS_VAR_SET([CACHEVAR], [yes])],
-		[AS_VAR_SET([CACHEVAR], [no])],
+		[AS_VAR_SET([ac_var], [yes])],
+		[AS_VAR_SET([ac_var], [no])],
 		[$3])
 	
-	AS_VAR_IF(CACHEVAR, [yes],
+	AS_VAR_IF([ac_var], [yes],
 		[
 			# Generate a shell var "CXXFLAGS_$1_$2" equal to the given compile flag (i.e. $2).
 			# Note: No brackets around "flags_var_name", since it is an Autoconf polymorphic shell variable.
@@ -68,11 +68,11 @@ AC_DEFUN([AXUCG_CHECK_COMPILE_FLAG],
 	##AC_RUN_LOG([: flags_var_name="$flags_var_name"])
 
 	# Generate an automake conditional for this flag.
-	AM_CONDITIONAL([BUILD_]flags_var_name, [test AS_VAR_GET(CACHEVAR) = yes])
+	AM_CONDITIONAL([BUILD_]flags_var_name, [test AS_VAR_GET(ac_var) = yes])
 	
 	AS_VAR_POPDEF([flags_var_name])
 	AS_VAR_POPDEF([sh_var_postfix])
-	AS_VAR_POPDEF([CACHEVAR])
+	AS_VAR_POPDEF([ac_var])
 ])
 
 ### @todo
