@@ -93,9 +93,9 @@ AC_PROG_CXXCPP([g++ clang++]) # Needed for any C++ AC_PREPROC_IFELSE() checks be
 
 # @temp? Tell clang to use its own library.
 # Looks like we don't need this after all, maybe.
-#AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
-#[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -I/usr/local/include"
-#LDFLAGS="$LDFLAGS -stdlib=libc++ -L/usr/local/lib"])
+AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
+[CPPFLAGS="$CPPFLAGS -stdlib=libc++ --rtlib=compiler-rt -DLIBCXX_USE_COMPILER_RT=YES"
+LDFLAGS="$LDFLAGS -stdlib=libc++ --rtlib=compiler-rt -DLIBCXX_USE_COMPILER_RT=YES"])
 
 AS_BOX([Checking C compiler language standard support])
 
@@ -155,7 +155,7 @@ AC_SUBST([LIBTOOL_DEPS])
 # Output a libtool script so we can run the rest of the compile checks with it.
 LT_OUTPUT
 
-PKG_PROG_PKG_CONFIG([0.9.0])
+PKG_PROG_PKG_CONFIG([0.20.0])
 AC_PROG_SED
 # Find the sed option which turns on Extended Regular Expressions.
 AC_CACHE_CHECK([for $SED option that supports extended regexes], [ac_cv_path_ESED],
@@ -635,6 +635,14 @@ AC_MSG_RESULT([
   CXXFLAGS:                   $CXXFLAGS
   LDFLAGS:                    $AM_LDFLAGS $LDFLAGS
   LIBS:                       $LIBS
+  
+  $CXX Search Paths
+  -----------------
+$($CXX -print-search-dirs | tr ':' '\n' | sed -E 's/^ [=]?//g' | sed 's/^ */  /g')
+  
+  $CXXCPP Include Paths
+  ---------------------
+$(echo | $CXXCPP -v -x c - 2>&1 | sed -n '/#include/,/End of/ p' | sed 's/^ */  /g')
   
   PCRE Info
   ---------

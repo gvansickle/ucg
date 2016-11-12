@@ -27,7 +27,7 @@
 #include <fts.h>
 
 #include <future/memory.hpp> // For std::make_unique<>
-
+#include <atomic>
 
 /**
  * Factorization of the FileID class.  This is the unsynchronized "pImpl" part which holds all the data.
@@ -61,7 +61,8 @@ public:
 
 	const std::string& GetBasename() const noexcept;
 
-	const std::string& GetPath() const;
+	/// Create and cache this FileID's path.  Recursively visits its parent directories to do so.
+	void GetPath() const;
 
 	/**
 	 * Determine if this file's full path has been determined and captured in the m_path string member.
@@ -191,7 +192,7 @@ FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_di
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 
-	LOG(INFO) << "2-param const., m_basename=" << m_basename << ", m_at_dir=" << m_at_dir->m_pimpl->GetPath();
+	LOG(INFO) << "2-param const., m_basename=" << m_basename << ", m_at_dir=" << m_at_dir->m_pimpl->m_path;
 
 	if(is_pathname_absolute(pathname))
 	{
@@ -287,9 +288,10 @@ void FileID::UnsynchronizedFileID::UnsyncedSetStatInfo(const struct stat &stat_b
 	m_blocks = stat_buf.st_blocks;
 }
 
-const std::string& FileID::UnsynchronizedFileID::GetPath() const
+void FileID::UnsynchronizedFileID::GetPath() const
 {
 	// Do we not have a full path already?
+	/// @todo probably don't need this check anymore.
 	if(m_path.empty())
 	{
 		// No.  Build the full path.
@@ -304,8 +306,6 @@ const std::string& FileID::UnsynchronizedFileID::GetPath() const
 			m_path = m_basename;
 		}
 	}
-
-	return m_path;
 }
 
 
@@ -429,21 +429,47 @@ const std::string& FileID::GetBasename() const noexcept
 
 std::string FileID::GetPath() const noexcept
 {
+	// Use double-checked locking to build up the path and cache it in m_path.
+	if(false)
 	{
-		ReaderLock rl(m_mutex);
-
-		if(m_pimpl->IsPathCaptured())
+		//std::call_once(m_once_flag_path, [this]{m_pimpl->GetPath();});
+		auto path_ptr = m_atomic_path_ptr.load(std::memory_order_relaxed);
+		std::atomic_thread_fence(std::memory_order_acquire);
+		if(path_ptr == nullptr)
 		{
-			// m_path has already been lazily evaluated and is available in a std::string.
-			return m_pimpl->GetPath();
+			// First check says we don't have an m_path yet.
+			WriterLock wl(m_mutex);
+			// One more try.
+			path_ptr = m_atomic_path_ptr.load(std::memory_order_relaxed);
+			if(path_ptr == nullptr)
+			{
+				// Still no cached m_path.  We'll have to do the heavy lifting.
+				m_pimpl->GetPath();
+				path_ptr = &(m_pimpl->m_path);
+				std::atomic_thread_fence(std::memory_order_release);
+				m_atomic_path_ptr.store(path_ptr, std::memory_order_relaxed);
+			}
 		}
+		return *path_ptr;
+	}
+	else
+	{
+		{
+			ReaderLock rl(m_mutex);
+
+			if(m_pimpl->IsPathCaptured())
+			{
+				// m_path has already been lazily evaluated and is available in a std::string.
+				return m_pimpl->m_path;
+			}
+		}
+		// Else, we need to get a write lock, and evaluate the path.
+
+		WriterLock wl(m_mutex);
+		m_pimpl->GetPath();
 	}
 
-	// Else, we need to get a write lock, and evaluate the path.
-
-	WriterLock wl(m_mutex);
-
-	return m_pimpl->GetPath();
+	return m_pimpl->m_path;
 }
 
 std::shared_ptr<FileID> FileID::GetAtDir() const noexcept
