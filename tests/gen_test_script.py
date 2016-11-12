@@ -43,7 +43,7 @@ test_script_template_1 = Template("""\
 ###
 
 TOP_CORPUSDIR=$${top_srcdir}/$${at_arg_corpusdir}/
-echo "TOP_CORPUSDIR: $$TOP_CORPUSDIR ($$(readlink $$TOP_CORPUSDIR))" >> ${results_file};
+echo "TOP_CORPUSDIR: $${TOP_CORPUSDIR} ($$(readlink -f $${TOP_CORPUSDIR}))" >> ${results_file};
 
 if test "x$$NUM_ITERATIONS" = "x"; then
 NUM_ITERATIONS=${num_iterations};
