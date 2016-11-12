@@ -31,7 +31,7 @@
 
 #include "Logger.h"
 
-File::File(FileID file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
+File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
 {
 	m_filename = file_id.GetPath();
 	m_file_descriptor = open(m_filename.c_str(), O_RDONLY);

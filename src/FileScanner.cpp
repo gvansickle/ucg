@@ -131,7 +131,7 @@ void FileScanner::Run(int thread_index)
 			// Try to open and read the file.  This could throw.
 			LOG(INFO) << "Attempting to scan file \'" << next_file.GetPath() << "\'";
 			//steady_clock::time_point start = steady_clock::now();
-			File f(next_file, file_data_storage);
+			File f(std::move(next_file), file_data_storage);
 			//steady_clock::time_point end = steady_clock::now();
 			//accum_elapsed_time += (end - start);
 			total_bytes_read += f.size();
