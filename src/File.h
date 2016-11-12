@@ -45,7 +45,7 @@ struct FileException : public std::runtime_error
 class File
 {
 public:
-	File(FileID file_id, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
+	File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
 	File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
 	~File();
 
