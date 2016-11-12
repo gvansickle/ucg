@@ -28,6 +28,7 @@
 #include <fts.h>
 
 #include <string>
+#include <atomic>
 #include <future/memory.hpp>
 #include <future/shared_mutex.hpp>
 
@@ -65,6 +66,8 @@ private:
 	  /// Likewise with this type.  In C++14+, it's a real std::shared_lock, else it's a std::unique_lock.
 	using ReaderLock = std::shared_lock<MutexType>;
 	using WriterLock = std::unique_lock<MutexType>;
+
+	mutable std::atomic<std::string*> m_atomic_path_ptr { nullptr };
 
 	/// Mutex for locking in copy and move constructors and some operations.
 	mutable MutexType m_mutex;
@@ -114,6 +117,11 @@ public:
 	~FileID();
 
 	const std::string& GetBasename() const noexcept;
+
+	/**
+	 * Returns the "full path" of the file.  May be absolute or relative to the AT dir.
+	 * @return A std::string object (not a reference) containing the file's path.
+	 */
 	std::string GetPath() const noexcept;
 
 	FileDescriptor GetFileDescriptor();

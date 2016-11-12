@@ -638,7 +638,7 @@ AC_MSG_RESULT([
   
   $CXX Search Paths
   -----------------
-$($CXX -print-search-dirs | tr ':' '\n' | sed -r 's/^ [=]?//g' | sed 's/^ */  /g')
+$($CXX -print-search-dirs | tr ':' '\n' | sed -E 's/^ [=]?//g' | sed 's/^ */  /g')
   
   $CXXCPP Include Paths
   ---------------------
