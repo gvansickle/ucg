@@ -51,6 +51,36 @@ enum FileType
 	FT_STAT_FAILED
 };
 
+/**
+ * Only one may be specified.
+ */
+enum FileAccessMode
+{
+	FAM_RDONLY = O_RDONLY,//!< FAM_RDONLY
+	FAM_RDWR = O_RDWR,    //!< FAM_RDWR
+	FAM_SEARCH = O_SEARCH //!< FAM_SEARCH
+};
+
+/**
+ * May be bitwise-or combined with FileAccesMode and each other.
+ */
+enum FileCreationFlag : int
+{
+	FCF_CLOEXEC = O_CLOEXEC,    //!< FCF_CLOEXEC
+	FCF_CREAT = O_CREAT,		//!< FCF_CREAT
+	FCF_DIRECTORY = O_DIRECTORY,//!< FCF_DIRECTORY
+	FCF_NOCTTY = O_NOCTTY,      //!< FCF_NOCTTY
+	FCF_NOFOLLOW = O_NOFOLLOW,  //!< FCF_NOFOLLOW
+	FCF_NOATIME = O_NOATIME
+};
+
+/// Bitwise-or operator for FileCreationFlag.
+/// @note Yeah, I didn't realize this was necessary for non-class enums in C++ either.  I've been writing too much C....
+constexpr inline FileCreationFlag operator|(FileCreationFlag a, FileCreationFlag b)
+{
+	return static_cast<FileCreationFlag>(static_cast<std::underlying_type<FileCreationFlag>::type>(a)
+			| static_cast<std::underlying_type<FileCreationFlag>::type>(b));
+}
 
 /**
  * The public interface to the underlying UnsynchronizedFileID instance.  This class adds thread safety.
@@ -60,14 +90,17 @@ class FileID
 private:
 
 	/// We're bringing this mutex type in from the future: @see <future/shared_mutex.hpp>.
-	/// Under C++17, this is really a std::shared_mutex.  In C++14, it's a std::shared_timed_mutex.
+	/// Under C++17, this is really a std::shared_mutex.
+	/// In C++14, it's a std::shared_timed_mutex.
 	/// In C++11, it's a regular std::mutex.
 	using MutexType = std::shared_mutex;
 	  /// Likewise with this type.  In C++14+, it's a real std::shared_lock, else it's a std::unique_lock.
 	using ReaderLock = std::shared_lock<MutexType>;
 	using WriterLock = std::unique_lock<MutexType>;
 
+#if 0 /// @todo For double-checked locking on m_path.
 	mutable std::atomic<std::string*> m_atomic_path_ptr { nullptr };
+#endif
 
 	/// Mutex for locking in copy and move constructors and some operations.
 	mutable MutexType m_mutex;
@@ -119,13 +152,31 @@ public:
 	const std::string& GetBasename() const noexcept;
 
 	/**
-	 * Returns the "full path" of the file.  May be absolute or relative to the AT dir.
+	 * Returns the "full path" of the file.  May be absolute or relative to the root AT dir.
 	 * @return A std::string object (not a reference) containing the file's path.
 	 */
 	std::string GetPath() const noexcept;
 
+	/**
+	 * This is essentially a possibly-deferred "open()" for this class.
+	 *
+	 * @post GetFileDescriptor() will return a FileDescriptor to the file with the given access mode and creation flags.
+	 *
+	 * @param fam
+	 * @param fcf
+	 */
+	void SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf);
+
+	/**
+	 *
+	 * @return
+	 */
 	FileDescriptor GetFileDescriptor();
 
+	/**
+	 * Return the type of file this FileID represents.  May involve stat()ing the file.
+	 * @return
+	 */
 	FileType GetFileType() const noexcept;
 	bool IsRegularFile() const noexcept { return GetFileType() == FT_REG; };
 	bool IsDir() const noexcept { return GetFileType() == FT_DIR; };

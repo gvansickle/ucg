@@ -75,7 +75,7 @@ private:
 		return !m_dir_has_been_visited.insert(di).second;
 	}
 
-	void ReaddirLoop();
+	void ReaddirLoop(int dirjob_num);
 
 	/**
 	 * Process a single directory entry (dirent) structure #de, with parent #dse.  Push any files found on the #m_out_queue,

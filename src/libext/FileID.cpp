@@ -65,10 +65,10 @@ public:
 	void GetPath() const;
 
 	/**
-	 * Determine if this file's full path has been determined and captured in the m_path string member.
+	 * Determine if this file's full path has been determined and cached in the m_path std::string member.
 	 * @return
 	 */
-	bool IsPathCaptured() const { return !m_path.empty(); };
+	bool IsPathResolved() const { return !m_path.empty(); };
 
 	FileDescriptor GetFileDescriptor();
 
@@ -150,6 +150,7 @@ public:
 	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
 	mutable std::string m_path;
 
+	mutable int m_open_flags { 0 };
 	mutable FileDescriptor m_file_descriptor;
 
 	/// @name Info normally gathered from a stat() call.
@@ -196,6 +197,7 @@ FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_di
 
 	if(is_pathname_absolute(pathname))
 	{
+		// Save an expensive recursive call to m_at_dir->GetPath() in the future.
 		m_path = pathname;
 	}
 }
@@ -224,18 +226,37 @@ FileDescriptor FileID::UnsynchronizedFileID::GetFileDescriptor()
 	{
 		// File hasn't been opened.
 
+		/// @todo This is ugly, needs to be moved out of here.
+		if(m_open_flags == 0)
+		{
+			m_open_flags = O_SEARCH | O_DIRECTORY | O_NOCTTY;
+		}
+
 		if(m_basename.empty() && !m_path.empty())
 		{
-			m_file_descriptor = make_shared_fd(openat(AT_FDCWD, m_path.c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
+			/// @todo Can this be removed?
+			throw std::runtime_error("m_path not empty, about to openat AT_FDCWD");
+			m_file_descriptor = make_shared_fd(openat(AT_FDCWD, m_path.c_str(), m_open_flags));
 		}
 		else
 		{
-			m_file_descriptor = make_shared_fd(openat(m_at_dir->GetFileDescriptor().GetFD(), GetBasename().c_str(), (O_SEARCH ? O_SEARCH : O_RDONLY) | O_DIRECTORY | O_NOCTTY));
+			m_file_descriptor = make_shared_fd(openat(m_at_dir->GetFileDescriptor().GetFD(), GetBasename().c_str(), m_open_flags));
 		}
 
 		if(m_file_descriptor.empty())
 		{
-			throw std::runtime_error("Bad fd");
+			/// Try to figure out what happened and throw an exception.
+			if(m_file_descriptor.GetFD() == -1)
+			{
+				// Couldn't open the file, throw exception.
+				int temp_errno = errno;
+				errno = 0;
+				throw std::system_error(temp_errno, std::generic_category());
+			}
+			else
+			{
+				throw std::runtime_error("Bad fd");
+			}
 		}
 	}
 
@@ -429,6 +450,7 @@ const std::string& FileID::GetBasename() const noexcept
 
 std::string FileID::GetPath() const noexcept
 {
+#if 0 /// @todo
 	// Use double-checked locking to build up the path and cache it in m_path.
 	if(false)
 	{
@@ -454,10 +476,11 @@ std::string FileID::GetPath() const noexcept
 	}
 	else
 	{
+#endif
 		{
 			ReaderLock rl(m_mutex);
 
-			if(m_pimpl->IsPathCaptured())
+			if(m_pimpl->IsPathResolved())
 			{
 				// m_path has already been lazily evaluated and is available in a std::string.
 				return m_pimpl->m_path;
@@ -467,7 +490,9 @@ std::string FileID::GetPath() const noexcept
 
 		WriterLock wl(m_mutex);
 		m_pimpl->GetPath();
+#if 0
 	}
+#endif
 
 	return m_pimpl->m_path;
 }
@@ -513,7 +538,17 @@ const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
 	WriterLock wl(m_mutex);
 	return m_pimpl->GetUniqueFileIdentifier();
-};
+}
+
+void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
+{
+	int temp_flags = fam | fcf;
+
+	{
+		WriterLock wl(m_mutex);
+		m_pimpl->m_open_flags = temp_flags;
+	}
+}
 
 FileDescriptor FileID::GetFileDescriptor()
 {
