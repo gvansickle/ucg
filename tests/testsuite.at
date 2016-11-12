@@ -47,9 +47,10 @@ AT_TESTED([ucg])
 # Additional option for specifying the top-level directory of the benchmark corpus.
 # Result will be in $at_arg_corpusdir, and during action-if-given in $at_optarg.
 # action-if-not-given is executed if the user doesn't specify this option.
-AT_ARG_OPTION_ARG([corpusdir], [AS_HELP_STRING([--corpusdir=DIR], [Top-level directory of the corpus to use for benchmarking.])],
+AT_ARG_OPTION_ARG([corpusdir], [AS_HELP_STRING([--corpusdir=PATH],
+	[Relative path from the top-level ucg source dir to the top-level directory of the corpus to use for benchmarking.])],
 	[AS_ECHO(["Using corpus directory \"$at_arg_corpusdir\"."])],
-	[at_arg_corpusdir="$abs_top_srcdir/../"
+	[at_arg_corpusdir="./../"
 	AS_ECHO(["Using default corpus directory \"$at_arg_corpusdir\"."])
 ])
 

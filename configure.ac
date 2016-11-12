@@ -636,6 +636,14 @@ AC_MSG_RESULT([
   LDFLAGS:                    $AM_LDFLAGS $LDFLAGS
   LIBS:                       $LIBS
   
+  $CXX Search Paths
+  -----------------
+$($CXX -print-search-dirs | tr ':' '\n' | sed -r 's/^ [=]?//g' | sed 's/^ */  /g')
+  
+  $CXXCPP Include Paths
+  ---------------------
+$(echo | $CXXCPP -v -x c - 2>&1 | sed -n '/#include/,/End of/ p' | sed 's/^ */  /g')
+  
   PCRE Info
   ---------
   HAVE_LIBPCRE                $HAVE_LIBPCRE

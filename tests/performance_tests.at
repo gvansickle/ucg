@@ -41,10 +41,10 @@
 ## We generate this file.
 m4_define([UCG_TEST_FILE_NAME_LARGE_FILE_1], ["${builddir}/500MBLoremIpsum.cpp"])
 ## The Boost library, version 1.58.0.
-#m4_define([UCG_BOOST_PATH], ["${top_srcdir}/../boost_1_58_0"])
-m4_define([UCG_BOOST_PATH], ["${top_srcdir}/../TestCorpus/linux"])
+m4_define([UCG_CORPUS_BOOST_PATH], ["${top_srcdir}/../boost_1_58_0"])
+m4_define([UCG_LINUX_PATH], ["${top_srcdir}/../TestCorpus/linux"])
 
-# The file where we'll put the results of the performance tests.
+# The file where we'll put the results of the benchmark tests.
 # This file will be created in performance_tests.at.
 m4_define([UCG_PERF_RESULTS_FILE], [${builddir}/perf_test_results.txt])
 
@@ -58,7 +58,7 @@ inst_gnu_grep_p])
 m4_define([AXUCG_SOURCE], [.])
 
 ###
-### Start of the performance tests.
+### Start of the benchmark tests.
 ### @todo Probably should change terminology to "benchmarks" throughout.
 ###
 AT_BANNER([UniversalCodeGrep Benchmarks])
@@ -67,8 +67,8 @@ AT_BANNER([UniversalCodeGrep Benchmarks])
 # Create the logfile.
 #
 AT_SETUP([Create report log file])
-AT_KEYWORDS([performance])
-AS_ECHO(["ucg Performance Test Results"]) > UCG_PERF_RESULTS_FILE
+AT_KEYWORDS([benchmark])
+AS_ECHO(["ucg Benchmark Test Results"]) > UCG_PERF_RESULTS_FILE
 AS_ECHO(["Test run started at: `date '+%Y-%m-%d %T%z' | sed 's/\(..\)\(..\)$/\1:\2/'`"]) >> UCG_PERF_RESULTS_FILE
 AT_CLEANUP
 
@@ -76,7 +76,7 @@ AT_CLEANUP
 # Record some system info.
 #
 AT_SETUP([Recording system info])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 AS_ECHO(["START SYSTEM INFO"]) >> UCG_PERF_RESULTS_FILE
 AT_CHECK([get_system_info >> UCG_PERF_RESULTS_FILE], [0], [stdout], [stderr])
 AS_ECHO(["END SYSTEM INFO"]) >> UCG_PERF_RESULTS_FILE
@@ -86,7 +86,7 @@ AT_CLEANUP
 # Get the versions of the programs we're comparing to.
 #
 AT_SETUP([Getting program versions])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 
 AS_ECHO(["START PROGVER INFO"]) >> UCG_PERF_RESULTS_FILE
 # Loop through the programs we're comparing performance with.
@@ -203,15 +203,15 @@ done;
 ### Benchmark: 'BOOST.*HPP' on Boost source.
 ###
 AT_SETUP([Benchmark: 'BOOST.*HPP' on Boost source])
-AT_KEYWORDS([performance long])
+AT_KEYWORDS([benchmark])
 
 # Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
+AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}], [TC1], [], [UCG_BOOST_PATH])
+UCG_GEN_PERFTEST([${PROGLIST}], [TC1], [], [UCG_CORPUS_BOOST_PATH])
 
 # Run the test script.
 AT_CHECK([AXUCG_SOURCE ${srcdir}/TC1.sh], [0], [ignore-nolog], [stderr])
@@ -227,15 +227,15 @@ AT_CLEANUP
 ### Benchmark: literal string on Boost source.
 ###
 AT_SETUP([Benchmark: long literal string on Boost source])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 
 # Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
+AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST], [TC2], [], [UCG_BOOST_PATH])
+UCG_GEN_PERFTEST([$PROGLIST], [TC2], [], [UCG_CORPUS_BOOST_PATH])
 
 # Run the test script.
 AT_CHECK([AXUCG_SOURCE ${srcdir}/TC2.sh], [0], [ignore-nolog], [stderr])
@@ -251,15 +251,15 @@ AT_CLEANUP
 ### Benchmark: find "" includes in Boost source.
 ###
 AT_SETUP([Benchmark: '#include\s+".*"' on Boost source])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 
 # Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
+AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}], [TC5], [], [UCG_BOOST_PATH])
+UCG_GEN_PERFTEST([${PROGLIST}], [TC5], [], [UCG_CORPUS_BOOST_PATH])
 # Run the test script.
 AT_CHECK([AXUCG_SOURCE ${srcdir}/TC5.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
@@ -274,15 +274,15 @@ AT_CLEANUP
 # Benchmark: Search with ignore of part of the dir tree.
 #
 AT_SETUP([Benchmark: literal '#endif' with --ignore-dir=doc on Boost source])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 
 # Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
+AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}], [TC6], [--opt=exclude_dir_literal=docs], [UCG_BOOST_PATH])
+UCG_GEN_PERFTEST([${PROGLIST}], [TC6], [--opt=exclude_dir_literal=docs], [UCG_CORPUS_BOOST_PATH])
 # Run the test script.
 AT_CHECK([AXUCG_SOURCE ${srcdir}/TC6.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
@@ -297,7 +297,7 @@ AT_CLEANUP
 ### Generate test files for large file tests.
 ###
 AT_SETUP([Generating files for large file tests])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 # Generate the test file UCG_TEST_FILE_NAME_LARGE_FILE_1, which is Lorum ipsum text with one distinct test string at the end.
 AT_CHECK([${builddir}/dummy-file-gen -b 500000000 | fold -s > UCG_TEST_FILE_NAME_LARGE_FILE_1], [0], [stdout], [stderr])
 AT_CHECK([cat stderr | $EGREP 'Number of bytes written:'], [0], [ignore], [ignore])
@@ -308,7 +308,7 @@ AT_CLEANUP
 ### Benchmark: regex 'iudice[\w]*umputo' on single ~500MB file.
 ###
 AT_SETUP([Benchmark: regex on 500MB file, match at end])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
@@ -328,7 +328,7 @@ AT_CLEANUP
 ### Benchmark: literal string on single ~500MB file.
 ###
 AT_SETUP([Benchmark: literal string on 500MB file, match at end])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
@@ -347,7 +347,7 @@ AT_CLEANUP
 ### Delete test files for the large file tests.
 ###
 AT_SETUP([Deleting files for large file tests])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 # Delete the test file UCG_TEST_FILE_NAME_LARGE_FILE_1, which is Lorum ipsum text with one distinct test string at the end.
 AT_CHECK([test -f "UCG_TEST_FILE_NAME_LARGE_FILE_1" && rm "UCG_TEST_FILE_NAME_LARGE_FILE_1"], [0], [stdout], [stderr])
 AT_CLEANUP
