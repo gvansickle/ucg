@@ -224,7 +224,11 @@ public:
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 
-		m_num_waiting_threads_notification_level = num_workers;
+		// If creating thread already says he set the m_num_waiting_threads_notification_level, skip this.
+		if(num_workers > 0)
+		{
+			m_num_waiting_threads_notification_level = num_workers;
+		}
 
 		m_cv_complete.wait(lock, [this, num_workers](){
 			return ((m_num_waiting_threads == num_workers) && m_underlying_queue.empty()) || m_closed;
@@ -238,6 +242,17 @@ public:
 		{
 			return queue_op_status::success;
 		}
+	}
+
+	/**
+	 * Must be called prior to any threads doing a #wait_pull().
+	 * @param num_workers
+	 */
+	void set_num_workers(size_t num_workers)
+	{
+		std::unique_lock<std::mutex> lock(m_mutex);
+
+		m_num_waiting_threads_notification_level = num_workers;
 	}
 
 private:

@@ -79,18 +79,21 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 		/// @todo Symlinks, COMFOLLOW.
 	}
 
+	// Tell the queue when to notify us when there is no work left to do.
+	m_dir_queue.set_num_workers(m_dirjobs);
+
 	// Create and start the directory traversal threads.
 	std::vector<std::thread> threads;
 
 	for(int i=0; i<m_dirjobs; i++)
 	{
-		threads.push_back(std::thread(&DirTree::ReaddirLoop, this));
+		threads.push_back(std::thread(&DirTree::ReaddirLoop, this, i));
 	}
 
 	LOG(INFO) << "Globber threads = " << threads.size();
 
 	// Wait for the producer+consumer threads to finish.
-	m_dir_queue.wait_for_worker_completion(m_dirjobs);
+	m_dir_queue.wait_for_worker_completion(0);
 
 	m_dir_queue.close();
 
@@ -101,11 +104,14 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 	}
 }
 
-void DirTree::ReaddirLoop()
+void DirTree::ReaddirLoop(int dirjob_num)
 {
 	std::shared_ptr<FileID> dse;
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
+
+	// Set the name of this thread, for logging and debug purposes.
+	set_thread_name("READDIR_" + std::to_string(dirjob_num));
 
 	while(m_dir_queue.wait_pull(std::move(dse)) != queue_op_status::closed)
 	{
@@ -165,7 +171,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 	// Skip "." and "..".
 	if(dname[0] == '.' && (dname[1] == 0 || (dname[1] == '.' && dname[2] == 0)))
 	{
-		// Always skip "." amd "..", unless they're specified on the command line.
+		// Always skip "." and "..", unless they're specified on the command line.
 		return;
 	}
 

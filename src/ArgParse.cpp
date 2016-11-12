@@ -638,14 +638,14 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 		if(!homedir.empty())
 		{
 			// See if we can open the user's .ucgrc file.
-			homedir += "/.ucgrc";
+			std::string homefilepath = homedir + "/.ucgrc";
 			try
 			{
-				File home_file(homedir);
+				File home_file(homefilepath);
 
 				if(home_file.size() == 0)
 				{
-					LOG(INFO) << "Config file \"" << homedir << "\" is zero-length.";
+					LOG(INFO) << "Config file \"" << homefilepath << "\" is zero-length.";
 				}
 				else
 				{
@@ -662,7 +662,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 			{
 				if(e.code() != std::errc::no_such_file_or_directory)
 				{
-					WARN() << "Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message();
+					WARN() << "Couldn't open config file \"" << homefilepath << "\", error " << e.code() << " - " << e.code().message();
 				}
 				// Otherwise, the file just doesn't exist.
 			}

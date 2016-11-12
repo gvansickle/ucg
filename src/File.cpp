@@ -33,12 +33,35 @@
 
 File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
 {
+#if 0
 	m_filename = file_id.GetPath();
 	m_file_descriptor = open(m_filename.c_str(), O_RDONLY);
-	if(m_file_descriptor == -1)
+#endif
+	m_fileid = std::move(file_id);
+	m_fileid.SetFileDescriptorMode(FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
+
+	int file_descriptor { -1 };
+
+	try
 	{
-		// Couldn't open the file, throw exception.
-		throw std::system_error(errno, std::generic_category());
+		file_descriptor = m_fileid.GetFileDescriptor().GetFD();
+
+		/// @todo Shouldn't need this anymore.
+		if(file_descriptor == -1)
+		{
+			// Couldn't open the file, throw exception.
+			throw std::system_error(errno, std::generic_category());
+		}
+	}
+	catch(const std::system_error &e)
+	{
+		// Rethrow.
+		throw;
+	}
+	catch(...)
+	{
+		// Rethrow anything else.
+		throw;
 	}
 
 #if 0 /// @todo
@@ -48,13 +71,13 @@ File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_
 	}
 #endif
 
-	m_file_size = file_id.GetFileSize();
+	ssize_t file_size = file_id.GetFileSize();
 
 	// If filesize is 0, skip.
-	if(m_file_size == 0)
+	if(file_size == 0)
 	{
-		close(m_file_descriptor);
-		m_file_descriptor = -1;
+		//close(m_file_descriptor);
+		//m_file_descriptor = -1;
 		return;
 	}
 
@@ -67,21 +90,24 @@ File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_
 	// ...it seems that as of ~2014, experiments show the minimum I/O size should be >=128KB.
 	// *stat() seems to return 4096 in all my experiments so far, so we'll clamp it to a min of 128KB and a max of
 	// something not unreasonable, e.g. 1M.
-	auto io_size = clamp(file_id.GetBlockSize(), static_cast<blksize_t>(0x20000), static_cast<blksize_t>(0x100000));
-	m_file_data = GetFileData(m_file_descriptor, m_file_size, io_size);
-	m_file_descriptor = -1;
+	auto io_size = clamp(m_fileid.GetBlockSize(), static_cast<blksize_t>(0x20000), static_cast<blksize_t>(0x100000));
+	m_file_data = GetFileData(file_descriptor, file_size, io_size);
+
+	///m_file_descriptor = -1;
 
 	if(m_file_data == MAP_FAILED)
 	{
 		// Mapping failed.
-		ERROR() << "Couldn't map file \"" << m_filename << "\"";
+		ERROR() << "Couldn't map file '" << m_fileid.GetPath() << "'";
 		throw std::system_error(errno, std::system_category());
 	}
 }
 
 
-File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
+File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage)
+	: File(FileID(std::make_shared<FileID>(FileID::path_known_cwd_tag()), filename), storage)
 {
+#if 0 /// @todo DELETE
 	// Save the filename.
 	m_filename = filename;
 
@@ -138,12 +164,13 @@ File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> st
 		ERROR() << "Couldn't map file \"" << filename << "\"";
 		throw std::system_error(errno, std::system_category());
 	}
+#endif
 }
 
 File::~File()
 {
 	// Clean up.
-	FreeFileData(m_file_data, m_file_size);
+	FreeFileData(m_file_data, m_fileid.GetFileSize());
 }
 
 const char* File::GetFileData(int file_descriptor, size_t file_size, size_t preferred_block_size)
