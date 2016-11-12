@@ -94,7 +94,7 @@ AC_PROG_CXXCPP([g++ clang++]) # Needed for any C++ AC_PREPROC_IFELSE() checks be
 # @temp? Tell clang to use its own library.
 # Looks like we don't need this after all, maybe.
 AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
-[CPPFLAGS="$CPPFLAGS -stdlib=libc++ --rtlib=compiler-rt -DLIBCXX_USE_COMPILER_RT=YES"
+[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
 LDFLAGS="$LDFLAGS -stdlib=libc++ --rtlib=compiler-rt -DLIBCXX_USE_COMPILER_RT=YES"])
 
 AS_BOX([Checking C compiler language standard support])
