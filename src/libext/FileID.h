@@ -71,7 +71,7 @@ inline std::ostream& operator<<(std::ostream& out, const FileType value){
 /**
  * Only one may be specified.
  */
-enum FileAccessMode
+enum FileAccessMode : int
 {
 	FAM_RDONLY = O_RDONLY,//!< FAM_RDONLY
 	FAM_RDWR = O_RDWR,    //!< FAM_RDWR

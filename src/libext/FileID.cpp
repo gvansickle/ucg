@@ -27,6 +27,7 @@
 #include <fts.h>
 
 #include <future/memory.hpp> // For std::make_unique<>
+#include <libext/string.hpp>
 #include <atomic>
 
 //////////////////////////////////
@@ -390,6 +391,8 @@ const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 {
 	int temp_flags = fam | fcf;
+
+	LOG(DEBUG) << "Setting file descriptor mode flags: " << to_string(temp_flags, std::hex);
 
 	{
 		WriterLock wl(m_mutex);

@@ -55,6 +55,8 @@ public:
 	{
 		ReaderLock rl(other.m_mutex);
 
+		LOG(DEBUG) << "copy constructor called.";
+
 		if(!other.unlocked_empty())
 		{
 			m_file_descriptor = dup(other.m_file_descriptor);
@@ -72,6 +74,7 @@ public:
 	FileDescriptor(FileDescriptor&& other) noexcept
 	{
 		WriterLock wl(other.m_mutex);
+		LOG(DEBUG) << "move constructor called.";
 
 		m_file_descriptor = other.m_file_descriptor;
 
@@ -91,6 +94,7 @@ public:
 		{
 			LOG(DEBUG) << "closing file descriptor: " << m_file_descriptor;
 			close(m_file_descriptor);
+			m_file_descriptor = cm_invalid_file_descriptor;
 		}
 	};
 
@@ -102,6 +106,8 @@ public:
 			WriterLock this_lock(m_mutex, std::defer_lock);
 			ReaderLock other_lock(other.m_mutex, std::defer_lock);
 			std::lock(this_lock, other_lock);
+
+			LOG(DEBUG) << "copy assignment called.";
 
 			if(!unlocked_empty())
 			{
@@ -133,6 +139,8 @@ public:
 			WriterLock this_lock(m_mutex, std::defer_lock);
 			WriterLock other_lock(other.m_mutex, std::defer_lock);
 			std::lock(this_lock, other_lock);
+
+			LOG(DEBUG) << "move assignment called.";
 
 			// Step 1: Release any resources this owns.
 			if(!unlocked_empty())
@@ -181,5 +189,10 @@ inline FileDescriptor make_shared_fd(int fd)
 	return FileDescriptor(fd);
 }
 
+static_assert(std::is_copy_constructible<FileDescriptor>::value, "FileDescriptor must be copy constructible.");
+static_assert(std::is_move_constructible<FileDescriptor>::value, "FileDescriptor must be move constructible.");
+static_assert(std::is_assignable<FileDescriptor, FileDescriptor>::value, "FileDescriptor must be assignable to itself.");
+static_assert(std::is_copy_assignable<FileDescriptor>::value, "FileDescriptor must be copy assignable to itself.");
+static_assert(std::is_move_assignable<FileDescriptor>::value, "FileDescriptor must be move assignable to itself.");
 
 #endif /* SRC_LIBEXT_FILEDESCRIPTOR_HPP_ */
