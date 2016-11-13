@@ -33,7 +33,7 @@
 ///
 
 
-FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
+FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
 	: m_at_dir(at_dir_fileid), m_basename(pathname)
 {
 	/// @note Taking pathname by value since we are always storing it.
@@ -50,7 +50,7 @@ FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_di
 	}
 }
 
-FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
+FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
 		const struct stat *stat_buf, FileType type)
 		: m_at_dir(at_dir_fileid), m_basename(basename), m_path(pathname), m_file_type(type)
 {
@@ -60,12 +60,12 @@ FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_di
 	}
 }
 
-const std::string& FileID::UnsynchronizedFileID::GetBasename() const noexcept
+const std::string& FileID::impl::GetBasename() const noexcept
 {
 	return m_basename;
 };
 
-FileDescriptor FileID::UnsynchronizedFileID::GetFileDescriptor()
+FileDescriptor FileID::impl::GetFileDescriptor()
 {
 	/// @todo This still needs rethinking.  I think.
 
@@ -102,7 +102,7 @@ FileDescriptor FileID::UnsynchronizedFileID::GetFileDescriptor()
 }
 
 
-const std::string& FileID::UnsynchronizedFileID::GetAtDirRelativeBasename() const noexcept
+const std::string& FileID::impl::GetAtDirRelativeBasename() const noexcept
 {
 	if(m_basename.empty())
 	{
@@ -111,13 +111,13 @@ const std::string& FileID::UnsynchronizedFileID::GetAtDirRelativeBasename() cons
 	return m_basename;
 }
 
-void FileID::UnsynchronizedFileID::SetDevIno(dev_t d, ino_t i) noexcept
+void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
 {
 	m_dev = d;
 	m_unique_file_identifier = dev_ino_pair(d, i);
 }
 
-void FileID::UnsynchronizedFileID::SetStatInfo(const struct stat &stat_buf) const noexcept
+void FileID::impl::SetStatInfo(const struct stat &stat_buf) const noexcept
 {
 	m_stat_info_valid = true;
 
@@ -147,7 +147,7 @@ void FileID::UnsynchronizedFileID::SetStatInfo(const struct stat &stat_buf) cons
 	m_blocks = stat_buf.st_blocks;
 }
 
-void FileID::UnsynchronizedFileID::GetPath() const
+void FileID::impl::GetPath() const
 {
 	// Do we not have a full path already?
 	/// @todo probably don't need this check anymore.
@@ -179,7 +179,7 @@ FileID::FileID() //: FileID(path_known_cwd)
 }
 
 // Copy constructor.
-FileID::FileID(const FileID& other) : m_pimpl((ReaderLock(other.m_mutex), std::make_unique<FileID::UnsynchronizedFileID>(*other.m_pimpl)))
+FileID::FileID(const FileID& other) : m_pimpl((ReaderLock(other.m_mutex), std::make_unique<FileID::impl>(*other.m_pimpl)))
 {
 	LOG(DEBUG) << "Copy constructor called";
 	if(!m_pimpl)
@@ -199,13 +199,13 @@ FileID::FileID(FileID&& other) : m_pimpl((WriterLock(other.m_mutex), std::move(o
 };
 
 FileID::FileID(path_known_cwd_tag)
-	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(nullptr, ".", ".", nullptr, FT_DIR))
+	: m_pimpl(std::make_unique<FileID::impl>(nullptr, ".", ".", nullptr, FT_DIR))
 {
 	m_pimpl->m_file_descriptor = make_shared_fd(open(".", O_SEARCH | O_DIRECTORY | O_NOCTTY));
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
-	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, basename, "", nullptr, type))
+	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", nullptr, type))
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
@@ -214,7 +214,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type)
-	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, pathname /*==basename*/, pathname, nullptr, type))
+	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname /*==basename*/, pathname, nullptr, type))
 {
 	/// @note Taking pathname by value since we are always storing it.
 	/// Full openat() semantics:
@@ -223,7 +223,7 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
-	: m_pimpl(std::make_unique<FileID::UnsynchronizedFileID>(at_dir_fileid, pathname))
+	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname))
 {
 
 }
@@ -261,7 +261,7 @@ FileID& FileID::operator=(const FileID& other)
 		WriterLock this_lock(m_mutex, std::defer_lock);
 		ReaderLock other_lock(other.m_mutex, std::defer_lock);
 		std::lock(this_lock, other_lock);
-		m_pimpl = std::make_unique<FileID::UnsynchronizedFileID>(*other.m_pimpl);
+		m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
 	}
 	return *this;
 };

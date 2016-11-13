@@ -110,7 +110,7 @@ public:
 
 	/// pImpl forward declaration.
 	/// Not private: only because we want to do some static_assert() checks on it.
-	class UnsynchronizedFileID;
+	class impl;
 
 	/// @name Tag types for selecting FileID() constructors when the given path is known to be relative or absolute.
 	/// @note This is not really "tag dispatching" as commonly understood, but I don't have a way yet to disambiguate
@@ -205,7 +205,7 @@ public:
 	void SetStatInfo(const struct stat &stat_buf) noexcept;
 
 	/// The pImpl.
-	std::unique_ptr<UnsynchronizedFileID> m_pimpl;
+	std::unique_ptr<impl> m_pimpl;
 };
 
 static_assert(std::is_assignable<FileID, FileID>::value, "FileID must be assignable to itself.");
@@ -220,29 +220,29 @@ static_assert(std::is_move_assignable<FileID>::value, "FileID must be move assig
  * As such, its interface is not intended to be directly exposed to the world.
  * @see FileID
  */
-class FileID::UnsynchronizedFileID
+class FileID::impl
 {
 public:
-	UnsynchronizedFileID() = default;
-	UnsynchronizedFileID(const UnsynchronizedFileID& other) = default;
-	UnsynchronizedFileID(UnsynchronizedFileID&& other) = default;
+	impl() = default;
+	impl(const impl& other) = default;
+	impl(impl&& other) = default;
 
 	/// Copy assignment.
-	UnsynchronizedFileID& operator=(const UnsynchronizedFileID &other) = default;
+	impl& operator=(const impl &other) = default;
 
 	/// Move assignment.
-	UnsynchronizedFileID& operator=(UnsynchronizedFileID&& other) = default;
+	impl& operator=(impl&& other) = default;
 
 	/// @name Various non-default constructors.
 	/// @{
-	UnsynchronizedFileID(const FTSENT *ftsent, bool stat_info_known_valid);
-	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
-	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
+	impl(const FTSENT *ftsent, bool stat_info_known_valid);
+	impl(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
+	impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
 			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 	///@}
 
 	/// Default destructor.
-	~UnsynchronizedFileID() = default;
+	~impl() = default;
 
 	const std::string& GetBasename() const noexcept;
 
@@ -368,9 +368,9 @@ public:
 
 /// @name Compile-time invariants for the UnsynchronizedFileID class.
 /// @{
-static_assert(std::is_assignable<FileID::UnsynchronizedFileID, FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be assignable to itself.");
-static_assert(std::is_copy_assignable<FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be copy assignable to itself.");
-static_assert(std::is_move_assignable<FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be move assignable to itself.");
+static_assert(std::is_assignable<FileID::impl, FileID::impl>::value, "UnsynchronizedFileID must be assignable to itself.");
+static_assert(std::is_copy_assignable<FileID::impl>::value, "UnsynchronizedFileID must be copy assignable to itself.");
+static_assert(std::is_move_assignable<FileID::impl>::value, "UnsynchronizedFileID must be move assignable to itself.");
 /// @}
 
 

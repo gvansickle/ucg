@@ -124,14 +124,14 @@ void FileScanner::Run(int thread_index)
 
 	// Pull new filenames off the input queue until it's closed.
 	FileID next_file;
-	auto debugptr = *(next_file.m_pimpl);
+	FileID::impl* debugptr = next_file.m_pimpl.get();
 	while(m_in_queue.wait_pull(std::move(next_file)) != queue_op_status::closed)
 	{
-		auto debugptr2 = *(next_file.m_pimpl);
+		FileID::impl* debugptr2 = next_file.m_pimpl.get();
 
 		try
 		{
-			auto debugptr3 = *(next_file.m_pimpl);
+			FileID::impl* debugptr3 = next_file.m_pimpl.get();
 
 			// Try to open and read the file.  This could throw.
 			LOG(INFO) << "Attempting to scan file \'" << next_file.GetPath() << "\'";
