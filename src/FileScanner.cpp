@@ -139,8 +139,9 @@ void FileScanner::Run(int thread_index)
 			File f(std::move(next_file), file_data_storage);
 			//steady_clock::time_point end = steady_clock::now();
 			//accum_elapsed_time += (end - start);
-			total_bytes_read += f.size();
-			LOG(INFO) << "Num bytes read: " << total_bytes_read;
+			auto bytes_read = f.size();
+			total_bytes_read += bytes_read;
+			LOG(INFO) << "Num/total bytes read: " << bytes_read << " / " << total_bytes_read;
 
 			MatchList ml(f.name());
 

@@ -80,7 +80,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 	}
 
 	// Tell the queue when to notify us when there is no work left to do.
-	m_dir_queue.set_num_workers(m_dirjobs);
+	//m_dir_queue.set_num_workers(m_dirjobs);
 
 	// Create and start the directory traversal threads.
 	std::vector<std::thread> threads;
@@ -93,7 +93,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 	LOG(INFO) << "Globber threads = " << threads.size();
 
 	// Wait for the producer+consumer threads to finish.
-	m_dir_queue.wait_for_worker_completion(0);
+	m_dir_queue.wait_for_worker_completion(m_dirjobs);
 
 	m_dir_queue.close();
 
