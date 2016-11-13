@@ -272,7 +272,7 @@ public:
 
 	void LazyLoadStatInfo() const
 	{
-		if(IsStatInfoValid())
+		if(m_stat_info_valid)
 		{
 			// Already set.
 			return;
@@ -290,7 +290,7 @@ public:
 		{
 			// Error.
 			m_file_type = FT_STAT_FAILED;
-			LOG(INFO) << "fstatat() failed" << LOG_STRERROR();
+			LOG(INFO) << "fstatat() failed: " << LOG_STRERROR();
 			// Note: We don't clear errno here, we want to be able to look at it in the caller.
 			//errno = 0;
 		}

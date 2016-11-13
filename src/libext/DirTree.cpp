@@ -64,7 +64,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 		if(type == FT_REG)
 		{
 			/// @todo filter-out mechanism?
-			m_out_queue.wait_push(FileID(*file_or_dir));
+			m_out_queue.wait_push(FileID(std::move(*file_or_dir)));
 		}
 		else if(type == FT_DIR)
 		{
@@ -102,6 +102,9 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 	{
 		thr.join();
 	}
+
+	// Log the traversal stats.
+	LOG(INFO) << m_stats;
 }
 
 void DirTree::ReaddirLoop(int dirjob_num)
@@ -109,6 +112,8 @@ void DirTree::ReaddirLoop(int dirjob_num)
 	std::shared_ptr<FileID> dse;
 	DIR *d {nullptr};
 	struct dirent *dp {nullptr};
+
+	DirTraversalStats stats;
 
 	// Set the name of this thread, for logging and debug purposes.
 	set_thread_name("READDIR_" + std::to_string(dirjob_num));
@@ -122,7 +127,7 @@ void DirTree::ReaddirLoop(int dirjob_num)
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
-			WARN() << "opendirat() failed" << LOG_STRERROR();
+			WARN() << "opendirat() failed on path " << open_at_path << ": " << LOG_STRERROR();
 			errno = 0;
 			continue;
 		}
@@ -132,7 +137,7 @@ void DirTree::ReaddirLoop(int dirjob_num)
 			errno = 0;
 			if((dp = readdir(d)) != NULL)
 			{
-				ProcessDirent(dse, dp);
+				ProcessDirent(dse, dp, stats);
 			}
 		} while(dp != NULL);
 
@@ -144,10 +149,12 @@ void DirTree::ReaddirLoop(int dirjob_num)
 
 		closedir(d);
 	}
+
+	m_stats += stats;
 }
 
 
-void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_dirent)
+void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_dirent, DirTraversalStats &stats)
 {
 	bool is_dir {false};
 	bool is_file {false};
@@ -229,10 +236,9 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 			//std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';
 			// It's a normal file.
 			LOG(INFO) << "... normal file.";
-			///stats.m_num_files_found++;
+			stats.m_num_files_found++;
 
 			// Check for inclusion.
-			///name.assign(ftsent->fts_name, ftsent->fts_namelen);
 			if(m_file_basename_filter(basename)) //skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
 			{
 				// Based on the file name, this file should be scanned.
@@ -242,21 +248,23 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				m_out_queue.wait_push({FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG});
 
 				// Count the number of files we found that were included in the search.
-				///stats.m_num_files_scanned++;
+				stats.m_num_files_scanned++;
 			}
 			else
 			{
-				///stats.m_num_files_rejected++;
+				stats.m_num_files_rejected++;
 			}
 		}
 		else if(is_dir)
 		{
-			//std::cout << "Dir: " << dse.get()->get_name() + "/" + dname << '\n';
+			LOG(INFO) << "... directory.";
+			stats.m_num_directories_found++;
+
 			if(m_dir_basename_filter(basename)) //!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
 			{
 				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 				LOG(INFO) << "... should be ignored.";
-				///stats.m_num_dirs_rejected++;
+				stats.m_num_dirs_rejected++;
 				return;
 			}
 
@@ -270,6 +278,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				{
 					// Found cycle.
 					WARN() << "'" << dir_atfd.GetPath() << "': recursive directory loop";
+					stats.m_num_dirs_rejected++;
 					return;
 				}
 			}

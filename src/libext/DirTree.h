@@ -33,6 +33,65 @@
 
 #include <dirent.h>
 
+/**
+ * Helper class to collect up and communicate directory tree traversal stats.
+ * The idea is that each thread will maintain its own instance of this class,
+ * and only when that thread is complete will it add its statistics to a single, "global"
+ * instance.  This avoids any locking concerns other than at that final, one-time sum.
+ */
+class DirTraversalStats
+{
+	/**
+	 * Using X-macros to make fields easier to add/rearrange/remove.
+	 */
+#define M_STATLIST \
+	X("Number of directories found", m_num_directories_found) \
+	X("Number of directories rejected", m_num_dirs_rejected) \
+	X("Number of files found", m_num_files_found) \
+	X("Number of files rejected", m_num_files_rejected) \
+	X("Number of files sent for scanning", m_num_files_scanned)
+
+public:
+#define X(d,s) size_t s {0};
+	M_STATLIST
+#undef X
+
+	/**
+	 * Atomic compound assignment by sum.
+	 * Adds the stats from #other to *this in a thread-safe manner.
+	 * @param other
+	 */
+	void operator+=(const DirTraversalStats & other)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+
+#define X(d,s) s += other. s;
+		M_STATLIST
+#undef X
+	}
+
+	/**
+	 * Friend function stream insertion operator.
+	 *
+	 * @param os
+	 * @param dts
+	 * @return
+	 */
+	friend std::ostream& operator<<(std::ostream& os, const DirTraversalStats &dts)
+	{
+		return os
+#define X(d,s) << "\n" d ": " << dts. s
+		M_STATLIST
+#undef X
+		;
+	};
+
+private:
+
+	/// Mutex for making the compound assignment by sum operator thread-safe.
+	std::mutex m_mutex;
+};
+
 /*
  *
  */
@@ -66,6 +125,8 @@ private:
 	file_basename_filter_type m_file_basename_filter;
 	dir_basename_filter_type m_dir_basename_filter;
 
+	DirTraversalStats m_stats;
+
 	using visited_set = std::unordered_set<dev_ino_pair>;
 	std::mutex m_dir_mutex;
 	visited_set m_dir_has_been_visited;
@@ -84,7 +145,7 @@ private:
 	 * @param dse
 	 * @param de
 	 */
-	void ProcessDirent(std::shared_ptr<FileID> dse, struct dirent *de);
+	void ProcessDirent(std::shared_ptr<FileID> dse, struct dirent *de, DirTraversalStats &stats);
 
 };
 

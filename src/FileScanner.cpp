@@ -140,10 +140,9 @@ void FileScanner::Run(int thread_index)
 			//steady_clock::time_point end = steady_clock::now();
 			//accum_elapsed_time += (end - start);
 			total_bytes_read += f.size();
-
+			LOG(INFO) << "Num bytes read: " << total_bytes_read;
 
 			MatchList ml(f.name());
-
 
 			if(f.size() == 0)
 			{

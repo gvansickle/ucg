@@ -467,19 +467,20 @@ inline std::string canonicalize_any_path(const std::string &path)
 inline DIR* opendirat(int at_dir, const char *name)
 {
 	LOG(INFO) << "Attempting to open directory '" << name << "' at file descriptor " << at_dir;
-	constexpr int openat_dir_search_flags = O_SEARCH ? O_SEARCH : O_RDONLY;
 
-	int file_fd = openat(at_dir, name, openat_dir_search_flags | O_DIRECTORY | O_NOCTTY);
+	int file_fd = openat(at_dir, name, O_SEARCH | O_DIRECTORY | O_NOCTTY);
 	if(file_fd < 0)
 	{
 		ERROR() << "openat() failed: " << LOG_STRERROR();
-		errno = 0;
+		//errno = 0;
+		return nullptr;
 	}
 	DIR* d = fdopendir(file_fd);
 	if(d == nullptr)
 	{
 		ERROR() << "fdopendir failed: " << LOG_STRERROR();
-		errno = 0;
+		//errno = 0;
+		close(file_fd);
 	}
 
 	return d;

@@ -61,6 +61,7 @@ File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_
 	}
 
 	ssize_t file_size = m_fileid.GetFileSize();
+	LOG(INFO) << "... file size is :" << file_size;
 
 	// If filesize is 0, skip.
 	if(file_size == 0)
