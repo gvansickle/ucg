@@ -55,6 +55,8 @@ AM_INIT_AUTOMAKE([1.14
 	-Werror
 ])
 
+AM_SILENT_RULES([yes])
+
 # Figure out who we're building for.
 case $host_os in
 	*cygwin* ) CYGWIN=yes;;
@@ -77,7 +79,6 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 ## Checks for the programs needed to do a build.
 AS_BOX([Checking for programs needed to do the build...])
 
-AC_PROG_INSTALL
 # To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
 # This will do that for us.
 # @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
@@ -140,10 +141,7 @@ AS_IF([test "x$HAVE_CXX1Z" = "x0"],
 ], [])
 AC_LANG_POP([C++])
 
-# @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
-# (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
-# Probably remove this when/if that is fixed. 
-#m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+AC_PROG_INSTALL
 # @note We still need AM_PROG_AR before LT_INIT(), or it will complain about a non-POSIX linker.
 # See e.g. https://lists.gnu.org/archive/html/libtool/2012-11/msg00019.html.
 AM_PROG_AR
@@ -240,8 +238,6 @@ AC_SUBST([PROG_GREP_P], [$ac_cv_path_PROG_GREP_P])
 ###
 
 AS_BOX([Checking for maintainer tools...])
-
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Python, for generation of test suite.
 AM_PATH_PYTHON([2.7],,[:])
