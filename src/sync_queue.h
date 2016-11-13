@@ -230,8 +230,8 @@ public:
 			m_num_waiting_threads_notification_level = num_workers;
 		}
 
-		m_cv_complete.wait(lock, [this, num_workers](){
-			return ((m_num_waiting_threads == num_workers) && m_underlying_queue.empty()) || m_closed;
+		m_cv_complete.wait(lock, [this](){
+			return ((m_num_waiting_threads == m_num_waiting_threads_notification_level) && m_underlying_queue.empty()) || m_closed;
 		});
 
 		if(m_closed)
