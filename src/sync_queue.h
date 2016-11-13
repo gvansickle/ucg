@@ -230,6 +230,9 @@ public:
 			m_num_waiting_threads_notification_level = num_workers;
 		}
 
+		// Wake up any waiting threads, so they can check the new notification level.
+		m_cv_complete.notify_all();
+
 		m_cv_complete.wait(lock, [this](){
 			return ((m_num_waiting_threads == m_num_waiting_threads_notification_level) && m_underlying_queue.empty()) || m_closed;
 		});

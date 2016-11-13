@@ -134,7 +134,7 @@ void FileScanner::Run(int thread_index)
 			FileID::impl* debugptr3 = next_file.m_pimpl.get();
 
 			// Try to open and read the file.  This could throw.
-			LOG(INFO) << "Attempting to scan file \'" << next_file.GetPath() << "\'";
+			LOG(INFO) << "Attempting to scan file \'" << next_file.GetPath() << "\', fd=" << next_file.GetFileDescriptor().GetFD();
 			//steady_clock::time_point start = steady_clock::now();
 			File f(std::move(next_file), file_data_storage);
 			//steady_clock::time_point end = steady_clock::now();

@@ -61,7 +61,8 @@ File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_
 	}
 
 	ssize_t file_size = m_fileid.GetFileSize();
-	LOG(INFO) << "... file size is :" << file_size;
+	LOG(INFO) << "... file size is: " << file_size;
+	LOG(INFO) << "... file type is: " << m_fileid.GetFileType();
 
 	// If filesize is 0, skip.
 	if(file_size == 0)
@@ -167,7 +168,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size, size_t pref
 {
 	const char *file_data = static_cast<const char *>(MAP_FAILED);
 
-	if(m_use_mmap)
+	if(false) /// @todo This is very broken right now.  (m_use_mmap)
 	{
 		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE /*| MAP_POPULATE*/, file_descriptor, 0));
 
@@ -198,8 +199,14 @@ const char* File::GetFileData(int file_descriptor, size_t file_size, size_t pref
 		file_data = m_storage->data();
 
 		// Read in the whole file.
-		/// @todo Handle read() errors better.
-		while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
+		ssize_t retval = 0;
+		while((retval = read(file_descriptor, const_cast<char*>(file_data), file_size)) > 0);
+		if(retval < 0)
+		{
+			// read error.
+			ERROR() << "read() error on file '" << "<<TODO>>" << "', descriptor " << file_descriptor << ": " << LOG_STRERROR();
+			errno = 0;
+		}
 	}
 
 	// We don't need the file descriptor anymore.

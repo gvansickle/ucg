@@ -34,6 +34,7 @@
 
 #include "integer.hpp"
 #include "filesystem.hpp"
+#include "FileDescriptor.hpp"
 
 
 // Forward declarations.
@@ -50,11 +51,27 @@ enum FileType
 	FT_SYMLINK,
 	FT_STAT_FAILED
 };
+/// Stream insertion operator for FileType enum.
+inline std::ostream& operator<<(std::ostream& out, const FileType value){
+    const char* s = 0;
+#define M_ENUM_CASE(p) case(p): s = #p; break;
+    switch(value){
+        M_ENUM_CASE(FT_UNINITIALIZED);
+        M_ENUM_CASE(FT_UNKNOWN);
+        M_ENUM_CASE(FT_REG);
+        M_ENUM_CASE(FT_DIR);
+		M_ENUM_CASE(FT_SYMLINK);
+		M_ENUM_CASE(FT_STAT_FAILED);
+    }
+#undef M_ENUM_CASE
+
+    return out << s;
+}
 
 /**
  * Only one may be specified.
  */
-enum FileAccessMode
+enum FileAccessMode : int
 {
 	FAM_RDONLY = O_RDONLY,//!< FAM_RDONLY
 	FAM_RDWR = O_RDWR,    //!< FAM_RDWR

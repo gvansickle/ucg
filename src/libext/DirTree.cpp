@@ -79,9 +79,6 @@ void DirTree::Scandir(std::vector<std::string> start_paths)
 		/// @todo Symlinks, COMFOLLOW.
 	}
 
-	// Tell the queue when to notify us when there is no work left to do.
-	//m_dir_queue.set_num_workers(m_dirjobs);
-
 	// Create and start the directory traversal threads.
 	std::vector<std::thread> threads;
 
