@@ -202,7 +202,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size, size_t pref
 	}
 
 	// We don't need the file descriptor anymore.
-	close(file_descriptor);
+	///@todo close(file_descriptor);
 
 	return file_data;
 }
