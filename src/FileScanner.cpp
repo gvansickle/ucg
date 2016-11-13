@@ -124,10 +124,15 @@ void FileScanner::Run(int thread_index)
 
 	// Pull new filenames off the input queue until it's closed.
 	FileID next_file;
+	auto debugptr = *(next_file.m_pimpl);
 	while(m_in_queue.wait_pull(std::move(next_file)) != queue_op_status::closed)
 	{
+		auto debugptr2 = *(next_file.m_pimpl);
+
 		try
 		{
+			auto debugptr3 = *(next_file.m_pimpl);
+
 			// Try to open and read the file.  This could throw.
 			LOG(INFO) << "Attempting to scan file \'" << next_file.GetPath() << "\'";
 			//steady_clock::time_point start = steady_clock::now();
@@ -137,12 +142,12 @@ void FileScanner::Run(int thread_index)
 			total_bytes_read += f.size();
 
 
-			MatchList ml(next_file.GetPath());
+			MatchList ml(f.name());
 
 
 			if(f.size() == 0)
 			{
-				LOG(INFO) << "WARNING: Filesize of \'" << next_file.GetPath() << "\' is 0, skipping.";
+				LOG(INFO) << "WARNING: Filesize of \'" << f.name() << "\' is 0, skipping.";
 				continue;
 			}
 

@@ -29,161 +29,9 @@
 #include <future/memory.hpp> // For std::make_unique<>
 #include <atomic>
 
-/**
- * Factorization of the FileID class.  This is the unsynchronized "pImpl" part which holds all the data.
- * It does not concern itself with concurrency issues with respect to copying, moving, or assigning.
- * As such, its interface is not intended to be directly exposed to the world.
- * @see FileID
- */
-class FileID::UnsynchronizedFileID
-{
-public:
-	UnsynchronizedFileID() = default;
-	UnsynchronizedFileID(const UnsynchronizedFileID& other) = default;
-	UnsynchronizedFileID(UnsynchronizedFileID&& other) = default;
+//////////////////////////////////
+///
 
-	/// Copy assignment.
-	UnsynchronizedFileID& operator=(const UnsynchronizedFileID &other) = default;
-
-	/// Move assignment.
-	UnsynchronizedFileID& operator=(UnsynchronizedFileID&& other) = default;
-
-	/// @name Various non-default constructors.
-	/// @{
-	UnsynchronizedFileID(const FTSENT *ftsent, bool stat_info_known_valid);
-	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
-	UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
-			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
-	///@}
-
-	/// Default destructor.
-	~UnsynchronizedFileID() = default;
-
-	const std::string& GetBasename() const noexcept;
-
-	/// Create and cache this FileID's path.  Recursively visits its parent directories to do so.
-	void GetPath() const;
-
-	/**
-	 * Determine if this file's full path has been determined and cached in the m_path std::string member.
-	 * @return
-	 */
-	bool IsPathResolved() const { return !m_path.empty(); };
-
-	FileDescriptor GetFileDescriptor();
-
-	FileType GetFileType() const noexcept
-	{
-		if(m_file_type == FT_UNINITIALIZED)
-		{
-			// We don't know the file type yet.  We'll have to get it from a stat() call.
-			LazyLoadStatInfo();
-		}
-
-		return m_file_type;
-	};
-
-//private:
-
-	void LazyLoadStatInfo() const
-	{
-		if(IsStatInfoValid())
-		{
-			// Already set.
-			return;
-		}
-
-		// We don't have stat info and now we need it.
-		// Get it from the filename.
-		if(!m_at_dir)
-		{
-			throw std::runtime_error("should have an at-dir");
-		}
-
-		struct stat stat_buf;
-		if(fstatat(m_at_dir->GetFileDescriptor().GetFD(), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
-		{
-			// Error.
-			m_file_type = FT_STAT_FAILED;
-			LOG(INFO) << "fstatat() failed" << LOG_STRERROR();
-			// Note: We don't clear errno here, we want to be able to look at it in the caller.
-			//errno = 0;
-		}
-		else
-		{
-			UnsyncedSetStatInfo(stat_buf);
-		}
-	}
-
-	void UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept;
-
-	std::shared_ptr<FileID> GetAtDir() const noexcept { return m_at_dir; };
-
-	const std::string& GetAtDirRelativeBasename() const noexcept;
-
-	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
-
-	off_t GetFileSize() const noexcept { LazyLoadStatInfo(); return m_size; };
-
-	blksize_t GetBlockSize() const noexcept
-	{
-		LazyLoadStatInfo();
-		return m_block_size;
-	};
-
-	const dev_ino_pair GetUniqueFileIdentifier() const noexcept { if(!m_unique_file_identifier.empty()) { LazyLoadStatInfo(); }; return m_unique_file_identifier; };
-
-	dev_t GetDev() const noexcept { if(m_dev == static_cast<dev_t>(-1)) { LazyLoadStatInfo(); }; return m_dev; };
-	void SetDevIno(dev_t d, ino_t i) noexcept;
-
-	/// Shared pointer to the directory this FileID is in.
-	mutable std::shared_ptr<FileID> m_at_dir;
-
-	/// The basename of this file.
-	/// We define this somewhat differently here: This is either:
-	/// - The full absolute path, or
-	/// - The path relative to m_at_dir, which may consist of more than one path element.
-	/// In any case, it is always equal to the string passed into the constructor.
-	mutable std::string m_basename;
-
-	/// The absolute path to this file.
-	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
-	mutable std::string m_path;
-
-	mutable int m_open_flags { 0 };
-	mutable FileDescriptor m_file_descriptor;
-
-	/// @name Info normally gathered from a stat() call.
-	///@{
-
-	mutable FileType m_file_type { FT_UNINITIALIZED };
-
-	/// Indicator of whether the stat info is valid or not.
-	mutable bool m_stat_info_valid { false };
-
-	mutable dev_ino_pair m_unique_file_identifier;
-
-	mutable dev_t m_dev { static_cast<dev_t>(-1) };
-
-	/// File size in bytes.
-	mutable off_t m_size { 0 };
-
-	/// The preferred I/O block size for this file.
-	/// @note GNU libc documents the units on this as bytes.
-	mutable blksize_t m_block_size { 0 };
-
-	/// Number of blocks allocated for this file.
-	/// @note POSIX doesn't define the units for this.  Linux is documented to use 512-byte units, as is GNU libc.
-	mutable blkcnt_t m_blocks { 0 };
-	///@}
-};
-
-/// @name Compile-time invariants for the UnsynchronizedFileID class.
-/// @{
-static_assert(std::is_assignable<FileID::UnsynchronizedFileID, FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be assignable to itself.");
-static_assert(std::is_copy_assignable<FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be copy assignable to itself.");
-static_assert(std::is_move_assignable<FileID::UnsynchronizedFileID>::value, "UnsynchronizedFileID must be move assignable to itself.");
-/// @}
 
 FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
 	: m_at_dir(at_dir_fileid), m_basename(pathname)
@@ -208,7 +56,7 @@ FileID::UnsynchronizedFileID::UnsynchronizedFileID(std::shared_ptr<FileID> at_di
 {
 	if(stat_buf != nullptr)
 	{
-		UnsyncedSetStatInfo(*stat_buf);
+		SetStatInfo(*stat_buf);
 	}
 }
 
@@ -219,8 +67,7 @@ const std::string& FileID::UnsynchronizedFileID::GetBasename() const noexcept
 
 FileDescriptor FileID::UnsynchronizedFileID::GetFileDescriptor()
 {
-	/// @todo This needs rethinking.  The FD would be opened differently depending on the file type etc.
-
+	/// @todo This still needs rethinking.  I think.
 
 	if(m_file_descriptor.empty())
 	{
@@ -232,16 +79,7 @@ FileDescriptor FileID::UnsynchronizedFileID::GetFileDescriptor()
 			m_open_flags = O_SEARCH | O_DIRECTORY | O_NOCTTY;
 		}
 
-		if(m_basename.empty() && !m_path.empty())
-		{
-			/// @todo Can this be removed?
-			throw std::runtime_error("m_path not empty, about to openat AT_FDCWD");
-			m_file_descriptor = make_shared_fd(openat(AT_FDCWD, m_path.c_str(), m_open_flags));
-		}
-		else
-		{
-			m_file_descriptor = make_shared_fd(openat(m_at_dir->GetFileDescriptor().GetFD(), GetBasename().c_str(), m_open_flags));
-		}
+		m_file_descriptor = make_shared_fd(openat(m_at_dir->GetFileDescriptor().GetFD(), GetBasename().c_str(), m_open_flags));
 
 		if(m_file_descriptor.empty())
 		{
@@ -279,7 +117,7 @@ void FileID::UnsynchronizedFileID::SetDevIno(dev_t d, ino_t i) noexcept
 	m_unique_file_identifier = dev_ino_pair(d, i);
 }
 
-void FileID::UnsynchronizedFileID::UnsyncedSetStatInfo(const struct stat &stat_buf) const noexcept
+void FileID::UnsynchronizedFileID::SetStatInfo(const struct stat &stat_buf) const noexcept
 {
 	m_stat_info_valid = true;
 
@@ -329,13 +167,13 @@ void FileID::UnsynchronizedFileID::GetPath() const
 	}
 }
 
-
+/// //////////////////////////////
 
 
 
 // Default constructor.
 // Note that it's defined here in the cpp vs. in the header because it needs to be able to see the full definition of UnsynchronizedFileID.
-FileID::FileID()
+FileID::FileID() //: FileID(path_known_cwd)
 {
 	LOG(DEBUG) << "Default constructor called";
 }
@@ -344,12 +182,20 @@ FileID::FileID()
 FileID::FileID(const FileID& other) : m_pimpl((ReaderLock(other.m_mutex), std::make_unique<FileID::UnsynchronizedFileID>(*other.m_pimpl)))
 {
 	LOG(DEBUG) << "Copy constructor called";
+	if(!m_pimpl)
+	{
+		throw std::runtime_error("no pimpl on copy");
+	}
 };
 
 // Move constructor.
 FileID::FileID(FileID&& other) : m_pimpl((WriterLock(other.m_mutex), std::move(other.m_pimpl)))
 {
 	LOG(DEBUG) << "Move constructor called";
+	if(!m_pimpl)
+	{
+		throw std::runtime_error("no pimpl on move");
+	}
 };
 
 FileID::FileID(path_known_cwd_tag)
@@ -388,7 +234,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	// basename is a file relative to at_dir_fileid, and we also have stat info for it.
 	if(stat_buf != nullptr)
 	{
-		SetStatInfo(*stat_buf);
+		m_pimpl->SetStatInfo(*stat_buf);
 	}
 }
 
@@ -435,13 +281,12 @@ FileID& FileID::operator=(FileID&& other)
 
 FileID::~FileID()
 {
-	// Make sure we lock during destruction.
-	// @note Actually, I think this makes no sense.  If anyone was trying to read or write us, they'd have
-	// (possibly shared) ownership (right?), and hence we wouldn't be getting destroyed.
-	//WriterLock(m_mutex);
+	// Don't lock during destruction.
+	// If anyone was trying to read or write us, they'd have to have (possibly shared) ownership (right?),
+	// and hence we wouldn't be getting destroyed.
 }
 
-const std::string& FileID::GetBasename() const noexcept
+std::string FileID::GetBasename() const noexcept
 {
 	ReaderLock rl(m_mutex);
 	return m_pimpl->GetBasename();
@@ -499,19 +344,21 @@ std::string FileID::GetPath() const noexcept
 
 std::shared_ptr<FileID> FileID::GetAtDir() const noexcept
 {
+	// Only need reader lock here, m_pimpl->m_at_dir will always exist.
 	ReaderLock rl(m_mutex);
 	return m_pimpl->GetAtDir();
 };
 
 const std::string& FileID::GetAtDirRelativeBasename() const noexcept
 {
+	// Only need reader lock here, m_pimpl->m_at_dir and its m_basename will always exist.
 	ReaderLock rl(m_mutex);
 	return m_pimpl->GetAtDirRelativeBasename();
 }
 
 bool FileID::IsStatInfoValid() const noexcept
 {
-	ReaderLock rl(m_mutex);
+	WriterLock rl(m_mutex);
 	return m_pimpl->IsStatInfoValid();
 };
 
@@ -524,7 +371,7 @@ FileType FileID::GetFileType() const noexcept
 
 off_t FileID::GetFileSize() const noexcept
 {
-	ReaderLock rl(m_mutex);
+	WriterLock rl(m_mutex);
 	return m_pimpl->GetFileSize();
 };
 
@@ -571,7 +418,7 @@ void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 void FileID::SetStatInfo(const struct stat &stat_buf) noexcept
 {
 	WriterLock wl(m_mutex);
-	m_pimpl->UnsyncedSetStatInfo(stat_buf);
+	m_pimpl->SetStatInfo(stat_buf);
 }
 
 
