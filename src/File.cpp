@@ -33,10 +33,6 @@
 
 File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
 {
-#if 0
-	m_filename = file_id.GetPath();
-	m_file_descriptor = open(m_filename.c_str(), O_RDONLY);
-#endif
 	m_fileid = std::move(file_id);
 	m_fileid.SetFileDescriptorMode(FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
 
@@ -64,14 +60,7 @@ File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_
 		throw;
 	}
 
-#if 0 /// @todo
-	if(!file_id.IsStatInfoValid())
-	{
-		throw FileException("FileID stat info should have been valid");
-	}
-#endif
-
-	ssize_t file_size = file_id.GetFileSize();
+	ssize_t file_size = m_fileid.GetFileSize();
 
 	// If filesize is 0, skip.
 	if(file_size == 0)
@@ -213,7 +202,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size, size_t pref
 	}
 
 	// We don't need the file descriptor anymore.
-	close(file_descriptor);
+	///@todo close(file_descriptor);
 
 	return file_data;
 }
