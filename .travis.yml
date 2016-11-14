@@ -11,10 +11,10 @@ matrix:
           compiler: gcc
         - os: linux
           compiler: clang
-#          env: CFG_CC=clang CFG_CXX='clang++ -std=c++14 -stdlib=libc++'
+          env: CFG_CC=clang CFG_CXX='clang++ -std=gnu++1z' ## -stdlib=libc++'
         - os: osx
           osx_image: xcode8
-          env: CFG_CC=clang CFG_CXX='clang++ -stdlib=libc++'
+          env: CFG_CC=clang CFG_CXX='clang++ -std=gnu++1z' ##-stdlib=libc++'
 #        - os: osx
 #          osx_image: xcode7.3
 #        - os: osx
@@ -25,6 +25,7 @@ matrix:
 #          osx_image: xcode7
         - os: osx
           osx_image: xcode6.4
+          env: CFG_CC=clang CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
 
 before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi

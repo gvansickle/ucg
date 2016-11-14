@@ -93,10 +93,10 @@ AC_PROG_CXX([g++ clang++])
 AC_PROG_CXXCPP([g++ clang++]) # Needed for any C++ AC_PREPROC_IFELSE() checks below.
 
 # @temp? Tell clang to use its own library.
-# Looks like we don't need this after all, maybe.
-AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
-[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
-LDFLAGS="$LDFLAGS -stdlib=libc++ --rtlib=compiler-rt -DLIBCXX_USE_COMPILER_RT=YES"])
+#AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
+#[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
+#CXXCPPFLAGS="$CXXCPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
+#LDFLAGS="$LDFLAGS -stdlib=libc++ --rtlib=compiler-rt"])
 
 AS_BOX([Checking C compiler language standard support])
 
@@ -624,12 +624,24 @@ AC_MSG_RESULT([
   Compilers
   ---------
   C compiler:                 $CC
+  [AM_CFLAGS]:                  $AM_CFLAGS
+  CFLAGS:                     $CFLAGS
+  
   C preprocessor:             $CPP
+  [AM_CPPFLAGS]:                $AM_CPPFLAGS
+  CPPFLAGS:                   $CPPFLAGS
+  
   C++ compiler:               $CXX
-  C++ preprocessor:           $CXXCPP
   [AM_CXXFLAGS]:                $AM_CXXFLAGS
   CXXFLAGS:                   $CXXFLAGS
-  LDFLAGS:                    $AM_LDFLAGS $LDFLAGS
+
+  C++ preprocessor:           $CXXCPP
+  
+  LTCC:                       $LTCC
+  LTCFLAGS:                   $LTCFLAGS
+  [AM_LDFLAGS]:                 $AM_LDFLAGS
+  LD:                         $LD
+  LDFLAGS:                    $LDFLAGS
   LIBS:                       $LIBS
   
   $CXX Search Paths

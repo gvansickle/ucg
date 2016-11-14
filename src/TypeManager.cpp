@@ -138,7 +138,7 @@ bool TypeManager::FileShouldBeScanned(const std::string_view& name) const noexce
 {
 	// Find the name's extension.
 	auto last_period_offset = name.find_last_of('.');
-	auto last_period = last_period_offset == std::string::npos ? name.cend() : name.cbegin() + last_period_offset;
+	auto last_period = last_period_offset == std::string_view::npos ? name.cend() : name.cbegin() + last_period_offset;
 	if(last_period != name.cend())
 	{
 		// There was a period, might be an extension.

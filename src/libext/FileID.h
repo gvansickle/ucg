@@ -22,15 +22,16 @@
 
 #include <config.h>
 
+#include <future/memory.hpp>
+#include <future/shared_mutex.hpp>
+
 #include "hints.hpp"
 
 #include <sys/stat.h> // For the stat types.
 #include <fts.h>
-
 #include <string>
 #include <atomic>
-#include <future/memory.hpp>
-#include <future/shared_mutex.hpp>
+
 
 #include "integer.hpp"
 #include "filesystem.hpp"
@@ -116,7 +117,7 @@ private:
 	using ReaderLock = std::shared_lock<MutexType>;
 	using WriterLock = std::unique_lock<MutexType>;
 
-#if 0 /// @todo For double-checked locking on m_path.
+#if 0 /// @todo For double-checked locking.
 	mutable std::atomic<std::string*> m_atomic_path_ptr { nullptr };
 #endif
 
@@ -204,8 +205,6 @@ public:
 	std::shared_ptr<FileID> GetAtDir() const noexcept;
 
 	const std::string& GetAtDirRelativeBasename() const noexcept;
-
-	bool IsStatInfoValid() const noexcept;
 
 	off_t GetFileSize() const noexcept;
 
