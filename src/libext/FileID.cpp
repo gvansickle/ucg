@@ -156,11 +156,14 @@ void FileID::impl::GetPath() const
 	if(m_path.empty())
 	{
 		// No.  Build the full path.
+		m_path.reserve(256); // Random number.
 		auto at_path = m_at_dir->GetPath();
 		if(at_path != ".")
 		{
 			//m_path.reserve(at_path.size() + m_basename.size() + 2);
-			m_path = at_path + "/" + m_basename;
+			m_path.append(at_path);
+			m_path.append("/", 1);
+			m_path.append(m_basename);
 		}
 		else
 		{
@@ -296,6 +299,30 @@ std::string FileID::GetBasename() const noexcept
 	return m_pimpl->GetBasename();
 };
 
+#if 0
+template < typename ReturnType, typename AtomicTypeWrapper >
+ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, std::shared_mutex mutex)
+{
+	auto retval_wrapper = wrap.load(std::memory_order_relaxed);
+	std::atomic_thread_fence(std::memory_order_acquire);
+	if(retval_wrapper == nullptr)
+	{
+		// First check says we don't have the cached value yet.
+		WriterLock wl(mutex);
+		// One more try.
+		retval_wrapper = wrap.load(std::memory_order_relaxed);
+		if(retval_wrapper == nullptr)
+		{
+			// Still no cached m_path.  We'll have to do the heavy lifting.
+			m_pimpl->GetPath();
+			retval_wrapper = &(m_pimpl->m_path);
+			std::atomic_thread_fence(std::memory_order_release);
+			wrap.store(retval_wrapper, std::memory_order_relaxed);
+		}
+	}
+	return *path_ptr;
+}
+#endif
 
 std::string FileID::GetPath() const noexcept
 {

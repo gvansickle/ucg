@@ -117,7 +117,7 @@ private:
 	using ReaderLock = std::shared_lock<MutexType>;
 	using WriterLock = std::unique_lock<MutexType>;
 
-#if 0 /// @todo For double-checked locking on m_path.
+#if 0 /// @todo For double-checked locking.
 	mutable std::atomic<std::string*> m_atomic_path_ptr { nullptr };
 #endif
 
