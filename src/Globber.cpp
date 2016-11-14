@@ -18,10 +18,11 @@
 /** @file */
 
 #include <config.h>
+#include <future/string.hpp>
+#include <future/string_view.hpp>
 
 #include "Globber.h"
 
-/// @todo
 #include <libext/DirTree.h>
 
 
@@ -41,7 +42,6 @@
 #include <string>
 #include <cstring>
 #include <algorithm>
-#include <future/string.hpp>
 #include <libext/string.hpp>
 
 /// @todo FOR TEST, DELETE
@@ -69,7 +69,7 @@ void Globber::Run()
 {
 #if USE_DIRTREE == 1 /// @todo TEMP
 
-	auto file_basename_filter = [this](const std::string &basename) noexcept { return m_type_manager.FileShouldBeScanned(basename); };
+	auto file_basename_filter = [this](const DirTree::filter_string_type &basename) noexcept { return m_type_manager.FileShouldBeScanned(basename); };
 	auto dir_basename_filter = [this](const std::string &basename) noexcept { return m_dir_inc_manager.DirShouldBeExcluded(basename); };
 
 	DirTree dt(m_out_queue, file_basename_filter, dir_basename_filter);

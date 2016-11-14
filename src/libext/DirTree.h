@@ -21,6 +21,7 @@
 #define SRC_LIBEXT_DIRTREE_H_
 
 #include <config.h>
+#include <future/string_view.hpp>
 
 #include <vector>
 #include <string>
@@ -92,14 +93,15 @@ private:
 	std::mutex m_mutex;
 };
 
-/*
- *
+/**
+ * Directory tree traversal class.
  */
 class DirTree
 {
 public:
 	/// Type of the file and directory include/exclude predicates.
-	using file_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
+	using filter_string_type = std::string_view;
+	using file_basename_filter_type = std::function<bool (const filter_string_type& name) noexcept>;
 	using dir_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
 
 	DirTree(sync_queue<FileID>& output_queue,

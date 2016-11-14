@@ -437,7 +437,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 #
 # C++11 features
 #
-AC_CHECK_DECLS([__cpp_alias_templates, __cpp_variadic_templates, __cpp_attributes])
+AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_templates])
 
 #
 # C++14 features
