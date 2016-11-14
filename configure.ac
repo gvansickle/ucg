@@ -416,6 +416,24 @@ AX_GCC_BUILTIN(__builtin_ctzll)
 ## <https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations> makes them mostly
 ## usable directly from the C++ code; using them by way of configure isn't required or helpful.
 
+# Detect __has_include() support.
+AC_MSG_CHECKING([for __has_include])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+#ifdef __has_include
+#define HAVE_HAS_INCLUDE yes
+#endif
+],
+[
+#ifndef HAVE_HAS_INCLUDE
+#error "Do not have __has_include()."
+#endif
+])],
+	[AC_MSG_RESULT([yes])],
+	[# Not defined, define a substitute in config.h.
+	AC_MSG_RESULT([no])
+	AC_DEFINE([__has_include(h)], [0], [Defined to a dummy replacement if __has_include() doesn't exist.])
+	])
+
 #
 # C++11 features
 #
@@ -438,18 +456,6 @@ AC_CHECK_DECLS([__cpp_alias_templates, __cpp_variadic_templates, __cpp_attribute
 #[AC_INCLUDES_DEFAULT()
 ##include <type_traits>])
 
-# Detect __has_include() support.
-AC_MSG_CHECKING([for __has_include])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-#if __has_include(<iostream>)
-#include <iostream>
-#endif
-], [std::cout << "Have __has_include()" << std::endl;])],
-	[AC_MSG_RESULT([yes])],
-	[# Not defined, define a substitute in config.h.
-	AC_MSG_RESULT([no])
-	AC_DEFINE([__has_include(h)], [0], [Defined to a dummy replacement if __has_include() doesn't exist.])
-	])
 
 # Check for x86-64 ISA extensions we can use for function multiversioning.
 AS_BOX([Checking for ISA extensions supported by the compiler...])
