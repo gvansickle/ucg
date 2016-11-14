@@ -22,10 +22,10 @@
 
 #include <config.h>
 
-#include "hints.hpp"
-
 #include <future/memory.hpp>
 #include <future/shared_mutex.hpp>
+
+#include "hints.hpp"
 
 #include <sys/stat.h> // For the stat types.
 #include <fts.h>
@@ -205,8 +205,6 @@ public:
 	std::shared_ptr<FileID> GetAtDir() const noexcept;
 
 	const std::string& GetAtDirRelativeBasename() const noexcept;
-
-	bool IsStatInfoValid() const noexcept;
 
 	off_t GetFileSize() const noexcept;
 

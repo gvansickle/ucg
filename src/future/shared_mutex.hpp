@@ -38,13 +38,15 @@
 				using shared_mutex = std::shared_timed_mutex;
 			}
 #		endif
-#		if !HAVE_SHARED_LOCK_SHARED_TIMED_MUTEX && !HAVE_SHARED_LOCK_SHARED_MUTEX
+#		if !defined(HAVE_SHARED_LOCK_SHARED_TIMED_MUTEX)
 			namespace std
 			{
 				// Use std::unique_lock<> instead.
 				template < typename T >
-				using shared_lock = std::unique_lock<T>;
+				using shared_lock = std::unique_lock<typename std::enable_if<std::is_same<T, std::shared_timed_mutex>::value>::type>;
 			}
+#		endif
+#		if defined(HAVE_SHARED_LOCK_SHARED_MUTEX)
 #		endif
 #	else // Found the header, but it didn't define __cpp_lib_shared_timed_mutex.
 		// Really shouldn't get here.

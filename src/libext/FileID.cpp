@@ -360,12 +360,6 @@ const std::string& FileID::GetAtDirRelativeBasename() const noexcept
 	return m_pimpl->GetAtDirRelativeBasename();
 }
 
-bool FileID::IsStatInfoValid() const noexcept
-{
-	WriterLock rl(m_mutex);
-	return m_pimpl->IsStatInfoValid();
-};
-
 FileType FileID::GetFileType() const noexcept
 {
 	WriterLock rl(m_mutex);
