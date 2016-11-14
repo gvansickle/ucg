@@ -88,7 +88,7 @@ enum FileCreationFlag : int
 	FCF_DIRECTORY = O_DIRECTORY,//!< FCF_DIRECTORY
 	FCF_NOCTTY = O_NOCTTY,      //!< FCF_NOCTTY
 	FCF_NOFOLLOW = O_NOFOLLOW,  //!< FCF_NOFOLLOW
-	FCF_NOATIME = O_NOATIME
+	FCF_NOATIME = O_NOATIME		//!< FCF_NOATIME
 };
 
 /// Bitwise-or operator for FileCreationFlag.
@@ -191,7 +191,7 @@ public:
 	 *
 	 * @return
 	 */
-	FileDescriptor GetFileDescriptor();
+	const FileDescriptor& GetFileDescriptor();
 
 	/**
 	 * Return the type of file this FileID represents.  May involve stat()ing the file.
@@ -272,7 +272,7 @@ public:
 	 */
 	bool IsPathResolved() const { return !m_path.empty(); };
 
-	FileDescriptor GetFileDescriptor();
+	const FileDescriptor& GetFileDescriptor();
 
 	FileType GetFileType() const noexcept
 	{

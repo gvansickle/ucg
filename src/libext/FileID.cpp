@@ -66,7 +66,7 @@ const std::string& FileID::impl::GetBasename() const noexcept
 	return m_basename;
 };
 
-FileDescriptor FileID::impl::GetFileDescriptor()
+const FileDescriptor& FileID::impl::GetFileDescriptor()
 {
 	/// @todo This still needs rethinking.  I think.
 
@@ -187,16 +187,18 @@ FileID::FileID(const FileID& other) : m_pimpl((ReaderLock(other.m_mutex), std::m
 	{
 		throw std::runtime_error("no pimpl on copy");
 	}
+	LOG(DEBUG) << "Copy constructor end";
 };
 
 // Move constructor.
-FileID::FileID(FileID&& other) : m_pimpl((WriterLock(other.m_mutex), std::move(other.m_pimpl)))
+FileID::FileID(FileID&& other) : m_pimpl(std::move((WriterLock(other.m_mutex), other.m_pimpl)))
 {
 	LOG(DEBUG) << "Move constructor called";
 	if(!m_pimpl)
 	{
 		throw std::runtime_error("no pimpl on move");
 	}
+	LOG(DEBUG) << "Move constructor end";
 };
 
 FileID::FileID(path_known_cwd_tag)
@@ -400,7 +402,7 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 	}
 }
 
-FileDescriptor FileID::GetFileDescriptor()
+const FileDescriptor& FileID::GetFileDescriptor()
 {
 	WriterLock wl(m_mutex);
 	return m_pimpl->GetFileDescriptor();

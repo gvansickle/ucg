@@ -117,10 +117,10 @@ void DirTree::ReaddirLoop(int dirjob_num)
 
 	while(m_dir_queue.wait_pull(std::move(dse)) != queue_op_status::closed)
 	{
-		FileDescriptor open_at_fd = dse->GetAtDir()->GetFileDescriptor();
+		int open_at_fd = dse->GetAtDir()->GetFileDescriptor().GetFD();
 		const char *open_at_path = dse->GetAtDirRelativeBasename().c_str();
 
-		d = opendirat(open_at_fd.GetFD(), open_at_path);
+		d = opendirat(open_at_fd, open_at_path);
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
@@ -228,9 +228,10 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 		// We'll need the file's basename.
 		std::string basename = dirent_get_name(current_dirent);
 
+		LOG(INFO) << "Considering dirent name='" << basename << "'";
+
 		if(is_file)
 		{
-			//std::cout << "File: " << dse.get()->get_name() + "/" + dname << '\n';
 			// It's a normal file.
 			LOG(INFO) << "... normal file.";
 			stats.m_num_files_found++;

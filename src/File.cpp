@@ -46,6 +46,7 @@ File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_
 		if(file_descriptor == -1)
 		{
 			// Couldn't open the file, throw exception.
+			LOG(DEBUG) << "bad file descriptor: fd=" << file_descriptor;
 			throw std::system_error(errno, std::generic_category());
 		}
 	}

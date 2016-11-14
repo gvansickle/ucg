@@ -60,11 +60,13 @@ public:
 		if(!other.unlocked_empty())
 		{
 			m_file_descriptor = dup(other.m_file_descriptor);
+			LOG(DEBUG) << "... duped fd=" << other.m_file_descriptor << " to fd=" << m_file_descriptor << ".";
 		}
 		else
 		{
 			// Other has an invalid fd, just copy the value.
 			m_file_descriptor = other.m_file_descriptor;
+			LOG(DEBUG) << "... other was invaliud, no dup. fd=" << m_file_descriptor;
 		}
 	}
 
@@ -124,7 +126,7 @@ public:
 				m_file_descriptor = dup(other.m_file_descriptor);
 				if((m_file_descriptor < 0) && (m_file_descriptor != AT_FDCWD))
 				{
-					perror("dup");
+					ERROR() << "dup() failure: " << LOG_STRERROR();
 				}
 			}
 		}
@@ -186,7 +188,9 @@ private:
 
 inline FileDescriptor make_shared_fd(int fd)
 {
-	return FileDescriptor(fd);
+	FileDescriptor retval(fd);
+	/// Should get returned by RVO, or move.
+	return retval;
 }
 
 static_assert(std::is_copy_constructible<FileDescriptor>::value, "FileDescriptor must be copy constructible.");

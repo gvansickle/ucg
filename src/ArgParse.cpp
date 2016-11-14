@@ -665,6 +665,10 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 					WARN() << "Couldn't open config file \"" << homefilepath << "\", error " << e.code() << " - " << e.code().message();
 				}
 				// Otherwise, the file just doesn't exist.
+				else
+				{
+					LOG(DEBUG) << "file doesn't exist";
+				}
 			}
 		}
 	}
