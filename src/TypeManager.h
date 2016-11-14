@@ -50,6 +50,8 @@ public:
 	TypeManager();
 	~TypeManager() = default;
 
+	using name_string_type = std::string;
+
 	/**
 	 * Determine if the file with the given @p name should be scanned based on the
 	 * enabled file types.
@@ -57,7 +59,7 @@ public:
 	 * @param name
 	 * @return true if file should be scanned, false otherwise.
 	 */
-	bool FileShouldBeScanned(const std::string_view &name) const noexcept;
+	bool FileShouldBeScanned(const name_string_type &name) const noexcept;
 
 	/**
 	 * Add the given file type to the types which will be scanned.  For handling the

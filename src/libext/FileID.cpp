@@ -396,6 +396,13 @@ FileType FileID::GetFileType() const noexcept
 
 off_t FileID::GetFileSize() const noexcept
 {
+	{
+		ReaderLock rl(m_mutex);
+		if(m_pimpl->m_stat_info_valid)
+		{
+			return m_pimpl->m_size;
+		}
+	}
 	WriterLock rl(m_mutex);
 	return m_pimpl->GetFileSize();
 };
@@ -426,6 +433,13 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 const FileDescriptor& FileID::GetFileDescriptor()
 {
+	{
+		ReaderLock rl(m_mutex);
+		if(!m_pimpl->m_file_descriptor.empty())
+		{
+			return m_pimpl->m_file_descriptor;
+		}
+	}
 	WriterLock wl(m_mutex);
 	return m_pimpl->GetFileDescriptor();
 }
