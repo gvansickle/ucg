@@ -636,7 +636,6 @@ AC_MSG_RESULT([
   CXXFLAGS:                   $CXXFLAGS
 
   C++ preprocessor:           $CXXCPP
-  CXXCPPFLAGS:                $CXXCPPFLAGS
   
   LTCC:                       $LTCC
   LTCFLAGS:                   $LTCFLAGS
