@@ -36,6 +36,7 @@ namespace std
 }
 #else
 // Can't find anything.  Fake what we use with std::string.
+#include <string>
 namespace std
 {
 	using string_view = std::string;
