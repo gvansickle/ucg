@@ -24,13 +24,14 @@
 
 #include "hints.hpp"
 
-#include <sys/stat.h> // For the stat types.
-#include <fts.h>
-
-#include <string>
-#include <atomic>
 #include <future/memory.hpp>
 #include <future/shared_mutex.hpp>
+
+#include <sys/stat.h> // For the stat types.
+#include <fts.h>
+#include <string>
+#include <atomic>
+
 
 #include "integer.hpp"
 #include "filesystem.hpp"

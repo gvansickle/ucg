@@ -22,16 +22,16 @@
 
 #include <config.h>
 
+#include <future/string_view.hpp>
+#include <libext/string.hpp>
+
 #include <iosfwd>
 #include <tuple>
 #include <string>
 #include <vector>
 #include <map>
 #include <unordered_map>
-#include <libext/string.hpp>
 
-#include <future/string_view.hpp>
-//using string_view = std::string_view;
 
 /**
  * TypeManager will throw this in certain circumstances.

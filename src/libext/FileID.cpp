@@ -19,6 +19,9 @@
 
 #include <config.h>
 
+#include <future/memory.hpp> // For std::make_unique<>
+#include <libext/string.hpp>
+
 #include "FileID.h"
 
 #include <fcntl.h> // For AT_FDCWD, AT_NO_AUTOMOUNT
@@ -26,8 +29,6 @@
 #include <sys/stat.h>
 #include <fts.h>
 
-#include <future/memory.hpp> // For std::make_unique<>
-#include <libext/string.hpp>
 #include <atomic>
 
 //////////////////////////////////
