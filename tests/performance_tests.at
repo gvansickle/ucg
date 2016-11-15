@@ -106,21 +106,6 @@ AS_ECHO(["END PROGVER INFO"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
 
-###
-### UCG_GEN_PERFTEST()
-### M4 macro which generates the shell script for a single benchmark.
-### @todo It no longer does anything like this, can probably be eliminated.
-m4_define([UCG_GEN_PERFTEST],
-[
-# $1 == test file/directory path
-
-#AS_ECHO(["Test description short: $at_desc"]) >> UCG_PERF_RESULTS_FILE
-# Record info on the filesystem where the test data lies.
-#TEST_DATA_FS_INFO=`get_dev_and_fs_type $1`
-#AS_ECHO(["Test data path: \"$1\""]) >> UCG_PERF_RESULTS_FILE
-#AS_ECHO(["Test data filesystem info: $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
-
-])
 
 ###
 ### UCG_SUMMARIZE_PERFTEST
@@ -204,9 +189,6 @@ AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-# Generate the test script.
-UCG_GEN_PERFTEST([UCG_CORPUS_BOOST_PATH])
-
 # Run the test script.
 AT_CHECK([AXUCG_SOURCE ${srcdir}/TC1.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
@@ -227,9 +209,6 @@ AT_KEYWORDS([benchmark])
 AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Generate the test script.
-UCG_GEN_PERFTEST([UCG_CORPUS_BOOST_PATH])
 
 # Run the test script.
 AT_CHECK([AXUCG_SOURCE ${srcdir}/TC2.sh], [0], [ignore-nolog], [stderr])
@@ -252,8 +231,6 @@ AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-# Generate the test script.
-UCG_GEN_PERFTEST([UCG_CORPUS_BOOST_PATH])
 # Run the test script.
 AT_CHECK([AXUCG_SOURCE ${srcdir}/TC5.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
@@ -275,8 +252,6 @@ AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-# Generate the test script.
-UCG_GEN_PERFTEST([UCG_CORPUS_BOOST_PATH])
 # Run the test script.
 AT_CHECK([AXUCG_SOURCE ${srcdir}/TC6.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
@@ -306,8 +281,6 @@ AT_KEYWORDS([benchmark])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-# Generate the test script.
-UCG_GEN_PERFTEST([UCG_TEST_FILE_NAME_LARGE_FILE_1])
 # Run the test script.
 AT_CHECK([AXUCG_SOURCE ${srcdir}/TC3.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
@@ -326,8 +299,6 @@ AT_KEYWORDS([benchmark])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-# Generate the test script.
-UCG_GEN_PERFTEST([UCG_TEST_FILE_NAME_LARGE_FILE_1])
 # Run the test script.
 AT_CHECK([AXUCG_SOURCE ${srcdir}/TC4.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
