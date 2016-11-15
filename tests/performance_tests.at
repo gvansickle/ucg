@@ -114,11 +114,11 @@ m4_define([UCG_GEN_PERFTEST],
 [
 # $1 == test file/directory path
 
-AS_ECHO(["Test description short: $at_desc"]) >> UCG_PERF_RESULTS_FILE
+#AS_ECHO(["Test description short: $at_desc"]) >> UCG_PERF_RESULTS_FILE
 # Record info on the filesystem where the test data lies.
-TEST_DATA_FS_INFO=`get_dev_and_fs_type $1`
-AS_ECHO(["Test data path: \"$1\""]) >> UCG_PERF_RESULTS_FILE
-AS_ECHO(["Test data filesystem info: $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
+#TEST_DATA_FS_INFO=`get_dev_and_fs_type $1`
+#AS_ECHO(["Test data path: \"$1\""]) >> UCG_PERF_RESULTS_FILE
+#AS_ECHO(["Test data filesystem info: $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
 
 ])
 

@@ -1,6 +1,6 @@
 test_case_id, desc_short, desc_long, regex, corpus
-TC1, Test case 1, "Benchmark: 'BOOST.*HPP' on Boost source.", BOOST.*HPP, "${top_srcdir}/../boost_1_58_0"
-TC2, Test Case 2, "Benchmark: literal string on Linux source.", PM_RESUME, "${top_srcdir}/../TestCorpus/linux"
+TC1, Test Case 1, "Benchmark: 'BOOST.*HPP' on Boost source.", BOOST.*HPP, "${top_srcdir}/../boost_1_58_0"
+TC2, Test Case 2, "Benchmark: 'PM_RESUME' on Linux source.", PM_RESUME, "${top_srcdir}/../TestCorpus/linux"
 TC3, Test Case 3, "Benchmark: regex 'iudice[\\w]*umputo' on single ~500MB file.", iudice[\\w]*umputo, "${builddir}/500MBLoremIpsum.cpp"
 TC4, Test Case 4, "Benchmark: literal string on 500MB file, match at end.", iudicemaequumputo, "${builddir}/500MBLoremIpsum.cpp"
 TC5, Test Case 5, "Benchmark: '#include\\s+".*"' on Boost source", #include\\s+".*", "${top_srcdir}/../boost_1_58_0"
