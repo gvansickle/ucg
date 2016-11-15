@@ -156,7 +156,7 @@ void FileID::impl::GetPath() const
 	if(m_path.empty())
 	{
 		// No.  Build the full path.
-		m_path.reserve(256); // Random number.
+		m_path.reserve(64); // Random number.
 		auto at_path = m_at_dir->GetPath();
 		if(at_path != ".")
 		{
