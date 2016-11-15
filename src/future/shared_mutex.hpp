@@ -52,7 +52,8 @@
 				// Use std::unique_lock<> instead.
 				template < typename T >
 				using shared_lock = std::unique_lock<typename std::enable_if<std::is_same<T, std::shared_mutex>::value>::type>;
-			}#		endif
+			}
+#		endif
 #	else // Found the header, but it didn't define __cpp_lib_shared_timed_mutex.
 		// Really shouldn't get here.
 		// Guess what?  Clang++/libc++ on OS X (Xcode 8gm) does this: "error: 'shared_mutex' is unavailable: introduced in macOS 10.12".
