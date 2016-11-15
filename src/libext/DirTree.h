@@ -109,7 +109,7 @@ public:
 			const dir_basename_filter_type &dir_basename_filter);
 	~DirTree();
 
-	void Scandir(std::vector<std::string> start_paths);
+	void Scandir(std::vector<std::string> start_paths, int dirjobs);
 
 private:
 

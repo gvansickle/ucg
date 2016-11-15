@@ -149,7 +149,7 @@ bool TypeManager::FileShouldBeScanned(const name_string_type& name) const noexce
 			// Name doesn't start with a period, it still could be an extension.
 			auto ext_plus_period_size = name.cend() - last_period;
 
-			if(ext_plus_period_size <= 5)
+			if(ext_plus_period_size <= microstring().max_size()+1)
 			{
 				// Use the 4-byte fast map.
 				microstring mext(last_period+1, name.end());

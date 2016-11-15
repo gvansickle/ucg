@@ -74,7 +74,7 @@ void Globber::Run()
 
 	DirTree dt(m_out_queue, file_basename_filter, dir_basename_filter);
 
-	dt.Scandir(m_start_paths);
+	dt.Scandir(m_start_paths, m_dirjobs);
 
 	return;
 #else
