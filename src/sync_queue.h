@@ -68,8 +68,9 @@ public:
 	sync_queue() {};
 	~sync_queue() {};
 
-	size_type size() const
+	size_type size() const noexcept
 	{
+		std::unique_lock<std::mutex> lock(m_mutex);
 		return m_underlying_queue.size();
 	}
 
@@ -247,20 +248,9 @@ public:
 		}
 	}
 
-	/**
-	 * Must be called prior to any threads doing a #wait_pull().
-	 * @param num_workers
-	 */
-	void set_num_workers(size_t num_workers)
-	{
-		std::unique_lock<std::mutex> lock(m_mutex);
-
-		m_num_waiting_threads_notification_level = num_workers;
-	}
-
 private:
 
-	std::mutex m_mutex;
+	mutable std::mutex m_mutex;
 
 	std::condition_variable m_cv;
 

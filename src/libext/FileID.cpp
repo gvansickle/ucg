@@ -300,75 +300,45 @@ std::string FileID::GetBasename() const noexcept
 };
 
 #if 0
-template < typename ReturnType, typename AtomicTypeWrapper >
-ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, std::shared_mutex mutex)
+template < typename ReturnType, typename AtomicTypeWrapper, typename CacheFiller >
+ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, std::shared_mutex &mutex, std::function<CacheFiller> cache_filler)
 {
-	auto retval_wrapper = wrap.load(std::memory_order_relaxed);
-	std::atomic_thread_fence(std::memory_order_acquire);
-	if(retval_wrapper == nullptr)
+	auto temp_retval = wrap.load(std::memory_order_relaxed);
+	std::atomic_thread_fence(std::memory_order_acquire);  	// Guaranteed to observe everything done in another thread before
+			 	 	 	 	 	 	 	 	 	 	 	 	// the std::atomic_thread_fence(std::memory_order_release) below.
+	if(temp_retval == nullptr)
 	{
 		// First check says we don't have the cached value yet.
-		WriterLock wl(mutex);
+		std::unique_lock wl(mutex);
 		// One more try.
-		retval_wrapper = wrap.load(std::memory_order_relaxed);
-		if(retval_wrapper == nullptr)
+		temp_retval = wrap.load(std::memory_order_relaxed);
+		if(temp_retval == nullptr)
 		{
-			// Still no cached m_path.  We'll have to do the heavy lifting.
-			m_pimpl->GetPath();
-			retval_wrapper = &(m_pimpl->m_path);
+			// Still no cached value.  We'll have to do the heavy lifting.
+			temp_retval = cache_filler();
 			std::atomic_thread_fence(std::memory_order_release);
-			wrap.store(retval_wrapper, std::memory_order_relaxed);
+			wrap.store(temp_retval, std::memory_order_relaxed);
 		}
 	}
-	return *path_ptr;
+	return temp_retval;
 }
 #endif
 
 std::string FileID::GetPath() const noexcept
 {
-#if 0 /// @todo
-	// Use double-checked locking to build up the path and cache it in m_path.
-	if(false)
 	{
-		//std::call_once(m_once_flag_path, [this]{m_pimpl->GetPath();});
-		auto path_ptr = m_atomic_path_ptr.load(std::memory_order_relaxed);
-		std::atomic_thread_fence(std::memory_order_acquire);
-		if(path_ptr == nullptr)
-		{
-			// First check says we don't have an m_path yet.
-			WriterLock wl(m_mutex);
-			// One more try.
-			path_ptr = m_atomic_path_ptr.load(std::memory_order_relaxed);
-			if(path_ptr == nullptr)
-			{
-				// Still no cached m_path.  We'll have to do the heavy lifting.
-				m_pimpl->GetPath();
-				path_ptr = &(m_pimpl->m_path);
-				std::atomic_thread_fence(std::memory_order_release);
-				m_atomic_path_ptr.store(path_ptr, std::memory_order_relaxed);
-			}
-		}
-		return *path_ptr;
-	}
-	else
-	{
-#endif
-		{
-			ReaderLock rl(m_mutex);
+		ReaderLock rl(m_mutex);
 
-			if(m_pimpl->IsPathResolved())
-			{
-				// m_path has already been lazily evaluated and is available in a std::string.
-				return m_pimpl->m_path;
-			}
+		if(!m_pimpl->m_path.empty())
+		{
+			// m_path has already been lazily evaluated and is available in a std::string.
+			return m_pimpl->m_path;
 		}
-		// Else, we need to get a write lock, and evaluate the path.
-
-		WriterLock wl(m_mutex);
-		m_pimpl->GetPath();
-#if 0
 	}
-#endif
+	// Else, we need to get a write lock, and evaluate the path.
+
+	WriterLock wl(m_mutex);
+	m_pimpl->GetPath();
 
 	return m_pimpl->m_path;
 }

@@ -36,17 +36,24 @@ class basic_microstring
 {
 public:
 
+	/// @name Member Types
+	/// @{
+	using size_type = typename uint_t<sizeof(UnderlyingType)*8>::type;
 	using underlying_storage_type = UnderlyingType;
+	/// @}
 
-	basic_microstring() = default;
+	// Default constructor.
+	constexpr basic_microstring() = default;
+
 	template <typename Stringlike>
 	basic_microstring(const Stringlike &other) : basic_microstring(other.cbegin(), other.cend()) {};
+
 	template <typename StringlikeConstIterator>
 	basic_microstring(StringlikeConstIterator b, StringlikeConstIterator e,
 			typename StringlikeConstIterator::iterator_category() = 0)
 		: basic_microstring(&*b, &*e) {};
 
-	basic_microstring(const char * __restrict__ cstr, uint8_t len) : basic_microstring(cstr, cstr+len) {};
+	basic_microstring(const char * __restrict__ cstr, size_type len) : basic_microstring(cstr, cstr+len) {};
 
 	basic_microstring(const char * __restrict__ start, const char * __restrict__ end)
 	{
@@ -89,7 +96,7 @@ public:
 	 *
 	 * @return Length of string.
 	 */
-	inline size_t length() const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	inline size_type length() const noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
 		auto tmp = m_storage;
 
@@ -101,12 +108,27 @@ public:
 		return strnlen(ptr, 4);
 	};
 
-	constexpr inline bool operator <(const basic_microstring other) const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	constexpr inline size_type size() const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	{
+		return length;
+	}
+
+	constexpr inline size_type max_size() const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	{
+		return sizeof(UnderlyingType);
+	}
+
+	constexpr inline bool empty() const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	{
+		return m_storage == 0;
+	}
+
+	constexpr inline bool operator<(const basic_microstring other) const noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
 		return m_storage < other.m_storage;
 	};
 
-	constexpr inline bool operator ==(const basic_microstring other) const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	constexpr inline bool operator==(const basic_microstring other) const noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
 		return m_storage == other.m_storage;
 	};
