@@ -134,11 +134,11 @@ TypeManager::TypeManager()
 	}
 }
 
-bool TypeManager::FileShouldBeScanned(const std::string_view& name) const noexcept
+bool TypeManager::FileShouldBeScanned(const name_string_type& name) const noexcept
 {
 	// Find the name's extension.
 	auto last_period_offset = name.find_last_of('.');
-	auto last_period = last_period_offset == std::string_view::npos ? name.cend() : name.cbegin() + last_period_offset;
+	auto last_period = last_period_offset == name_string_type::npos ? name.cend() : name.cbegin() + last_period_offset;
 	if(last_period != name.cend())
 	{
 		// There was a period, might be an extension.
@@ -164,8 +164,7 @@ bool TypeManager::FileShouldBeScanned(const std::string_view& name) const noexce
 			if(include_it)
 			{
 				// Now check that a glob pattern doesn't subsequently exclude it.
-				std::string name_str = std::string(name);
-				if(IsExcludedByAnyGlob(name_str))
+				if(IsExcludedByAnyGlob(name))
 				{
 					return false;
 				}
@@ -178,11 +177,10 @@ bool TypeManager::FileShouldBeScanned(const std::string_view& name) const noexce
 	}
 
 	// Check if the filename is one of the literal filenames we're supposed to look at.
-	std::string name_str = std::string(name);
-	if(m_included_literal_filenames.find(name_str) != m_included_literal_filenames.end())
+	if(m_included_literal_filenames.find(name) != m_included_literal_filenames.end())
 	{
 		// It matches a literal filename, but now check that a glob pattern doesn't subsequently exclude it.
-		if(IsExcludedByAnyGlob(name_str))
+		if(IsExcludedByAnyGlob(name))
 		{
 			return false;
 		}

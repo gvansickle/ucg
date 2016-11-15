@@ -100,7 +100,7 @@ class DirTree
 {
 public:
 	/// Type of the file and directory include/exclude predicates.
-	using filter_string_type = std::string_view;
+	using filter_string_type = std::string;
 	using file_basename_filter_type = std::function<bool (const filter_string_type& name) noexcept>;
 	using dir_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
 
