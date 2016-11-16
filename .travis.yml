@@ -4,13 +4,6 @@ language: cpp
 dist: trusty
 sudo: required
 
-os:
-  - linux
-  - osx
-    osx_image:
-    - xcode8
-    - xcode6.4
-
 compiler:
   - gcc
   - clang
@@ -20,6 +13,13 @@ env:
   - CFG_CC=clang CFG_CXX=clang++
   - CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
 
+matrix:
+  include:
+    - os: linux
+    - os: osx
+      osx_image: xcode8
+    - os: osx
+      osx_image: xcode6.4
 
 # Build matrix:
 #matrix:
