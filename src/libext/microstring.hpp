@@ -38,6 +38,7 @@ public:
 
 	/// @name Member Types
 	/// @{
+	/// Type returned by size(), length(), max_length().
 	using size_type = typename uint_t<sizeof(UnderlyingType)*8>::type;
 	using underlying_storage_type = UnderlyingType;
 	/// @}
