@@ -75,6 +75,7 @@ STATIC_MSG_WARN("No _GLIBCXX_USE_C99_STDINT_TR1")
 STATIC_MSG_WARN("No _GLIBCXX_HAS_GTHREADS")
 #endif
 
+
 #if 0 /// @note Put this in to see at compile time what types are really being used for the shared locks.
 std::shared_mutex i;
 std::shared_timed_mutex j;
