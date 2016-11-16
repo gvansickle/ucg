@@ -4,9 +4,9 @@ language: cpp
 dist: trusty
 sudo: required
 
-compiler:
-  - gcc
-  - clang
+#compiler:
+#  - gcc
+#  - clang
 
 env:
   - CFG_CC= CFG_CXX=
