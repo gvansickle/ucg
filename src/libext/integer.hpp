@@ -118,8 +118,20 @@ constexpr
 };
 
 // Separate declaration here to avoid "attributes are not allowed on a function-definition" error.
-constexpr inline uint32_t bswap(uint32_t x) ATTR_CONST ATTR_ARTIFICIAL;
-constexpr inline uint32_t bswap(uint32_t x)
+template < typename T >
+constexpr inline T bswap(T x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template < typename T >
+constexpr inline T bswap(T x) noexcept
+{
+	// Should never get to this unspecialized version.
+	///@note This tuple business is to get the compiler to dump the name of the type when it errors out.  E.g.:
+	/// "error: ‘dummy’ is not a member of ‘std::tuple<long unsigned int>’"
+	auto test_var = std::make_tuple(x);
+	static_assert(decltype(test_var)::dummy, "No template specialization for type T.");
+}
+
+template <> constexpr inline uint32_t bswap<uint32_t>(uint32_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <> constexpr inline uint32_t bswap<uint32_t>(uint32_t x) noexcept
 {
 #if defined(HAVE___BUILTIN_BSWAP32)
 	return __builtin_bswap32(x);
@@ -129,16 +141,28 @@ constexpr inline uint32_t bswap(uint32_t x)
 #endif
 }
 
+template <> constexpr inline uint64_t bswap<uint64_t>(uint64_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <> constexpr inline uint64_t bswap<uint64_t>(uint64_t x) noexcept
+{
+#if defined(HAVE___BUILTIN_BSWAP32)
+	return __builtin_bswap64(x);
+#else
+	/// @todo create a fallback.
+	static_assert(false, "Generic bswap64() not yet implemented.");
+#endif
+}
+
 /**
  * Portable byte-order conversion of a value from Host order to big-endian.
- * This overload is for unsigned 32-bit values.
  *
  * @param x
  * @return
  */
 // Separate declaration here to avoid "attributes are not allowed on a function-definition" error.
-constexpr inline uint32_t host_to_be(uint32_t x) ATTR_CONST ATTR_ARTIFICIAL;
-constexpr inline uint32_t host_to_be(uint32_t x)
+template <typename T>
+constexpr inline T host_to_be(T x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <typename T>
+constexpr inline T host_to_be(T x) noexcept
 {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 	return bswap(x);

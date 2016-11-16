@@ -24,6 +24,7 @@
 
 #include <config.h>
 
+#include <future/type_traits.hpp>
 #include "integer.hpp"
 #include "hints.hpp"
 
@@ -34,6 +35,14 @@
 template <typename UnderlyingType>
 class basic_microstring
 {
+private:
+
+	template < std::size_t Bits >
+	using IsSize = typename std::enable_if<sizeof(UnderlyingType)*8==Bits>;
+
+	template <bool B, typename T = void>
+	using enable_if_t = typename std::enable_if<B, T>::type;
+
 public:
 
 	/// @name Member Types
@@ -56,35 +65,124 @@ public:
 
 	basic_microstring(const char * __restrict__ cstr, size_type len) : basic_microstring(cstr, cstr+len) {};
 
-	basic_microstring(const char * __restrict__ start, const char * __restrict__ end)
+	/**
+	 * @title Dr. Substlove or: How I Learned To Stop Constructing and Love SFINAE
+	 *
+	 * Gentle Reader, prepare yourself for a journey to the center of C++'s mind.  Ok, so the basic_microstring<>
+	 * class template is templated upon an underlying integral type.  Fast forward a few weeks: that means we
+	 * need different non-default constructors for different sizes of the template.  E.g., for
+	 * a basic_microstring<uint32_t>, we need a constructor which copies 4 bytes, but for a
+	 * basic_microstring<uint64_t>, we need a constructor which copies 8 bytes.  "No problemo," I say,
+	 * "that's what std::enable_if<> is for!"...
+	 * ...and after I awakened, I realized that it was not that easy.  Here's some things which you can't do:
+	 *
+	 * - Overload a constructor with the same signature.  Obvious, of course, but it complicates other potential options.
+	 * - Use std::enable_if to enable/disable the return type to cause substitution failure.  Because of course, constructors
+	 *   have no return type.
+	 * - Use the class's template parameter directly to do any sort of SFINAE to eliminate member functions [@todo explain/ref]
+	 * - Overload based solely on a template parameter's default value.
+	 * - @todo etc...
+	 *
+	 * For SFINAE to work, the SF has to happen *in the S*[1], not outside it.  If you get compile errors where you think you should
+	 * just be getting a template taken out of the overload resolution set, this may very well be what you're running into.
+	 * [1] "Substitution Failure has to happen in the Substitution".
+	 *
+	 * The solution I use here is based somewhat on this SO post: @see http://stackoverflow.com/a/26949793/945838.  The key steps are:
+	 * 1. Make the constructors member templates.
+	 * 1a. Make the member template parameters default to the class's template parameter (i.e. typename T = UnderlyingType).
+	 * 2. Add another parameter to the constructors.  This parameter will both cause the SFINAE to work *and* disambiguate
+	 *    the otherwise-identical overloads.
+	 * 2a. Give the param a default value of 0.
+	 * 3. Use std::enable_if to specify the type of this parameter.  This is the key to the key here, and must be done very carefully.
+	 *    Note the form here for a basic_microstring<uint32_t>:
+	 *        basic_microstring(...params..., typename std::enable_if<sizeof(T)==4, T>::type = 0)
+	 *    3a. The enable expression is here --------------------------^^^^^^^^^^^^  ^
+	 *    3b. The Disambiguating Type(tm) is here ----------------------------------|
+	 *        ...and is equivalent to the class's template type.  No new type needed to be introduced.
+	 * 4. Let what's going on here sink in.  Basically, we've beaten C++11+'s best efforts to defeat us.  There are two cases:
+	 * 4a. If, at instantiation time, sizeof(T) isn't 4, we get a normal substitution failure:
+	 *        i.   basic_microstring(...params..., typename std::enable_if<sizeof(T)!=4, T>::type = 0)
+	 *        ii.  basic_microstring(...params..., typename std::enable_if<false, T>::type = 0)
+	 *        iii. basic_microstring(...params..., [nothing here, enable_if::type doesn't exist] = 0)
+	 *        iv.  ==> Substitution Failure.
+	 * 4b. But, if, at instantiation time, sizeof(T) is 4, a minor miracle happens:
+	 *        i.   basic_microstring(...params..., typename std::enable_if<sizeof(T)==4, T>::type = 0)
+	 *        ii.  basic_microstring(...params..., typename std::enable_if<true, T>::type = 0)
+	 *        iii. basic_microstring(...params..., T = 0)
+	 *        iv.  basic_microstring(...params..., uint32_t = 0)
+	 *        v.   ==> Valid constructor prototype, disambiguated from any others which may be needed for different UnderlyingType's.
+	 * 5. Bask in the knowledge that you've solved yet another of the world's problems.
+	 */
+
+	/**
+	 * Constructor for 4-character microstrings.
+	 * @param start
+	 * @param end
+	 * @param
+	 */
+	template <typename T = UnderlyingType>
+	basic_microstring(const char * __restrict__ start, const char * __restrict__ end,
+			typename std::enable_if<sizeof(T)==4, T>::type = 0)
 	{
+		static_assert(sizeof(T) == 4, "This constructor is for 4-byte microstrings only.");
+
+		size_t num_chars = end - start;
+
+		if(unlikely(num_chars > sizeof(underlying_storage_type)))
+		{
+			throw std::length_error("Length too long for a microstring");
+		}
+
+		assume(num_chars <= max_size());
+
+		m_storage = 0;
+		uint8_t *storage_start = reinterpret_cast<uint8_t*>(&m_storage);
+
+		// Copy the bytes.  Hopefully the compiler will optimize this loop.
+		/// @note On Intel (little endian), we ultimately want to reverse the byte order.  We don't do it
+		/// in this loop though, to give the compiler every opportunity to optimize it.
+		for(uint8_t i=0; i<num_chars; i++)
+		{
+			storage_start[i] = start[i];
+		}
+
+		// Put the first character in the MSB, so that microstrings sort the same as a regular string.
+		m_storage = host_to_be(m_storage);
+	}
+
+	/**
+	 * Constructor for 8-character microstrings.
+	 * @param start
+	 * @param end
+	 * @param
+	 */
+	template <typename T = UnderlyingType>
+	basic_microstring(const char * __restrict__ start, const char * __restrict__ end,
+			typename std::enable_if<sizeof(T)==8, T>::type = 0)
+	{
+		static_assert(sizeof(T) == 8, "This constructor is for 8-byte microstrings only.");
+
 		size_t num_chars = end - start;
 		if(unlikely(num_chars > sizeof(underlying_storage_type)))
 		{
 			throw std::length_error("Length too long for a microstring");
 		}
 
-		// Put the first character in the MSB, so that microstrings sort the same as a regular string.
+		assume(num_chars <= max_size());
+
 		m_storage = 0;
-		if(num_chars > 0)
+		uint8_t *storage_start = reinterpret_cast<uint8_t*>(&m_storage);
+
+		// Copy the bytes.  Hopefully the compiler will optimize this loop.
+		/// @note On Intel (little endian), we ultimately want to reverse the byte order.  We don't do it
+		/// in this loop though, to give the compiler every opportunity to optimize it.
+		for(uint8_t i=0; i<num_chars; i++)
 		{
-			m_storage = (static_cast<underlying_storage_type>(*start) << (8*3));
+			storage_start[i] = start[i];
 		}
-		if(num_chars > 1)
-		{
-			++start;
-			m_storage |= (static_cast<underlying_storage_type>(*start) << (8*2));
-		}
-		if(num_chars > 2)
-		{
-			++start;
-			m_storage |= (static_cast<underlying_storage_type>(*start) << (8*1));
-		}
-		if(num_chars > 3)
-		{
-			++start;
-			m_storage |= static_cast<underlying_storage_type>(*start);
-		}
+
+		// Put the first character in the MSB, so that microstrings sort the same as a regular string.
+		m_storage = host_to_be(m_storage);
 	}
 
 	~basic_microstring() noexcept = default;
@@ -114,7 +212,7 @@ public:
 		return length;
 	}
 
-	constexpr inline size_type max_size() const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	static constexpr inline size_type max_size() noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
 		return sizeof(UnderlyingType);
 	}
