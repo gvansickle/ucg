@@ -7,10 +7,9 @@ sudo: required
 os:
   - linux
   - osx
-
-osx_image:
-  - xcode8
-  - xcode6.4
+    osx_image:
+    - xcode8
+    - xcode6.4
 
 compiler:
   - gcc
