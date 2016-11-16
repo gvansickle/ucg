@@ -8,29 +8,24 @@ sudo: required
 #  - gcc
 #  - clang
 
-env:
-  - CFG_CC= CFG_CXX=
-  - CFG_CC=clang CFG_CXX=clang++
-  - CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
-
-matrix:
-  include:
-    - os: linux
-    - os: osx
-      osx_image: xcode8
-    - os: osx
-      osx_image: xcode6.4
+#env:
+#  - CFG_CC= CFG_CXX=
+#  - CFG_CC=clang CFG_CXX=clang++
+#  - CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
 
 # Build matrix:
-#matrix:
-#    include:
-#        - os: linux
-#          compiler: gcc
-#        - os: linux
-#          compiler: clang
-#        - os: osx
-#          osx_image: xcode8
-#          env: CFG_CC=clang CFG_CXX='clang++ -std=gnu++1z' ##-stdlib=libc++'
+matrix:
+    include:
+        - os: linux
+          compiler: gcc
+        - os: linux
+          compiler: clang
+        - os: osx
+          osx_image: xcode8
+          env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z'
+        - os: osx
+          osx_image: xcode8
+          env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
 #        - os: osx
 #          osx_image: xcode7.3
 #        - os: osx
@@ -39,10 +34,10 @@ matrix:
 #          osx_image: xcode7.2
 #        - os: osx
 #          osx_image: xcode7
-#        - os: osx
-#          osx_image: xcode6.4
-#          env: CFG_CC=clang CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
-#          env: CFG_CC=clang CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
+        - os: osx
+          osx_image: xcode6.4
+          env: CFG_CC=clang CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
+          env: CFG_CC=clang CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
 
 before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
@@ -68,7 +63,7 @@ before_script:
  - git fetch --unshallow  # Travis limits its pull by default to 50 revs.  The build then can't do a proper "git describe".
 
 script:
- - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help; fi 
+ - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help; fi
  - #if [ $TRAVIS_OS_NAME == osx ]; then ls -l -R $(brew --prefix pcre); fi
  - pkg-config --list-all | grep argp || true
  - find /usr -iname '*argp*' || true
@@ -83,7 +78,7 @@ script:
  - ../configure CC="$CFG_CC" CXX="$CFG_CXX"
  - make
  - make check 'TESTSUITEFLAGS=--keywords=!benchmark,!characterize'
- - find . -iname '*.log' -exec cat "{}" \; 
+ - find . -iname '*.log' -exec cat "{}" \;
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
 
 after_success:
@@ -95,4 +90,4 @@ after_success:
  - cat tests/perf_test_results.txt
  - if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then LD_DEBUG=all && ldd -v ucg; fi
- - #find . -iname '*.log' -exec cat "{}" \; 
+ - #find . -iname '*.log' -exec cat "{}" \;
