@@ -18,11 +18,11 @@
 /** @file Dummy cpp file to get this otherwise header-only lib to build portably. */
 
 #include <config.h>
-
+#include "shared_mutex.hpp"
 #include <static_diagnostics.hpp>
 
 #include "memory.hpp"
-#include "shared_mutex.hpp"
+
 
 const char *link_me = "dummy";
 

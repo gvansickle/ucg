@@ -42,6 +42,7 @@
 			namespace std
 			{
 				// Use std::unique_lock<> instead.
+				STATIC_MSG_WARN("Backfilling shared_lock<shared_timed_mutex> with unique_lock<>.")
 				template < typename T >
 				using shared_lock = std::unique_lock<typename std::enable_if<std::is_same<T, std::shared_timed_mutex>::value>::type>;
 			}
@@ -50,8 +51,14 @@
 			namespace std
 			{
 				// Use std::unique_lock<> instead.
-				template < typename T >
-				using shared_lock = std::unique_lock<typename std::enable_if<std::is_same<T, std::shared_mutex>::value>::type>;
+				/// @todo From what I can tell, we shouldn't ever need this.  If we have the real std::shared_mutex, we should
+				/// also have the real std::shared_lock<std::shared_mutex>.  If we only have std::shared_timed_mutex, the backfill
+				/// in !HAVE_SHARED_LOCK_SHARED_TIMED_MUTEX above will be used regardless of whether we're trying to shared_lock
+				/// a real std::shared_mutex or our backfilled version using std::shared_timed_mutex.
+				//STATIC_MSG_WARN("Backfilling shared_lock<shared_mutex> with unique_lock<>.")
+				//template < typename T >
+				//using shared_lock = std::unique_lock<typename std::enable_if<std::is_same<T, std::shared_mutex>::value>::type>;
+//#				define SHARED_LOCK_SHARED_MUTEX std::unique_lock<std::shared_mutex>;
 			}
 #		endif
 #	else // Found the header, but it didn't define __cpp_lib_shared_timed_mutex.
