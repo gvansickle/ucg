@@ -42,6 +42,13 @@ test_script_template_1 = Template("""\
 ### GENERATED FILE, DO NOT EDIT
 ###
 
+echo "Test description short: '${desc_long}'" >> ${results_file}
+
+# Record info on the filesystem where the test data lies.
+TEST_DATA_FS_INFO=`get_dev_and_fs_type $$1`
+"Test data path: \"$$1\"" >> ${results_file}
+"Test data filesystem info: $$TEST_DATA_FS_INFO" >> ${results_file}
+
 TOP_CORPUSDIR=$${top_srcdir}/$${at_arg_corpusdir}/
 echo "TOP_CORPUSDIR: $${TOP_CORPUSDIR} ($$(readlink -f $${TOP_CORPUSDIR}))" >> ${results_file};
 
@@ -181,7 +188,7 @@ class TestGenDatabase(object):
             if opt_val:
                 select_opts += ' || "' + opt_val + '"'
         select_string = """CREATE TABLE {} AS
-        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, {} AS other_options, t.regex, t.corpus
+        SELECT t.test_case_id, t.desc_long, p.prog_id, p.exename, p.pre_options, {} AS other_options, t.regex, t.corpus
         FROM test_cases AS t CROSS JOIN benchmark_progs as p
         INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
         """.format(output_table_name, select_opts)
@@ -238,8 +245,12 @@ class TestGenDatabase(object):
         
         test_cases = ""
         test_inst_num=0
+        desc_long = ""
         rows = self.dbconnection.execute('SELECT * FROM benchmark1 WHERE test_case_id == "{}"'.format(test_case_id))
         for row in rows:
+            if desc_long == "":
+                # Escape any embedded double quotes.
+                desc_long = row['desc_long'].replace("'", "\\'").replace('"', '\\"')
             test_inst_num += 1
             search_results_filename="SearchResults_{}.txt".format(test_inst_num)
             time_run_results_filename='./time_results_{}.txt'.format(test_inst_num)
@@ -270,6 +281,7 @@ class TestGenDatabase(object):
                 )
             test_cases += test_case + "\n"
         script = test_script_template_1.substitute(
+            desc_long=desc_long,
             num_iterations=10,
             results_file=test_output_filename,
             test_cases=test_cases

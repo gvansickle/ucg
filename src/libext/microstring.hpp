@@ -146,8 +146,13 @@ private:
 	underlying_storage_type m_storage;  // No member initializer, would make the class non-trivial.
 };
 
+template < typename UnderlyingType >
+constexpr bool operator==(basic_microstring<UnderlyingType> lhs, basic_microstring<UnderlyingType> rhs)
+{
+	return lhs == rhs;
+}
 
-using microstring = basic_microstring<uint32_t>;
+using microstring = basic_microstring<uint64_t>;
 
 
 
@@ -164,7 +169,7 @@ static_assert(std::is_trivially_assignable<microstring, microstring>::value, "mi
 static_assert(std::is_trivially_copy_assignable<microstring>::value, "microstring is not trivially copy-assignable");
 static_assert(std::is_trivially_move_assignable<microstring>::value, "microstring is not trivially move-assignable");
 #endif
-static_assert(sizeof(microstring) == sizeof(uint32_t), "microstring has a different size than its underlying storage");
+static_assert(sizeof(microstring) == sizeof(microstring::underlying_storage_type), "microstring has a different size than its underlying storage");
 
 static_assert(std::is_constructible<microstring, std::string>::value, "microstring is not constructible from std::string");
 static_assert(std::is_trivially_destructible<microstring>::value, "microstring is not trivially destructible");
