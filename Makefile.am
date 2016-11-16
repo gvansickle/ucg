@@ -122,3 +122,7 @@ autoreconf:
 
 check-malloc:
 	export MALLOC_CHECK_=3 && $(MAKE) check
+
+check-comp:
+	$(MAKE) distclean && ../configure CC=clang CXX=clang++ && $(MAKE)
+	$(MAKE) distclean && ../configure
