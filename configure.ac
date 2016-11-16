@@ -656,7 +656,7 @@ $($CXX -print-search-dirs | tr ':' '\n' | sed -E 's/^ [=]?//g' | sed 's/^ */  /g
   
   $CXXCPP Include Paths
   ---------------------
-$(echo | $CXXCPP -v -x c - 2>&1 | sed -n '/#include/,/End of/ p' | sed 's/^ */  /g')
+$(echo | $CXXCPP -v -x c++ - 2>&1 | sed -n '/^ *#include/,/^ *End of/ p' | sed 's/^ */  /g')
   
   PCRE Info
   ---------
