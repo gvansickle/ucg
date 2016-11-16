@@ -283,7 +283,7 @@ inline bool is_pathname_absolute(const std::string &path) noexcept
  * @param path
  * @return
  */
-inline std::string canonicalize_any_path(const std::string &path)
+inline std::string realpath(const std::string &path)
 {
 
 	/// @todo The below will add e.g. "./" to a path with no dir.  We need that to not happen.

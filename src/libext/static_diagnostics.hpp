@@ -41,7 +41,6 @@
 
 /// @todo Make this use GCC warning if no message support.
 #define STATIC_MSG(m)       PRAGMA_HELPER(message #m)
-
 #define STATIC_MSG_WARN(m)  PRAGMA_HELPER(GCC warning #m)
 
 #endif /* SRC_LIBEXT_STATIC_DIAGNOSTICS_HPP_ */

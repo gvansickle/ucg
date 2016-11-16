@@ -61,6 +61,20 @@ STATIC_MSG("__cpp_lib_shared_mutex is defined")
 STATIC_MSG_WARN("__cpp_lib_shared_mutex not defined")
 #endif
 
+#if __has_include(<shared_mutex>)
+STATIC_MSG("Have __has_include(<shared_mutex>)")
+#else
+STATIC_MSG("No __has_include(<shared_mutex>)")
+#endif
+
+#ifndef _GLIBCXX_USE_C99_STDINT_TR1
+STATIC_MSG_WARN("No _GLIBCXX_USE_C99_STDINT_TR1")
+#endif
+
+#ifndef _GLIBCXX_HAS_GTHREADS
+STATIC_MSG_WARN("No _GLIBCXX_HAS_GTHREADS")
+#endif
+
 #if 0 /// @note Put this in to see at compile time what types are really being used for the shared locks.
 std::shared_mutex i;
 std::shared_timed_mutex j;
