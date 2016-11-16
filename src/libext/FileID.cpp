@@ -324,7 +324,7 @@ ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, std::shared_mutex &mutex, 
 }
 #endif
 
-std::string FileID::GetPath() const noexcept
+const std::string& FileID::GetPath() const noexcept
 {
 	{
 		ReaderLock rl(m_mutex);

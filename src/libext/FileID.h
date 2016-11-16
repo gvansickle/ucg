@@ -174,9 +174,9 @@ public:
 
 	/**
 	 * Returns the "full path" of the file.  May be absolute or relative to the root AT dir.
-	 * @return A std::string object (not a reference) containing the file's path.
+	 * @return Ref to a std::string containing the file's path.  Threadsafe as long as this FileID exists.
 	 */
-	std::string GetPath() const noexcept;
+	const std::string& GetPath() const noexcept;
 
 	/**
 	 * This is essentially a possibly-deferred "open()" for this class.
