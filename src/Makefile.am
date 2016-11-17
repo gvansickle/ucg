@@ -43,8 +43,7 @@ libsrc_la_SOURCES = \
 	ResizableArray.h \
 	sync_queue.h \
 	sync_queue_impl_selector.h \
-	TypeManager.cpp TypeManager.h \
-	valgrind_support.h
+	TypeManager.cpp TypeManager.h
 
 libsrc_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_la_CFLAGS = $(AM_CFLAGS)

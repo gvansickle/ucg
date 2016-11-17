@@ -73,7 +73,12 @@
 	STATIC_MSG_WARN("No <shared_mutex> header found")
 #endif
 
-#if !defined(HAVE_SHARED_MUTEX_HEADER) || defined(HAVE_BROKEN_SHARED_MUTEX_HEADER) || defined(NO_SHARED_MUTEX_HEADER)
+#if defined(HAVE_BROKEN_SHARED_MUTEX_HEADER)
+
+// We're on Mac OSX.
+STATIC_MSG_WARN("Trying to build with broken <shared_mutex> header")
+
+#elif !defined(HAVE_SHARED_MUTEX_HEADER) || defined(NO_SHARED_MUTEX_HEADER)
 
 STATIC_MSG_WARN("Backfilling header <shared_mutex> from future");
 #include <mutex>
