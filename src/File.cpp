@@ -171,7 +171,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size, size_t pref
 
 	if(false) /// @todo This is very broken right now.  (m_use_mmap)
 	{
-		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE /*| MAP_POPULATE*/, file_descriptor, 0));
+		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE /*| MAP_NORESERVE | MAP_POPULATE*/, file_descriptor, 0));
 
 		if(file_data == MAP_FAILED)
 		{
