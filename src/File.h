@@ -22,9 +22,9 @@
 
 #include <config.h>
 
-#include <string>
+#include <future/memory.hpp>
+#include <future/string.hpp>
 #include <stdexcept>
-#include <memory>
 
 #include "libext/FileID.h"
 #include "ResizableArray.h"
@@ -32,11 +32,14 @@
 /**
  * File() may throw this if it runs into trouble opening the given filename.
  */
-struct FileException : public std::runtime_error
+struct FileException : public std::system_error
 {
-	FileException(const std::string &message) : std::runtime_error(message) {};
+	FileException(const std::string &message, int errval = errno) : std::system_error(errval, std::system_category(), message) {};
 };
-
+inline std::ostream& operator<<(std::ostream &out, const FileException &fe) noexcept
+{
+	return out << fe.what() << ": " << fe.code() << " - " << fe.code().message();
+}
 
 /**
  * A class to represent the contents and some metadata of a read-only file.
@@ -82,12 +85,6 @@ private:
 	void FreeFileData(const char * file_data, size_t file_size) noexcept;
 
 	FileID m_fileid;
-
-	///std::string m_filename;
-
-	///int m_file_descriptor { -1 };
-
-	///size_t m_file_size { 0 };
 
 	/// The ResizableArray that we'll get file data storage from.
 	std::shared_ptr<ResizableArray<char>> m_storage;

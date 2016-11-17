@@ -42,13 +42,18 @@ File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_
 	{
 		file_descriptor = m_fileid.GetFileDescriptor().GetFD();
 
-		/// @todo Shouldn't need this anymore.
+		/// @todo Do attempts to open nonexistent files throw and get to here?
 		if(file_descriptor == -1)
 		{
 			// Couldn't open the file, throw exception.
 			LOG(DEBUG) << "bad file descriptor: fd=" << file_descriptor;
-			throw std::system_error(errno, std::generic_category());
+			throw FileException("File constructor: bad file descriptor");
 		}
+	}
+	catch(const FileException &e)
+	{
+		LOG(DEBUG) << e;
+		throw;
 	}
 	catch(const std::system_error &e)
 	{
@@ -85,13 +90,11 @@ File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_
 	auto io_size = clamp(m_fileid.GetBlockSize(), static_cast<blksize_t>(0x20000), static_cast<blksize_t>(0x100000));
 	m_file_data = GetFileData(file_descriptor, file_size, io_size);
 
-	///m_file_descriptor = -1;
-
 	if(m_file_data == MAP_FAILED)
 	{
 		// Mapping failed.
 		ERROR() << "Couldn't map file '" << m_fileid.GetPath() << "'";
-		throw std::system_error(errno, std::system_category());
+		throw FileException("mmapping file failed", errno);
 	}
 }
 

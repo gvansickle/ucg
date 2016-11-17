@@ -124,6 +124,9 @@ private:
 	/// Mutex for locking in copy and move constructors and some operations.
 	mutable MutexType m_mutex;
 
+	/// Mutex for double-checked locking.
+	//mutable std::mutex m_the_mutex;
+
 public:
 
 	/// pImpl forward declaration.
@@ -292,7 +295,7 @@ public:
 		// Get it from the filename.
 		if(!m_at_dir)
 		{
-			throw std::runtime_error("should have an at-dir");
+			throw std::runtime_error("should always have an at-dir");
 		}
 
 		struct stat stat_buf;
@@ -314,8 +317,6 @@ public:
 
 	std::shared_ptr<FileID> GetAtDir() const noexcept { return m_at_dir; };
 
-	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
-
 	off_t GetFileSize() const noexcept { LazyLoadStatInfo(); return m_size; };
 
 	blksize_t GetBlockSize() const noexcept
@@ -329,7 +330,7 @@ public:
 	dev_t GetDev() const noexcept { if(m_dev == static_cast<dev_t>(-1)) { LazyLoadStatInfo(); }; return m_dev; };
 	void SetDevIno(dev_t d, ino_t i) noexcept;
 
-
+// Data members.
 
 	/// Shared pointer to the directory this FileID is in.
 	/// The constructors ensure that this member always exists and is valid.
@@ -346,7 +347,10 @@ public:
 	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
 	mutable std::string m_path;
 
+	/// Flags to use when we open the file descriptor.
 	mutable int m_open_flags { 0 };
+
+	/// The file descriptor object.
 	mutable FileDescriptor m_file_descriptor;
 
 	/// @name Info normally gathered from a stat() call.

@@ -131,21 +131,21 @@ void DirTree::ReaddirLoop(int dirjob_num)
 
 	while(m_dir_queue.wait_pull(std::move(dse)) != queue_op_status::closed)
 	{
-		int open_at_fd = dse->GetAtDir()->GetFileDescriptor().GetFD();
-		const char *open_at_path = dse->GetBasename().c_str();
+		//int open_at_fd = dse->GetAtDir()->GetFileDescriptor().GetFD();
+		//const char *open_at_path = dse->GetBasename().c_str();
 
-		d = opendirat(open_at_fd, open_at_path);
+		//d = opendirat(open_at_fd, open_at_path);
+		int open_at_fd = dse->GetFileDescriptor().GetFD();
+		d = fdopendir(open_at_fd);
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
-			WARN() << "opendirat() failed on path " << open_at_path << ": " << LOG_STRERROR();
-			errno = 0;
+			WARN() << "fdopendir() failed on path " << dse->GetBasename() << ": " << LOG_STRERROR();
 			continue;
 		}
 
 		do
 		{
-			errno = 0;
 			if((dp = readdir(d)) != NULL)
 			{
 				ProcessDirent(dse, dp, stats);
