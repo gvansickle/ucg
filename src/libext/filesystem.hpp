@@ -217,7 +217,7 @@ namespace portable
  * @return  A std::string representing the dirname part of #path.  Guaranteed to be a normal std::string with which you may do
  *          whatever you can do with any other std::string.
  */
-inline std::string dirname(const std::string &path)
+inline std::string dirname(const std::string &path) noexcept
 {
 	// Get a copy of the path string which dirname() can modify all it wants.
 	char * modifiable_path = strdup(path.c_str());
@@ -238,7 +238,7 @@ inline std::string dirname(const std::string &path)
  * @return  A std::string representing the basename part of path.  Guaranteed to be a normal std::string with which you may do
  *          whatever you can do with any other std::string.
  */
-inline std::string basename(const std::string &path)
+inline std::string basename(const std::string &path) noexcept
 {
 	// Get a copy of the path string which dirname() can modify all it wants.
 	char * modifiable_path = strdup(path.c_str());
@@ -284,14 +284,8 @@ inline bool is_pathname_absolute(const std::string &path) noexcept
  * @param path
  * @return
  */
-inline std::string realpath(const std::string &path)
+inline std::string realpath(const std::string &path) noexcept
 {
-
-	/// @todo The below will add e.g. "./" to a path with no dir.  We need that to not happen.
-	return path;
-#if 0
-	std::string::const_reverse_iterator rbegin = path.rbegin();
-
 	// For Posix, there are three situations we need to consider here:
 	// 1. An absolute path starting with 1 or 2 slashes needs those slashes left alone.
 	// 2. An absolute path with >= 3 slashes can be stripped down to 1 slash.
@@ -299,16 +293,18 @@ inline std::string realpath(const std::string &path)
 
 	auto dir = portable::dirname(path);
 	auto base = portable::basename(path);
-	if(!dir.empty() && dir.find_first_of("/\\", dir.length()-1) != std::string::npos)
+	if(dir.empty() || dir == ".")
 	{
-		// Ends in a slash (possibly root), just concat.
-		return dir + base;
+		// There is no "dir" component.  If dirname() finds no slashes in the path,
+		// it returns a ".".  We don't want to append a "./" to the name, so we just return the basename.
+		// Note that GNU grep does not appear to do this; all paths it prints look like they're dirname()+"/"+basename().
+		// ag and ack however do appear to be doing this "empty dirname() elision".
+		return base;
 	}
 	else
 	{
 		return dir + "/" + base;
 	}
-#endif
 }
 
 

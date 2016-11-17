@@ -263,7 +263,7 @@ public:
 	const std::string& GetBasename() const noexcept;
 
 	/// Resolve and cache this FileID's path.  Recursively visits its parent directories to do so.
-	void GetPath() const;
+	const std::string& ResolvePath() const;
 
 	const FileDescriptor& GetFileDescriptor();
 
