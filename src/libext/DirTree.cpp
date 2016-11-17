@@ -281,7 +281,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier()))
 				{
 					// Found cycle.
-					WARN() << "'" << dir_atfd.GetPath() << "': already visited this directory"; /// @todo? "': recursive directory loop";
+					WARN() << "'" << dir_atfd.GetPath() << "': already visited this directory, possible recursive directory loop?";
 					stats.m_num_dirs_rejected++;
 					return;
 				}
