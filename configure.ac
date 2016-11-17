@@ -11,7 +11,7 @@
 # UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -130,7 +130,7 @@ AX_CHECK_COMPILE_FLAG([-std=gnu++1z],
 		AX_APPEND_FLAG([-std=c++1z], [CXXCPP])
 		],
 		[# action-if-fail
-		AC_SUBST([HAVE_CXX1Z], [0])		
+		AC_SUBST([HAVE_CXX1Z], [0])
 		])
 	])
 AS_IF([test "x$HAVE_CXX1Z" = "x0"],
@@ -203,7 +203,7 @@ AS_IF([test "$LN_S" = 'ln -s'],
 	[AC_SUBST([TEST_LN_S], [$LN_S])],
 	[AC_SUBST([TEST_LN_S], [:])
 	AC_MSG_WARN([couldn't find a real 'ln -s', will not be able to run all tests])])
-	
+
 # Try to find GNU grep.
 AC_CACHE_CHECK([for GNU grep], [ac_cv_path_PROG_GNU_GREP],
 [
@@ -247,14 +247,14 @@ AM_COND_IF([HAVE_PYTHON],
 	[])
 # @todo If we don't have the Python Sqlite3 library, we might as well not have python at all for
 # our purposes here.  This is intended to scuttle the AM_MISSING_PROG([MAINTPYTHON]...) below, but
-# it likely could be done better. 
+# it likely could be done better.
 AS_IF([test $HAVE_PYMOD_SQLITE3 = no], [PYTHON=:])
 
 # Define a maintainer-only version of python, so a tarball builder doesn't need
 # a real python runtime.
 AM_MISSING_PROG([MAINTPYTHON], [$PYTHON])
 
-# Autotest needs autom4te, or 'missing's stub for it post-distribution. 
+# Autotest needs autom4te, or 'missing's stub for it post-distribution.
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 # Add Valgrind support.
@@ -325,7 +325,7 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
-AS_BOX([Checking for necessary types...])
+AS_BOX([Checking for needed C++ types...])
 
 AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL], [1],
 	[Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
@@ -354,7 +354,6 @@ AC_CHECK_TYPES([[std::shared_lock<std::shared_timed_mutex>]],
 	[AC_INCLUDES_DEFAULT
 	#include <shared_mutex>
 ])
-
 
 AC_LANG_POP([C++])
 
@@ -410,6 +409,7 @@ AX_GCC_BUILTIN(__builtin_unreachable)
 AX_GCC_BUILTIN(__builtin_expect)
 AX_GCC_BUILTIN(__builtin_popcount)
 AX_GCC_BUILTIN(__builtin_bswap32)
+AX_GCC_BUILTIN(__builtin_bswap64)
 AX_GCC_BUILTIN(__builtin_ctzll)
 
 ## The checks below for C++ feature-test macros are mainly for diagnostic purposes.  The way they're defined
@@ -485,7 +485,7 @@ AS_IF([test "x$ax_pthread_ok" = xyes],
         [AC_LANG_PROGRAM([
         					#include <type_traits>
         					#include <thread>
-        					#include <pthread.h> 					
+        					#include <pthread.h>
         				],
                          [
                          	static_assert(std::is_same<std::thread::native_handle_type, pthread_t>::value, "C++11 underlying thread implementation is not pthreads");
@@ -522,7 +522,7 @@ AC_CHECK_DECLS([std::to_string(int)],
 				[AC_DEFINE([HAVE_TO_STRING], [1], [If defined, the std::to_string() function exists.])
 				],
 				[], [#include <string>])
-				
+
 # See if we have a std::make_unique<>().  Note that checking for __cpp_lib_make_unique does not seem to
 # work properly under clang++; i.e., it won't be defined even though a std::make_unique() exists.
 AC_CHECK_DECLS([std::make_unique<int>(int)], [], [], [#include <memory>])
@@ -540,7 +540,7 @@ AC_CHECK_FUNCS([aligned_alloc posix_memalign])
 AS_IF([test "x$ac_cv_func_aligned_alloc" = xno -a "x$ac_cv_func_posix_memalign" = xno],
 	[AC_MSG_ERROR([cannot find an aligned memory allocator.])],
 	[AC_MSG_NOTICE([found a usable aligned memory allocator.])])
-	
+
 AC_CHECK_FUNCS([posix_fadvise])
 
 AC_MSG_CHECKING([if the GNU C library program_invocation{_short}_name strings are defined])
@@ -632,37 +632,37 @@ AC_MSG_RESULT([
   C compiler:                 $CC
   [AM_CFLAGS]:                  $AM_CFLAGS
   CFLAGS:                     $CFLAGS
-  
+
   C preprocessor:             $CPP
   [AM_CPPFLAGS]:                $AM_CPPFLAGS
   CPPFLAGS:                   $CPPFLAGS
-  
+
   C++ compiler:               $CXX
   [AM_CXXFLAGS]:                $AM_CXXFLAGS
   CXXFLAGS:                   $CXXFLAGS
 
   C++ preprocessor:           $CXXCPP
-  
+
   LTCC:                       $LTCC
   LTCFLAGS:                   $LTCFLAGS
   [AM_LDFLAGS]:                 $AM_LDFLAGS
   LD:                         $LD
   LDFLAGS:                    $LDFLAGS
   LIBS:                       $LIBS
-  
+
   $CXX Search Paths
   -----------------
 $($CXX -print-search-dirs | tr ':' '\n' | sed -E 's/^ [=]?//g' | sed 's/^ */  /g')
-  
+
   $CXXCPP Include Paths
   ---------------------
 $(echo | $CXXCPP -v -x c++ - 2>&1 | sed -n '/^ *#include/,/^ *End of/ p' | sed 's/^ */  /g')
-  
+
   PCRE Info
   ---------
   HAVE_LIBPCRE                $HAVE_LIBPCRE
   HAVE_LIBPCRE2               $HAVE_LIBPCRE2
-  
+
   libtool info
   ------------
   sys_lib_search_path_spec:   $sys_lib_search_path_spec

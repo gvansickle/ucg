@@ -209,7 +209,7 @@ public:
 
 	constexpr inline size_type size() const noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
-		return length;
+		return length();
 	}
 
 	static constexpr inline size_type max_size() noexcept ATTR_CONST ATTR_ARTIFICIAL
