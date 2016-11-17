@@ -65,6 +65,9 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		// Clean up the incoming paths.
 		p = realpath(p);
 
+		/// @note At the moment, we're doing the equivalent of fts' COMFOLLOW here;
+		/// we follow symlinks during the fstatat() call in the FileID constructor by not specifying
+		/// AT_SYMLINK_NOFOLLOW.  So, we shouldn't get a FT_SYMLINK back from GetFileType().
 		auto file_or_dir = std::make_shared<FileID>(FileID(root_file_id, p));
 		auto type = file_or_dir->GetFileType();
 		if(type == FT_REG)
@@ -76,13 +79,18 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		{
 			m_dir_queue.wait_push(file_or_dir);
 		}
-		else if(type == FT_STAT_FAILED)
+		else if(type == FT_SYMLINK)
+		{
+			// Should never get this.
+			ERROR() << "Got filetype of symlink while following symlinks";
+		}
+		else //if(type == FT_STAT_FAILED) /// @note Treat anything else as nonstatable.
 		{
 			// Couldn't get any info on this path.
 			NOTICE() << "Could not get stat info at path \'" << file_or_dir->GetPath() << "\': "
 												<< LOG_STRERROR(errno) << ". Skipping.";
 		}
-		/// @todo Symlinks, COMFOLLOW.
+
 	}
 
 	// Create and start the directory traversal threads.
@@ -159,6 +167,8 @@ void DirTree::ReaddirLoop(int dirjob_num)
 
 void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_dirent, DirTraversalStats &stats)
 {
+	struct stat statbuf;
+
 	bool is_dir {false};
 	bool is_file {false};
 	bool is_symlink {false};
@@ -185,7 +195,6 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 		return;
 	}
 
-	struct stat statbuf;
 	struct stat *statbuff_ptr = nullptr;
 
 	if((is_unknown) || (m_logical && is_symlink))

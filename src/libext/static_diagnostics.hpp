@@ -41,8 +41,8 @@
 
 /// @todo Make this use GCC warning if no message support.
 #define STATIC_MSG(msg)       _Pragma(EXPAND_MACRO_HELPER(message(msg " at line " DEFER(EXPAND_MACRO_HELPER,__LINE__))))
-/// @todo The "at line" logic below breaks on older gccs (4.8.4).
-#define STATIC_MSG_WARN(msg)  _Pragma(EXPAND_MACRO_HELPER(GCC warning #msg)) //(msg " at line " DEFER(EXPAND_MACRO_HELPER,__LINE__))))
-#define STATIC_MSG_ERROR(msg) _Pragma(EXPAND_MACRO_HELPER(GCC error #msg)) //(msg " at line " DEFER(EXPAND_MACRO_HELPER,__LINE__))))
+/// @todo The "at line" logic if put in the below breaks on older gccs (4.8.4).
+#define STATIC_MSG_WARN(msg)  _Pragma(EXPAND_MACRO_HELPER(GCC warning #msg))
+#define STATIC_MSG_ERROR(msg) _Pragma(EXPAND_MACRO_HELPER(GCC error #msg))
 
 #endif /* SRC_LIBEXT_STATIC_DIAGNOSTICS_HPP_ */

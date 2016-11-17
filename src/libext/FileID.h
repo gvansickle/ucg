@@ -280,7 +280,7 @@ public:
 
 //private:
 
-	void LazyLoadStatInfo() const
+	void LazyLoadStatInfo() const noexcept
 	{
 		if(m_stat_info_valid)
 		{
