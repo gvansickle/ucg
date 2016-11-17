@@ -132,7 +132,7 @@ void DirTree::ReaddirLoop(int dirjob_num)
 	while(m_dir_queue.wait_pull(std::move(dse)) != queue_op_status::closed)
 	{
 		int open_at_fd = dse->GetAtDir()->GetFileDescriptor().GetFD();
-		const char *open_at_path = dse->GetAtDirRelativeBasename().c_str();
+		const char *open_at_path = dse->GetBasename().c_str();
 
 		d = opendirat(open_at_fd, open_at_path);
 		if(d == nullptr)
