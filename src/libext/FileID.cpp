@@ -121,8 +121,6 @@ void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
 
 void FileID::impl::SetStatInfo(const struct stat &stat_buf) const noexcept
 {
-	m_stat_info_valid = true;
-
 	// Determine file type.
 	if(S_ISREG(stat_buf.st_mode))
 	{
@@ -147,16 +145,18 @@ void FileID::impl::SetStatInfo(const struct stat &stat_buf) const noexcept
 	m_size = stat_buf.st_size;
 	m_block_size = stat_buf.st_blksize;
 	m_blocks = stat_buf.st_blocks;
+
+	m_stat_info_valid = true;
 }
 
-void FileID::impl::GetPath() const
+const std::string& FileID::impl::ResolvePath() const
 {
 	// Do we not have a full path already?
 	/// @todo probably don't need this check anymore.
 	if(m_path.empty())
 	{
 		// No.  Build the full path.
-		m_path.reserve(64); // Random number.
+		m_path.reserve(64 + m_basename.size()); // Random number.
 		auto at_path = m_at_dir->GetPath();
 		if(at_path != ".")
 		{
@@ -170,6 +170,8 @@ void FileID::impl::GetPath() const
 			m_path = m_basename;
 		}
 	}
+
+	return m_path;
 }
 
 /// //////////////////////////////
@@ -338,7 +340,7 @@ const std::string& FileID::GetPath() const noexcept
 	// Else, we need to get a write lock, and evaluate the path.
 
 	WriterLock wl(m_mutex);
-	m_pimpl->GetPath();
+	m_pimpl->ResolvePath();
 
 	return m_pimpl->m_path;
 }

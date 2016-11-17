@@ -217,7 +217,7 @@ namespace portable
  * @return  A std::string representing the dirname part of #path.  Guaranteed to be a normal std::string with which you may do
  *          whatever you can do with any other std::string.
  */
-inline std::string dirname(const std::string &path)
+inline std::string dirname(const std::string &path) noexcept
 {
 	// Get a copy of the path string which dirname() can modify all it wants.
 	char * modifiable_path = strdup(path.c_str());
@@ -238,7 +238,7 @@ inline std::string dirname(const std::string &path)
  * @return  A std::string representing the basename part of path.  Guaranteed to be a normal std::string with which you may do
  *          whatever you can do with any other std::string.
  */
-inline std::string basename(const std::string &path)
+inline std::string basename(const std::string &path) noexcept
 {
 	// Get a copy of the path string which dirname() can modify all it wants.
 	char * modifiable_path = strdup(path.c_str());
