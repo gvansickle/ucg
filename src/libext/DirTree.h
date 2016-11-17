@@ -21,7 +21,6 @@
 #define SRC_LIBEXT_DIRTREE_H_
 
 #include <config.h>
-#include <future/string_view.hpp>
 
 #include <vector>
 #include <string>
@@ -114,9 +113,9 @@ public:
 private:
 
 	/// Flag indicating whether we should traverse symlinks or not.
-	bool m_logical {true};
+	bool m_logical {false};
 
-	int m_dirjobs {2}; ///@todo
+	int m_dirjobs {2};
 
 	/// Directory queue.  Used internally.
 	sync_queue<std::shared_ptr<FileID>> m_dir_queue;
@@ -134,7 +133,7 @@ private:
 	visited_set m_dir_has_been_visited;
 	bool HasDirBeenVisited(dev_ino_pair di)
 	{
-		std::unique_lock<std::mutex> lock(m_dir_mutex);
+		std::lock_guard<std::mutex> lock(m_dir_mutex);
 		return !m_dir_has_been_visited.insert(di).second;
 	}
 
@@ -142,7 +141,7 @@ private:
 
 	/**
 	 * Process a single directory entry (dirent) structure #de, with parent #dse.  Push any files found on the #m_out_queue,
-	 * push any directories found on the #m_dir_queue.
+	 * push any directories found on the #m_dir_queue.  Maintain statistics in #stats.
 	 *
 	 * @param dse
 	 * @param de

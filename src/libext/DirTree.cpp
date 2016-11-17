@@ -37,12 +37,16 @@
 #include <future/memory.hpp>
 #include <libext/filesystem.hpp> // For AT_FDCWD, AT_NO_AUTOMOUNT, openat(), etc.
 
+/// Estimate that we'll traverse no more than 10000 directories in one traversal.
+/// m_dir_has_been_visited will resize/rehash if it needs more space.
+constexpr auto M_INITIAL_NUM_DIR_ESTIMATE = 10000;
 
 DirTree::DirTree(sync_queue<FileID>& output_queue,
 		const file_basename_filter_type &file_basename_filter,
 		const dir_basename_filter_type &dir_basename_filter)
 	: m_out_queue(output_queue), m_file_basename_filter(file_basename_filter), m_dir_basename_filter(dir_basename_filter)
 {
+	m_dir_has_been_visited.reserve(M_INITIAL_NUM_DIR_ESTIMATE);
 }
 
 DirTree::~DirTree()
@@ -239,7 +243,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 			stats.m_num_files_found++;
 
 			// Check for inclusion.
-			if(m_file_basename_filter(basename)) //skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
+			if(m_file_basename_filter(basename)) ///@todo skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
 			{
 				// Based on the file name, this file should be scanned.
 
@@ -277,7 +281,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier()))
 				{
 					// Found cycle.
-					WARN() << "'" << dir_atfd.GetPath() << "': recursive directory loop";
+					WARN() << "'" << dir_atfd.GetPath() << "': already visited this directory"; /// @todo? "': recursive directory loop";
 					stats.m_num_dirs_rejected++;
 					return;
 				}

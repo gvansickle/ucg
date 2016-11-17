@@ -119,11 +119,12 @@ struct dev_ino_pair
 	dev_ino_pair() = default;
 	dev_ino_pair(dev_t d, ino_t i) noexcept : m_dev(d), m_ino(i) { };
 
-	constexpr bool operator<(const dev_ino_pair& other) const noexcept { return m_dev < other.m_dev || m_ino < other.m_ino; };
+	inline constexpr bool operator<(const dev_ino_pair& other) const noexcept { return m_dev < other.m_dev || m_ino < other.m_ino; };
 
-	constexpr bool operator==(dev_ino_pair other) const noexcept { return m_dev == other.m_dev && m_ino == other.m_ino; };
+	inline constexpr bool operator==(dev_ino_pair other) const noexcept { return m_dev == other.m_dev && m_ino == other.m_ino; };
 
-	constexpr bool empty() const noexcept { return m_dev == 0 && m_ino == 0; };
+	inline constexpr bool empty() const noexcept { return m_dev == 0 && m_ino == 0; };
+
 private:
 	friend struct std::hash<dev_ino_pair>;
 
