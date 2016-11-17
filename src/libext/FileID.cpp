@@ -103,16 +103,6 @@ const FileDescriptor& FileID::impl::GetFileDescriptor()
 	return m_file_descriptor;
 }
 
-
-const std::string& FileID::impl::GetAtDirRelativeBasename() const noexcept
-{
-	if(m_basename.empty())
-	{
-		throw std::runtime_error("basename was empty");
-	}
-	return m_basename;
-}
-
 void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
 {
 	m_dev = d;
@@ -351,13 +341,6 @@ std::shared_ptr<FileID> FileID::GetAtDir() const noexcept
 	ReaderLock rl(m_mutex);
 	return m_pimpl->GetAtDir();
 };
-
-const std::string& FileID::GetAtDirRelativeBasename() const noexcept
-{
-	// Only need reader lock here, m_pimpl->m_at_dir and its m_basename will always exist.
-	ReaderLock rl(m_mutex);
-	return m_pimpl->GetAtDirRelativeBasename();
-}
 
 FileType FileID::GetFileType() const noexcept
 {
