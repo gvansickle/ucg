@@ -38,7 +38,9 @@
 /// And at least NetBSD behaves similarly.  So, include the POSIX versions and we'll try to clean this mess up below.
 #include <libgen.h>
 #include <dirent.h>
+#ifdef USE_FTS
 #include <fts.h>
+#endif
 
 /// @note Because we included libgen.h above, we shouldn't get the GNU version from this #include of string.h.
 #include <string.h>
@@ -187,14 +189,6 @@ inline std::string dirent_get_name(const dirent* de) noexcept
 	return basename;
 }
 
-
-inline std::ostream& dump_fd_info(std::ostream &ostr, int fd)
-{
-	std::stringstream ss;
-
-	//ss << "fd=" << fd << ":" << ;
-	return ostr << ss.str();
-}
 
 /**
  * Checks two file descriptors (file, dir, whatever) and checks if they are referring to the same entity.
