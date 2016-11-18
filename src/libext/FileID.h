@@ -246,15 +246,15 @@ static_assert(std::is_move_assignable<FileID>::value, "FileID must be move assig
 class FileID::impl
 {
 public:
-	impl() { LOG(DEBUG) << "DEFAULT CONSTRUCT";};//= default;
-	impl(const impl& other) { LOG(DEBUG) << "COPY CONSTRUCT";};//= default;
-	impl(impl&& other) { LOG(DEBUG) << "MOVE CONSTRUCT";};//= default;
+	impl() = default;
+	impl(const impl& other) = default;
+	impl(impl&& other) = default;
 
 	/// Copy assignment.
-	impl& operator=(const impl &other) { LOG(DEBUG) << "COPY ASSIGN";};// = default;
+	impl& operator=(const impl &other) = default;
 
 	/// Move assignment.
-	impl& operator=(impl&& other) { LOG(DEBUG) << "MOVE ASSIGN";}; //= default;
+	impl& operator=(impl&& other) = default;
 
 	/// @name Various non-default constructors.
 	/// @{
