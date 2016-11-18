@@ -121,8 +121,8 @@ AUTOTEST = $(AUTOM4TE) --language=autotest
 ### See <http://sources.redhat.com/automake/automake.html#distcleancheck> for more info.
 ###
 $(TESTSUITE): $(srcdir)/package.m4 $(TESTSUITE_AT)
-	$(AUTOTEST) -I '$(srcdir)' $(srcdir)/testsuite.at -o $@.tmp
-	mv $@.tmp $@
+	$(AUTOTEST) -I '$(srcdir)' $(srcdir)/testsuite.at -o "$@.tmp"
+	mv "$@.tmp" "$@"
 	
 # It appears that at least up to autoconf 2.68, atconfig doesn't get a dependency
 # and rebuild rule generated for it.  Do that manually here.
@@ -174,21 +174,9 @@ dist_check_SCRIPTS = $(BENCHMARKSCRIPTS)
 # regenerated from a tarball.  Hence, we're using the $(MAINTPYTHON) variable here, which is either
 # a python interpreter or the "missing" script.
 
-$(srcdir)/TC1.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC1 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
-
-$(srcdir)/TC2.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC2 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+$(srcdir)/TC%.sh : $(BENCHMARK_SCRIPT_DEPS)
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC$* -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
 $(srcdir)/TC3.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC3 "$${builddir}/500MBLoremIpsum.cpp" -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
-
-$(srcdir)/TC4.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC4 "$${builddir}/500MBLoremIpsum.cpp" -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
-
-$(srcdir)/TC5.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC5 '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
-
-$(srcdir)/TC6.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC6 --opt=exclude_dir_literal=docs '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC3 --opt=exclude_dir_literal=docs -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 

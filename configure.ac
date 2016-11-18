@@ -52,8 +52,8 @@ AM_INIT_AUTOMAKE([1.14
 	color-tests
 	std-options
 	-Wall
-	-Werror
 ])
+dnl -Werror
 
 AM_SILENT_RULES([yes])
 
