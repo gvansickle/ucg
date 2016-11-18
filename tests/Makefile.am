@@ -19,7 +19,7 @@
 
 EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in \
 	gen_test_script.py stats.awk \
-	benchmark_progs.csv opts_defs.csv test_cases.csv \
+	$(BENCHMARK_DATABASE_FILES) \
 	$(BENCHMARKSCRIPTS)
 CLEANFILES = perf_test_results.txt
 DISTCLEANFILES = atconfig
@@ -53,7 +53,9 @@ BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
 	$(srcdir)/TC3.sh \
 	$(srcdir)/TC4.sh \
 	$(srcdir)/TC5.sh \
-	$(srcdir)/TC6.sh
+	$(srcdir)/TC6.sh \
+	$(srcdir)/TC7.sh \
+	$(srcdir)/TC8.sh
 
      
 # This line appears in the Autoconf/Autotest manual, but see configure.ac.
@@ -164,8 +166,10 @@ installcheck-local: atconfig atlocal $(TESTSUITE)
 ### I.e. these are built, distributed files.
 ###
 
+BENCHMARK_DATABASE_FILES = benchmark_progs.csv opts_defs.csv test_cases.csv
+
 BENCHMARK_SCRIPT_DEPS = gen_test_script.py stats.awk \
-	benchmark_progs.csv opts_defs.csv test_cases.csv Makefile.am
+	$(BENCHMARK_DATABASE_FILES) Makefile.am
 
 dist_check_SCRIPTS = $(BENCHMARKSCRIPTS)
 
