@@ -144,7 +144,7 @@ template <> constexpr inline uint32_t bswap<uint32_t>(uint32_t x) noexcept
 template <> constexpr inline uint64_t bswap<uint64_t>(uint64_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 template <> constexpr inline uint64_t bswap<uint64_t>(uint64_t x) noexcept
 {
-#if defined(HAVE___BUILTIN_BSWAP32)
+#if defined(HAVE___BUILTIN_BSWAP64)
 	return __builtin_bswap64(x);
 #else
 	/// @todo create a fallback.
@@ -165,7 +165,7 @@ template <typename T>
 constexpr inline T host_to_be(T x) noexcept
 {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-	return bswap(x);
+	return bswap<T>(x);
 #else
 	return x;
 #endif

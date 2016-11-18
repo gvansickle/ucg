@@ -72,11 +72,13 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		auto type = file_or_dir->GetFileType();
 		if(type == FT_REG)
 		{
-			/// @todo filter-out mechanism?
+			// Explicitly not filtering files specified on command line.
+			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
 			m_out_queue.wait_push(FileID(std::move(*file_or_dir)));
 		}
 		else if(type == FT_DIR)
 		{
+			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY);
 			m_dir_queue.wait_push(file_or_dir);
 		}
 		else if(type == FT_SYMLINK)
@@ -131,21 +133,21 @@ void DirTree::ReaddirLoop(int dirjob_num)
 
 	while(m_dir_queue.wait_pull(std::move(dse)) != queue_op_status::closed)
 	{
-		int open_at_fd = dse->GetAtDir()->GetFileDescriptor().GetFD();
-		const char *open_at_path = dse->GetBasename().c_str();
-
-		d = opendirat(open_at_fd, open_at_path);
+		//int open_at_fd = dse->GetAtDir()->GetFileDescriptor().GetFD();
+		//const char *open_at_path = dse->GetBasename().c_str();
+		//d = opendirat(open_at_fd, open_at_path);
+		LOG(DEBUG) << "Examining files in directory '" << dse->GetPath() << "'";
+		int open_at_fd = dse->GetFileDescriptor().GetDupFD();
+		d = fdopendir(open_at_fd);
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
-			WARN() << "opendirat() failed on path " << open_at_path << ": " << LOG_STRERROR();
-			errno = 0;
+			WARN() << "fdopendir() failed on path " << dse->GetBasename() << ": " << LOG_STRERROR();
 			continue;
 		}
 
 		do
 		{
-			errno = 0;
 			if((dp = readdir(d)) != NULL)
 			{
 				ProcessDirent(dse, dp, stats);
@@ -252,13 +254,17 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 			stats.m_num_files_found++;
 
 			// Check for inclusion.
-			if(m_file_basename_filter(basename)) ///@todo skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
+			if(m_file_basename_filter(basename))
 			{
 				// Based on the file name, this file should be scanned.
 
 				LOG(INFO) << "... should be scanned.";
 
-				m_out_queue.wait_push({FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG});
+				FileID file_to_scan(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG);
+				file_to_scan.SetFileDescriptorMode(FAM_RDONLY, FCF_NOCTTY | FCF_NOATIME);
+
+				// Queue it up.
+				m_out_queue.wait_push(std::move(file_to_scan));
 
 				// Count the number of files we found that were included in the search.
 				stats.m_num_files_scanned++;
@@ -283,6 +289,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 
 			FileID dir_atfd(FileID::path_known_relative, dse, basename, FT_DIR);
 			dir_atfd.SetDevIno(dse->GetDev(), current_dirent->d_ino);
+			dir_atfd.SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY);
 
 			if(m_logical)
 			{

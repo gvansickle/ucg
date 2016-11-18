@@ -42,12 +42,13 @@ class FileDescriptor
 public:
 	/// Default constructor.
 	/// @note Can't be noexcept, though only seems to break the compile on Cygwin gcc 5.4.0.
-	FileDescriptor() = default;
+	FileDescriptor() { LOG(DEBUG) << "DEFAULT CONSTRUCTOR"; };
 
 	explicit FileDescriptor(int fd) noexcept
 	{
 		WriterLock wl(m_mutex);
 		m_file_descriptor = fd;
+		LOG(DEBUG) << "Explicitly assigned file descriptor: " << m_file_descriptor;
 	};
 
 	/// Copy constructor will dup the other's file descriptor.
@@ -60,13 +61,13 @@ public:
 		if(!other.unlocked_empty())
 		{
 			m_file_descriptor = dup(other.m_file_descriptor);
-			LOG(DEBUG) << "... duped fd=" << other.m_file_descriptor << " to fd=" << m_file_descriptor << ".";
+			LOG(DEBUG) << "duped fd=" << other.m_file_descriptor << " to fd=" << m_file_descriptor << ".";
 		}
 		else
 		{
 			// Other has an invalid fd, just copy the value.
 			m_file_descriptor = other.m_file_descriptor;
-			LOG(DEBUG) << "... other was invaliud, no dup. fd=" << m_file_descriptor;
+			LOG(DEBUG) << "other was invalid, no dup. fd=" << m_file_descriptor;
 		}
 	}
 
@@ -79,6 +80,7 @@ public:
 		LOG(DEBUG) << "move constructor called.";
 
 		m_file_descriptor = other.m_file_descriptor;
+		LOG(DEBUG) << "moved file descriptor: " << m_file_descriptor;
 
 		if(!other.unlocked_empty())
 		{
@@ -91,7 +93,8 @@ public:
 	{
 		// @note No locking here.  If anyone was trying to read or write us, they'd have
 		// to have (possibly shared) ownership (right?), and hence we wouldn't be getting destroyed.
-		//WriterLock wl(m_mutex);
+		WriterLock wl(m_mutex);
+		LOG(DEBUG) << "DESTRUCTOR, have file descriptor: " << m_file_descriptor;
 		if(!unlocked_empty())
 		{
 			LOG(DEBUG) << "closing file descriptor: " << m_file_descriptor;
@@ -114,20 +117,23 @@ public:
 			if(!unlocked_empty())
 			{
 				close(m_file_descriptor);
+				LOG(DEBUG) << "closing file descriptor: " << m_file_descriptor;
 			}
 
 			if(other.unlocked_empty())
 			{
 				// Other fd isn't valid, just copy it.
 				m_file_descriptor = other.m_file_descriptor;
+				LOG(DEBUG) << "copied invalid file descriptor: " << m_file_descriptor;
 			}
 			else
 			{
 				m_file_descriptor = dup(other.m_file_descriptor);
-				if((m_file_descriptor < 0) && (m_file_descriptor != AT_FDCWD))
+				if(m_file_descriptor < 0)
 				{
 					ERROR() << "dup() failure: " << LOG_STRERROR();
 				}
+				LOG(DEBUG) << "duped file descriptor: " << m_file_descriptor;
 			}
 		}
 		return *this;
@@ -148,10 +154,12 @@ public:
 			if(!unlocked_empty())
 			{
 				close(m_file_descriptor);
+				LOG(DEBUG) << "closing file descriptor: " << m_file_descriptor;
 			}
 
 			// Step 2: Take other's resources.
 			m_file_descriptor = other.m_file_descriptor;
+			LOG(DEBUG) << "moved file descriptor: " << m_file_descriptor;
 
 			// Step 3: Set other to a destructible state.
 			// In particular here, this means invalidating its file descriptor,
@@ -170,6 +178,13 @@ public:
 		return m_file_descriptor;
 	};
 
+	int GetDupFD() const noexcept
+	{
+		ReaderLock rl(m_mutex);
+		int retval = dup(m_file_descriptor);
+		return retval;
+	}
+
 	/// Returns true if this FileDescriptor isn't a valid file descriptor.
 	inline bool empty() const noexcept
 	{
@@ -180,7 +195,7 @@ public:
 private:
 	static constexpr int cm_invalid_file_descriptor = -987;
 
-	int m_file_descriptor { cm_invalid_file_descriptor };
+	mutable int m_file_descriptor { cm_invalid_file_descriptor };
 
 	inline bool unlocked_empty() const noexcept { return m_file_descriptor < 0; };
 };

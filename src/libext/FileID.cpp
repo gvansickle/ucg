@@ -19,6 +19,7 @@
 
 #include <config.h>
 
+
 #include <future/memory.hpp> // For std::make_unique<>
 #include <libext/string.hpp>
 
@@ -29,33 +30,71 @@
 #include <sys/stat.h>
 #include <fts.h>
 
+#include <libexplain/openat.h>
+
 #include <atomic>
+
+//using cache_filler_type = std::function<ReturnType() noexcept>;
+/**
+ *
+ * @param wrap          An instance of ats::atomic<ReturnType>.
+ * @param mutex
+ * @param cache_filler
+ * @return
+ */
+template < typename ReturnType, typename AtomicTypeWrapper = std::atomic<ReturnType>, typename CacheFillerType = std::function<ReturnType()> >
+ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, std::mutex &mutex, CacheFillerType cache_filler)
+{
+#if 1
+	ReturnType temp_retval = wrap.load(std::memory_order_relaxed);
+	std::atomic_thread_fence(std::memory_order_acquire);  	// Guaranteed to observe everything done in another thread before
+			 	 	 	 	 	 	 	 	 	 	 	 	// the std::atomic_thread_fence(std::memory_order_release) below.
+	if(temp_retval == nullptr)
+	{
+		// First check says we don't have the cached value yet.
+		std::lock_guard<std::mutex> lock(mutex);
+		// One more try.
+		temp_retval = wrap.load(std::memory_order_relaxed);
+		if(temp_retval == nullptr)
+		{
+			// Still no cached value.  We'll have to do the heavy lifting.
+			temp_retval = cache_filler();
+			std::atomic_thread_fence(std::memory_order_release);
+			wrap.store(temp_retval, std::memory_order_relaxed);
+		}
+	}
+#else
+#endif
+	return temp_retval;
+}
+
 
 //////////////////////////////////
 ///
 
 
-FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
-	: m_at_dir(at_dir_fileid), m_basename(pathname)
+FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
+	: m_at_dir(at_dir_fileid), m_basename(bname)
 {
-	/// @note Taking pathname by value since we are always storing it.
+	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 
-	LOG(INFO) << "2-param const., m_basename=" << m_basename << ", m_at_dir=" << m_at_dir->m_pimpl->m_path;
+	LOG(DEBUG) << "2-param const., m_basename=" << m_basename << ", m_at_dir=" << (!!m_at_dir ? (m_at_dir->m_pimpl->m_path) : "<nullptr>");
 
-	if(is_pathname_absolute(pathname))
+	if(is_pathname_absolute(bname))
 	{
 		// Save an expensive recursive call to m_at_dir->GetPath() in the future.
-		m_path = pathname;
+		m_path = bname;
 	}
 }
 
-FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
+FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std::string pname,
 		const struct stat *stat_buf, FileType type)
-		: m_at_dir(at_dir_fileid), m_basename(basename), m_path(pathname), m_file_type(type)
+		: m_at_dir(at_dir_fileid), m_basename(bname), m_path(pname), m_file_type(type)
 {
+	LOG(DEBUG) << "5-param const., m_basename=" << m_basename << ", m_at_dir=" << (!!m_at_dir ? (m_at_dir->m_pimpl->m_path) : "<nullptr>");
 	if(stat_buf != nullptr)
 	{
 		SetStatInfo(*stat_buf);
@@ -69,34 +108,36 @@ const std::string& FileID::impl::GetBasename() const noexcept
 
 const FileDescriptor& FileID::impl::GetFileDescriptor()
 {
-	/// @todo This still needs rethinking.  I think.
-
 	if(m_file_descriptor.empty())
 	{
 		// File hasn't been opened.
 
-		/// @todo This is ugly, needs to be moved out of here.
 		if(m_open_flags == 0)
 		{
-			m_open_flags = O_SEARCH | O_DIRECTORY | O_NOCTTY;
+			throw std::runtime_error("m_open_flags is not set");
 		}
 
-		m_file_descriptor = make_shared_fd(openat(m_at_dir->GetFileDescriptor().GetFD(), GetBasename().c_str(), m_open_flags));
-
-		if(m_file_descriptor.empty())
+		if(m_at_dir)
 		{
-			/// Try to figure out what happened and throw an exception.
-			if(m_file_descriptor.GetFD() == -1)
+			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
+			int tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
+			if(tempfd == -1)
 			{
-				// Couldn't open the file, throw exception.
-				int temp_errno = errno;
-				errno = 0;
-				throw std::system_error(temp_errno, std::generic_category());
+				LOG(DEBUG) << "OPENAT FAIL: " << explain_openat(atdirfd, GetBasename().c_str(), m_open_flags, 0666);
+				throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with valid m_at_dir=" + std::to_string(atdirfd) + " failed");
 			}
-			else
+			m_file_descriptor = make_shared_fd(tempfd);
+		}
+		else
+		{
+			// We should only get here if we are the root of the traversal.
+			int tempfd = openat(AT_FDCWD, GetBasename().c_str(), m_open_flags);
+			if(tempfd == -1)
 			{
-				throw std::runtime_error("Bad fd");
+				LOG(DEBUG) << "OPENAT FAIL: " << explain_openat(AT_FDCWD, GetBasename().c_str(), m_open_flags, 0666);
+				throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with invalid m_at_dir=" + std::to_string(AT_FDCWD) + " failed");
 			}
+			m_file_descriptor = make_shared_fd(tempfd);
 		}
 	}
 
@@ -176,7 +217,8 @@ FileID::FileID() //: FileID(path_known_cwd)
 }
 
 // Copy constructor.
-FileID::FileID(const FileID& other) : m_pimpl((ReaderLock(other.m_mutex), std::make_unique<FileID::impl>(*other.m_pimpl)))
+FileID::FileID(const FileID& other)
+	: m_pimpl((ReaderLock(other.m_mutex), std::make_unique<FileID::impl>(*other.m_pimpl)))
 {
 	LOG(DEBUG) << "Copy constructor called";
 	if(!m_pimpl)
@@ -187,7 +229,8 @@ FileID::FileID(const FileID& other) : m_pimpl((ReaderLock(other.m_mutex), std::m
 };
 
 // Move constructor.
-FileID::FileID(FileID&& other) : m_pimpl(std::move((WriterLock(other.m_mutex), other.m_pimpl)))
+FileID::FileID(FileID&& other)
+	: m_pimpl(std::move((WriterLock(other.m_mutex), other.m_pimpl)))
 {
 	LOG(DEBUG) << "Move constructor called";
 	if(!m_pimpl)
@@ -200,7 +243,16 @@ FileID::FileID(FileID&& other) : m_pimpl(std::move((WriterLock(other.m_mutex), o
 FileID::FileID(path_known_cwd_tag)
 	: m_pimpl(std::make_unique<FileID::impl>(nullptr, ".", ".", nullptr, FT_DIR))
 {
-	m_pimpl->m_file_descriptor = make_shared_fd(open(".", O_SEARCH | O_DIRECTORY | O_NOCTTY));
+	// Open the file descriptor immediately, since we don't want to use openat() here unlike in all other cases.
+	SetFileDescriptorMode(FAM_SEARCH, FCF_DIRECTORY | FCF_NOCTTY);
+	int tempfd = open(".", O_SEARCH | O_DIRECTORY | O_NOCTTY);
+	if(tempfd == -1)
+	{
+		LOG(DEBUG) << "Error in fdcwd constructor: " << LOG_STRERROR();
+	}
+	m_pimpl->m_file_descriptor = make_shared_fd(tempfd);
+	LOG(DEBUG) << "FDCWD constructor, file descriptor: " << m_pimpl->m_file_descriptor.GetFD();
+
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
@@ -221,10 +273,10 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
+FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileAccessMode fam, FileCreationFlag fcf)
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname))
 {
-
+	SetFileDescriptorMode(fam, fcf);
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf, FileType type)
@@ -259,8 +311,15 @@ FileID& FileID::operator=(const FileID& other)
 	{
 		WriterLock this_lock(m_mutex, std::defer_lock);
 		ReaderLock other_lock(other.m_mutex, std::defer_lock);
+		/// @todo
+#if 0
+		std::unique_lock<std::mutex> this_l2(m_the_mutex, std::defer_lock);
+		std::unique_lock<std::mutex> other_l2(other.m_the_mutex, std::defer_lock);
+#endif
 		std::lock(this_lock, other_lock);
-		m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
+		LOG(DEBUG) << "COPY ASSIGN";
+		//m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
+		m_pimpl.reset(new impl(*other.m_pimpl));
 	}
 	return *this;
 };
@@ -271,6 +330,12 @@ FileID& FileID::operator=(FileID&& other)
 	{
 		WriterLock this_lock(m_mutex, std::defer_lock);
 		WriterLock other_lock(other.m_mutex, std::defer_lock);
+#if 0
+		/// @todo
+		std::unique_lock<std::mutex> this_l2(m_the_mutex, std::defer_lock);
+		std::unique_lock<std::mutex> other_l2(other.m_the_mutex, std::defer_lock);
+#endif
+		LOG(DEBUG) << "MOVE ASSIGN";
 		std::lock(this_lock, other_lock);
 
 		m_pimpl = std::move(other.m_pimpl);
@@ -291,33 +356,9 @@ std::string FileID::GetBasename() const noexcept
 	return m_pimpl->GetBasename();
 };
 
-#if 0
-template < typename ReturnType, typename AtomicTypeWrapper, typename CacheFiller >
-ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, std::shared_mutex &mutex, std::function<CacheFiller> cache_filler)
-{
-	auto temp_retval = wrap.load(std::memory_order_relaxed);
-	std::atomic_thread_fence(std::memory_order_acquire);  	// Guaranteed to observe everything done in another thread before
-			 	 	 	 	 	 	 	 	 	 	 	 	// the std::atomic_thread_fence(std::memory_order_release) below.
-	if(temp_retval == nullptr)
-	{
-		// First check says we don't have the cached value yet.
-		std::unique_lock wl(mutex);
-		// One more try.
-		temp_retval = wrap.load(std::memory_order_relaxed);
-		if(temp_retval == nullptr)
-		{
-			// Still no cached value.  We'll have to do the heavy lifting.
-			temp_retval = cache_filler();
-			std::atomic_thread_fence(std::memory_order_release);
-			wrap.store(temp_retval, std::memory_order_relaxed);
-		}
-	}
-	return temp_retval;
-}
-#endif
-
 const std::string& FileID::GetPath() const noexcept
 {
+#if 1
 	{
 		ReaderLock rl(m_mutex);
 
@@ -333,6 +374,11 @@ const std::string& FileID::GetPath() const noexcept
 	m_pimpl->ResolvePath();
 
 	return m_pimpl->m_path;
+#else
+	auto path_filler = [this](){ return (std::string*)&m_pimpl->ResolvePath(); };
+	//std::function<const std::string& (FileID::impl&)> path_filler = &impl::ResolvePath;
+	return *DoubleCheckedLock<std::string*>(m_atomic_path_ptr, m_the_mutex, path_filler);
+#endif
 }
 
 std::shared_ptr<FileID> FileID::GetAtDir() const noexcept

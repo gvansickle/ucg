@@ -74,6 +74,7 @@ inline std::ostream& operator<<(std::ostream& out, const FileType value){
  */
 enum FileAccessMode : int
 {
+	FAM_UNINITIALIZED = 0,
 	FAM_RDONLY = O_RDONLY,//!< FAM_RDONLY
 	FAM_RDWR = O_RDWR,    //!< FAM_RDWR
 	FAM_SEARCH = O_SEARCH //!< FAM_SEARCH
@@ -84,6 +85,7 @@ enum FileAccessMode : int
  */
 enum FileCreationFlag : int
 {
+	FCF_UNINITIALIZED = 0,
 	FCF_CLOEXEC = O_CLOEXEC,    //!< FCF_CLOEXEC
 	FCF_CREAT = O_CREAT,		//!< FCF_CREAT
 	FCF_DIRECTORY = O_DIRECTORY,//!< FCF_DIRECTORY
@@ -124,6 +126,9 @@ private:
 	/// Mutex for locking in copy and move constructors and some operations.
 	mutable MutexType m_mutex;
 
+	/// Mutex for double-checked locking.
+	//mutable std::mutex m_the_mutex;
+
 public:
 
 	/// pImpl forward declaration.
@@ -156,9 +161,11 @@ public:
 			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
-	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
+	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname,
+			FileAccessMode fam = FAM_UNINITIALIZED, FileCreationFlag fcf = FCF_UNINITIALIZED);
+#if USE_FTS
 	FileID(const FTSENT *ftsent, bool stat_info_known_valid);
-
+#endif
 	/// @}
 
 	/// Copy assignment.
@@ -239,19 +246,21 @@ static_assert(std::is_move_assignable<FileID>::value, "FileID must be move assig
 class FileID::impl
 {
 public:
-	impl() = default;
-	impl(const impl& other) = default;
-	impl(impl&& other) = default;
+	impl() { LOG(DEBUG) << "DEFAULT CONSTRUCT";};//= default;
+	impl(const impl& other) { LOG(DEBUG) << "COPY CONSTRUCT";};//= default;
+	impl(impl&& other) { LOG(DEBUG) << "MOVE CONSTRUCT";};//= default;
 
 	/// Copy assignment.
-	impl& operator=(const impl &other) = default;
+	impl& operator=(const impl &other) { LOG(DEBUG) << "COPY ASSIGN";};// = default;
 
 	/// Move assignment.
-	impl& operator=(impl&& other) = default;
+	impl& operator=(impl&& other) { LOG(DEBUG) << "MOVE ASSIGN";}; //= default;
 
 	/// @name Various non-default constructors.
 	/// @{
+#ifdef USE_FTS
 	impl(const FTSENT *ftsent, bool stat_info_known_valid);
+#endif
 	impl(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
 	impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
 			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
@@ -292,7 +301,7 @@ public:
 		// Get it from the filename.
 		if(!m_at_dir)
 		{
-			throw std::runtime_error("should have an at-dir");
+			throw std::runtime_error("should always have an at-dir");
 		}
 
 		struct stat stat_buf;
@@ -314,8 +323,6 @@ public:
 
 	std::shared_ptr<FileID> GetAtDir() const noexcept { return m_at_dir; };
 
-	bool IsStatInfoValid() const noexcept { return m_stat_info_valid; };
-
 	off_t GetFileSize() const noexcept { LazyLoadStatInfo(); return m_size; };
 
 	blksize_t GetBlockSize() const noexcept
@@ -329,7 +336,7 @@ public:
 	dev_t GetDev() const noexcept { if(m_dev == static_cast<dev_t>(-1)) { LazyLoadStatInfo(); }; return m_dev; };
 	void SetDevIno(dev_t d, ino_t i) noexcept;
 
-
+// Data members.
 
 	/// Shared pointer to the directory this FileID is in.
 	/// The constructors ensure that this member always exists and is valid.
@@ -346,8 +353,11 @@ public:
 	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
 	mutable std::string m_path;
 
+	/// Flags to use when we open the file descriptor.
 	mutable int m_open_flags { 0 };
-	mutable FileDescriptor m_file_descriptor;
+
+	/// The file descriptor object.
+	mutable FileDescriptor m_file_descriptor {};
 
 	/// @name Info normally gathered from a stat() call.
 	///@{

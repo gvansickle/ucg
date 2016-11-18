@@ -456,7 +456,7 @@ bool TypeManager::IsExcludedByAnyGlob(const std::string &name) const noexcept
 
 void TypeManager::CompileTypeTables()
 {
-	std::set<microstring> unique_4char_extensions;
+	std::set<microstring> unique_microstring_extensions;
 
 	for(auto i : m_active_type_map)
 	{
@@ -474,12 +474,12 @@ void TypeManager::CompileTypeTables()
 			if(j[0] == '.')
 			{
 				// First char is a '.', this is an extension specification.
-				if(j.length() <= 5)
+				if(j.length() <= microstring::max_size()+1)
 				{
 					// It's 4 chars or less, minus the '.'.
 					LOG(INFO) << "Compiling ext spec \'" << j << "\' as microstring";
-					microstring m(j.begin()+1, j.end());
-					unique_4char_extensions.insert(m);
+					microstring m(j.cbegin()+1, j.cend());
+					unique_microstring_extensions.insert(m);
 				}
 				else
 				{
@@ -508,15 +508,15 @@ void TypeManager::CompileTypeTables()
 		}
 	}
 
-	m_fast_include_extensions.resize(unique_4char_extensions.size());
-	LOG(INFO) << "Found " << unique_4char_extensions.size() << " unique 4-char or less extensions.";
+	m_fast_include_extensions.resize(unique_microstring_extensions.size());
+	LOG(INFO) << "Found " << unique_microstring_extensions.size() << " unique " << microstring::max_size() << "-char or less extensions.";
 	decltype(m_fast_include_extensions)::size_type j = 0;
-	for(auto i : unique_4char_extensions)
+	for(auto i : unique_microstring_extensions)
 	{
 		m_fast_include_extensions[j] = i;
 		++j;
 
-		LOG(INFO) << "Added " << static_cast<std::string>(i) << "(" << std::hex << i.urep() << ") to m_fast_include_extensions";
+		LOG(INFO) << "Added " << static_cast<std::string>(i) << " (" << to_string(i.urep(), std::hex) << ") to m_fast_include_extensions";
 	}
 
 	// Sort the fast_include_extensions list so we can binary search it.

@@ -162,11 +162,13 @@ void FileScanner::Run(int thread_index)
 		{
 			// The File constructor threw an exception.
 			ERROR() << error.what();
+			LOG(DEBUG) << "Caught FileException: " << error.what();
 		}
 		catch(const std::system_error& error)
 		{
 			// A system error.  Currently should only be errors from File.
 			ERROR() << error.code() << " - " << error.code().message();
+			LOG(DEBUG) << "Caught std::system_error: " << error.code() << " - " << error.code().message();
 		}
 		catch(...)
 		{

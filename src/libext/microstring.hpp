@@ -35,14 +35,6 @@
 template <typename UnderlyingType>
 class basic_microstring
 {
-private:
-
-	template < std::size_t Bits >
-	using IsSize = typename std::enable_if<sizeof(UnderlyingType)*8==Bits>;
-
-	template <bool B, typename T = void>
-	using enable_if_t = typename std::enable_if<B, T>::type;
-
 public:
 
 	/// @name Member Types
@@ -135,7 +127,7 @@ public:
 
 		assume(num_chars <= max_size());
 
-		m_storage = 0;
+		m_storage = static_cast<decltype(m_storage)>(0);
 		uint8_t *storage_start = reinterpret_cast<uint8_t*>(&m_storage);
 
 		// Copy the bytes.  Hopefully the compiler will optimize this loop.
@@ -170,7 +162,7 @@ public:
 
 		assume(num_chars <= max_size());
 
-		m_storage = 0;
+		m_storage = static_cast<decltype(m_storage)>(0);
 		uint8_t *storage_start = reinterpret_cast<uint8_t*>(&m_storage);
 
 		// Copy the bytes.  Hopefully the compiler will optimize this loop.
@@ -204,7 +196,7 @@ public:
 
 		auto ptr = reinterpret_cast<const char *>(&tmp);
 
-		return strnlen(ptr, 4);
+		return strnlen(ptr, this->max_size());
 	};
 
 	constexpr inline size_type size() const noexcept ATTR_CONST ATTR_ARTIFICIAL
@@ -212,6 +204,7 @@ public:
 		return length();
 	}
 
+	/// Maximum size in characters.
 	static constexpr inline size_type max_size() noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
 		return sizeof(UnderlyingType);
