@@ -303,7 +303,7 @@ PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
 	],
 	[AC_SUBST([HAVE_LIBPCRE2], [no])])
 
-PKG_CHECK_MODULES([EXPLAIN], [libexplain])
+#PKG_CHECK_MODULES([EXPLAIN], [libexplain])
 
 AC_LANG_POP([C++])
 
