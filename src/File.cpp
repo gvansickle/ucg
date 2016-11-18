@@ -34,7 +34,6 @@
 File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
 {
 	m_fileid = std::move(file_id);
-	///m_fileid.SetFileDescriptorMode(FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
 
 	int file_descriptor { -1 };
 

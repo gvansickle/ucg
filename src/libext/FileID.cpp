@@ -73,27 +73,28 @@ ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, std::mutex &mutex, CacheFi
 ///
 
 
-FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename)
-	: m_at_dir(at_dir_fileid), m_basename(basename)
+FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
+	: m_at_dir(at_dir_fileid), m_basename(bname)
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 
-	LOG(DEBUG) << "2-param const., m_basename=" << m_basename << ", m_at_dir=" << m_at_dir->m_pimpl->m_path;
+	LOG(DEBUG) << "2-param const., m_basename=" << m_basename << ", m_at_dir=" << (!!m_at_dir ? (m_at_dir->m_pimpl->m_path) : "<nullptr>");
 
-	if(is_pathname_absolute(basename))
+	if(is_pathname_absolute(bname))
 	{
 		// Save an expensive recursive call to m_at_dir->GetPath() in the future.
-		m_path = basename;
+		m_path = bname;
 	}
 }
 
-FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
+FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std::string pname,
 		const struct stat *stat_buf, FileType type)
-		: m_at_dir(at_dir_fileid), m_basename(basename), m_path(pathname), m_file_type(type)
+		: m_at_dir(at_dir_fileid), m_basename(bname), m_path(pname), m_file_type(type)
 {
+	LOG(DEBUG) << "5-param const., m_basename=" << m_basename << ", m_at_dir=" << (!!m_at_dir ? (m_at_dir->m_pimpl->m_path) : "<nullptr>");
 	if(stat_buf != nullptr)
 	{
 		SetStatInfo(*stat_buf);
@@ -261,6 +262,7 @@ FileID::FileID(FileID&& other)
 FileID::FileID(path_known_cwd_tag)
 	: m_pimpl(std::make_unique<FileID::impl>(nullptr, ".", ".", nullptr, FT_DIR))
 {
+	LOG(DEBUG) << "FDCWD constructor";
 	// Open the file descriptor immediately, since we don't want to use openat() here unlike in all other cases.
 	SetFileDescriptorMode(FAM_SEARCH, FCF_DIRECTORY | FCF_NOCTTY);
 	int tempfd = open(".", O_SEARCH | O_DIRECTORY | O_NOCTTY);
