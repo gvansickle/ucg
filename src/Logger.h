@@ -85,7 +85,7 @@ public:
 		set_thread_name(m_program_invocation_short_name);
 	}
 
-	/// Helper function for converting a C errno into
+	/// Helper function for converting a C errno into a human-readable string.
 	static std::string strerror(int c_errno = errno) noexcept
 	{
 		// Convert the errno to a string and return it.
@@ -185,6 +185,7 @@ public:
 /// @name Macros for logging messages which are not intended for end-user consumption.
 ///@{
 #define LOG(logger) logger::IsEnabled() && logger().m_tempstream << __PRETTY_FUNCTION__ << ": "
+#define LOG_TIME(logger) logger::log_elapsed_time([&]
 ///@}
 
 /// @name Macros for output intended for the end user.
