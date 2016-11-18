@@ -112,7 +112,6 @@ const FileDescriptor& FileID::impl::GetFileDescriptor()
 	{
 		// File hasn't been opened.
 
-		/// @todo This is ugly, needs to be moved out of here.
 		if(m_open_flags == 0)
 		{
 			throw std::runtime_error("m_open_flags is not set");

@@ -93,7 +93,8 @@ public:
 	{
 		// @note No locking here.  If anyone was trying to read or write us, they'd have
 		// to have (possibly shared) ownership (right?), and hence we wouldn't be getting destroyed.
-		//WriterLock wl(m_mutex);
+		WriterLock wl(m_mutex);
+		LOG(DEBUG) << "DESTRUCTOR, have file descriptor: " << m_file_descriptor;
 		if(!unlocked_empty())
 		{
 			LOG(DEBUG) << "closing file descriptor: " << m_file_descriptor;

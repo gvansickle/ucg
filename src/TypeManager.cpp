@@ -478,7 +478,7 @@ void TypeManager::CompileTypeTables()
 				{
 					// It's 4 chars or less, minus the '.'.
 					LOG(INFO) << "Compiling ext spec \'" << j << "\' as microstring";
-					microstring m(j.begin()+1, j.end());
+					microstring m(j.cbegin()+1, j.cend());
 					unique_microstring_extensions.insert(m);
 				}
 				else
@@ -516,7 +516,7 @@ void TypeManager::CompileTypeTables()
 		m_fast_include_extensions[j] = i;
 		++j;
 
-		LOG(INFO) << "Added " << static_cast<std::string>(i) << "(" << std::hex << i.urep() << ") to m_fast_include_extensions";
+		LOG(INFO) << "Added " << static_cast<std::string>(i) << " (" << to_string(i.urep(), std::hex) << ") to m_fast_include_extensions";
 	}
 
 	// Sort the fast_include_extensions list so we can binary search it.
