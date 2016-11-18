@@ -19,6 +19,7 @@
 
 #include <config.h>
 
+
 #include <future/memory.hpp> // For std::make_unique<>
 #include <libext/string.hpp>
 
@@ -28,6 +29,8 @@
 #include <unistd.h> // For close().
 #include <sys/stat.h>
 #include <fts.h>
+
+#include <libexplain/openat.h>
 
 #include <atomic>
 
@@ -113,15 +116,18 @@ const FileDescriptor& FileID::impl::GetFileDescriptor()
 		/// @todo This is ugly, needs to be moved out of here.
 		if(m_open_flags == 0)
 		{
+			throw std::runtime_error("m_open_flags is not set");
 			m_open_flags = O_SEARCH | O_DIRECTORY | O_NOCTTY;
 		}
 
 		if(m_at_dir)
 		{
-			int tempfd = openat(m_at_dir->GetFileDescriptor().GetFD(), GetBasename().c_str(), m_open_flags);
+			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
+			int tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
 			if(tempfd == -1)
 			{
-				throw FileException("GetFileDescriptor(): openat() with valid m_at_dir failed");
+				LOG(DEBUG) << "OPENAT FAIL: " << explain_openat(atdirfd, GetBasename().c_str(), m_open_flags, 0666);
+				throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with valid m_at_dir=" + std::to_string(atdirfd) + " failed");
 			}
 			m_file_descriptor = make_shared_fd(tempfd);
 		}
@@ -131,7 +137,7 @@ const FileDescriptor& FileID::impl::GetFileDescriptor()
 			int tempfd = openat(AT_FDCWD, GetBasename().c_str(), m_open_flags);
 			if(tempfd == -1)
 			{
-				throw FileException("GetFileDescriptor(): openat() with invalid m_at_dir failed");
+				throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with invalid m_at_dir=" + std::to_string(AT_FDCWD) + " failed");
 			}
 			m_file_descriptor = make_shared_fd(tempfd);
 		}
@@ -283,10 +289,10 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	/// - If pathname is relative, it's relative to at_dir_fd.
 }
 
-FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname)
+FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileAccessMode fam, FileCreationFlag fcf)
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname))
 {
-
+	SetFileDescriptorMode(fam, fcf);
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf, FileType type)

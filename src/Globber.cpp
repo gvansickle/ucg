@@ -136,6 +136,8 @@ void Globber::Run()
 
 }
 
+#ifdef USE_FTS
+
 /**
  * Returns the fts_options to pass to fts_open().  This is only its own function because of all the #if's involved.
  * @return
@@ -490,3 +492,6 @@ void Globber::ScanOneDirectory(FTS *tree, FTSENT *parent, FTSENT *child, sync_qu
 		}
 	} // for()
 }
+
+#endif // USE_FTS
+

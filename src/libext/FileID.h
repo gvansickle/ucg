@@ -74,6 +74,7 @@ inline std::ostream& operator<<(std::ostream& out, const FileType value){
  */
 enum FileAccessMode : int
 {
+	FAM_UNINITIALIZED = 0,
 	FAM_RDONLY = O_RDONLY,//!< FAM_RDONLY
 	FAM_RDWR = O_RDWR,    //!< FAM_RDWR
 	FAM_SEARCH = O_SEARCH //!< FAM_SEARCH
@@ -84,6 +85,7 @@ enum FileAccessMode : int
  */
 enum FileCreationFlag : int
 {
+	FCF_UNINITIALIZED = 0,
 	FCF_CLOEXEC = O_CLOEXEC,    //!< FCF_CLOEXEC
 	FCF_CREAT = O_CREAT,		//!< FCF_CREAT
 	FCF_DIRECTORY = O_DIRECTORY,//!< FCF_DIRECTORY
@@ -159,9 +161,11 @@ public:
 			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
-	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
+	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname,
+			FileAccessMode fam = FAM_UNINITIALIZED, FileCreationFlag fcf = FCF_UNINITIALIZED);
+#if USE_FTS
 	FileID(const FTSENT *ftsent, bool stat_info_known_valid);
-
+#endif
 	/// @}
 
 	/// Copy assignment.
@@ -351,7 +355,7 @@ public:
 	mutable int m_open_flags { 0 };
 
 	/// The file descriptor object.
-	mutable FileDescriptor m_file_descriptor;
+	mutable FileDescriptor m_file_descriptor {};
 
 	/// @name Info normally gathered from a stat() call.
 	///@{

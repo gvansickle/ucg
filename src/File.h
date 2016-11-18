@@ -29,17 +29,6 @@
 #include "libext/FileID.h"
 #include "ResizableArray.h"
 
-/**
- * File() may throw this if it runs into trouble opening the given filename.
- */
-struct FileException : public std::system_error
-{
-	FileException(const std::string &message, int errval = errno) : std::system_error(errval, std::system_category(), message) {};
-};
-inline std::ostream& operator<<(std::ostream &out, const FileException &fe) noexcept
-{
-	return out << fe.what() << ": " << fe.code() << " - " << fe.code().message();
-}
 
 /**
  * A class to represent the contents and some metadata of a read-only file.
@@ -49,7 +38,8 @@ class File
 {
 public:
 	File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
-	File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
+	File(const std::string &filename, FileAccessMode fam, FileCreationFlag fcf,
+			std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
 	~File();
 
 	size_t size() const noexcept { return m_fileid.GetFileSize(); };

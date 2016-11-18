@@ -641,7 +641,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 			std::string homefilepath = homedir + "/.ucgrc";
 			try
 			{
-				File home_file(homefilepath);
+				File home_file(homefilepath, FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
 
 				if(home_file.size() == 0)
 				{
@@ -680,7 +680,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 		// We found it, see if we can open it.
 		try
 		{
-			File proj_rc_file(proj_rc_filename);
+			File proj_rc_file(proj_rc_filename, FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
 
 			if(proj_rc_file.size() == 0)
 			{

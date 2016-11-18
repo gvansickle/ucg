@@ -72,11 +72,13 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		auto type = file_or_dir->GetFileType();
 		if(type == FT_REG)
 		{
-			/// @todo filter-out mechanism?
+			// Explicitly not filtering files specified on command line.
+			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
 			m_out_queue.wait_push(FileID(std::move(*file_or_dir)));
 		}
 		else if(type == FT_DIR)
 		{
+			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY);
 			m_dir_queue.wait_push(file_or_dir);
 		}
 		else if(type == FT_SYMLINK)
@@ -283,6 +285,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 
 			FileID dir_atfd(FileID::path_known_relative, dse, basename, FT_DIR);
 			dir_atfd.SetDevIno(dse->GetDev(), current_dirent->d_ino);
+			dir_atfd.SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY);
 
 			if(m_logical)
 			{

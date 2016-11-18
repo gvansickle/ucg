@@ -110,6 +110,21 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 /// @}
 
 
+
+/**
+ * Class to throw for failures of file-related fuctions such as open()/fstat()/etc.
+ */
+struct FileException : public std::system_error
+{
+	FileException(const std::string &message, int errval = errno) : std::system_error(errval, std::system_category(), message) {};
+};
+inline std::ostream& operator<<(std::ostream &out, const FileException &fe) noexcept
+{
+	return out << fe.what() << ": " << fe.code() << " - " << fe.code().message();
+}
+
+
+
 /**
  * Class intended to abstract the concept of a UUID for a file or directory.
  * @todo Currently only supports POSIX-like OSes, and not necessarily all filesystems.  Needs to be expanded.
@@ -173,6 +188,13 @@ inline std::string dirent_get_name(const dirent* de) noexcept
 }
 
 
+inline std::ostream& dump_fd_info(std::ostream &ostr, int fd)
+{
+	std::stringstream ss;
+
+	//ss << "fd=" << fd << ":" << ;
+	return ostr << ss.str();
+}
 
 /**
  * Checks two file descriptors (file, dir, whatever) and checks if they are referring to the same entity.
@@ -330,6 +352,7 @@ inline DIR* opendirat(int at_dir, const char *name)
 	return d;
 }
 
+#ifdef USE_FTS
 
 /// @name FTS helpers.
 /// @{
@@ -387,5 +410,7 @@ inline std::string ftsent_path(const FTSENT* p)
 }
 
 ///@}
+
+#endif // USE_FTS
 
 #endif /* SRC_LIBEXT_FILESYSTEM_HPP_ */

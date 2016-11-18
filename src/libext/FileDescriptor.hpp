@@ -48,6 +48,7 @@ public:
 	{
 		WriterLock wl(m_mutex);
 		m_file_descriptor = fd;
+		LOG(DEBUG) << "exlpicitly assigned file descriptor: " << m_file_descriptor;
 	};
 
 	/// Copy constructor will dup the other's file descriptor.
@@ -60,13 +61,13 @@ public:
 		if(!other.unlocked_empty())
 		{
 			m_file_descriptor = dup(other.m_file_descriptor);
-			LOG(DEBUG) << "... duped fd=" << other.m_file_descriptor << " to fd=" << m_file_descriptor << ".";
+			LOG(DEBUG) << "duped fd=" << other.m_file_descriptor << " to fd=" << m_file_descriptor << ".";
 		}
 		else
 		{
 			// Other has an invalid fd, just copy the value.
 			m_file_descriptor = other.m_file_descriptor;
-			LOG(DEBUG) << "... other was invaliud, no dup. fd=" << m_file_descriptor;
+			LOG(DEBUG) << "other was invalid, no dup. fd=" << m_file_descriptor;
 		}
 	}
 
@@ -79,6 +80,7 @@ public:
 		LOG(DEBUG) << "move constructor called.";
 
 		m_file_descriptor = other.m_file_descriptor;
+		LOG(DEBUG) << "moved file descriptor: " << m_file_descriptor;
 
 		if(!other.unlocked_empty())
 		{
@@ -114,20 +116,23 @@ public:
 			if(!unlocked_empty())
 			{
 				close(m_file_descriptor);
+				LOG(DEBUG) << "closing file descriptor: " << m_file_descriptor;
 			}
 
 			if(other.unlocked_empty())
 			{
 				// Other fd isn't valid, just copy it.
 				m_file_descriptor = other.m_file_descriptor;
+				LOG(DEBUG) << "copied invalid file descriptor: " << m_file_descriptor;
 			}
 			else
 			{
 				m_file_descriptor = dup(other.m_file_descriptor);
-				if((m_file_descriptor < 0) && (m_file_descriptor != AT_FDCWD))
+				if(m_file_descriptor < 0)
 				{
 					ERROR() << "dup() failure: " << LOG_STRERROR();
 				}
+				LOG(DEBUG) << "duped file descriptor: " << m_file_descriptor;
 			}
 		}
 		return *this;
@@ -148,10 +153,12 @@ public:
 			if(!unlocked_empty())
 			{
 				close(m_file_descriptor);
+				LOG(DEBUG) << "closing file descriptor: " << m_file_descriptor;
 			}
 
 			// Step 2: Take other's resources.
 			m_file_descriptor = other.m_file_descriptor;
+			LOG(DEBUG) << "moved file descriptor: " << m_file_descriptor;
 
 			// Step 3: Set other to a destructible state.
 			// In particular here, this means invalidating its file descriptor,
