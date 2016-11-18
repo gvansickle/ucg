@@ -108,8 +108,6 @@ const std::string& FileID::impl::GetBasename() const noexcept
 
 const FileDescriptor& FileID::impl::GetFileDescriptor()
 {
-	/// @todo This still needs rethinking.  I think.
-
 	if(m_file_descriptor.empty())
 	{
 		// File hasn't been opened.
@@ -118,7 +116,6 @@ const FileDescriptor& FileID::impl::GetFileDescriptor()
 		if(m_open_flags == 0)
 		{
 			throw std::runtime_error("m_open_flags is not set");
-			m_open_flags = O_SEARCH | O_DIRECTORY | O_NOCTTY;
 		}
 
 		if(m_at_dir)
@@ -138,25 +135,10 @@ const FileDescriptor& FileID::impl::GetFileDescriptor()
 			int tempfd = openat(AT_FDCWD, GetBasename().c_str(), m_open_flags);
 			if(tempfd == -1)
 			{
+				LOG(DEBUG) << "OPENAT FAIL: " << explain_openat(AT_FDCWD, GetBasename().c_str(), m_open_flags, 0666);
 				throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with invalid m_at_dir=" + std::to_string(AT_FDCWD) + " failed");
 			}
 			m_file_descriptor = make_shared_fd(tempfd);
-		}
-
-		if(m_file_descriptor.empty())
-		{
-			/// Try to figure out what happened and throw an exception.
-			if(m_file_descriptor.GetFD() == -1)
-			{
-				// Couldn't open the file, throw exception.
-				int temp_errno = errno;
-				errno = 0;
-				throw std::system_error(temp_errno, std::generic_category());
-			}
-			else
-			{
-				throw std::runtime_error("Bad fd");
-			}
 		}
 	}
 

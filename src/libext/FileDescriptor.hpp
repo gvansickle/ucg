@@ -187,7 +187,7 @@ public:
 private:
 	static constexpr int cm_invalid_file_descriptor = -987;
 
-	int m_file_descriptor { cm_invalid_file_descriptor };
+	mutable int m_file_descriptor { cm_invalid_file_descriptor };
 
 	inline bool unlocked_empty() const noexcept { return m_file_descriptor < 0; };
 };

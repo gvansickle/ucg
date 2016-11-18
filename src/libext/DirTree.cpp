@@ -135,8 +135,8 @@ void DirTree::ReaddirLoop(int dirjob_num)
 	{
 		//int open_at_fd = dse->GetAtDir()->GetFileDescriptor().GetFD();
 		//const char *open_at_path = dse->GetBasename().c_str();
-
 		//d = opendirat(open_at_fd, open_at_path);
+		LOG(DEBUG) << "Examining files in directory '" << dse->GetPath() << "'";
 		int open_at_fd = dse->GetFileDescriptor().GetFD();
 		d = fdopendir(open_at_fd);
 		if(d == nullptr)
@@ -254,13 +254,17 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 			stats.m_num_files_found++;
 
 			// Check for inclusion.
-			if(m_file_basename_filter(basename)) ///@todo skip_inclusion_checks || m_type_manager.FileShouldBeScanned(name))
+			if(m_file_basename_filter(basename))
 			{
 				// Based on the file name, this file should be scanned.
 
 				LOG(INFO) << "... should be scanned.";
 
-				m_out_queue.wait_push({FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG});
+				FileID file_to_scan(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG);
+				file_to_scan.SetFileDescriptorMode(FAM_RDONLY, FCF_NOCTTY | FCF_NOATIME);
+
+				// Queue it up.
+				m_out_queue.wait_push(std::move(file_to_scan));
 
 				// Count the number of files we found that were included in the search.
 				stats.m_num_files_scanned++;
