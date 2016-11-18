@@ -137,7 +137,7 @@ void DirTree::ReaddirLoop(int dirjob_num)
 		//const char *open_at_path = dse->GetBasename().c_str();
 		//d = opendirat(open_at_fd, open_at_path);
 		LOG(DEBUG) << "Examining files in directory '" << dse->GetPath() << "'";
-		int open_at_fd = dse->GetFileDescriptor().GetFD();
+		int open_at_fd = dse->GetFileDescriptor().GetDupFD();
 		d = fdopendir(open_at_fd);
 		if(d == nullptr)
 		{

@@ -246,19 +246,21 @@ static_assert(std::is_move_assignable<FileID>::value, "FileID must be move assig
 class FileID::impl
 {
 public:
-	impl() = default;
-	impl(const impl& other) = default;
-	impl(impl&& other) = default;
+	impl() { LOG(DEBUG) << "DEFAULT CONSTRUCT";};//= default;
+	impl(const impl& other) { LOG(DEBUG) << "COPY CONSTRUCT";};//= default;
+	impl(impl&& other) { LOG(DEBUG) << "MOVE CONSTRUCT";};//= default;
 
 	/// Copy assignment.
-	impl& operator=(const impl &other) = default;
+	impl& operator=(const impl &other) { LOG(DEBUG) << "COPY ASSIGN";};// = default;
 
 	/// Move assignment.
-	impl& operator=(impl&& other) = default;
+	impl& operator=(impl&& other) { LOG(DEBUG) << "MOVE ASSIGN";}; //= default;
 
 	/// @name Various non-default constructors.
 	/// @{
+#ifdef USE_FTS
 	impl(const FTSENT *ftsent, bool stat_info_known_valid);
+#endif
 	impl(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
 	impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
 			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);

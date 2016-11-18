@@ -243,7 +243,6 @@ FileID::FileID(FileID&& other)
 FileID::FileID(path_known_cwd_tag)
 	: m_pimpl(std::make_unique<FileID::impl>(nullptr, ".", ".", nullptr, FT_DIR))
 {
-	LOG(DEBUG) << "FDCWD constructor";
 	// Open the file descriptor immediately, since we don't want to use openat() here unlike in all other cases.
 	SetFileDescriptorMode(FAM_SEARCH, FCF_DIRECTORY | FCF_NOCTTY);
 	int tempfd = open(".", O_SEARCH | O_DIRECTORY | O_NOCTTY);
@@ -252,6 +251,8 @@ FileID::FileID(path_known_cwd_tag)
 		LOG(DEBUG) << "Error in fdcwd constructor: " << LOG_STRERROR();
 	}
 	m_pimpl->m_file_descriptor = make_shared_fd(tempfd);
+	LOG(DEBUG) << "FDCWD constructor, file descriptor: " << m_pimpl->m_file_descriptor.GetFD();
+
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
@@ -316,7 +317,9 @@ FileID& FileID::operator=(const FileID& other)
 		std::unique_lock<std::mutex> other_l2(other.m_the_mutex, std::defer_lock);
 #endif
 		std::lock(this_lock, other_lock);
-		m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
+		LOG(DEBUG) << "COPY ASSIGN";
+		//m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
+		m_pimpl.reset(new impl(*other.m_pimpl));
 	}
 	return *this;
 };
@@ -332,6 +335,7 @@ FileID& FileID::operator=(FileID&& other)
 		std::unique_lock<std::mutex> this_l2(m_the_mutex, std::defer_lock);
 		std::unique_lock<std::mutex> other_l2(other.m_the_mutex, std::defer_lock);
 #endif
+		LOG(DEBUG) << "MOVE ASSIGN";
 		std::lock(this_lock, other_lock);
 
 		m_pimpl = std::move(other.m_pimpl);

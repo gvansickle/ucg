@@ -42,13 +42,13 @@ class FileDescriptor
 public:
 	/// Default constructor.
 	/// @note Can't be noexcept, though only seems to break the compile on Cygwin gcc 5.4.0.
-	FileDescriptor() = default;
+	FileDescriptor() { LOG(DEBUG) << "DEFAULT CONSTRUCTOR"; };
 
 	explicit FileDescriptor(int fd) noexcept
 	{
 		WriterLock wl(m_mutex);
 		m_file_descriptor = fd;
-		LOG(DEBUG) << "exlpicitly assigned file descriptor: " << m_file_descriptor;
+		LOG(DEBUG) << "Explicitly assigned file descriptor: " << m_file_descriptor;
 	};
 
 	/// Copy constructor will dup the other's file descriptor.
@@ -177,6 +177,13 @@ public:
 		ReaderLock rl(m_mutex);
 		return m_file_descriptor;
 	};
+
+	int GetDupFD() const noexcept
+	{
+		ReaderLock rl(m_mutex);
+		int retval = dup(m_file_descriptor);
+		return retval;
+	}
 
 	/// Returns true if this FileDescriptor isn't a valid file descriptor.
 	inline bool empty() const noexcept
