@@ -18,7 +18,7 @@ copyright_notice=\
 # UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 '''
@@ -63,12 +63,15 @@ test "$$1" = "--" && shift # Any remaining params will be left in $$@
 
 # Did the caller request a ready-status report?
 # Return 0 if ready to run, 1 if this test should be skipped.
-if test $$report_ready = 1; then
+if test $$report_ready = "1"; then
     if test -e "${corpus}"; then
-        # Can't find the test corpus, skip the test.
-        exit 1;
-    else
+        # Found the test corpus.
+        echo "Found test corpus: ${corpus}";
         exit 0;
+    else
+        # Can't find the test corpus, skip the test.
+        echo "No test corpus: ${corpus}"
+        exit 1;
     fi;
 fi
 
@@ -153,11 +156,11 @@ class TestGenDatabase(object):
         self.dbconnection.execute("PRAGMA foreign_keys = ON")
         # Use a Row object.
         self.dbconnection.row_factory = sqlite3.Row
-        
+
         # Register a suitable csv dialect.
         csv.register_dialect('ucg_nonstrict', delimiter=',', doublequote=True, escapechar="\\", quotechar=r'"',
                              quoting=csv.QUOTE_MINIMAL, skipinitialspace=True)
-        
+
     def __new__(cls, *args, **kwargs):
         """
         Override of class's __new__ to give us a real C++-style destructor.
@@ -165,14 +168,14 @@ class TestGenDatabase(object):
         instance = super(TestGenDatabase, cls).__new__(cls)
         instance.__init__(*args, **kwargs)
         return contextlib.closing(instance)
-        
+
     def close(self):
         """
         Cleanup function for contextlib.closing()'s use.
         """
         self.dbconnection.close()
 
-        
+
     def _placeholders(self, num):
         """
         Helper function which generates a string of num placeholders (e.g. for num==5, returns "?,?,?,?,?").
@@ -182,13 +185,13 @@ class TestGenDatabase(object):
         for col in range(1,num):
             qmarks += ",?"
         return qmarks
-        
+
     def _select_data(self, output_table_name=None):
-        
+
         # Use a Row object.
         self.dbconnection.row_factory = sqlite3.Row
         c = self.dbconnection.cursor()
-                
+
         # Do a cartesian join.
         c.execute("""CREATE TABLE {} AS SELECT test_cases.test_case_id, benchmark_progs.prog_id, benchmark_progs.exename, benchmark_progs.pre_options,
                 coalesce(benchmark_progs.opt_dirjobs, '') as opt_dirjobs, coalesce(test_cases.regex,'') || "   " || coalesce(test_cases.corpus,'') AS CombinedColumnsTest
@@ -204,11 +207,11 @@ class TestGenDatabase(object):
         INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
         """.format(output_table_name))
         return c
-    
+
     def parse_opt(self, optstring):
         opt_parts = optstring.split("=")
         return opt_parts
-    
+
     def generate_tests_type_2(self, opts=None, output_table_name=None):
         c = self.dbconnection.cursor()
         select_opts = ""
@@ -226,7 +229,7 @@ class TestGenDatabase(object):
         """.format(output_table_name, select_opts)
         c.execute(select_string)
         return c
-            
+
     def read_csv_into_table(self, table_name=None, filename=None, prim_key=None, foreign_key_tuples=None):
         c = self.dbconnection.cursor()
         if not foreign_key_tuples: foreign_key_tuples = []
@@ -256,7 +259,7 @@ class TestGenDatabase(object):
         self.dbconnection.commit()
         #c.execute('SELECT * from csv_test')
         #print(c.fetchall())
-       
+
     def PrintTable(self, table_name=None):
         c = self.dbconnection.cursor()
         c.execute('SELECT * from {}'.format(table_name))
@@ -266,7 +269,7 @@ class TestGenDatabase(object):
         print("Header     : " + ", ".join(rows[0].keys()))
         for row in rows:
             print("Row        : " + ", ".join(row))
-    
+
     def GenerateTestScript(self, test_case_id, test_output_filename, options=None, fh=sys.stdout):
         """
         Generate and output the test script.
@@ -274,7 +277,7 @@ class TestGenDatabase(object):
         # Query the db.
         self.generate_tests_type_2(options, "benchmark1")
         #self.PrintTable("benchmark1")
-        
+
         test_cases = ""
         test_inst_num=0
         desc_long = ""
@@ -321,10 +324,10 @@ class TestGenDatabase(object):
             results_file=test_output_filename,
             test_cases=test_cases
             )
-        
+
         # Print it to the given file.
         print(script, file=fh)
-        
+
     def LoadDatabaseFiles(self, csv_dir=None):
         print("sqlite3 lib version: {}".format(sqlite3.sqlite_version), file=sys.stderr)
         self.read_csv_into_table(table_name="opts_defs", filename=csv_dir+'/opts_defs.csv', prim_key='opt_id')
@@ -345,7 +348,7 @@ class CLIError(Exception):
         return self.msg
     def __unicode__(self):
         return self.msg
-    
+
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
 
@@ -379,7 +382,7 @@ def main(argv=None): # IGNORE:C0111
 
         # Process arguments
         args = parser.parse_args()
-        
+
         outfile_name = args.outfile_name
         test_case = args.test_case
         csv_dir = args.csv_dir
@@ -394,16 +397,16 @@ def main(argv=None): # IGNORE:C0111
             raise CLIError("include and exclude pattern are equal! Nothing will be processed.")
 
         #inpath = paths[0]
-        #outdir = paths[1] 
-        
+        #outdir = paths[1]
+
         with TestGenDatabase() as results_db:
             # Load the csv files into the database as tables.
             results_db.LoadDatabaseFiles(csv_dir=csv_dir)
-            
+
             # Generate the shell script, writing it to outfile.
             results_db.GenerateTestScript(test_case_id=test_case, test_output_filename=test_output_filename, options=opts,
                                            fh=outfile_name)
-            
+
         return 0
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
