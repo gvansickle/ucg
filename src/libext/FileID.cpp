@@ -160,10 +160,13 @@ void FileID::impl::LazyLoadStatInfo() const noexcept
 
 	// We don't have stat info and now we need it.
 	// Get it from the filename.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wterminate" // Quiet some warnings that this will terminate the program, that's intentional.
 	if(!m_at_dir)
 	{
 		throw std::runtime_error("should always have an at-dir");
 	}
+#pragma GCC diagnostic pop
 
 	struct stat stat_buf;
 	if(fstatat(m_at_dir->GetFileDescriptor().GetFD(), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
