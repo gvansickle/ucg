@@ -1,5 +1,15 @@
 # NEWS file for the UniversalCodeGrep project.
 
+## [UNRELEASED]
+
+### New Features
+- Now builds with GCC6 on TrueOS (nee PC-BSD).
+- Major overhaul of directory tree traversal.
+
+### Changed
+
+### Fixed
+
 ## [0.3.0] - 2016-10-23
 
 Major feature/bugfix release of UniversalCodeGrep (ucg).

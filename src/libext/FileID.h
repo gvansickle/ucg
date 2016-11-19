@@ -287,35 +287,7 @@ public:
 
 //private:
 
-	void LazyLoadStatInfo() const noexcept
-	{
-		if(m_stat_info_valid)
-		{
-			// Already set.
-			return;
-		}
-
-		// We don't have stat info and now we need it.
-		// Get it from the filename.
-		if(!m_at_dir)
-		{
-			throw std::runtime_error("should always have an at-dir");
-		}
-
-		struct stat stat_buf;
-		if(fstatat(m_at_dir->GetFileDescriptor().GetFD(), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
-		{
-			// Error.
-			m_file_type = FT_STAT_FAILED;
-			LOG(INFO) << "fstatat() failed: " << LOG_STRERROR();
-			// Note: We don't clear errno here, we want to be able to look at it in the caller.
-			//errno = 0;
-		}
-		else
-		{
-			SetStatInfo(stat_buf);
-		}
-	}
+	void LazyLoadStatInfo() const noexcept;
 
 	void SetStatInfo(const struct stat &stat_buf) const noexcept;
 
