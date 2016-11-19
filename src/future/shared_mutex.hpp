@@ -28,6 +28,7 @@
 // We're on Mac OSX.
 // Don't include the system <shared_mutex> header at all.
 STATIC_MSG_WARN("Mac OSX detected, attempting to backfill <shared_mutex>");
+#include <mutex>
 #define HAVE_BROKEN_SHARED_MUTEX_HEADER
 namespace std
 {
