@@ -191,8 +191,8 @@ m4_define([ATUCG_INSTANTIATE_ONE_BENCHMARK],
 AT_SETUP(m4_esyscmd_s(echo $2))dnl The echo here is to "shell-unescape" the shell-escaped title.
 AT_KEYWORDS([benchmark])
 
-# Skip this test if we can't find the specified test corpus.
-AT_SKIP_IF([test ! -d UCG_CORPUS_LINUX_PATH])
+# Skip this test if the test script reports it's not ready.  The most likely cause is that we can't find the necessary test corpus.
+AT_SKIP_IF([AXUCG_SOURCE ${srcdir}/$1.sh -r])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 

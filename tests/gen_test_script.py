@@ -42,6 +42,38 @@ test_script_template_1 = Template("""\
 ### GENERATED FILE, DO NOT EDIT
 ###
 
+## Parse command line args.
+
+# Reset in case getopts has been used already.
+OPTIND=1
+# Initialize CLI vars.
+report_ready=0
+
+while getopts "ro:" opt; do
+    case "$$opt" in
+    r)  report_ready=1
+        ;;
+    o)  output_file=$$OPTARG
+        ;;
+    esac
+done
+shift $$((OPTIND-1))
+test "$$1" = "--" && shift # Any remaining params will be left in $$@
+## Command-line parsing complete.
+
+# Did the caller request a ready-status report?
+# Return 0 if ready to run, 1 if this test should be skipped.
+if test $$report_ready = 1; then
+    if test -e "${corpus}"; then
+        # Can't find the test corpus, skip the test.
+        exit 1;
+    else
+        exit 0;
+    fi;
+fi
+
+# Else run the test.
+
 echo "Test description short: '${desc_long}'" >> ${results_file}
 
 # Record info on the filesystem where the test data lies.
@@ -246,11 +278,13 @@ class TestGenDatabase(object):
         test_cases = ""
         test_inst_num=0
         desc_long = ""
+        corpus = ""
         rows = self.dbconnection.execute('SELECT * FROM benchmark1 WHERE test_case_id == "{}"'.format(test_case_id))
         for row in rows:
             if desc_long == "":
                 # Escape any embedded double quotes.
                 desc_long = row['desc_long'].replace("'", "\\'").replace('"', '\\"')
+                corpus = row['corpus']
             test_inst_num += 1
             search_results_filename="SearchResults_{}.txt".format(test_inst_num)
             time_run_results_filename='./time_results_{}.txt'.format(test_inst_num)
@@ -282,6 +316,7 @@ class TestGenDatabase(object):
             test_cases += test_case + "\n"
         script = test_script_template_1.substitute(
             desc_long=desc_long,
+            corpus=corpus,
             num_iterations=10,
             results_file=test_output_filename,
             test_cases=test_cases
