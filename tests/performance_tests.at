@@ -218,94 +218,15 @@ AT_CHECK([cat stderr | $EGREP 'Number of bytes written:'], [0], [ignore], [ignor
 AT_CHECK([echo "iudicemaequumputo" >> UCG_TEST_FILE_NAME_LARGE_FILE_1], [0], [stdout], [stderr])
 AT_CLEANUP
 
-###
-### Benchmark: 'BOOST.*HPP' on Boost source.
-###
-#AT_SETUP([Benchmark: 'BOOST.*HPP' on Boost source])
-#AT_KEYWORDS([benchmark])
+##
+## m4 experimental area.
+##
+#m4_errprintn(m4_esyscmd([echo "at_srcdir = ${at_srcdir}"])at_srcdir)
+#m4_errprintn(m4_esyscmd([echo "srcdir = ${srcdir}"])srcdir)
+#m4_errprintn(m4_esyscmd([echo "top_srcdir = ${top_srcdir}"])top_srcdir)
+#m4_errprintn(m4_esyscmd([echo "abs_top_srcdir = ${abs_top_srcdir}"])abs_top_srcdir)
+#m4_errprintn(m4_esyscmd([echo "pwd = $(pwd)"]))
 
-# Skip this test if we can't find the Boost source tree.
-#AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
-
-#AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Run the test script.
-#AT_CHECK([AXUCG_SOURCE ${srcdir}/TC1.sh], [0], [ignore-nolog], [stderr])
-# Summarize the test results.
-#UCG_SUMMARIZE_PERFTEST
-
-#AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-#AT_CLEANUP
-
-
-###
-### Benchmark: literal string on Boost source.
-###
-#AT_SETUP([Benchmark: long literal string on Boost source])
-#AT_KEYWORDS([benchmark])
-
-# Skip this test if we can't find the Boost source tree.
-#AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
-
-#AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Run the test script.
-#AT_CHECK([AXUCG_SOURCE ${srcdir}/TC2.sh], [0], [ignore-nolog], [stderr])
-# Summarize the test results.
-#UCG_SUMMARIZE_PERFTEST
-
-#AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-#AT_CLEANUP
-
-
-###
-### Benchmark: find "" includes in Boost source.
-###
-#AT_SETUP([Benchmark: '#include\s+".*"' on Boost source])
-#AT_KEYWORDS([benchmark])
-
-# Skip this test if we can't find the Boost source tree.
-#AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
-
-#AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Run the test script.
-#AT_CHECK([AXUCG_SOURCE ${srcdir}/TC5.sh], [0], [ignore-nolog], [stderr])
-# Summarize the test results.
-#UCG_SUMMARIZE_PERFTEST
-
-#AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-#AT_CLEANUP
-
-
-#
-# Benchmark: Search with ignore of part of the dir tree.
-#
-#AT_SETUP([Benchmark: literal '#endif' with --ignore-dir=doc on Boost source])
-#AT_KEYWORDS([benchmark])
-
-# Skip this test if we can't find the Boost source tree.
-#AT_SKIP_IF([test ! -d UCG_CORPUS_BOOST_PATH])
-
-#AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Run the test script.
-#AT_CHECK([AXUCG_SOURCE ${srcdir}/TC6.sh], [0], [ignore-nolog], [stderr])
-# Summarize the test results.
-#UCG_SUMMARIZE_PERFTEST
-
-#AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-#AT_CLEANUP
-
-m4_errprintn(m4_esyscmd([echo "at_srcdir = ${at_srcdir}"])at_srcdir)
-m4_errprintn(m4_esyscmd([echo "srcdir = ${srcdir}"])srcdir)
-m4_errprintn(m4_esyscmd([echo "top_srcdir = ${top_srcdir}"])top_srcdir)
-m4_errprintn(m4_esyscmd([echo "abs_top_srcdir = ${abs_top_srcdir}"])abs_top_srcdir)
-m4_errprintn(m4_esyscmd([echo "pwd = $(pwd)"]))
 # Extract the list of tests we need to generate from the test_cases.csv file.
 # @todo pwd is build/tests here.  None of the *srcdirs seem to be defined at m4 time.
 m4_define([test_case_table],
@@ -313,70 +234,27 @@ m4_define([test_case_table],
 	)
 )
 #m4_define([test_case_table], m4_dquote([abc],[def gh],[ijk],[lmn opg]))
-m4_errprintn([m4_dumpdef:])
+#m4_errprintn([m4_dumpdef:])
 m4_dumpdef([test_case_table])
 
-m4_errprintn([Exp1])
-m4_define([test_case_table_1],
- m4_dquote(m4_apply([m4_echo], [test_case_table])))
-m4_dumpdef([test_case_table_1])
+#m4_errprintn([Exp1])
+#m4_define([test_case_table_1],
+# m4_dquote(m4_apply([m4_echo], [test_case_table])))
+#m4_dumpdef([test_case_table_1])
 
-m4_errprintn(m4_echo())
-m4_errprintn([Exp2])                 dnl m4_dquote(test_case_table_1)
+#m4_errprintn([Exp2])                 dnl m4_dquote(test_case_table_1)
 #m4_define([mapping], m4_foreach([var], [[1],[2],[3],[4]], [echo var]))
 #m4_define([mapping], m4_map_args_pair([echo], [], [abc],[def ghi],[jkl],[mno pqr stu]))
 #m4_define([mapping], m4_map_args_pair([echo], [m4_ignore], m4_dquote_elt(test_case_table)))
 #m4_dumpdef([mapping])
-m4_errprintn(m4_echo(mapping))
+#m4_errprintn(m4_echo(mapping))
+#m4_fatal([debug stop])
 
 ###
 ### Create the benchmark test instantiations via m4.
 ###
 m4_map_args_pair([ATUCG_INSTANTIATE_ONE_BENCHMARK], [m4_ignore], m4_dquote_elt(test_case_table))
 
-m4_errprintn([Exp3])
-m4_errprintn(m4_map_args([m4_echo], m4_expand(test_case_table)))
-#m4_errprintn(m4_expand(m4_esyscmd([cat $(pwd)/../../tests/test_cases.csv | gawk 'BEGIN { FPAT = "([^,]+)| *(\"[^\"]+\")" } /TC.*/ { print("["$1 $3"]"); }'])
-#))
-#m4_fatal([debug stop])
-
-
-
-
-###
-### Benchmark: regex 'iudice[\w]*umputo' on single ~500MB file.
-###
-#AT_SETUP([Benchmark: regex on 500MB file, match at end])
-#AT_KEYWORDS([benchmark])
-
-#AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Run the test script.
-#AT_CHECK([AXUCG_SOURCE ${srcdir}/TC3.sh], [0], [ignore-nolog], [stderr])
-# Summarize the test results.
-#UCG_SUMMARIZE_PERFTEST
-
-#AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-#AT_CLEANUP
-
-
-###
-### Benchmark: literal string on single ~500MB file.
-###
-#AT_SETUP([Benchmark: literal string on 500MB file, match at end])
-#AT_KEYWORDS([benchmark])
-
-#AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Run the test script.
-#AT_CHECK([AXUCG_SOURCE ${srcdir}/TC4.sh], [0], [ignore-nolog], [stderr])
-# Summarize the test results.
-#UCG_SUMMARIZE_PERFTEST
-
-#AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-#AT_CLEANUP
 
 ###
 ### Delete test files for the large file tests.

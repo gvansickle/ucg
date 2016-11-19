@@ -179,7 +179,8 @@ dist_check_SCRIPTS = $(BENCHMARKSCRIPTS)
 # a python interpreter or the "missing" script.
 
 $(BENCHMARKSCRIPTS) : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC$* -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+	$(AM_V_GEN) TEST_CASE_NUM=$$(echo $@ | $(ESED) -n 's/.*TC([0-9]+).*/\1/p') && \
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC$${TEST_CASE_NUM} -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
 $(srcdir)/TC3.sh : $(BENCHMARK_SCRIPT_DEPS)
 	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC3 --opt=exclude_dir_literal=docs -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
