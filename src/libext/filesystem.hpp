@@ -295,7 +295,7 @@ inline bool is_pathname_absolute(const std::string &path) noexcept
 
 /**
  * Takes an absolute or relative path, possibly with trailing slashes, and removes the unnecessary trailing
- * slashes.
+ * slashes, and any unnecessary non-existent directory (e.g. "./" gets removed).
  *
  * @param path
  * @return

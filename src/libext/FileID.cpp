@@ -183,7 +183,6 @@ void FileID::impl::SetStatInfo(const struct stat &stat_buf) const noexcept
 const std::string& FileID::impl::ResolvePath() const
 {
 	// Do we not have a full path already?
-	/// @todo probably don't need this check anymore.
 	if(m_path.empty())
 	{
 		// No.  Build the full path.
@@ -191,7 +190,6 @@ const std::string& FileID::impl::ResolvePath() const
 		auto at_path = m_at_dir->GetPath();
 		if(at_path != ".")
 		{
-			//m_path.reserve(at_path.size() + m_basename.size() + 2);
 			m_path.append(at_path);
 			m_path.append("/", 1);
 			m_path.append(m_basename);
@@ -289,7 +287,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	}
 }
 
-#if 0
+#if USE_FTS
 FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid)
 	: m_path(ftsent->fts_path, ftsent->fts_pathlen)
 {

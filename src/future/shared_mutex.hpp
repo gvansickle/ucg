@@ -77,6 +77,10 @@
 
 // We're on Mac OSX.
 STATIC_MSG_WARN("Trying to build with broken <shared_mutex> header")
+namespace std
+{
+		using shared_mutex = std::shared_timed_mutex;
+}
 
 #elif !defined(HAVE_SHARED_MUTEX_HEADER) || defined(NO_SHARED_MUTEX_HEADER)
 
