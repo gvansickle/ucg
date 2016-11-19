@@ -230,7 +230,7 @@ AT_CLEANUP
 # Extract the list of tests we need to generate from the test_cases.csv file.
 # @todo pwd is build/tests here.  None of the *srcdirs seem to be defined at m4 time.
 m4_define([test_case_table],
-	m4_flatten(m4_esyscmd_s([cat $(pwd)/../../tests/test_cases.csv | gawk 'BEGIN { FPAT = "([^,]+)| *(\"[^\"]+\")" } /TC.*/ { printf "[[%s],[%s],]", $1, $3; }'])dnl
+	m4_flatten(m4_esyscmd_s([cat $(pwd)/../../tests/test_cases.csv | awk 'BEGIN { FPAT = "([^,]+)| *(\"[^\"]+\")" } /TC.*/ { printf "[[%s],[%s],]", $1, $3; }'])dnl
 	)
 )
 #m4_define([test_case_table], m4_dquote([abc],[def gh],[ijk],[lmn opg]))
