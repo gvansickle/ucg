@@ -36,6 +36,14 @@
 ### abs_builddir=/<...>/UCGTopSrcDir/build/tests
 ### at_top_srcdir=../..
 ###
+### At testsuite runtime:
+### at_dir=`pwd`    # The directory we run the suite in.  Default to . if no -C option.
+### at_suite_log=$at_dir/$as_me.log  # The file containing the log.
+### at_suite_dir=$at_dir/$as_me.dir  # The directory the whole suite works in. Should be absolute to let the user `cd' at will.
+###
+### Note that none of these are exported from the top-level testsuite script.
+###
+
 
 # Paths to source that we'll test against.
 ## We generate this file.
@@ -185,23 +193,18 @@ done;
 ###
 # $1 = Test case identifier (e.g. "TC1").
 # $2 = Test case title.
-# $3 = Directory which must exist or skip test.
 m4_define([ATUCG_INSTANTIATE_ONE_BENCHMARK],
 [
 AT_SETUP(m4_esyscmd_s(echo $2))dnl The echo here is to "shell-unescape" the shell-escaped title.
 AT_KEYWORDS([benchmark])
 
 # Skip this test if the test script reports it's not ready.  The most likely cause is that we can't find the necessary test corpus.
-AT_SKIP_IF([
-if ${srcdir}/$1.sh -r;
-then exit 0;
-else exit 1;
-fi;])
+AT_SKIP_IF([export srcdir && export top_srcdir && $srcdir/$1.sh -s])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Run the test script.
-AT_CHECK([AXUCG_SOURCE ${srcdir}/$1.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([AXUCG_SOURCE $srcdir/$1.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST
 
