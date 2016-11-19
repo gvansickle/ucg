@@ -206,8 +206,6 @@ public:
 	 * @return
 	 */
 	FileType GetFileType() const noexcept;
-	bool IsRegularFile() const noexcept { return GetFileType() == FT_REG; };
-	bool IsDir() const noexcept { return GetFileType() == FT_DIR; };
 
 	std::shared_ptr<FileID> GetAtDir() const noexcept;
 

@@ -24,7 +24,18 @@
 
 #include <libext/static_diagnostics.hpp>
 
-#if __has_include(<shared_mutex>) // C++14 feature.  Header check only, returns 1.
+#if defined(__APPLE__) || defined(__apple_build_version__)
+// We're on Mac OSX.
+// Don't include the system <shared_mutex> header at all.
+STATIC_MSG_WARN("Mac OSX detected, attempting to backfill <shared_mutex>");
+#define HAVE_BROKEN_SHARED_MUTEX_HEADER
+namespace std
+{
+		using shared_mutex = std::mutex;
+		template <typename T>
+		using shared_lock = std::unique_lock<T>;
+}
+#elif __has_include(<shared_mutex>) // C++14 feature.  Header check only, returns 1.
 #	include <shared_mutex>
 #	define HAVE_SHARED_MUTEX_HEADER 1
 #	if __cpp_lib_shared_timed_mutex || defined(HAVE_STD__SHARED_TIMED_MUTEX) // C++14 feature which renamed std::shared_mutex to std::shared_timed_mutex.  <shared_mutex> and == 201402.
@@ -75,7 +86,6 @@
 
 #if defined(HAVE_BROKEN_SHARED_MUTEX_HEADER)
 
-// We're on Mac OSX.
 STATIC_MSG_WARN("Trying to build with broken <shared_mutex> header")
 
 #elif !defined(HAVE_SHARED_MUTEX_HEADER) || defined(NO_SHARED_MUTEX_HEADER)
