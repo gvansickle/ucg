@@ -75,12 +75,16 @@
 
 #if defined(HAVE_BROKEN_SHARED_MUTEX_HEADER)
 
-// We're on Mac OSX.
 STATIC_MSG_WARN("Trying to build with broken <shared_mutex> header")
+#ifdef __APPLE__
+// We're on Mac OSX.
+STATIC_MSG_WARN("Mac OSX detected, attempting to backfill...");
 namespace std
 {
 		using shared_mutex = std::shared_timed_mutex;
+		template <typename T> using shared_lock = std::unique_lock<T>;
 }
+#endif
 
 #elif !defined(HAVE_SHARED_MUTEX_HEADER) || defined(NO_SHARED_MUTEX_HEADER)
 
