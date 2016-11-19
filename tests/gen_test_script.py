@@ -47,11 +47,11 @@ test_script_template_1 = Template("""\
 # Reset in case getopts has been used already.
 OPTIND=1
 # Initialize CLI vars.
-report_ready=0
+should_skip=0
 
-while getopts "ro:" opt; do
+while getopts "so:" opt; do
     case "$$opt" in
-    r)  report_ready=1
+    s)  should_skip=1
         ;;
     o)  output_file=$$OPTARG
         ;;
@@ -61,17 +61,17 @@ shift $$((OPTIND-1))
 test "$$1" = "--" && shift # Any remaining params will be left in $$@
 ## Command-line parsing complete.
 
-# Did the caller request a ready-status report?
-# Return 0 if ready to run, 1 if this test should be skipped.
-if test $$report_ready = "1"; then
+# Did the caller request a should-skip report?
+# Return 0 (true) if not ready to run and this test should be skipped, or 1 if ready.
+if test $$should_skip = "1"; then
     if test -e "${corpus}"; then
         # Found the test corpus.
         echo "Found test corpus: ${corpus}";
-        exit 0;
+        exit 1;
     else
         # Can't find the test corpus, skip the test.
         echo "No test corpus: ${corpus}"
-        exit 1;
+        exit 0;
     fi;
 fi
 
