@@ -81,8 +81,9 @@ STATIC_MSG_WARN("Trying to build with broken <shared_mutex> header")
 STATIC_MSG_WARN("Mac OSX detected, attempting to backfill...");
 namespace std
 {
-		using shared_mutex = std::shared_timed_mutex;
-		template <typename T> using shared_lock = std::unique_lock<T>;
+		using shared_mutex = std::mutex;
+		template <typename T>
+		using shared_lock = std::unique_lock<T>;
 }
 #endif
 
