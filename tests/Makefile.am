@@ -178,7 +178,7 @@ dist_check_SCRIPTS = $(BENCHMARKSCRIPTS)
 # regenerated from a tarball.  Hence, we're using the $(MAINTPYTHON) variable here, which is either
 # a python interpreter or the "missing" script.
 
-$(srcdir)/TC%.sh : $(BENCHMARK_SCRIPT_DEPS)
+$(BENCHMARKSCRIPTS) : $(BENCHMARK_SCRIPT_DEPS)
 	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC$* -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
 $(srcdir)/TC3.sh : $(BENCHMARK_SCRIPT_DEPS)
