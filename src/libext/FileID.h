@@ -196,6 +196,19 @@ public:
 	void SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf);
 
 	/**
+	 * Stat the given filename at the directory represented by this.
+	 *
+	 * @note Only makes sens to call on FileIDs representing directories.
+	 *
+	 * @todo Derived class for dirs?
+	 *
+	 * @param name
+	 * @param statbuf
+	 * @param flags
+	 */
+	void FStatAt(const std::string &name, struct stat *statbuf, int flags);
+
+	/**
 	 *
 	 * @return
 	 */

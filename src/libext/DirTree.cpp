@@ -197,7 +197,6 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 	if(dname[0] == '.' && (dname[1] == 0 || (dname[1] == '.' && dname[2] == 0)))
 	{
 		// Always skip "." and "..", unless they're specified on the command line.
-		/// @todo these are really links, not exactly dirs for this purpose.
 		stats.m_num_dotdirs_found++;
 		stats.m_num_dotdirs_rejected++;
 		stats.m_num_filetype_without_stat++;
@@ -215,21 +214,11 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 		//   Note that if the situation is m_logical+is_symlink, we want to find out
 		//   where it goes, so we follow the symlink.
 
-		if(is_unknown)
-		{
-			// Otherwise it was accounted for as a non-stat above.
-			stats.m_num_filetype_stats++;
-		}
+		stats.m_num_filetype_stats++;
 
 		// Stat the filename using the directory as the at-descriptor.
-		int retval = fstatat(dse->GetFileDescriptor().GetFD(), dname, &statbuf,
-				AT_NO_AUTOMOUNT | (!m_logical ? AT_SYMLINK_NOFOLLOW : 0));
-		if(retval == -1)
-		{
-			WARN() << "Attempt to stat file '" << dname << "' in directory '" << dse->GetPath() << "' failed: " << LOG_STRERROR();
-			errno = 0;
-			return;
-		}
+		dse->FStatAt(dname, &statbuf, AT_NO_AUTOMOUNT | (!m_logical ? AT_SYMLINK_NOFOLLOW : 0));
+
 		is_dir = S_ISDIR(statbuf.st_mode);
 		is_file = S_ISREG(statbuf.st_mode);
 		/// @note This shouldn't ever come back as a symlink if we're doing a logical traversal, since
@@ -275,6 +264,10 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				LOG(INFO) << "... should be scanned.";
 
 				FileID file_to_scan(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG);
+				if(statbuff_ptr == nullptr)
+				{
+					file_to_scan.SetDevIno(dse->GetDev(), current_dirent->d_ino);
+				}
 				file_to_scan.SetFileDescriptorMode(FAM_RDONLY, FCF_NOCTTY | FCF_NOATIME);
 
 				// Queue it up.
@@ -293,7 +286,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 			LOG(INFO) << "... directory.";
 			stats.m_num_directories_found++;
 
-			if(m_dir_basename_filter(basename)) //!skip_inclusion_checks && m_dir_inc_manager.DirShouldBeExcluded(name))
+			if(m_dir_basename_filter(basename))
 			{
 				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 				LOG(INFO) << "... should be ignored.";
@@ -301,8 +294,11 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				return;
 			}
 
-			FileID dir_atfd(FileID::path_known_relative, dse, basename, FT_DIR);
-			dir_atfd.SetDevIno(dse->GetDev(), current_dirent->d_ino);
+			FileID dir_atfd(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_DIR);
+			if(statbuff_ptr == nullptr)
+			{
+				dir_atfd.SetDevIno(dse->GetDev(), current_dirent->d_ino);
+			}
 			dir_atfd.SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY);
 
 			if(m_logical)

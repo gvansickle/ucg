@@ -463,6 +463,17 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 	}
 }
 
+void FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
+{
+	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
+	if(retval == -1)
+	{
+		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' failed: " << LOG_STRERROR();
+		errno = 0;
+		return;
+	}
+}
+
 const FileDescriptor& FileID::GetFileDescriptor()
 {
 	{
