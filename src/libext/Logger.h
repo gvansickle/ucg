@@ -23,8 +23,8 @@
  * @todo Redirecting to streams/files, timestamp, maybe sorting by timestamp, more log severity levels: trace, debug, info, warning, error, fatal.
  */
 
-#ifndef SRC_LOGGER_H_
-#define SRC_LOGGER_H_
+#ifndef SRC_LIBEXT_LOGGER_H_
+#define SRC_LIBEXT_LOGGER_H_
 
 #include <config.h>
 
@@ -197,4 +197,4 @@ public:
 #define ERROR()  CERR(STDERR) << "error: "
 ///@}
 
-#endif /* SRC_LOGGER_H_ */
+#endif /* SRC_LIBEXT_LOGGER_H_ */

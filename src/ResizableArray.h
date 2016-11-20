@@ -34,7 +34,7 @@ inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign
 #error "Could not find aligned memory allocator."
 #endif
 
-#include "Logger.h"
+#include "libext/Logger.h"
 #include <libext/integer.hpp>
 
 /**

@@ -22,8 +22,7 @@
  */
 
 #include <config.h>
-
-#include "Logger.h"
+#include <libext/Logger.h>
 
 #include <string>
 #include <thread>
