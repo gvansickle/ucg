@@ -227,7 +227,7 @@ namespace portable
 {
 
 /**
- * A more usable and portable replacement for glibc and POSIX dirname().
+ * A more usable and portable replacement for glibc and POSIX dirname()'s.
  *
  * @param path  const ref to a path string.  Guaranteed to not be modified in any way by the function call.
  * @return  A std::string representing the dirname part of #path.  Guaranteed to be a normal std::string with which you may do
@@ -248,7 +248,7 @@ inline std::string dirname(const std::string &path) noexcept
 }
 
 /**
- * A more usable and portable replacement for glibc and POSIX basename().
+ * A more usable and portable replacement for glibc and POSIX basename()'s.
  *
  * @param path  const ref to a path string.  Guaranteed to not be modified in any way by the function call.
  * @return  A std::string representing the basename part of path.  Guaranteed to be a normal std::string with which you may do
@@ -259,7 +259,7 @@ inline std::string basename(const std::string &path) noexcept
 	// Get a copy of the path string which dirname() can modify all it wants.
 	char * modifiable_path = strdup(path.c_str());
 
-	// Copy the output of dirname into a std:string.  We don't ever free the string dirname() returns
+	// Copy the output of dirname into a std:string.  We don't ever free the string basename() returns
 	// because it's either a static buffer, or it's a pointer to modifiable_path.  The latter we'll free below.
 	std::string retval(::basename(modifiable_path));
 
@@ -269,11 +269,21 @@ inline std::string basename(const std::string &path) noexcept
 }
 
 
+/**
+ * Convert #path into an absolute file path.
+ *
+ * @param path
+ * @return
+ */
 inline std::string canonicalize_file_name(const std::string &path)
 {
 	std::string retval;
-	/// @todo Maybe prefer glibc extension canonicalize_file_name()?
+	/// @todo Maybe prefer glibc extension canonicalize_file_name() here?
 	char * fn = ::realpath(path.c_str(), nullptr);
+	if(fn == nullptr)
+	{
+		throw FileException("realpath failed");
+	}
 	retval.assign(fn);
 	::free(fn);
 	return retval;

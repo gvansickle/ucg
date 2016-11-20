@@ -196,6 +196,19 @@ public:
 	void SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf);
 
 	/**
+	 * Stat the given filename at the directory represented by this.
+	 *
+	 * @note Only makes sens to call on FileIDs representing directories.
+	 *
+	 * @todo Derived class for dirs?
+	 *
+	 * @param name
+	 * @param statbuf
+	 * @param flags
+	 */
+	void FStatAt(const std::string &name, struct stat *statbuf, int flags);
+
+	/**
 	 *
 	 * @return
 	 */
@@ -319,9 +332,12 @@ public:
 	/// In any case, it is always equal to the string passed into the constructor, and this will always exist and is valid.
 	std::string m_basename;
 
-	/// The absolute path to this file.
+	/// The full m_at_dir-relative path to this file.
 	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
 	mutable std::string m_path;
+
+	/// An absolute path to this file.
+	mutable std::string m_abs_path;
 
 	/// Flags to use when we open the file descriptor.
 	mutable int m_open_flags { 0 };
