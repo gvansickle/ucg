@@ -106,6 +106,18 @@ const std::string& FileID::impl::GetBasename() const noexcept
 	return m_basename;
 };
 
+// Stats
+std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_reg;
+std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_dir;
+std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_other;
+
+template <typename T, typename Lambda = std::function<T(T&)>&>
+void com_exch_loop(std::atomic<T> &atomic_var, Lambda val_changer)
+{
+	T old_val;
+	while(!atomic_var.compare_exchange_weak(old_val, val_changer(old_val))) {};
+}
+
 const FileDescriptor& FileID::impl::GetFileDescriptor()
 {
 	if(m_file_descriptor.empty())
@@ -115,6 +127,27 @@ const FileDescriptor& FileID::impl::GetFileDescriptor()
 		if(m_open_flags == 0)
 		{
 			throw std::runtime_error("m_open_flags is not set");
+		}
+
+		// Maintain stats on the number of openat()s we do for each of FT_REG/FT_DIR.
+		switch(m_file_type)
+		{
+		case FT_REG:
+		{
+			uint64_t old_val = m_atomic_fd_max_reg.load();
+			while(!m_atomic_fd_max_reg.compare_exchange_weak(old_val, old_val + 1)) {};
+			break;
+		}
+		case FT_DIR:
+		{
+			com_exch_loop(m_atomic_fd_max_dir, [](uint64_t old_val){ return old_val++; });
+			break;
+		}
+		default:
+		{
+			com_exch_loop(m_atomic_fd_max_other, [](uint64_t old_val){ return old_val++; });
+			break;
+		}
 		}
 
 		if(m_at_dir)
@@ -505,4 +538,10 @@ void FileID::SetStatInfo(const struct stat &stat_buf) noexcept
 	m_pimpl->SetStatInfo(stat_buf);
 }
 
+
+std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid)
+{
+	fileid.m_pimpl->dump_stats(ostrm, *fileid.m_pimpl);
+	return ostrm;
+}
 

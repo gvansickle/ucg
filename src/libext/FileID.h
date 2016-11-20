@@ -198,7 +198,7 @@ public:
 	/**
 	 * Stat the given filename at the directory represented by this.
 	 *
-	 * @note Only makes sens to call on FileIDs representing directories.
+	 * @note Only makes sense to call on FileIDs representing directories.
 	 *
 	 * @todo Derived class for dirs?
 	 *
@@ -234,6 +234,8 @@ public:
 
 	void SetDevIno(dev_t d, ino_t i) noexcept;
 
+	friend std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid);
+
 ///@debug private:
 
 	void SetStatInfo(const struct stat &stat_buf) noexcept;
@@ -241,6 +243,8 @@ public:
 	/// The pImpl.
 	std::unique_ptr<impl> m_pimpl;
 };
+
+std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid);
 
 static_assert(std::is_assignable<FileID, FileID>::value, "FileID must be assignable to itself.");
 static_assert(std::is_copy_assignable<FileID>::value, "FileID must be copy assignable to itself.");
@@ -297,6 +301,14 @@ public:
 
 		return m_file_type;
 	};
+
+//protected:
+	std::ostream& dump_stats(std::ostream &ostrm, const FileID::impl &impl)
+	{
+		return ostrm << "Max descriptors, regular: " << impl.m_atomic_fd_max_reg << "\n"
+				<< "Max descriptors, dir: " << impl.m_atomic_fd_max_dir << "\n"
+				<< "Max descriptors, other: " << impl.m_atomic_fd_max_other << "\n";
+	}
 
 //private:
 
@@ -368,6 +380,11 @@ public:
 	/// @note POSIX doesn't define the units for this.  Linux is documented to use 512-byte units, as is GNU libc.
 	mutable blkcnt_t m_blocks { 0 };
 	///@}
+
+	// Stats
+	static std::atomic<std::uint64_t> m_atomic_fd_max_reg;
+	static std::atomic<std::uint64_t> m_atomic_fd_max_dir;
+	static std::atomic<std::uint64_t> m_atomic_fd_max_other;
 };
 
 /// @name Compile-time invariants for the UnsynchronizedFileID class.

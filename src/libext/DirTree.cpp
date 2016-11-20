@@ -118,6 +118,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 
 	// Log the traversal stats.
 	LOG(INFO) << m_stats;
+	LOG(INFO) << "FileID stats:\n" << *root_file_id;
 }
 
 void DirTree::ReaddirLoop(int dirjob_num)
