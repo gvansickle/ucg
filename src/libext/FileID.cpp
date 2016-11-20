@@ -134,18 +134,17 @@ const FileDescriptor& FileID::impl::GetFileDescriptor()
 		{
 		case FT_REG:
 		{
-			uint64_t old_val = m_atomic_fd_max_reg.load();
-			while(!m_atomic_fd_max_reg.compare_exchange_weak(old_val, old_val + 1)) {};
+			com_exch_loop(m_atomic_fd_max_reg, [](uint64_t old_val){ return old_val + 1; });
 			break;
 		}
 		case FT_DIR:
 		{
-			com_exch_loop(m_atomic_fd_max_dir, [](uint64_t old_val){ return old_val++; });
+			com_exch_loop(m_atomic_fd_max_dir, [](uint64_t old_val){ return old_val + 1; });
 			break;
 		}
 		default:
 		{
-			com_exch_loop(m_atomic_fd_max_other, [](uint64_t old_val){ return old_val++; });
+			com_exch_loop(m_atomic_fd_max_other, [](uint64_t old_val){ return old_val + 1; });
 			break;
 		}
 		}
