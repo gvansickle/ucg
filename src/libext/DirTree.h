@@ -92,6 +92,8 @@ private:
 
 	/// Mutex for making the compound assignment by sum operator thread-safe.
 	std::mutex m_mutex;
+
+#undef M_STATLIST
 };
 
 /**
