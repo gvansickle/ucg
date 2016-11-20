@@ -49,7 +49,9 @@ class DirTraversalStats
 	X("Number of directories rejected", m_num_dirs_rejected) \
 	X("Number of files found", m_num_files_found) \
 	X("Number of files rejected", m_num_files_rejected) \
-	X("Number of files sent for scanning", m_num_files_scanned)
+	X("Number of files sent for scanning", m_num_files_scanned) \
+	X("Number of files which required a stat() call to determine type", m_num_filetype_stats) \
+	X("Number of files which did not require a stat() call to determine type", m_num_filetype_without_stat)
 
 public:
 #define X(d,s) size_t s {0};
