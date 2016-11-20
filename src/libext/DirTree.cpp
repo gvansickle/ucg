@@ -63,7 +63,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 	for(auto p : start_paths)
 	{
 		// Clean up the paths coming from the command line.
-		p = realpath(p);
+		p = clean_up_path(p);
 
 		/// @note At the moment, we're doing the equivalent of fts' COMFOLLOW here;
 		/// we follow symlinks during the fstatat() call in the FileID constructor by not specifying

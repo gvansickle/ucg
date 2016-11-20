@@ -268,7 +268,18 @@ inline std::string basename(const std::string &path) noexcept
 	return retval;
 }
 
+
+inline std::string canonicalize_file_name(const std::string &path)
+{
+	std::string retval;
+	/// @todo Maybe prefer glibc extension canonicalize_file_name()?
+	char * fn = ::realpath(path.c_str(), nullptr);
+	retval.assign(fn);
+	::free(fn);
+	return retval;
 }
+
+} // namespace
 
 /**
  * Examines the given #path and determines if it is absolute.
@@ -300,7 +311,7 @@ inline bool is_pathname_absolute(const std::string &path) noexcept
  * @param path
  * @return
  */
-inline std::string realpath(const std::string &path) noexcept
+inline std::string clean_up_path(const std::string &path) noexcept
 {
 	// For Posix, there are three situations we need to consider here:
 	// 1. An absolute path starting with 1 or 2 slashes needs those slashes left alone.
