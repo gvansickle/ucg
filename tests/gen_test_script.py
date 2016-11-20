@@ -35,7 +35,7 @@ from string import Template
 
 # Benchmark script header template.
 # Only instantiated once.
-test_script_template_1 = Template("""\
+test_script_master_template = Template("""\
 #!/bin/sh
 
 ###
@@ -80,8 +80,8 @@ fi
 echo "Test description short: '${desc_long}'" >> ${results_file}
 
 # Record info on the filesystem where the test data lies.
-TEST_DATA_FS_INFO=`get_dev_and_fs_type $$1`
-"Test data path: \"$$1\"" >> ${results_file}
+TEST_DATA_FS_INFO=`get_dev_and_fs_type ${corpus}`
+"Test data path: \"${corpus}\"" >> ${results_file}
 "Test data filesystem info: $$TEST_DATA_FS_INFO" >> ${results_file}
 
 TOP_CORPUSDIR=$${top_srcdir}/$${at_arg_corpusdir}/
@@ -317,7 +317,7 @@ class TestGenDatabase(object):
                 wrapped_cmd_line_timing=wrapped_cmd_line_timing
                 )
             test_cases += test_case + "\n"
-        script = test_script_template_1.substitute(
+        script = test_script_master_template.substitute(
             desc_long=desc_long,
             corpus=corpus,
             num_iterations=10,

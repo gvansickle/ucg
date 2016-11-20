@@ -205,7 +205,7 @@ AT_SKIP_IF([export srcdir && export top_srcdir && export builddir && $srcdir/$1.
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Run the test script.
-AT_CHECK([AXUCG_SOURCE $srcdir/$1.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([export srcdir && export top_srcdir && export builddir && $srcdir/$1.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST
 
