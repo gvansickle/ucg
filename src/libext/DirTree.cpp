@@ -62,8 +62,8 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 
 	for(auto p : start_paths)
 	{
-		// Clean up the incoming paths.
-		p = realpath(p);
+		// Clean up the paths coming from the command line.
+		p = clean_up_path(p);
 
 		/// @note At the moment, we're doing the equivalent of fts' COMFOLLOW here;
 		/// we follow symlinks during the fstatat() call in the FileID constructor by not specifying
@@ -74,7 +74,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		{
 			// Explicitly not filtering files specified on command line.
 			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
-			m_out_queue.wait_push(FileID(std::move(*file_or_dir)));
+			m_out_queue.wait_push(std::move(*file_or_dir));
 		}
 		else if(type == FT_DIR)
 		{
@@ -133,9 +133,6 @@ void DirTree::ReaddirLoop(int dirjob_num)
 
 	while(m_dir_queue.wait_pull(std::move(dse)) != queue_op_status::closed)
 	{
-		//int open_at_fd = dse->GetAtDir()->GetFileDescriptor().GetFD();
-		//const char *open_at_path = dse->GetBasename().c_str();
-		//d = opendirat(open_at_fd, open_at_path);
 		LOG(DEBUG) << "Examining files in directory '" << dse->GetPath() << "'";
 		int open_at_fd = dse->GetFileDescriptor().GetDupFD();
 		d = fdopendir(open_at_fd);
@@ -186,7 +183,13 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 	if(!is_file && !is_dir && !is_symlink && !is_unknown)
 	{
 		// It's a type we don't care about.
+		stats.m_num_filetype_without_stat++;
 		return;
+	}
+	if(!is_unknown)
+	{
+		// We know the type.
+		stats.m_num_filetype_without_stat++;
 	}
 #endif
 	const char *dname = current_dirent->d_name;
@@ -194,6 +197,10 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 	if(dname[0] == '.' && (dname[1] == 0 || (dname[1] == '.' && dname[2] == 0)))
 	{
 		// Always skip "." and "..", unless they're specified on the command line.
+		/// @todo these are really links, not exactly dirs for this purpose.
+		stats.m_num_directories_found++;
+		stats.m_num_dirs_rejected++;
+		stats.m_num_filetype_without_stat++;
 		return;
 	}
 
@@ -208,6 +215,12 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 		//   Note that if the situation is m_logical+is_symlink, we want to find out
 		//   where it goes, so we follow the symlink.
 
+		if(is_unknown)
+		{
+			// Otherwise it was accounted for as a non-stat above.
+			stats.m_num_filetype_stats++;
+		}
+
 		// Stat the filename using the directory as the at-descriptor.
 		int retval = fstatat(dse->GetFileDescriptor().GetFD(), dname, &statbuf,
 				AT_NO_AUTOMOUNT | (!m_logical ? AT_SYMLINK_NOFOLLOW : 0));
@@ -217,10 +230,9 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 			errno = 0;
 			return;
 		}
-		/// @todo Capture this info in the FileID object.
 		is_dir = S_ISDIR(statbuf.st_mode);
 		is_file = S_ISREG(statbuf.st_mode);
-		/// @todo This shouldn't ever come back as a symlink if we're doing a logical traversal, since
+		/// @note This shouldn't ever come back as a symlink if we're doing a logical traversal, since
 		///       fstatat() follows symlinks by default.  We add the AT_SYMLINK_NOFOLLOW flag and then
 		///       ignore any symlinks returned if we're doing a physical traversal.
 		is_symlink = S_ISLNK(statbuf.st_mode);
@@ -228,6 +240,8 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 		{
 			is_unknown = false;
 		}
+
+		// Capture the stat info in the FileID object we create below.
 		statbuff_ptr = &statbuf;
 	}
 
