@@ -52,7 +52,7 @@
 #include <future/shared_mutex.hpp>
 
 #include "integer.hpp"
-#include "../Logger.h"
+#include "Logger.h"
 
 
 /// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:

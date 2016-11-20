@@ -21,7 +21,7 @@
 
 #include "DirTree.h"
 
-#include "../Logger.h" ///< @todo Break this root-ward dependency.
+#include "Logger.h"
 
 #include <sys/stat.h>
 #include <unistd.h>

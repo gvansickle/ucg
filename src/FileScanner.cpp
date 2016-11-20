@@ -22,7 +22,6 @@
 #include <libext/cpuidex.hpp>
 #include <libext/multiversioning.hpp>
 
-#include "Logger.h"
 #include "FileScanner.h"
 #include "FileScannerCpp11.h"
 #include "FileScannerPCRE.h"
@@ -35,6 +34,7 @@
 #include <string>
 #include <libext/string.hpp>
 #include <future/string.hpp>
+#include <libext/Logger.h>
 #include <thread>
 #include <mutex>
 #include <cstring> // For memchr().

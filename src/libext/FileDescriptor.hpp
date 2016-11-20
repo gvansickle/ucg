@@ -23,7 +23,7 @@
 #define SRC_LIBEXT_FILEDESCRIPTOR_HPP_
 
 #include <future/shared_mutex.hpp>
-#include "../Logger.h"
+#include "Logger.h"
 
 /**
  * Wrapper for C's 'int' file descriptor.
