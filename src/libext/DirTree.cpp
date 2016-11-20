@@ -198,8 +198,8 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 	{
 		// Always skip "." and "..", unless they're specified on the command line.
 		/// @todo these are really links, not exactly dirs for this purpose.
-		stats.m_num_directories_found++;
-		stats.m_num_dirs_rejected++;
+		stats.m_num_dotdirs_found++;
+		stats.m_num_dotdirs_rejected++;
 		stats.m_num_filetype_without_stat++;
 		return;
 	}

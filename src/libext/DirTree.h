@@ -47,6 +47,8 @@ class DirTraversalStats
 #define M_STATLIST \
 	X("Number of directories found", m_num_directories_found) \
 	X("Number of directories rejected", m_num_dirs_rejected) \
+	X("Number of dot dirs found", m_num_dotdirs_found) \
+	X("Number of dot dirs rejected", m_num_dotdirs_rejected) \
 	X("Number of files found", m_num_files_found) \
 	X("Number of files rejected", m_num_files_rejected) \
 	X("Number of files sent for scanning", m_num_files_scanned) \
