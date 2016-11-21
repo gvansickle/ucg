@@ -28,9 +28,6 @@
 #include <fcntl.h> // For AT_FDCWD, AT_NO_AUTOMOUNT
 #include <unistd.h> // For close().
 #include <sys/stat.h>
-#include <fts.h>
-
-//#include <libexplain/openat.h>
 
 #include <atomic>
 
@@ -351,22 +348,6 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 		m_pimpl->SetStatInfo(*stat_buf);
 	}
 }
-
-#if USE_FTS
-FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid)
-	: m_path(ftsent->fts_path, ftsent->fts_pathlen)
-{
-	// Initialize the stat fields if possible.
-	if(stat_info_known_valid)
-	{
-		m_stat_info_valid = true;
-		m_unique_file_identifier = dev_ino_pair(ftsent->fts_statp->st_dev, ftsent->fts_statp->st_ino);
-		m_size = ftsent->fts_statp->st_size;
-		m_block_size = ftsent->fts_statp->st_blksize;
-		m_blocks = ftsent->fts_statp->st_blocks;
-	}
-}
-#endif
 
 FileID& FileID::operator=(const FileID& other)
 {

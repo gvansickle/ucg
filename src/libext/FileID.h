@@ -163,9 +163,6 @@ public:
 	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname,
 			FileAccessMode fam = FAM_UNINITIALIZED, FileCreationFlag fcf = FCF_UNINITIALIZED);
-#if USE_FTS
-	FileID(const FTSENT *ftsent, bool stat_info_known_valid);
-#endif
 	/// @}
 
 	/// Copy assignment.
@@ -273,9 +270,6 @@ public:
 
 	/// @name Various non-default constructors.
 	/// @{
-#ifdef USE_FTS
-	impl(const FTSENT *ftsent, bool stat_info_known_valid);
-#endif
 	impl(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
 	impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
 			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);

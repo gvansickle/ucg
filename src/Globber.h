@@ -103,9 +103,6 @@ private:
 struct DirQueueEntry
 {
 	DirQueueEntry() = default;
-#ifdef USE_FTS
-	DirQueueEntry(FTSENT *ftsent) : m_pathname(ftsent_path(ftsent)), m_level(ftsent_level(ftsent)) {};
-#endif
 	DirQueueEntry(DirQueueEntry&&) = default;
 	~DirQueueEntry() = default;
 
