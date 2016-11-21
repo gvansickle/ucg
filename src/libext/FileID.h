@@ -119,15 +119,8 @@ private:
 	using ReaderLock = std::shared_lock<MutexType>;
 	using WriterLock = std::unique_lock<MutexType>;
 
-#if 0 /// @todo For double-checked locking.
-	mutable std::atomic<std::string*> m_atomic_path_ptr { nullptr };
-#endif
-
 	/// Mutex for locking in copy and move constructors and some operations.
 	mutable MutexType m_mutex;
-
-	/// Mutex for double-checked locking.
-	//mutable std::mutex m_the_mutex;
 
 public:
 

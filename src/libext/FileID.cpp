@@ -158,6 +158,7 @@ const FileDescriptor* FileID::impl::GetFileDescriptor()
 			}
 			m_file_descriptor = make_shared_fd(tempfd);
 		}
+#if 0
 		else
 		{
 			// We should only get here if we are the root of the traversal.
@@ -169,6 +170,7 @@ const FileDescriptor* FileID::impl::GetFileDescriptor()
 			}
 			m_file_descriptor = make_shared_fd(tempfd);
 		}
+#endif
 	}
 
 	return &m_file_descriptor;
@@ -318,6 +320,16 @@ FileID::FileID(path_known_cwd_tag)
 
 }
 
+FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf, FileType type)
+	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", stat_buf, type))
+{
+	// basename is a file relative to at_dir_fileid, and we also have stat info for it.
+	if(stat_buf != nullptr)
+	{
+		m_stat_info_witness.store((void*)1);
+	}
+}
+
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", nullptr, type))
 {
@@ -334,23 +346,17 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	/// Full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
+
+	if(is_pathname_absolute(pathname))
+	{
+		m_path_witness.store(&m_pimpl->m_path);
+	}
 }
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileAccessMode fam, FileCreationFlag fcf)
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname))
 {
 	SetFileDescriptorMode(fam, fcf);
-}
-
-FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf, FileType type)
-	: FileID::FileID(path_known_relative, at_dir_fileid, basename, type)
-{
-	// basename is a file relative to at_dir_fileid, and we also have stat info for it.
-	if(stat_buf != nullptr)
-	{
-		m_pimpl->SetStatInfo(*stat_buf);
-		m_stat_info_witness.store((void*)1);
-	}
 }
 
 FileID& FileID::operator=(const FileID& other)
