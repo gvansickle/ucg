@@ -217,10 +217,6 @@ public:
 	 */
 	FileType GetFileType() const noexcept;
 
-	std::shared_ptr<FileID> GetAtDir() const noexcept;
-
-	const std::string& GetAtDirRelativeBasename() const noexcept;
-
 	off_t GetFileSize() const noexcept;
 
 	blksize_t GetBlockSize() const noexcept;
@@ -241,7 +237,8 @@ public:
 	std::unique_ptr<impl> m_pimpl;
 
 	mutable std::atomic<FileDescriptor*> m_file_descriptor_witness {nullptr};
-
+	mutable std::atomic<void*> m_stat_info_witness {nullptr};
+	mutable std::atomic<const std::string*> m_path_witness {nullptr};
 };
 
 std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid);
@@ -309,7 +306,7 @@ public:
 
 //private:
 
-	void LazyLoadStatInfo() const noexcept;
+	void* LazyLoadStatInfo() const noexcept;
 
 	void SetStatInfo(const struct stat &stat_buf) const noexcept;
 
