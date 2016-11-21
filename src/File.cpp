@@ -41,7 +41,7 @@ File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_
 	{
 		file_descriptor = m_fileid.GetFileDescriptor().GetFD();
 
-		/// @todo Do attempts to open nonexistent files throw and get to here?
+		/// @todo Does the above ever not throw on error?
 		if(file_descriptor == -1)
 		{
 			// Couldn't open the file, throw exception.

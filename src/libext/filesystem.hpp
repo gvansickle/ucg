@@ -38,9 +38,6 @@
 /// And at least NetBSD behaves similarly.  So, include the POSIX versions and we'll try to clean this mess up below.
 #include <libgen.h>
 #include <dirent.h>
-#ifdef USE_FTS
-#include <fts.h>
-#endif
 
 /// @note Because we included libgen.h above, we shouldn't get the GNU version from this #include of string.h.
 #include <string.h>
@@ -366,66 +363,5 @@ inline DIR* opendirat(int at_dir, const char *name)
 
 	return d;
 }
-
-#ifdef USE_FTS
-
-/// @name FTS helpers.
-/// @{
-
-
-inline int64_t ftsent_level(const FTSENT* p)
-{
-	// We store the "real level" of the parent directory in the fts_number member.
-	return p->fts_level + p->fts_number;
-}
-
-/**
- * Returns just the basename of the file represented by #p.
- * @param p
- * @return
- */
-inline std::string ftsent_name(const FTSENT* p)
-{
-	if(p != nullptr)
-	{
-		return std::string(p->fts_name, p->fts_namelen);
-	}
-	else
-	{
-		return "<nullptr>";
-	}
-}
-
-/**
- * Returns the full path (dirname + basename) of the file/dir represented by #p.
- * @param p
- * @return
- */
-inline std::string ftsent_path(const FTSENT* p)
-{
-	//return ftsent_name(p);
-	if(p != nullptr)
-	{
-		std::string retval;
-		if(p->fts_parent != nullptr)
-		{
-			if(p->fts_parent->fts_pathlen > 0)
-			{
-				retval.assign(p->fts_parent->fts_path, p->fts_parent->fts_pathlen);
-				retval += '/';
-			}
-		}
-		retval.append(p->fts_name, p->fts_namelen);
-		return retval;
-	}
-	else
-	{
-		return "<nullptr>";
-	}
-}
-
-///@}
-
-#endif // USE_FTS
 
 #endif /* SRC_LIBEXT_FILESYSTEM_HPP_ */

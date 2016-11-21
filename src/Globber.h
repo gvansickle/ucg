@@ -103,9 +103,6 @@ private:
 struct DirQueueEntry
 {
 	DirQueueEntry() = default;
-#ifdef USE_FTS
-	DirQueueEntry(FTSENT *ftsent) : m_pathname(ftsent_path(ftsent)), m_level(ftsent_level(ftsent)) {};
-#endif
 	DirQueueEntry(DirQueueEntry&&) = default;
 	~DirQueueEntry() = default;
 
@@ -113,7 +110,6 @@ struct DirQueueEntry
 	DirQueueEntry& operator=(const DirQueueEntry&) = default;
 
 	std::string m_pathname;
-	int64_t m_level {FTS_ROOTPARENTLEVEL};
 };
 
 
@@ -137,9 +133,6 @@ private:
 
 	void RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_index);
 
-	int GetFTSOptions() const noexcept;
-
-	void ScanOneDirectory(FTS *tree, FTSENT *parent, FTSENT *child_list, sync_queue<DirQueueEntry> &dir_queue, DirectoryTraversalStats &stats);
 
 	/// Vector of the paths which the user gave on the command line.
 	std::vector<std::string> m_start_paths;

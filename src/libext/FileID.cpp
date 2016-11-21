@@ -28,9 +28,6 @@
 #include <fcntl.h> // For AT_FDCWD, AT_NO_AUTOMOUNT
 #include <unistd.h> // For close().
 #include <sys/stat.h>
-#include <fts.h>
-
-//#include <libexplain/openat.h>
 
 #include <atomic>
 
@@ -106,6 +103,18 @@ const std::string& FileID::impl::GetBasename() const noexcept
 	return m_basename;
 };
 
+// Stats
+std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_reg;
+std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_dir;
+std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_other;
+
+template <typename T, typename Lambda = std::function<T(T&)>&>
+void com_exch_loop(std::atomic<T> &atomic_var, Lambda val_changer)
+{
+	T old_val;
+	while(!atomic_var.compare_exchange_weak(old_val, val_changer(old_val))) {};
+}
+
 const FileDescriptor& FileID::impl::GetFileDescriptor()
 {
 	if(m_file_descriptor.empty())
@@ -115,6 +124,26 @@ const FileDescriptor& FileID::impl::GetFileDescriptor()
 		if(m_open_flags == 0)
 		{
 			throw std::runtime_error("m_open_flags is not set");
+		}
+
+		// Maintain stats on the number of openat()s we do for each of FT_REG/FT_DIR.
+		switch(m_file_type)
+		{
+		case FT_REG:
+		{
+			com_exch_loop(m_atomic_fd_max_reg, [](uint64_t old_val){ return old_val + 1; });
+			break;
+		}
+		case FT_DIR:
+		{
+			com_exch_loop(m_atomic_fd_max_dir, [](uint64_t old_val){ return old_val + 1; });
+			break;
+		}
+		default:
+		{
+			com_exch_loop(m_atomic_fd_max_other, [](uint64_t old_val){ return old_val + 1; });
+			break;
+		}
 		}
 
 		if(m_at_dir)
@@ -320,22 +349,6 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	}
 }
 
-#if USE_FTS
-FileID::FileID(const FTSENT *ftsent, bool stat_info_known_valid)
-	: m_path(ftsent->fts_path, ftsent->fts_pathlen)
-{
-	// Initialize the stat fields if possible.
-	if(stat_info_known_valid)
-	{
-		m_stat_info_valid = true;
-		m_unique_file_identifier = dev_ino_pair(ftsent->fts_statp->st_dev, ftsent->fts_statp->st_ino);
-		m_size = ftsent->fts_statp->st_size;
-		m_block_size = ftsent->fts_statp->st_blksize;
-		m_blocks = ftsent->fts_statp->st_blocks;
-	}
-}
-#endif
-
 FileID& FileID::operator=(const FileID& other)
 {
 	if(this != &other)
@@ -505,4 +518,10 @@ void FileID::SetStatInfo(const struct stat &stat_buf) noexcept
 	m_pimpl->SetStatInfo(stat_buf);
 }
 
+
+std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid)
+{
+	fileid.m_pimpl->dump_stats(ostrm, *fileid.m_pimpl);
+	return ostrm;
+}
 

@@ -60,6 +60,11 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 	// Start at the cwd of the process (~AT_FDCWD)
 	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(FileID::path_known_cwd_tag());
 
+	//
+	// Step 1: Process the paths and/or filenames specified by the user on the command line.
+	// We always use only a single thread (the current one) for this step.
+	//
+
 	for(auto p : start_paths)
 	{
 		// Clean up the paths coming from the command line.
@@ -118,6 +123,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 
 	// Log the traversal stats.
 	LOG(INFO) << m_stats;
+	LOG(INFO) << "FileID stats:\n" << *root_file_id;
 }
 
 void DirTree::ReaddirLoop(int dirjob_num)
