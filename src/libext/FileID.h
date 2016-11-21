@@ -238,7 +238,7 @@ public:
 
 	mutable std::atomic<FileDescriptor*> m_file_descriptor_witness {nullptr};
 	mutable std::atomic<void*> m_stat_info_witness {nullptr};
-	mutable std::atomic<const std::string*> m_path_witness {nullptr};
+	mutable std::atomic<std::string*> m_path_witness {nullptr};
 };
 
 std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid);

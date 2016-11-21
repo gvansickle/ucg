@@ -366,7 +366,6 @@ FileID& FileID::operator=(const FileID& other)
 		std::lock(this_lock, other_lock);
 		LOG(DEBUG) << "COPY ASSIGN";
 		m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
-		//m_pimpl.reset(new impl(*other.m_pimpl));
 
 		m_file_descriptor_witness = other.m_file_descriptor_witness.load();
 		m_stat_info_witness = other.m_stat_info_witness.load();
@@ -412,7 +411,7 @@ std::string FileID::GetBasename() const noexcept
 
 const std::string& FileID::GetPath() const noexcept
 {
-#if 1
+#if 0
 	{
 		ReaderLock rl(m_mutex);
 
@@ -429,9 +428,7 @@ const std::string& FileID::GetPath() const noexcept
 
 	return m_pimpl->m_path;
 #else
-	auto path_filler = [this](){ return (std::string*)&m_pimpl->ResolvePath(); };
-	//std::function<const std::string& (FileID::impl&)> path_filler = &impl::ResolvePath;
-	return *DoubleCheckedLock<std::string*>(m_atomic_path_ptr, m_the_mutex, path_filler);
+	return *DoubleCheckedLock<std::string*>(m_path_witness, m_mutex, [this](){ return (std::string*)&(m_pimpl->ResolvePath()); });
 #endif
 }
 
