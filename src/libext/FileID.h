@@ -239,6 +239,9 @@ public:
 
 	/// The pImpl.
 	std::unique_ptr<impl> m_pimpl;
+
+	mutable std::atomic<FileDescriptor*> m_file_descriptor_witness {nullptr};
+
 };
 
 std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid);
@@ -283,7 +286,7 @@ public:
 	/// Resolve and cache this FileID's path.  Recursively visits its parent directories to do so.
 	const std::string& ResolvePath() const;
 
-	const FileDescriptor& GetFileDescriptor();
+	const FileDescriptor* GetFileDescriptor();
 
 	FileType GetFileType() const noexcept
 	{

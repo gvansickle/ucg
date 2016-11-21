@@ -39,8 +39,8 @@
  * @param cache_filler
  * @return
  */
-template < typename ReturnType, typename AtomicTypeWrapper = std::atomic<ReturnType>, typename CacheFillerType = std::function<ReturnType()> >
-ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, std::mutex &mutex, CacheFillerType cache_filler)
+template < typename ReturnType, typename AtomicTypeWrapper = std::atomic<ReturnType>, typename CacheFillerType = std::function<ReturnType()>&, typename MutexType = std::mutex >
+ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, MutexType &mutex, CacheFillerType cache_filler)
 {
 #if 1
 	ReturnType temp_retval = wrap.load(std::memory_order_relaxed);
@@ -49,13 +49,13 @@ ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, std::mutex &mutex, CacheFi
 	if(temp_retval == nullptr)
 	{
 		// First check says we don't have the cached value yet.
-		std::lock_guard<std::mutex> lock(mutex);
+		std::unique_lock<MutexType> lock(mutex);
 		// One more try.
 		temp_retval = wrap.load(std::memory_order_relaxed);
 		if(temp_retval == nullptr)
 		{
 			// Still no cached value.  We'll have to do the heavy lifting.
-			temp_retval = cache_filler();
+			temp_retval = const_cast<ReturnType>(cache_filler());
 			std::atomic_thread_fence(std::memory_order_release);
 			wrap.store(temp_retval, std::memory_order_relaxed);
 		}
@@ -63,6 +63,14 @@ ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, std::mutex &mutex, CacheFi
 #else
 #endif
 	return temp_retval;
+}
+
+
+template <typename T, typename Lambda = std::function<T(T&)>&>
+void com_exch_loop(std::atomic<T> &atomic_var, Lambda val_changer)
+{
+	T old_val;
+	while(!atomic_var.compare_exchange_weak(old_val, val_changer(old_val))) {};
 }
 
 
@@ -108,14 +116,7 @@ std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_reg;
 std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_dir;
 std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_other;
 
-template <typename T, typename Lambda = std::function<T(T&)>&>
-void com_exch_loop(std::atomic<T> &atomic_var, Lambda val_changer)
-{
-	T old_val;
-	while(!atomic_var.compare_exchange_weak(old_val, val_changer(old_val))) {};
-}
-
-const FileDescriptor& FileID::impl::GetFileDescriptor()
+const FileDescriptor* FileID::impl::GetFileDescriptor()
 {
 	if(m_file_descriptor.empty())
 	{
@@ -170,7 +171,7 @@ const FileDescriptor& FileID::impl::GetFileDescriptor()
 		}
 	}
 
-	return m_file_descriptor;
+	return &m_file_descriptor;
 }
 
 void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
@@ -383,6 +384,7 @@ FileID& FileID::operator=(FileID&& other)
 		std::lock(this_lock, other_lock);
 
 		m_pimpl = std::move(other.m_pimpl);
+		m_file_descriptor_witness = other.m_file_descriptor_witness.load();
 	}
 	return *this;
 };
@@ -489,6 +491,7 @@ void FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 
 const FileDescriptor& FileID::GetFileDescriptor()
 {
+#if 0
 	{
 		ReaderLock rl(m_mutex);
 		if(!m_pimpl->m_file_descriptor.empty())
@@ -498,6 +501,8 @@ const FileDescriptor& FileID::GetFileDescriptor()
 	}
 	WriterLock wl(m_mutex);
 	return m_pimpl->GetFileDescriptor();
+#endif
+	return *DoubleCheckedLock<FileDescriptor*>(m_file_descriptor_witness, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
 }
 
 dev_t FileID::GetDev() const noexcept
