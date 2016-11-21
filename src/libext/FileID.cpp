@@ -180,12 +180,12 @@ void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
 	m_unique_file_identifier = dev_ino_pair(d, i);
 }
 
-void FileID::impl::LazyLoadStatInfo() const noexcept
+void* FileID::impl::LazyLoadStatInfo() const noexcept
 {
 	if(m_stat_info_valid)
 	{
 		// Already set.
-		return;
+		return (void*)1;
 	}
 
 	// We don't have stat info and now we need it.
@@ -211,6 +211,8 @@ void FileID::impl::LazyLoadStatInfo() const noexcept
 	{
 		SetStatInfo(stat_buf);
 	}
+
+	return (void*)1;
 }
 
 void FileID::impl::SetStatInfo(const struct stat &stat_buf) const noexcept
@@ -363,8 +365,11 @@ FileID& FileID::operator=(const FileID& other)
 #endif
 		std::lock(this_lock, other_lock);
 		LOG(DEBUG) << "COPY ASSIGN";
-		//m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
-		m_pimpl.reset(new impl(*other.m_pimpl));
+		m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
+
+		m_file_descriptor_witness = other.m_file_descriptor_witness.load();
+		m_stat_info_witness = other.m_stat_info_witness.load();
+		m_path_witness = other.m_path_witness.load();
 	}
 	return *this;
 };
@@ -385,6 +390,8 @@ FileID& FileID::operator=(FileID&& other)
 
 		m_pimpl = std::move(other.m_pimpl);
 		m_file_descriptor_witness = other.m_file_descriptor_witness.load();
+		m_stat_info_witness = other.m_stat_info_witness.load();
+		m_path_witness = other.m_path_witness.load();
 	}
 	return *this;
 };
@@ -404,7 +411,7 @@ std::string FileID::GetBasename() const noexcept
 
 const std::string& FileID::GetPath() const noexcept
 {
-#if 1
+#if 0
 	{
 		ReaderLock rl(m_mutex);
 
@@ -421,18 +428,9 @@ const std::string& FileID::GetPath() const noexcept
 
 	return m_pimpl->m_path;
 #else
-	auto path_filler = [this](){ return (std::string*)&m_pimpl->ResolvePath(); };
-	//std::function<const std::string& (FileID::impl&)> path_filler = &impl::ResolvePath;
-	return *DoubleCheckedLock<std::string*>(m_atomic_path_ptr, m_the_mutex, path_filler);
+	return *DoubleCheckedLock<std::string*>(m_path_witness, m_mutex, [this](){ return (std::string*)&(m_pimpl->ResolvePath()); });
 #endif
 }
-
-std::shared_ptr<FileID> FileID::GetAtDir() const noexcept
-{
-	// Only need reader lock here, m_pimpl->m_at_dir will always exist.
-	ReaderLock rl(m_mutex);
-	return m_pimpl->GetAtDir();
-};
 
 FileType FileID::GetFileType() const noexcept
 {
@@ -443,6 +441,7 @@ FileType FileID::GetFileType() const noexcept
 
 off_t FileID::GetFileSize() const noexcept
 {
+#if 0
 	{
 		ReaderLock rl(m_mutex);
 		if(m_pimpl->m_stat_info_valid)
@@ -452,6 +451,9 @@ off_t FileID::GetFileSize() const noexcept
 	}
 	WriterLock rl(m_mutex);
 	return m_pimpl->GetFileSize();
+#endif
+	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ m_pimpl->GetFileSize(); return (void*)1;});
+	return m_pimpl->m_size;
 };
 
 blksize_t FileID::GetBlockSize() const noexcept
