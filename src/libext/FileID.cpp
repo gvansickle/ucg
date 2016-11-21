@@ -349,6 +349,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	if(stat_buf != nullptr)
 	{
 		m_pimpl->SetStatInfo(*stat_buf);
+		m_stat_info_witness.store((void*)1);
 	}
 }
 
@@ -405,7 +406,8 @@ FileID::~FileID()
 
 std::string FileID::GetBasename() const noexcept
 {
-	ReaderLock rl(m_mutex);
+	//ReaderLock rl(m_mutex);
+	// This is read-only after construction, so it doesn't need a lock here.
 	return m_pimpl->GetBasename();
 };
 
@@ -434,9 +436,14 @@ const std::string& FileID::GetPath() const noexcept
 
 FileType FileID::GetFileType() const noexcept
 {
+#if 0
 	WriterLock rl(m_mutex);
 
 	return m_pimpl->GetFileType();
+#endif
+	/// @todo Not reliant on stat, could be optimized.
+	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	return m_pimpl->m_file_type;
 }
 
 off_t FileID::GetFileSize() const noexcept
@@ -458,14 +465,25 @@ off_t FileID::GetFileSize() const noexcept
 
 blksize_t FileID::GetBlockSize() const noexcept
 {
+#if 0
 	WriterLock wl(m_mutex);
 	return m_pimpl->GetBlockSize();
+#endif
+	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	return m_pimpl->m_block_size;
 };
 
 const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
+#if 0
 	WriterLock wl(m_mutex);
 	return m_pimpl->GetUniqueFileIdentifier();
+#endif
+
+	/// @todo This is not necessarily dependent on stat info, could be optimized.
+
+	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo();});
+	return m_pimpl->m_unique_file_identifier;
 }
 
 void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
