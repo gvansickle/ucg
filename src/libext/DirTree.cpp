@@ -83,7 +83,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		}
 		else if(type == FT_DIR)
 		{
-			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY);
+			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
 			m_dir_queue.wait_push(file_or_dir);
 		}
 		else if(type == FT_SYMLINK)
@@ -305,7 +305,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 			{
 				dir_atfd.SetDevIno(dse->GetDev(), current_dirent->d_ino);
 			}
-			dir_atfd.SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY);
+			dir_atfd.SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
 
 			if(m_logical)
 			{
