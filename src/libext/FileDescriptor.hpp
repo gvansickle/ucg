@@ -185,22 +185,23 @@ public:
 	/// Allow read access to the underlying int.
 	int GetFD() const noexcept
 	{
-		ReaderLock rl(m_mutex);
-		return m_file_descriptor;
+		//ReaderLock rl(m_mutex);
+		return m_file_descriptor.load();
 	};
 
 	int GetDupFD() const noexcept
 	{
-		ReaderLock rl(m_mutex);
-		int retval = dup(m_file_descriptor);
+		//ReaderLock rl(m_mutex);
+		int retval = dup(m_file_descriptor.load());
 		return retval;
 	}
 
 	/// Returns true if this FileDescriptor isn't a valid file descriptor.
 	inline bool empty() const noexcept
 	{
-		ReaderLock rl(m_mutex);
-		return unlocked_empty();
+		//ReaderLock rl(m_mutex);
+		//return unlocked_empty();
+		return m_file_descriptor.load() < 0;
 	}
 
 private:

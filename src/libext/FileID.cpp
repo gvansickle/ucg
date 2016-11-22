@@ -85,6 +85,7 @@ const FileDescriptor* FileID::impl::GetFileDescriptor()
 			throw std::runtime_error("m_open_flags is not set");
 		}
 
+#if 0
 		// Maintain stats on the number of openat()s we do for each of FT_REG/FT_DIR.
 		switch(m_file_type)
 		{
@@ -104,7 +105,7 @@ const FileDescriptor* FileID::impl::GetFileDescriptor()
 			break;
 		}
 		}
-
+#endif
 		if(m_at_dir)
 		{
 			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
