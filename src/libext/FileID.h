@@ -91,7 +91,9 @@ enum FileCreationFlag : int
 	FCF_DIRECTORY = O_DIRECTORY,//!< FCF_DIRECTORY
 	FCF_NOCTTY = O_NOCTTY,      //!< FCF_NOCTTY
 	FCF_NOFOLLOW = O_NOFOLLOW,  //!< FCF_NOFOLLOW
-	FCF_NOATIME = O_NOATIME		//!< FCF_NOATIME
+	FCF_NOATIME = O_NOATIME,		//!< FCF_NOATIME
+	FCF_NONBLOCK = O_NONBLOCK,
+	FCF_PATH = O_PATH
 };
 
 /// Bitwise-or operator for FileCreationFlag.
@@ -197,6 +199,8 @@ public:
 	 * @param flags
 	 */
 	void FStatAt(const std::string &name, struct stat *statbuf, int flags);
+
+	void OpenAt(const std::string &name);
 
 	/**
 	 *

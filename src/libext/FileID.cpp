@@ -29,49 +29,7 @@
 #include <unistd.h> // For close().
 #include <sys/stat.h>
 
-#include <atomic>
-
-//using cache_filler_type = std::function<ReturnType() noexcept>;
-/**
- *
- * @param wrap          An instance of ats::atomic<ReturnType>.
- * @param mutex
- * @param cache_filler
- * @return
- */
-template < typename ReturnType, typename AtomicTypeWrapper = std::atomic<ReturnType>, typename CacheFillerType = std::function<ReturnType()>&, typename MutexType = std::mutex >
-ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, MutexType &mutex, CacheFillerType cache_filler)
-{
-#if 1
-	ReturnType temp_retval = wrap.load(std::memory_order_relaxed);
-	std::atomic_thread_fence(std::memory_order_acquire);  	// Guaranteed to observe everything done in another thread before
-			 	 	 	 	 	 	 	 	 	 	 	 	// the std::atomic_thread_fence(std::memory_order_release) below.
-	if(temp_retval == nullptr)
-	{
-		// First check says we don't have the cached value yet.
-		std::unique_lock<MutexType> lock(mutex);
-		// One more try.
-		temp_retval = wrap.load(std::memory_order_relaxed);
-		if(temp_retval == nullptr)
-		{
-			// Still no cached value.  We'll have to do the heavy lifting.
-			temp_retval = const_cast<ReturnType>(cache_filler());
-			std::atomic_thread_fence(std::memory_order_release);
-			wrap.store(temp_retval, std::memory_order_relaxed);
-		}
-	}
-#else
-#endif
-	return temp_retval;
-}
-
-
-template <typename T, typename Lambda = std::function<T(T&)>&>
-void com_exch_loop(std::atomic<T> &atomic_var, Lambda val_changer)
-{
-	T old_val;
-	while(!atomic_var.compare_exchange_weak(old_val, val_changer(old_val))) {};
-}
+#include "double_checked_lock.hpp"
 
 
 //////////////////////////////////
