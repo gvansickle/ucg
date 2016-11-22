@@ -93,7 +93,6 @@ enum FileCreationFlag : int
 	FCF_NOFOLLOW = O_NOFOLLOW,  //!< FCF_NOFOLLOW
 	FCF_NOATIME = O_NOATIME,		//!< FCF_NOATIME
 	FCF_NONBLOCK = O_NONBLOCK,
-	FCF_PATH = O_PATH
 };
 
 /// Bitwise-or operator for FileCreationFlag.
