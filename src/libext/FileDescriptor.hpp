@@ -23,6 +23,8 @@
 #define SRC_LIBEXT_FILEDESCRIPTOR_HPP_
 
 #include <future/shared_mutex.hpp>
+
+#include "double_checked_lock.hpp"
 #include "Logger.h"
 
 /**
@@ -42,11 +44,12 @@ class FileDescriptor
 public:
 	/// Default constructor.
 	/// @note Can't be noexcept, though only seems to break the compile on Cygwin gcc 5.4.0.
-	FileDescriptor() { LOG(DEBUG) << "DEFAULT CONSTRUCTOR"; };
+	FileDescriptor() = default;
 
 	explicit FileDescriptor(int fd) noexcept
 	{
-		WriterLock wl(m_mutex);
+		/// WriterLock wl(m_mutex);  @note I don't see that we need a lock here, it'd be "other" that we would need to lock,
+		/// and "other" is a raw FD.
 		m_file_descriptor = fd;
 		LOG(DEBUG) << "Explicitly assigned file descriptor: " << m_file_descriptor;
 	};
@@ -54,21 +57,24 @@ public:
 	/// Copy constructor will dup the other's file descriptor.
 	FileDescriptor(const FileDescriptor &other) noexcept
 	{
-		ReaderLock rl(other.m_mutex);
-
 		LOG(DEBUG) << "copy constructor called.";
 
-		if(!other.unlocked_empty())
-		{
-			m_file_descriptor = dup(other.m_file_descriptor);
-			LOG(DEBUG) << "duped fd=" << other.m_file_descriptor << " to fd=" << m_file_descriptor << ".";
-		}
-		else
-		{
-			// Other has an invalid fd, just copy the value.
-			m_file_descriptor = other.m_file_descriptor;
-			LOG(DEBUG) << "other was invalid, no dup. fd=" << m_file_descriptor;
-		}
+		//ReaderLock rl(other.m_mutex);
+		DoubleCheckedLock<int, cm_invalid_file_descriptor>(other.m_file_descriptor, m_mutex, [&](){
+			int temp_fd;
+			if(!other.unlocked_empty())
+			{
+				temp_fd = dup(other.m_file_descriptor);
+				LOG(DEBUG) << "duped fd=" << other.m_file_descriptor << " to fd=" << m_file_descriptor << ".";
+			}
+			else
+			{
+				// Other has an invalid fd, just copy the value.
+				temp_fd = other.m_file_descriptor;
+				LOG(DEBUG) << "other was invalid, no dup. fd=" << m_file_descriptor;
+			}
+			return temp_fd;
+		});
 	}
 
 	/// Move constructor.  Ownership of the fd will be transferred from other to this.
@@ -76,16 +82,21 @@ public:
 	/// when it is destroyed, it will close the file, which it no longer owns.
 	FileDescriptor(FileDescriptor&& other) noexcept
 	{
-		WriterLock wl(other.m_mutex);
 		LOG(DEBUG) << "move constructor called.";
 
-		m_file_descriptor = other.m_file_descriptor;
-		LOG(DEBUG) << "moved file descriptor: " << m_file_descriptor;
+		//WriterLock wl(other.m_mutex);
+		DoubleCheckedLock<int, cm_invalid_file_descriptor>(other.m_file_descriptor, m_mutex, [&](){
 
-		if(!other.unlocked_empty())
-		{
-			other.m_file_descriptor = cm_invalid_file_descriptor;
-		}
+			int temp_fd = other.m_file_descriptor;
+			LOG(DEBUG) << "moved file descriptor: " << temp_fd;
+
+			if(!other.unlocked_empty())
+			{
+				other.m_file_descriptor.store(cm_invalid_file_descriptor);
+			}
+
+			return temp_fd;
+		});
 	}
 
 	/// Destructor.  Closes #m_file_descriptor if it's valid.
@@ -93,7 +104,7 @@ public:
 	{
 		// @note No locking here.  If anyone was trying to read or write us, they'd have
 		// to have (possibly shared) ownership (right?), and hence we wouldn't be getting destroyed.
-		WriterLock wl(m_mutex);
+		//WriterLock wl(m_mutex);
 		LOG(DEBUG) << "DESTRUCTOR, have file descriptor: " << m_file_descriptor;
 		if(!unlocked_empty())
 		{
@@ -123,7 +134,7 @@ public:
 			if(other.unlocked_empty())
 			{
 				// Other fd isn't valid, just copy it.
-				m_file_descriptor = other.m_file_descriptor;
+				m_file_descriptor.store(other.m_file_descriptor);
 				LOG(DEBUG) << "copied invalid file descriptor: " << m_file_descriptor;
 			}
 			else
@@ -158,7 +169,7 @@ public:
 			}
 
 			// Step 2: Take other's resources.
-			m_file_descriptor = other.m_file_descriptor;
+			m_file_descriptor.store(other.m_file_descriptor);
 			LOG(DEBUG) << "moved file descriptor: " << m_file_descriptor;
 
 			// Step 3: Set other to a destructible state.
@@ -174,28 +185,29 @@ public:
 	/// Allow read access to the underlying int.
 	int GetFD() const noexcept
 	{
-		ReaderLock rl(m_mutex);
-		return m_file_descriptor;
+		//ReaderLock rl(m_mutex);
+		return m_file_descriptor.load();
 	};
 
 	int GetDupFD() const noexcept
 	{
-		ReaderLock rl(m_mutex);
-		int retval = dup(m_file_descriptor);
+		//ReaderLock rl(m_mutex);
+		int retval = dup(m_file_descriptor.load());
 		return retval;
 	}
 
 	/// Returns true if this FileDescriptor isn't a valid file descriptor.
 	inline bool empty() const noexcept
 	{
-		ReaderLock rl(m_mutex);
-		return unlocked_empty();
+		//ReaderLock rl(m_mutex);
+		//return unlocked_empty();
+		return m_file_descriptor.load() < 0;
 	}
 
 private:
 	static constexpr int cm_invalid_file_descriptor = -987;
 
-	mutable int m_file_descriptor { cm_invalid_file_descriptor };
+	mutable std::atomic<int> m_file_descriptor { cm_invalid_file_descriptor };
 
 	inline bool unlocked_empty() const noexcept { return m_file_descriptor < 0; };
 };

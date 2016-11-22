@@ -32,22 +32,27 @@
  * @param cache_filler
  * @return
  */
-template < typename ReturnType, typename AtomicTypeWrapper = std::atomic<ReturnType>, typename CacheFillerType = std::function<ReturnType()>&, typename MutexType = std::mutex >
+template < typename ReturnType,
+	ReturnType NullVal = nullptr,
+	typename AtomicTypeWrapper = std::atomic<ReturnType>,
+	typename CacheFillerType = std::function<ReturnType()>&,
+	typename MutexType = std::mutex >
 ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, MutexType &mutex, CacheFillerType cache_filler)
 {
 	ReturnType temp_retval = wrap.load(std::memory_order_relaxed);
 	std::atomic_thread_fence(std::memory_order_acquire);  	// Guaranteed to observe everything done in another thread before
 			 	 	 	 	 	 	 	 	 	 	 	 	// the std::atomic_thread_fence(std::memory_order_release) below.
-	if(temp_retval == nullptr)
+	if(temp_retval == NullVal)
 	{
 		// First check says we don't have the cached value yet.
 		std::unique_lock<MutexType> lock(mutex);
 		// One more try.
 		temp_retval = wrap.load(std::memory_order_relaxed);
-		if(temp_retval == nullptr)
+		if(temp_retval == NullVal)
 		{
 			// Still no cached value.  We'll have to do the heavy lifting.
-			temp_retval = const_cast<ReturnType>(cache_filler());
+			//temp_retval = const_cast<ReturnType>(cache_filler());
+			temp_retval = (typename std::remove_const<ReturnType>::type)(cache_filler());
 			std::atomic_thread_fence(std::memory_order_release);
 			wrap.store(temp_retval, std::memory_order_relaxed);
 		}
