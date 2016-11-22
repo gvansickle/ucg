@@ -158,6 +158,7 @@ const FileDescriptor* FileID::impl::GetFileDescriptor()
 			}
 			m_file_descriptor = make_shared_fd(tempfd);
 		}
+#if 0
 		else
 		{
 			// We should only get here if we are the root of the traversal.
@@ -169,6 +170,7 @@ const FileDescriptor* FileID::impl::GetFileDescriptor()
 			}
 			m_file_descriptor = make_shared_fd(tempfd);
 		}
+#endif
 	}
 
 	return &m_file_descriptor;
@@ -318,6 +320,16 @@ FileID::FileID(path_known_cwd_tag)
 
 }
 
+FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf, FileType type)
+	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", stat_buf, type))
+{
+	// basename is a file relative to at_dir_fileid, and we also have stat info for it.
+	if(stat_buf != nullptr)
+	{
+		m_stat_info_witness.store((void*)1);
+	}
+}
+
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", nullptr, type))
 {
@@ -334,22 +346,17 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	/// Full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
+
+	if(is_pathname_absolute(pathname))
+	{
+		m_path_witness.store(&m_pimpl->m_path);
+	}
 }
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileAccessMode fam, FileCreationFlag fcf)
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname))
 {
 	SetFileDescriptorMode(fam, fcf);
-}
-
-FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf, FileType type)
-	: FileID::FileID(path_known_relative, at_dir_fileid, basename, type)
-{
-	// basename is a file relative to at_dir_fileid, and we also have stat info for it.
-	if(stat_buf != nullptr)
-	{
-		m_pimpl->SetStatInfo(*stat_buf);
-	}
 }
 
 FileID& FileID::operator=(const FileID& other)
@@ -405,7 +412,8 @@ FileID::~FileID()
 
 std::string FileID::GetBasename() const noexcept
 {
-	ReaderLock rl(m_mutex);
+	//ReaderLock rl(m_mutex);
+	// This is read-only after construction, so it doesn't need a lock here.
 	return m_pimpl->GetBasename();
 };
 
@@ -434,9 +442,14 @@ const std::string& FileID::GetPath() const noexcept
 
 FileType FileID::GetFileType() const noexcept
 {
+#if 0
 	WriterLock rl(m_mutex);
 
 	return m_pimpl->GetFileType();
+#endif
+	/// @todo Not reliant on stat, could be optimized.
+	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	return m_pimpl->m_file_type;
 }
 
 off_t FileID::GetFileSize() const noexcept
@@ -458,14 +471,25 @@ off_t FileID::GetFileSize() const noexcept
 
 blksize_t FileID::GetBlockSize() const noexcept
 {
+#if 0
 	WriterLock wl(m_mutex);
 	return m_pimpl->GetBlockSize();
+#endif
+	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	return m_pimpl->m_block_size;
 };
 
 const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
+#if 0
 	WriterLock wl(m_mutex);
 	return m_pimpl->GetUniqueFileIdentifier();
+#endif
+
+	/// @todo This is not necessarily dependent on stat info, could be optimized.
+
+	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo();});
+	return m_pimpl->m_unique_file_identifier;
 }
 
 void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
