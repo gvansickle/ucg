@@ -160,6 +160,8 @@ void* FileID::impl::LazyLoadStatInfo() const noexcept
 #pragma GCC diagnostic pop
 
 	struct stat stat_buf;
+	m_at_dir->FStatAt(m_basename, &stat_buf, AT_NO_AUTOMOUNT);
+#if 0
 	if(fstatat(m_at_dir->GetFileDescriptor().GetFD(), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
 	{
 		// Error.
@@ -170,8 +172,9 @@ void* FileID::impl::LazyLoadStatInfo() const noexcept
 	}
 	else
 	{
+#endif
 		SetStatInfo(stat_buf);
-	}
+	//}
 
 	return (void*)1;
 }
@@ -275,6 +278,8 @@ FileID::FileID(path_known_cwd_tag)
 		LOG(DEBUG) << "Error in fdcwd constructor: " << LOG_STRERROR();
 	}
 	m_pimpl->m_file_descriptor = make_shared_fd(tempfd);
+	m_pimpl->m_abs_path = portable::canonicalize_file_name(".");
+
 	LOG(DEBUG) << "FDCWD constructor, file descriptor: " << m_pimpl->m_file_descriptor.GetFD();
 
 }
@@ -316,6 +321,14 @@ FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, File
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname))
 {
 	SetFileDescriptorMode(fam, fcf);
+	if(!at_dir_fileid->m_pimpl->m_abs_path.empty())
+	{
+		// Assumes pathname has been cleaned up.
+		if(is_pathname_absolute(pathname))
+		{
+			m_pimpl->m_abs_path = at_dir_fileid->m_pimpl->m_abs_path + "/" + pathname;
+		}
+	}
 }
 
 FileID& FileID::operator=(const FileID& other)
@@ -399,6 +412,21 @@ const std::string& FileID::GetPath() const noexcept
 #endif
 }
 
+const std::string& FileID::GetAbsPath() const noexcept
+{
+	/// @todo
+#if 0
+	if(!m_pimpl->m_at_dir->m_abs_path.empty())
+	{
+		// Assumes pathname has been cleaned up.
+		if(is_pathname_absolute(pathname))
+		{
+			m_pimpl->m_abs_path = at_dir_fileid->m_pimpl->m_abs_path + "/" + pathname;
+		}
+	}
+#endif
+}
+
 FileType FileID::GetFileType() const noexcept
 {
 #if 0
@@ -465,13 +493,31 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 void FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
+#if LEAN_FD
 	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
+#else
+	int atfd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
+	int retval = fstatat(atfd, name.c_str(), statbuf, flags);
+	close(atfd);
+#endif
+
 	if(retval == -1)
 	{
 		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' failed: " << LOG_STRERROR();
 		errno = 0;
 		return;
 	}
+}
+
+DIR *FileID::OpenDir()
+{
+	int atfd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
+	return fdopendir(atfd);
+}
+
+void FileID::CloseDir(DIR *d)
+{
+	closedir(d);
 }
 
 const FileDescriptor& FileID::GetFileDescriptor()
