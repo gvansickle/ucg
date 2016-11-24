@@ -226,10 +226,10 @@ const std::string& FileID::impl::ResolvePath() const
 	if(m_path.empty())
 	{
 		// No.  Build the full path.
-		m_path.reserve(64 + m_basename.size()); // Random number.
 		auto at_path = m_at_dir->GetPath();
 		if(at_path != ".")
 		{
+			m_path.reserve(at_path.length() + m_basename.size()+2);
 			m_path.append(at_path);
 			m_path.append("/", 1);
 			m_path.append(m_basename);

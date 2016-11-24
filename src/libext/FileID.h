@@ -332,6 +332,8 @@ public:
 	dev_t GetDev() const noexcept { if(m_dev == static_cast<dev_t>(-1)) { LazyLoadStatInfo(); }; return m_dev; };
 	void SetDevIno(dev_t d, ino_t i) noexcept;
 
+	/// @todo size_t GetResolvedPathLength() const noexcept;
+
 // Data members.
 
 	/// Shared pointer to the directory this FileID is in.
