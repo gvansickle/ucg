@@ -50,8 +50,8 @@ CLEANFILES =
 # The stamp file which will depend on all active third-party builds.
 # We do this this way so as to maximize parallel build potential.
 stampfile-all-third-party-builds-complete: $(third_party_complete_deps)
-	echo "All third-party builds complete, $$(date)" > "$@-temp"
-	mv "$@-temp" "$@"
+	@echo "All third-party builds complete, $$(date)" > "$@-temp"
+	@mv "$@-temp" "$@"
 
 ###
 ### MAINTAINER-ONLY TARGETS
@@ -71,7 +71,7 @@ MOSTLYCLEANFILES +=  $(CLEANFILES_REPORT_BOILERPLATE) stampfile-all-third-party-
 # We need to hook 'clean' here because we need to rm the entire untarred source trees, not just individual files.	
 clean-local:
 	@:; # Strip any spaces off the ends of the directory list.
-	DIRLIST="$$(echo "$(CLEAN_LOCAL_DIRS)" | $(ESED) 's/[ ]*(.*)[ ]*/\1\n/')"; \
+	$(AM_V_GEN) && DIRLIST="$$(echo "$(CLEAN_LOCAL_DIRS)" | $(ESED) 's/[ ]*(.*)[ ]*/\1\n/')"; \
 	if [ -n "$${DIRLIST}" ]; then \
 		for DIRNAME in $${DIRLIST}; \
 		do \
