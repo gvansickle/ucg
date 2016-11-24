@@ -140,8 +140,9 @@ void DirTree::ReaddirLoop(int dirjob_num)
 	while(m_dir_queue.wait_pull(std::move(dse)) != queue_op_status::closed)
 	{
 		LOG(DEBUG) << "Examining files in directory '" << dse->GetPath() << "'";
-		int open_at_fd = dse->GetFileDescriptor().GetDupFD();
-		d = fdopendir(open_at_fd);
+		//int open_at_fd = dse->GetFileDescriptor().GetDupFD();
+		//d = fdopendir(open_at_fd);
+		d = dse->OpenDir();
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
@@ -163,7 +164,8 @@ void DirTree::ReaddirLoop(int dirjob_num)
 			errno = 0;
 		}
 
-		closedir(d);
+		dse->CloseDir(d);
+		//closedir(d);
 	}
 
 	m_stats += stats;

@@ -176,6 +176,8 @@ public:
 	 */
 	const std::string& GetPath() const noexcept;
 
+	const std::string& GetAbsPath() const noexcept;
+
 	/**
 	 * This is essentially a possibly-deferred "open()" for this class.
 	 *
@@ -200,6 +202,9 @@ public:
 	void FStatAt(const std::string &name, struct stat *statbuf, int flags);
 
 	void OpenAt(const std::string &name);
+
+	DIR *OpenDir();
+	void CloseDir(DIR*d);
 
 	/**
 	 *
