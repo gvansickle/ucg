@@ -201,7 +201,7 @@ public:
 	 */
 	void FStatAt(const std::string &name, struct stat *statbuf, int flags);
 
-	void OpenAt(const std::string &name);
+	FileID OpenAt(const std::string &name, FileType type, int flags);
 
 	DIR *OpenDir();
 	void CloseDir(DIR*d);
@@ -304,6 +304,12 @@ public:
 				<< "Max descriptors, dir: " << impl.m_atomic_fd_max_dir << "\n"
 				<< "Max descriptors, other: " << impl.m_atomic_fd_max_other << "\n";
 	}
+
+	/**
+	 * If we have a file descriptor already, return it.  Else return -1.
+	 * @return
+	 */
+	int TryGetFD() const noexcept;
 
 //private:
 

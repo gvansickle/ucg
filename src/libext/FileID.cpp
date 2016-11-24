@@ -141,6 +141,17 @@ void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
 	m_unique_file_identifier = dev_ino_pair(d, i);
 }
 
+int FileID::impl::TryGetFD() const noexcept
+{
+	if(!m_file_descriptor.empty())
+	{
+		return m_file_descriptor.GetFD();
+	}
+
+	// No descriptor open yet.
+	return -1;
+}
+
 void* FileID::impl::LazyLoadStatInfo() const noexcept
 {
 	if(m_stat_info_valid)
@@ -493,12 +504,16 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 void FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-#if LEAN_FD
+#if 1// LEAN_FD
 	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
 #else
-	int atfd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
-	int retval = fstatat(atfd, name.c_str(), statbuf, flags);
-	close(atfd);
+	int fd = m_pimpl->TryGetFD();
+	if(fd == -1)
+	{
+		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
+	}
+	int retval = fstatat(fd, name.c_str(), statbuf, flags);
+	close(fd);
 #endif
 
 	if(retval == -1)
@@ -509,10 +524,22 @@ void FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 	}
 }
 
+FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
+{
+	FileID retval;
+
+	/// @todo
+	return retval;
+}
+
 DIR *FileID::OpenDir()
 {
-	int atfd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
-	return fdopendir(atfd);
+	int fd = m_pimpl->TryGetFD();
+	//if(fd == -1)
+	//{
+		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
+	//}
+	return fdopendir(fd);
 }
 
 void FileID::CloseDir(DIR *d)
