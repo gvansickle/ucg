@@ -504,11 +504,11 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 void FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-#if 1// LEAN_FD
+#if 1 //LEAN_FD
 	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
 #else
 	int fd = m_pimpl->TryGetFD();
-	if(fd == -1)
+	if(fd < 0)
 	{
 		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
 	}
@@ -535,10 +535,10 @@ FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 DIR *FileID::OpenDir()
 {
 	int fd = m_pimpl->TryGetFD();
-	//if(fd == -1)
-	//{
+	if(fd < 0)
+	{
 		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
-	//}
+	}
 	return fdopendir(fd);
 }
 
