@@ -226,10 +226,10 @@ const std::string& FileID::impl::ResolvePath() const
 	if(m_path.empty())
 	{
 		// No.  Build the full path.
-		m_path.reserve(64 + m_basename.size()); // Random number.
 		auto at_path = m_at_dir->GetPath();
 		if(at_path != ".")
 		{
+			m_path.reserve(at_path.length() + m_basename.size()+2);
 			m_path.append(at_path);
 			m_path.append("/", 1);
 			m_path.append(m_basename);
@@ -504,16 +504,21 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 void FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-#if 1// LEAN_FD
+#if 1 //LEAN_FD
 	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
 #else
+	int retval;
 	int fd = m_pimpl->TryGetFD();
-	if(fd == -1)
+	if(fd < 0)
 	{
 		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
+		retval = fstatat(fd, name.c_str(), statbuf, flags);
+		close(fd);
 	}
-	int retval = fstatat(fd, name.c_str(), statbuf, flags);
-	close(fd);
+	else
+	{
+		retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
+	}
 #endif
 
 	if(retval == -1)
@@ -535,10 +540,10 @@ FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 DIR *FileID::OpenDir()
 {
 	int fd = m_pimpl->TryGetFD();
-	//if(fd == -1)
-	//{
+	if(fd < 0)
+	{
 		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
-	//}
+	}
 	return fdopendir(fd);
 }
 
