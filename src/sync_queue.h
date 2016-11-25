@@ -226,7 +226,7 @@ public:
 
 private:
 
-	std::mutex m_mutex;
+	mutable std::mutex m_mutex;
 
 	std::condition_variable m_cv;
 

@@ -24,10 +24,11 @@
 
 #include <config.h>
 
+#include <future/string.hpp>
 #include <type_traits>
 #include <cstring>
-#include <string>
 #include <sstream>
+#include <iomanip>
 #include <vector>
 #include <numeric>
 #include <algorithm>
@@ -102,6 +103,23 @@ typename ContainerType::value_type join(const ContainerType& container_of_string
 	}
 
 	return retval;
+}
+
+/**
+ * Overload of std::to_string() to make insertion of hex-formatted integral types into an ostream more possible.
+ *
+ * @param val
+ * @param base
+ * @return
+ */
+template < typename T >
+std::string to_string(T val, std::ios_base & (*base)(std::ios_base&))
+{
+	std::ostringstream ss;
+
+	ss << std::showbase << std::setw(sizeof(T)*2+2) << base << val;
+
+	return ss.str();
 }
 
 

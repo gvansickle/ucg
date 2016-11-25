@@ -18,7 +18,7 @@ copyright_notice=\
 # UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 '''
@@ -33,12 +33,59 @@ import sqlite3
 import csv
 from string import Template
 
-test_script_template_1 = Template("""\
+# Benchmark script header template.
+# Only instantiated once.
+test_script_master_template = Template("""\
 #!/bin/sh
 
 ###
 ### GENERATED FILE, DO NOT EDIT
 ###
+
+## Parse command line args.
+
+# Reset in case getopts has been used already.
+OPTIND=1
+# Initialize CLI vars.
+should_skip=0
+
+while getopts "so:" opt; do
+    case "$$opt" in
+    s)  should_skip=1
+        ;;
+    o)  output_file=$$OPTARG
+        ;;
+    esac
+done
+shift $$((OPTIND-1))
+test "$$1" = "--" && shift # Any remaining params will be left in $$@
+## Command-line parsing complete.
+
+# Did the caller request a should-skip report?
+# Return 0 (true) if not ready to run and this test should be skipped, or 1 if ready.
+if test $$should_skip = "1"; then
+    if test -e "${corpus}"; then
+        # Found the test corpus.
+        echo "Found test corpus: ${corpus}";
+        exit 1;
+    else
+        # Can't find the test corpus, skip the test.
+        echo "No test corpus: ${corpus}"
+        exit 0;
+    fi;
+fi
+
+# Else run the test.
+
+echo "Test description short: '${desc_long}'" >> ${results_file}
+
+# Record info on the filesystem where the test data lies.
+TEST_DATA_FS_INFO=`get_dev_and_fs_type ${corpus}`
+"Test data path: \"${corpus}\"" >> ${results_file}
+"Test data filesystem info: $$TEST_DATA_FS_INFO" >> ${results_file}
+
+TOP_CORPUSDIR=$${top_srcdir}/$${at_arg_corpusdir}/
+echo "TOP_CORPUSDIR: $${TOP_CORPUSDIR} ($$(readlink -f $${TOP_CORPUSDIR}))" >> ${results_file};
 
 if test "x$$NUM_ITERATIONS" = "x"; then
 NUM_ITERATIONS=${num_iterations};
@@ -109,11 +156,11 @@ class TestGenDatabase(object):
         self.dbconnection.execute("PRAGMA foreign_keys = ON")
         # Use a Row object.
         self.dbconnection.row_factory = sqlite3.Row
-        
+
         # Register a suitable csv dialect.
         csv.register_dialect('ucg_nonstrict', delimiter=',', doublequote=True, escapechar="\\", quotechar=r'"',
                              quoting=csv.QUOTE_MINIMAL, skipinitialspace=True)
-        
+
     def __new__(cls, *args, **kwargs):
         """
         Override of class's __new__ to give us a real C++-style destructor.
@@ -121,14 +168,14 @@ class TestGenDatabase(object):
         instance = super(TestGenDatabase, cls).__new__(cls)
         instance.__init__(*args, **kwargs)
         return contextlib.closing(instance)
-        
+
     def close(self):
         """
         Cleanup function for contextlib.closing()'s use.
         """
         self.dbconnection.close()
 
-        
+
     def _placeholders(self, num):
         """
         Helper function which generates a string of num placeholders (e.g. for num==5, returns "?,?,?,?,?").
@@ -138,13 +185,13 @@ class TestGenDatabase(object):
         for col in range(1,num):
             qmarks += ",?"
         return qmarks
-        
+
     def _select_data(self, output_table_name=None):
-        
+
         # Use a Row object.
         self.dbconnection.row_factory = sqlite3.Row
         c = self.dbconnection.cursor()
-                
+
         # Do a cartesian join.
         c.execute("""CREATE TABLE {} AS SELECT test_cases.test_case_id, benchmark_progs.prog_id, benchmark_progs.exename, benchmark_progs.pre_options,
                 coalesce(benchmark_progs.opt_dirjobs, '') as opt_dirjobs, coalesce(test_cases.regex,'') || "   " || coalesce(test_cases.corpus,'') AS CombinedColumnsTest
@@ -160,11 +207,11 @@ class TestGenDatabase(object):
         INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
         """.format(output_table_name))
         return c
-    
+
     def parse_opt(self, optstring):
         opt_parts = optstring.split("=")
         return opt_parts
-    
+
     def generate_tests_type_2(self, opts=None, output_table_name=None):
         c = self.dbconnection.cursor()
         select_opts = ""
@@ -176,13 +223,13 @@ class TestGenDatabase(object):
             if opt_val:
                 select_opts += ' || "' + opt_val + '"'
         select_string = """CREATE TABLE {} AS
-        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, {} AS other_options, t.regex, t.corpus
+        SELECT t.test_case_id, t.desc_long, p.prog_id, p.exename, p.pre_options, {} AS other_options, t.regex, t.corpus
         FROM test_cases AS t CROSS JOIN benchmark_progs as p
         INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
         """.format(output_table_name, select_opts)
         c.execute(select_string)
         return c
-            
+
     def read_csv_into_table(self, table_name=None, filename=None, prim_key=None, foreign_key_tuples=None):
         c = self.dbconnection.cursor()
         if not foreign_key_tuples: foreign_key_tuples = []
@@ -212,7 +259,7 @@ class TestGenDatabase(object):
         self.dbconnection.commit()
         #c.execute('SELECT * from csv_test')
         #print(c.fetchall())
-       
+
     def PrintTable(self, table_name=None):
         c = self.dbconnection.cursor()
         c.execute('SELECT * from {}'.format(table_name))
@@ -222,7 +269,7 @@ class TestGenDatabase(object):
         print("Header     : " + ", ".join(rows[0].keys()))
         for row in rows:
             print("Row        : " + ", ".join(row))
-    
+
     def GenerateTestScript(self, test_case_id, test_output_filename, options=None, fh=sys.stdout):
         """
         Generate and output the test script.
@@ -230,11 +277,17 @@ class TestGenDatabase(object):
         # Query the db.
         self.generate_tests_type_2(options, "benchmark1")
         #self.PrintTable("benchmark1")
-        
+
         test_cases = ""
         test_inst_num=0
+        desc_long = ""
+        corpus = ""
         rows = self.dbconnection.execute('SELECT * FROM benchmark1 WHERE test_case_id == "{}"'.format(test_case_id))
         for row in rows:
+            if desc_long == "":
+                # Escape any embedded double quotes.
+                desc_long = row['desc_long'].replace("'", "\\'").replace('"', '\\"')
+                corpus = row['corpus']
             test_inst_num += 1
             search_results_filename="SearchResults_{}.txt".format(test_inst_num)
             time_run_results_filename='./time_results_{}.txt'.format(test_inst_num)
@@ -264,15 +317,17 @@ class TestGenDatabase(object):
                 wrapped_cmd_line_timing=wrapped_cmd_line_timing
                 )
             test_cases += test_case + "\n"
-        script = test_script_template_1.substitute(
+        script = test_script_master_template.substitute(
+            desc_long=desc_long,
+            corpus=corpus,
             num_iterations=10,
             results_file=test_output_filename,
             test_cases=test_cases
             )
-        
+
         # Print it to the given file.
         print(script, file=fh)
-        
+
     def LoadDatabaseFiles(self, csv_dir=None):
         print("sqlite3 lib version: {}".format(sqlite3.sqlite_version), file=sys.stderr)
         self.read_csv_into_table(table_name="opts_defs", filename=csv_dir+'/opts_defs.csv', prim_key='opt_id')
@@ -293,7 +348,7 @@ class CLIError(Exception):
         return self.msg
     def __unicode__(self):
         return self.msg
-    
+
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
 
@@ -327,7 +382,7 @@ def main(argv=None): # IGNORE:C0111
 
         # Process arguments
         args = parser.parse_args()
-        
+
         outfile_name = args.outfile_name
         test_case = args.test_case
         csv_dir = args.csv_dir
@@ -342,16 +397,16 @@ def main(argv=None): # IGNORE:C0111
             raise CLIError("include and exclude pattern are equal! Nothing will be processed.")
 
         #inpath = paths[0]
-        #outdir = paths[1] 
-        
+        #outdir = paths[1]
+
         with TestGenDatabase() as results_db:
             # Load the csv files into the database as tables.
             results_db.LoadDatabaseFiles(csv_dir=csv_dir)
-            
+
             # Generate the shell script, writing it to outfile.
             results_db.GenerateTestScript(test_case_id=test_case, test_output_filename=test_output_filename, options=opts,
                                            fh=outfile_name)
-            
+
         return 0
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###

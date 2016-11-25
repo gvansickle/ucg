@@ -13,13 +13,13 @@
 # UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
-## Process this file with autoconf to produce atlocal.
+# Process this file with autoconf to produce atlocal.
 
-# We need this so we're able to find the binary we built.
+# We need this so we're able to find the binary we built, and find it prior to any already-installed versions.
 PATH=@abs_builddir@:@abs_top_builddir@/src:@abs_top_srcdir@/build-aux:$top_srcdir:$srcdir:$PATH
 
 XFAILFILE=$abs_builddir/.badversion
@@ -43,35 +43,43 @@ export AWK="@AWK@"
 export PYTHON="@PYTHON@"
 
 # At testsuite-run-time, find the programs we wish to compare performance with.
+# Export the vars so the TCn.sh scripts can find the programs.
 PROGLIST=built_ucg:ucg
 if PROG_INST_UCG="$(which ucg 2>/dev/null)";
 then
 	PROGLIST=$PROGLIST,inst_ucg:$PROG_INST_UCG
+	export PROG_INST_UCG;
 fi
-if PROG_INST_AG="$(which ag 2>/dev/null)";
-then
-	PROGLIST=$PROGLIST,inst_ag:$PROG_INST_AG
-fi
+#if PROG_INST_AG="$(which ag 2>/dev/null)";
+#then
+#	PROGLIST=$PROGLIST,inst_ag:$PROG_INST_AG
+#	export PROG_INST_AG
+#fi
 #if PROG_ACK="$(which ack)";
 #then
 #fi
 if PROG_INST_RIPGREP="$(which rg 2>/dev/null)";
 then
 	PROGLIST=$PROGLIST,inst_ripgrep:$PROG_INST_RIPGREP
+	export PROG_INST_RIPGREP;
 fi
-if test -x "${PROG_PCRE2GREP}";
-then
-	PROGLIST=$PROGLIST,inst_pcre2grep:$PROG_PCRE2GREP
-fi
+#if PROG_INST_PCRE2GREP="$(which pcre2grep 2>/dev/null)";
+#then
+#	PROGLIST=$PROGLIST,inst_pcre2grep:$PROG_INST_PCRE2GREP
+#fi
 PROGLIST=$PROGLIST,inst_system_grep:grep
 if test -x "${PROG_GNU_GREP}";
 then
 	PROGLIST=$PROGLIST,inst_gnu_grep_e:$PROG_GNU_GREP
+	export PROG_GNU_GREP;
 fi
 if test -x "${PROG_GREP_P}";
 then
 	PROGLIST=$PROGLIST,inst_gnu_grep_p:$PROG_GREP_P
+	export PROG_GREP_P;
 fi
+export PROGLIST;
+
 
 ### Functions for use in the testsuite.
 
@@ -91,7 +99,7 @@ uname_or_unknown()
 get_system_info()
 {
 	# Collects and returns information regarding the test system.
-	
+
 	# Distro, using /etc/os-release.
 	# This is a file specified by freedesktop.  See https://www.freedesktop.org/software/systemd/man/os-release.html
 	echo "";
@@ -102,7 +110,7 @@ get_system_info()
 	fi
 	echo "END /etc/os-release info.";
 	echo "";
-	
+
 	# Distro, using  /usr/bin/sw_vers
 	# This is for OSX.
 	echo "";
@@ -113,7 +121,7 @@ get_system_info()
 	fi
 	echo "END sw_vers info."
 	echo "";
-	
+
 	# Using uname.
 	#
 	# OSX: Note that on a VMWare box running on a Xeon, we get the following:
@@ -128,11 +136,11 @@ get_system_info()
 	echo "kernel_version_uname_v: "`uname_or_unknown -v`"";
 	echo "machine_uname_m: "`uname_or_unknown -m`"";
 	# Non-POSIX uname options.
-	echo "operatingsystem_uname_o: "`uname_or_unknown -o`""; # This is for Cygwin, it's the closest we have to a PRETTY_NAME in /etc/os-release.  
+	echo "operatingsystem_uname_o: "`uname_or_unknown -o`""; # This is for Cygwin, it's the closest we have to a PRETTY_NAME in /etc/os-release.
 	echo "processor_uname_p: "`uname_or_unknown -p`"";
 	echo "END uname info.";
 	echo "";
-	
+
 	# Using sysctl.
 	echo "";
 	echo "START sysctl info.";
@@ -173,7 +181,7 @@ get_system_info()
 	fi
 	echo "END sysctl info.";
 	echo "";
-	
+
 	# Using lscpu.
 	echo "";
 	echo "START lscpu info.";
@@ -186,21 +194,21 @@ get_system_info()
 	fi;
 	echo "END lscpu info.";
 	echo "";
-	
+
 	# Using cpuid.
 	echo "";
 	echo "START cpuid info.";
 	cpuid 2>/dev/null || echo "ERROR: Could not run cpuid."
 	echo "END cpuid info.";
 	echo "";
-	
+
 	# Using cat /proc/cpuinfo.
 	echo "";
 	echo "START /proc/cpuinfo info.";
 	cat /proc/cpuinfo 2>/dev/null || echo "ERROR: Could not cat /proc/cpuinfo."
 	echo "END /proc/cpuinfo info.";
 	echo "";
-	
+
 	# Checking for specific virtualization environment.
 	echo "";
 	echo "START virtual environment info.";
@@ -235,12 +243,12 @@ ASX_SCRIPT ()
 }
 
 # Pipe output through this to convert to an ASCII+Hex text representation.
-# Useful for detecting differences in non-printing characters. 
+# Useful for detecting differences in non-printing characters.
 # @note On some OSX systems (which detect as having a bsd-style 'script' utility), tests such as this:
 #       AT_CHECK([{ ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something' ; } | $PROG_TOHEX > stdout_tty], [0], [stdout], [stderr])
 #       will prefix stdout_tty with '^D<backspace><backspace>' (hex 5e  44  08  08).  Not clear why.  Until we figure that out, just
 #       strip those chars with tr and sed if they're there.
 # @note Portability: POSIX sed doesn't support specifying numeric values in either BRE or EREs, so we use tr here, which
-#       does support octal char specifications under POSIX. 
+#       does support octal char specifications under POSIX.
 PROG_TOHEX='eval tr -d "\010" | sed s/^\^D// | od -t ax1'
 

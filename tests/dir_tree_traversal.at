@@ -62,7 +62,7 @@ AT_CHECK([ucg --noenv --dirjobs=1 'line'], [0], [stdout], [stderr])
 AT_CHECK([cat stdout | LCT], [0], [12])
 AT_CHECK([cat stderr | LCT], [0], [2])
 AT_CHECK([cat stdout | $EGREP '.*file1.py:2:line2'], [0], [ignore], [ignore])
-AT_CHECK([cat stderr | $EGREP 'ucg: warning: .*/link_to_dir2.*recursive directory loop'], [0], [ignore], [ignore])
+AT_CHECK([cat stderr | $EGREP 'ucg: warning: .*/link_to_dir2.*recursive directory loop.*'], [0], [ignore], [ignore])
 
 AT_CLEANUP
 

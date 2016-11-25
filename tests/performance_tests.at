@@ -11,7 +11,7 @@
 # UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -22,7 +22,7 @@
 ### the "../.." that we really want.
 ###
 ### Directories during test time:
-### 
+###
 ### AS_ECHO([Dirs: pwd=$(pwd) , srcdir=$srcdir , at_top_srcdir=$at_top_srcdir , top_srcdir=$top_srcdir , abs_builddir=$abs_builddir builddir=$builddir,$(realpath $builddir)]) >> UCG_PERF_RESULTS_FILE
 ### AT_CHECK([AS_ECHO "srcdir: ${srcdir} == $(realpath ${srcdir})" > diags.txt], [0])
 ### AT_CHECK([AS_ECHO "at_srcdir: ${at_srcdir} == $(realpath ${at_srcdir})" >> diags.txt], [0])
@@ -32,18 +32,28 @@
 ### pwd=/<...>/UCGTopSrcDir/build/tests/testsuite.dir/39
 ### srcdir=../../../../tests <== This will get you to the srcdir of the test's *.at file at test run time.
 ### top_srcdir=../../../.. <== This will get you to the real top_srcdir relative to the test's CWD at test runtime.
-### builddir=../.. <== This will get you to /<..>/UCGTopBuildDir/tests from the CWD at test runtime. 
+### builddir=../.. <== This will get you to /<..>/UCGTopBuildDir/tests from the CWD at test runtime.
 ### abs_builddir=/<...>/UCGTopSrcDir/build/tests
 ### at_top_srcdir=../..
-### 
+###
+### At testsuite runtime:
+### at_dir=`pwd`    # The directory we run the suite in.  Default to . if no -C option.
+### at_suite_log=$at_dir/$as_me.log  # The file containing the log.
+### at_suite_dir=$at_dir/$as_me.dir  # The directory the whole suite works in. Should be absolute to let the user `cd' at will.
+###
+### Note that none of these are exported from the top-level testsuite script.
+###
+
 
 # Paths to source that we'll test against.
 ## We generate this file.
 m4_define([UCG_TEST_FILE_NAME_LARGE_FILE_1], ["${builddir}/500MBLoremIpsum.cpp"])
-## The Boost library, version 1.58.0.
-m4_define([UCG_BOOST_PATH], ["${top_srcdir}/../boost_1_58_0"])
+## The Boost library, version 1.58.0, as unpacked from the tarball.
+m4_define([UCG_CORPUS_BOOST_PATH], ["${top_srcdir}/../boost_1_58_0"])
+## A built linux source tree.
+m4_define([UCG_CORPUS_LINUX_PATH], ["${top_srcdir}/../TestCorpus/linux"])
 
-# The file where we'll put the results of the performance tests.
+# The file where we'll put the results of the benchmark tests.
 # This file will be created in performance_tests.at.
 m4_define([UCG_PERF_RESULTS_FILE], [${builddir}/perf_test_results.txt])
 
@@ -57,7 +67,7 @@ inst_gnu_grep_p])
 m4_define([AXUCG_SOURCE], [.])
 
 ###
-### Start of the performance tests.
+### Start of the benchmark tests.
 ### @todo Probably should change terminology to "benchmarks" throughout.
 ###
 AT_BANNER([UniversalCodeGrep Benchmarks])
@@ -66,8 +76,8 @@ AT_BANNER([UniversalCodeGrep Benchmarks])
 # Create the logfile.
 #
 AT_SETUP([Create report log file])
-AT_KEYWORDS([performance])
-AS_ECHO(["ucg Performance Test Results"]) > UCG_PERF_RESULTS_FILE
+AT_KEYWORDS([benchmark])
+AS_ECHO(["ucg Benchmark Test Results"]) > UCG_PERF_RESULTS_FILE
 AS_ECHO(["Test run started at: `date '+%Y-%m-%d %T%z' | sed 's/\(..\)\(..\)$/\1:\2/'`"]) >> UCG_PERF_RESULTS_FILE
 AT_CLEANUP
 
@@ -75,7 +85,7 @@ AT_CLEANUP
 # Record some system info.
 #
 AT_SETUP([Recording system info])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 AS_ECHO(["START SYSTEM INFO"]) >> UCG_PERF_RESULTS_FILE
 AT_CHECK([get_system_info >> UCG_PERF_RESULTS_FILE], [0], [stdout], [stderr])
 AS_ECHO(["END SYSTEM INFO"]) >> UCG_PERF_RESULTS_FILE
@@ -85,7 +95,7 @@ AT_CLEANUP
 # Get the versions of the programs we're comparing to.
 #
 AT_SETUP([Getting program versions])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 
 AS_ECHO(["START PROGVER INFO"]) >> UCG_PERF_RESULTS_FILE
 # Loop through the programs we're comparing performance with.
@@ -104,28 +114,6 @@ AS_ECHO(["END PROGVER INFO"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
 
-###
-### UCG_GEN_PERFTEST()
-### M4 macro which generates the shell script for a single benchmark.
-###
-m4_define([UCG_GEN_PERFTEST],
-[
-# $1 == ## program name list.
-# $2 == test_case_id from test_cases.csv.
-# $3 == '--opt=' options to pass to the program under test.
-# $4 == test file/directory path
-m4_pushdef([test_case_id], $2)
-m4_pushdef([test_prog_opts], $3)
-
-AS_ECHO(["Test description short: $at_desc"]) >> UCG_PERF_RESULTS_FILE
-# Record info on the filesystem where the test data lies.
-TEST_DATA_FS_INFO=`get_dev_and_fs_type $4`
-AS_ECHO(["Test data path: \"$4\""]) >> UCG_PERF_RESULTS_FILE
-AS_ECHO(["Test data filesystem info: $TEST_DATA_FS_INFO"]) >> UCG_PERF_RESULTS_FILE
-
-m4_popdef([test_prog_opts])
-m4_popdef([test_case_id])
-])
 
 ###
 ### UCG_SUMMARIZE_PERFTEST
@@ -151,16 +139,16 @@ MAX_PREF_VAL=0;
 for fn in $(ls SearchResults_*.txt); do
 	# Get the '*' we matched on.
 	WILDCARD=$(AS_ECHO $fn | $ESED -n 's/SearchResults_(.*)\.txt/\1/p');
-	
+
 	# Create a temp match file with the header and time triplet cut off.
 	cat $fn | $ESED -n '1,/END OF HEADER/! p' | tail -n +4 > temp_$fn;
-	
+
 	# Count the number of lines matched.
 	LINECT=$(cat temp_$fn | LCT)
-	
+
 	# Tack the line count onto the associated timing results list.
 	AS_ECHO "NUM_MATCHED_LINES: ${LINECT}" >> time_results_${WILDCARD}.txt;
-	
+
 	# Find the prog_id which generated these results.
 	THIS_PROG_ID=$($AWK '$[1] ~ /^TEST_PROG_ID:/ { print $[2]; }' $fn);
 	THIS_PREF_VAL=$(pref_index $THIS_PROG_ID);
@@ -182,10 +170,10 @@ AS_ECHO "Note: Max lines in file \"$MAX_LINE_FN\" from $MAX_PROG_ID: $MAX_LINECT
 for fn in $(ls temp_SearchResults_*.txt); do
 	# Get the '*' we matched on.
 	WILDCARD=$(AS_ECHO $fn | $ESED -n 's/temp_SearchResults_(.*)\.txt/\1/p');
-	
+
 	# Diff against the file selected above.
 	NUM_CHARS_DIFF=$(git diff --no-index --word-diff=porcelain $fn $MAX_LINE_FN | $EGREP '^(\\+[[^+]])|^(-[[^-]])' | wc -m);
-	
+
 	# Tack the line count onto the associated timing results list.
 	AS_ECHO "NUM_CHARS_DIFF: ${NUM_CHARS_DIFF}" >> time_results_${WILDCARD}.txt;
 done;
@@ -198,159 +186,91 @@ for fn in $(ls -1 time_results_*.txt); do
 done;
 ])
 
-###
-### Benchmark: 'BOOST.*HPP' on Boost source.
-###
-AT_SETUP([Benchmark: 'BOOST.*HPP' on Boost source])
-AT_KEYWORDS([performance long])
 
-# Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
+###
+### ATUCG_INSTANTIATE_ONE_BENCHMARK
+### M4 macro which expands to a single AutoTest AT_SETUP/AT_CHECK/AT_CLEANUP benchmark test case.
+###
+# $1 = Test case identifier (e.g. "TC1").
+# $2 = Test case title.
+m4_define([ATUCG_INSTANTIATE_ONE_BENCHMARK],
+[
+AT_SETUP(m4_esyscmd_s(echo $2))dnl The echo here is to "shell-unescape" the shell-escaped title.
+AT_KEYWORDS([benchmark])
+
+# Skip this test if the test script reports it's not ready.  The most likely cause is that we can't find the necessary test corpus.
+## @todo var exports here are for finding the 3 corpi.  Find cleaner way to do this.
+AT_SKIP_IF([export srcdir && export top_srcdir && export builddir && $srcdir/$1.sh -s])
 
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
-# Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}], [TC1], [], [UCG_BOOST_PATH])
-
 # Run the test script.
-AT_CHECK([AXUCG_SOURCE ${srcdir}/TC1.sh], [0], [ignore-nolog], [stderr])
+AT_CHECK([export srcdir && export top_srcdir && export builddir && $srcdir/$1.sh], [0], [ignore-nolog], [stderr])
 # Summarize the test results.
 UCG_SUMMARIZE_PERFTEST
 
 AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 AT_CLEANUP
-
-
-###
-### Benchmark: literal string on Boost source.
-###
-AT_SETUP([Benchmark: long literal string on Boost source])
-AT_KEYWORDS([performance])
-
-# Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
-
-AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST], [TC2], [], [UCG_BOOST_PATH])
-
-# Run the test script.
-AT_CHECK([AXUCG_SOURCE ${srcdir}/TC2.sh], [0], [ignore-nolog], [stderr])
-# Summarize the test results.
-UCG_SUMMARIZE_PERFTEST
-
-AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-AT_CLEANUP
-
+])
 
 
 ###
 ### Generate test files for large file tests.
 ###
 AT_SETUP([Generating files for large file tests])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 # Generate the test file UCG_TEST_FILE_NAME_LARGE_FILE_1, which is Lorum ipsum text with one distinct test string at the end.
 AT_CHECK([${builddir}/dummy-file-gen -b 500000000 | fold -s > UCG_TEST_FILE_NAME_LARGE_FILE_1], [0], [stdout], [stderr])
 AT_CHECK([cat stderr | $EGREP 'Number of bytes written:'], [0], [ignore], [ignore])
 AT_CHECK([echo "iudicemaequumputo" >> UCG_TEST_FILE_NAME_LARGE_FILE_1], [0], [stdout], [stderr])
 AT_CLEANUP
 
+##
+## m4 experimental area.
+##
+#m4_errprintn(m4_esyscmd([echo "at_srcdir = ${at_srcdir}"])at_srcdir)
+#m4_errprintn(m4_esyscmd([echo "srcdir = ${srcdir}"])srcdir)
+#m4_errprintn(m4_esyscmd([echo "top_srcdir = ${top_srcdir}"])top_srcdir)
+#m4_errprintn(m4_esyscmd([echo "abs_top_srcdir = ${abs_top_srcdir}"])abs_top_srcdir)
+#m4_errprintn(m4_esyscmd([echo "pwd = $(pwd)"]))
+
+# Extract the list of tests we need to generate from the test_cases.csv file.
+# @todo pwd is build/tests here.  None of the *srcdirs seem to be defined at m4 time.
+m4_define([test_case_table],
+	m4_flatten(m4_esyscmd_s([cat $(pwd)/../../tests/test_cases.csv | awk 'BEGIN { FS = ",[ ]+" } /TC.*/ { printf "[[%s],[%s],]", $1, $3; }'])dnl
+	)
+)
+#m4_define([test_case_table], m4_dquote([abc],[def gh],[ijk],[lmn opg]))
+#m4_errprintn([m4_dumpdef:])
+m4_dumpdef([test_case_table])
+
+#m4_errprintn([Exp1])
+#m4_define([test_case_table_1],
+# m4_dquote(m4_apply([m4_echo], [test_case_table])))
+#m4_dumpdef([test_case_table_1])
+
+#m4_errprintn([Exp2])                 dnl m4_dquote(test_case_table_1)
+#m4_define([mapping], m4_foreach([var], [[1],[2],[3],[4]], [echo var]))
+#m4_define([mapping], m4_map_args_pair([echo], [], [abc],[def ghi],[jkl],[mno pqr stu]))
+#m4_define([mapping], m4_map_args_pair([echo], [m4_ignore], m4_dquote_elt(test_case_table)))
+#m4_dumpdef([mapping])
+#m4_errprintn(m4_echo(mapping))
+#m4_fatal([debug stop])
+
 ###
-### Benchmark: regex 'iudice[\w]*umputo' on single ~500MB file.
+### Create the benchmark test instantiations via m4.
 ###
-AT_SETUP([Benchmark: regex on 500MB file, match at end])
-AT_KEYWORDS([performance])
+m4_map_args_pair([ATUCG_INSTANTIATE_ONE_BENCHMARK], [m4_ignore], m4_dquote_elt(test_case_table))
 
-AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST], [TC3], [], [UCG_TEST_FILE_NAME_LARGE_FILE_1])
-# Run the test script.
-AT_CHECK([AXUCG_SOURCE ${srcdir}/TC3.sh], [0], [ignore-nolog], [stderr])
-# Summarize the test results.
-UCG_SUMMARIZE_PERFTEST
-
-AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-AT_CLEANUP
-
-
-###
-### Benchmark: literal string on single ~500MB file.
-###
-AT_SETUP([Benchmark: literal string on 500MB file, match at end])
-AT_KEYWORDS([performance])
-
-AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Generate the test script.
-UCG_GEN_PERFTEST([$PROGLIST], [TC4], [], [UCG_TEST_FILE_NAME_LARGE_FILE_1])
-# Run the test script.
-AT_CHECK([AXUCG_SOURCE ${srcdir}/TC4.sh], [0], [ignore-nolog], [stderr])
-# Summarize the test results.
-UCG_SUMMARIZE_PERFTEST
-
-AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-AT_CLEANUP
 
 ###
 ### Delete test files for the large file tests.
 ###
 AT_SETUP([Deleting files for large file tests])
-AT_KEYWORDS([performance])
+AT_KEYWORDS([benchmark])
 # Delete the test file UCG_TEST_FILE_NAME_LARGE_FILE_1, which is Lorum ipsum text with one distinct test string at the end.
 AT_CHECK([test -f "UCG_TEST_FILE_NAME_LARGE_FILE_1" && rm "UCG_TEST_FILE_NAME_LARGE_FILE_1"], [0], [stdout], [stderr])
 AT_CLEANUP
-
-
-###
-### Benchmark: find "" includes in Boost source.
-###
-AT_SETUP([Benchmark: '#include\s+".*"' on Boost source])
-AT_KEYWORDS([performance])
-
-# Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
-
-AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}], [TC5], [], [UCG_BOOST_PATH])
-# Run the test script.
-AT_CHECK([AXUCG_SOURCE ${srcdir}/TC5.sh], [0], [ignore-nolog], [stderr])
-# Summarize the test results.
-UCG_SUMMARIZE_PERFTEST
-
-AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-AT_CLEANUP
-
-
-#
-# Benchmark: Search with ignore of part of the dir tree.
-#
-AT_SETUP([Benchmark: literal '#endif' with --ignore-dir=doc on Boost source])
-AT_KEYWORDS([performance])
-
-# Skip this test if we can't find the Boost source tree.
-AT_SKIP_IF([test ! -d UCG_BOOST_PATH])
-
-AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-# Generate the test script.
-UCG_GEN_PERFTEST([${PROGLIST}], [TC6], [--opt=exclude_dir_literal=docs], [UCG_BOOST_PATH])
-# Run the test script.
-AT_CHECK([AXUCG_SOURCE ${srcdir}/TC6.sh], [0], [ignore-nolog], [stderr])
-# Summarize the test results.
-UCG_SUMMARIZE_PERFTEST
-
-AS_ECHO(["END PERFTEST"]) >> UCG_PERF_RESULTS_FILE
-
-AT_CLEANUP
-
 
 
