@@ -507,13 +507,18 @@ void FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 #if 1 //LEAN_FD
 	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
 #else
+	int retval;
 	int fd = m_pimpl->TryGetFD();
 	if(fd < 0)
 	{
 		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
+		retval = fstatat(fd, name.c_str(), statbuf, flags);
+		close(fd);
 	}
-	int retval = fstatat(fd, name.c_str(), statbuf, flags);
-	close(fd);
+	else
+	{
+		retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
+	}
 #endif
 
 	if(retval == -1)
