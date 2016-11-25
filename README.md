@@ -51,18 +51,16 @@ UniversalCodeGrep (`ucg`) is an extremely fast grep-like tool specialized for se
 ### Speed
 `ucg` is intended to address the impatient programmer's code searching needs.  `ucg` is written in C++11 and takes advantage of the concurrency (and other) support of the language to increase scanning speed while reducing reliance on third-party libraries and increasing portability.  Regex scanning is provided by the [PCRE2 library](http://www.pcre.org/), with its [JIT compilation feature](http://www.pcre.org/current/doc/html/pcre2jit.html) providing a huge performance gain on most platforms.  Directory tree traversal is performed by multiple threads, reducing the impact of waiting for I/O completions.  Critical functions are implemented with hand-rolled vectorized (SSE2/4.2/etc.) versions selected at program load-time based on what the system supports, with non-vectorized fallbacks.  
 
-As a consequence of its overall design for maximum concurrency and speed, `ucg` is extremely fast.  As an example, under Fedora 24, one of the benchmarks in the test suite which scans the Boost 1.58.0 source tree with `ucg` and a selection of similar utilities yields the following results:
+As a consequence of its overall design for maximum concurrency and speed, `ucg` is extremely fast.  As an example, under Fedora 25, one of the benchmarks in the test suite which scans the Boost 1.58.0 source tree with `ucg` and a selection of similar utilities yields the following results:
 
 #### Benchmark: '#include\s+".*"' on Boost source
 
 | Command | Program Version | Elapsed Real Time, Average of 10 Runs | Num Matched Lines | Num Diff Chars |
 |---------|-----------------|---------------------------------------|-------------------|----------------|
-| `ucg --noenv --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.3.0 | 0.212767 | 9511 | 189 |
-| `/usr/bin/ucg --noenv --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.2.2 | 0.262368 | 9511 | 189 |
-| `/usr/bin/rg -n -t cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.2.3 | 0.262967 | 9509 | 0 |
-| `grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx '#include\s+.*' ~/src/boost_1_58_0` | grep (GNU grep) 2.25 | 0.366634 | 9509 | 0 |
-| `/usr/bin/pcre2grep -rn --color '--exclude=^.*(?<!\.cpp|\.hpp|\.h|\.cc|\.cxx)$' '#include\s+.*' ~/src/boost_1_58_0` | 10.21 2016-01-12 | 0.818627 | 9527 | 1386 |
-| `/usr/bin/ag  --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.32.0 | 1.90161 | 9511 | 189 |
+| `/usr/bin/ucg --noenv --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.3.0 | 0.228973 | 9511 | 189 |
+| `/usr/bin/rg -Lun -t cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.2.9 | 0.167586 | 9509 | 0 |
+| `/usr/bin/ag  --cpp '#include\s+.*' ~/src/boost_1_58_0` | 0.32.0 | 2.29074 | 9511 | 189 |
+| `grep -Ern --color --include=\*.cpp --include=\*.hpp --include=\*.h --include=\*.cc --include=\*.cxx '#include\s+.*' ~/src/boost_1_58_0` | grep (GNU grep) 2.26 | 0.370082 | 9509 | 0 |
 
 Note that UniversalCodeGrep is in fact somewhat faster than `grep` itself, even when `grep` is only using [Extended Regular Expressions](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_04).  And `ucg` certainly wins the ease-of-use contest.
 
