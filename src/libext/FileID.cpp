@@ -289,7 +289,6 @@ FileID::FileID(path_known_cwd_tag)
 		LOG(DEBUG) << "Error in fdcwd constructor: " << LOG_STRERROR();
 	}
 	m_pimpl->m_file_descriptor = make_shared_fd(tempfd);
-	m_pimpl->m_abs_path = portable::canonicalize_file_name(".");
 
 	LOG(DEBUG) << "FDCWD constructor, file descriptor: " << m_pimpl->m_file_descriptor.GetFD();
 
@@ -332,14 +331,6 @@ FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, File
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname))
 {
 	SetFileDescriptorMode(fam, fcf);
-	if(!at_dir_fileid->m_pimpl->m_abs_path.empty())
-	{
-		// Assumes pathname has been cleaned up.
-		if(is_pathname_absolute(pathname))
-		{
-			m_pimpl->m_abs_path = at_dir_fileid->m_pimpl->m_abs_path + "/" + pathname;
-		}
-	}
 }
 
 FileID& FileID::operator=(const FileID& other)
@@ -420,21 +411,6 @@ const std::string& FileID::GetPath() const noexcept
 	return m_pimpl->m_path;
 #else
 	return *DoubleCheckedLock<std::string*>(m_path_witness, m_mutex, [this](){ return (std::string*)&(m_pimpl->ResolvePath()); });
-#endif
-}
-
-const std::string& FileID::GetAbsPath() const noexcept
-{
-	/// @todo
-#if 0
-	if(!m_pimpl->m_at_dir->m_abs_path.empty())
-	{
-		// Assumes pathname has been cleaned up.
-		if(is_pathname_absolute(pathname))
-		{
-			m_pimpl->m_abs_path = at_dir_fileid->m_pimpl->m_abs_path + "/" + pathname;
-		}
-	}
 #endif
 }
 

@@ -269,6 +269,8 @@ inline std::string basename(const std::string &path) noexcept
 /**
  * Convert #path into an absolute file path.
  *
+ * @todo Suspect this is broken on... wait for it... OSX.
+ *
  * @param path
  * @return
  */

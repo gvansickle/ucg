@@ -19,11 +19,12 @@
 
 AT_SETUP([UniversalCodeGrep version])
 
-AT_CHECK([ucg --version | sed 1q], [0], [stdout], [stderr])
+AT_DATA([expout], [AT_PACKAGE_NAME AT_PACKAGE_VERSION
+])
 
-AT_CHECK([cat stdout], [0], [AT_PACKAGE_NAME AT_PACKAGE_VERSION
-],
-[stderr],
+AT_CHECK([ucg --version], [0], [stdout], [stderr])
+
+AT_CHECK([cat stdout | sed 1q], [0], [expout], [stderr],
 [cat >$[]XFAILFILE <<'_EOT'
 
 ===================================================================================

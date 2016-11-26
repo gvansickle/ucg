@@ -106,6 +106,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		default:
 		{
 			// Ignore all other types.
+			NOTICE() << "Unsupported file type at path \'" << file_or_dir->GetPath() << "\': " << ". Skipping.";
 			break;
 		}
 		}

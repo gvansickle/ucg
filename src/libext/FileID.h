@@ -351,9 +351,6 @@ public:
 	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
 	mutable std::string m_path;
 
-	/// An absolute path to this file.
-	mutable std::string m_abs_path;
-
 	/// Flags to use when we open the file descriptor.
 	mutable int m_open_flags { 0 };
 
