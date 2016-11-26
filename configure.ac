@@ -629,7 +629,7 @@ AC_OUTPUT
 ### Print a configure summary.
 ###
 AC_MSG_RESULT([
-  Configuration Summary for $PACKAGE $VERSION
+  Configuration Summary for $PACKAGE_NAME $VERSION
   =================================================
 
   Compilers
@@ -657,11 +657,11 @@ AC_MSG_RESULT([
 
   $CXX Search Paths
   -----------------
-$($CXX -print-search-dirs | tr ':' '\n' | sed -E 's/^ [=]?//g' | sed 's/^ */  /g')
+$($CXX -print-search-dirs | tr ':' '\n' | $ESED 's/^ [=]?//g' | sed 's/^ */  /g')
 
   $CXXCPP Include Paths
   ---------------------
-$(echo | $CXXCPP -v -x c++ - 2>&1 | sed -n '/^ *#include/,/^ *End of/ p' | sed 's/^ */  /g')
+$(echo | $CXXCPP -v -x c++ - 2>&1 | $SED -n '/^ *#include/,/^ *End of/ p' | $SED 's/^ */  /g')
 
   PCRE Info
   ---------
