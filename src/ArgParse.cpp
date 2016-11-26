@@ -656,10 +656,19 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 			}
 			catch(const FileException &e)
 			{
-				WARN() << "During search for ~/.ucgrc: " << e.what();
+				if(e.code() != std::errc::no_such_file_or_directory)
+				{
+					WARN() << "Couldn't open config file \"" << homefilepath << "\", error " << e.code() << " - " << e.code().message();
+				}
+				else
+				{
+					// .ucgrc file doesn't exist.
+					LOG(INFO) << "During search for ~/.ucgrc: " << e;
+				}
 			}
 			catch(const std::system_error &e)
 			{
+				/// @todo Do we need this anymore?  It should be dealt with above in the FileException catch.
 				if(e.code() != std::errc::no_such_file_or_directory)
 				{
 					WARN() << "Couldn't open config file \"" << homefilepath << "\", error " << e.code() << " - " << e.code().message();

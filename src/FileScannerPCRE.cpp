@@ -104,7 +104,7 @@ FileScannerPCRE::FileScannerPCRE(sync_queue<FileID> &in_queue,
 
 	// Put in our callout, which essentially exists to make '\s' not match a newline.
 	regex = "(?:" + regex + ")(?=.*?$)(?C1)";
-		
+
 	// PCRE1 has a single global pointer to the callout function.  This is OK for our use here.
 	pcre_callout = callout_handler;
 
@@ -137,7 +137,11 @@ FileScannerPCRE::~FileScannerPCRE()
 
 void FileScannerPCRE::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
-#ifdef HAVE_LIBPCRE
+#if !defined(HAVE_LIBPCRE)
+	(void)file_data;
+	(void)file_size;
+	(void)ml;
+#else
 	// Match output vector.  We won't support submatches, so we only need two entries, plus a third for pcre's own use.
 	int ovector[3] = {-1, 0, 0};
 	size_t line_no = 1;

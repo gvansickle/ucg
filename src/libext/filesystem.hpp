@@ -115,7 +115,7 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
  */
 struct FileException : public std::system_error
 {
-	FileException(const std::string &message, int errval = errno) : std::system_error(errval, std::system_category(), message) {};
+	FileException(const std::string &message, int errval = errno) : std::system_error(errval, std::generic_category(), message) {};
 };
 inline std::ostream& operator<<(std::ostream &out, const FileException &fe) noexcept
 {
