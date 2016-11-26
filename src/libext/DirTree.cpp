@@ -75,29 +75,40 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		/// AT_SYMLINK_NOFOLLOW.  So, we shouldn't get a FT_SYMLINK back from GetFileType().
 		auto file_or_dir = std::make_shared<FileID>(FileID(root_file_id, p));
 		auto type = file_or_dir->GetFileType();
-		if(type == FT_REG)
+		switch(type)
+		{
+		case FT_REG:
 		{
 			// Explicitly not filtering files specified on command line.
 			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
 			m_out_queue.wait_push(std::move(*file_or_dir));
+			break;
 		}
-		else if(type == FT_DIR)
+		case FT_DIR:
 		{
 			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
 			m_dir_queue.wait_push(file_or_dir);
+			break;
 		}
-		else if(type == FT_SYMLINK)
+		case FT_SYMLINK:
 		{
 			// Should never get this.
 			ERROR() << "Got filetype of symlink while following symlinks";
+			break;
 		}
-		else //if(type == FT_STAT_FAILED) /// @note Treat anything else as nonstatable.
+		case FT_STAT_FAILED:
 		{
 			// Couldn't get any info on this path.
 			NOTICE() << "Could not get stat info at path \'" << file_or_dir->GetPath() << "\': "
 												<< LOG_STRERROR(errno) << ". Skipping.";
+			break;
 		}
-
+		default:
+		{
+			// Ignore all other types.
+			break;
+		}
+		}
 	}
 
 	// Create and start the directory traversal threads.

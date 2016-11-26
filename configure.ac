@@ -83,7 +83,7 @@ AS_BOX([Checking for programs needed to do the build...])
 # This will do that for us.
 # @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
 #       calling LT_INIT, or it will complain.
-AC_USE_SYSTEM_EXTENSIONS
+#AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC([gcc clang])
 # Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
@@ -91,7 +91,7 @@ AC_PROG_CC([gcc clang])
 #AM_PROG_CC_C_O
 AC_PROG_CXX([g++ clang++])
 AC_PROG_CXXCPP([g++ clang++]) # Needed for any C++ AC_PREPROC_IFELSE() checks below.
-
+AC_USE_SYSTEM_EXTENSIONS
 # @temp? Tell clang to use its own library.
 #AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
 #[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
@@ -289,19 +289,22 @@ AS_BOX([Checking for libraries...])
 # We use libpcre or libpcre2 for regex matching.  As of this writing there are no C++11 implementations
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
+AC_SUBST([HAVE_LIBPCRE2], [no])
+AC_SUBST([HAVE_LIBPCRE2], [no])
+PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
+	[# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
+	AC_SUBST([HAVE_LIBPCRE2], [yes])
+	AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
+	],
+	[
+AC_SUBST([HAVE_LIBPCRE2], [no])
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 	[# Found it.  Remember to add $PCRE_LIBS, $PCRE_CFLAGS, and $PCRE_CPPFLAGS to the appropriate automake vars.
 	AC_SUBST([HAVE_LIBPCRE], [yes])
 	AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])
 	],
 	[AC_SUBST([HAVE_LIBPCRE], [no])])
-
-PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
-	[# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
-	AC_SUBST([HAVE_LIBPCRE2], [yes])
-	AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
-	],
-	[AC_SUBST([HAVE_LIBPCRE2], [no])])
+])
 
 #PKG_CHECK_MODULES([EXPLAIN], [libexplain])
 
@@ -392,7 +395,7 @@ AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm
 AX_APPEND_COMPILE_FLAGS([-fdiagnostics-color=auto], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CXXFLAGS]) # -fopt-info-optimized -fopt-info-vec-all
-#AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
+#AX_APPEND_COMPILE_FLAGS([-minline-stringops-dynamically], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'], [AM_CXXFLAGS], [-Wformat -Wformat-security])
