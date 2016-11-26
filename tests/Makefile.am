@@ -1,6 +1,6 @@
 # Second-level Makefile.am for UniversalCodeGrep's ./tests directory.
 #
-# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -65,7 +65,7 @@ BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
 
 # The `:;' works around a Bash 3.2 bug when the output is not writeable.
 $(srcdir)/package.m4: $(top_srcdir)/configure.ac
-	$(AM_V_GEN) :;{ \
+	@:;{ \
 	echo '# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).' && \
 	echo '#' && \
 	echo '# This file is part of UniversalCodeGrep.' && \
