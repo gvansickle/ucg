@@ -11,7 +11,7 @@
 # UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -19,9 +19,9 @@
 
 AT_SETUP([UniversalCodeGrep version])
 
-AT_CHECK([ucg --version | sed 1q],
-	[0],
-	[AT_PACKAGE_NAME AT_PACKAGE_VERSION
+AT_CHECK([ucg --version | sed 1q], [0], [stdout], [stderr])
+
+AT_CHECK([cat stdout], [0], [AT_PACKAGE_NAME AT_PACKAGE_VERSION
 ],
 [stderr],
 [cat >$[]XFAILFILE <<'_EOT'
