@@ -163,7 +163,7 @@ namespace std
 }
 
 /**
- * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as posible.
+ * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as possible.
  *
  * @param de
  * @return

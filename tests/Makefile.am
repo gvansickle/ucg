@@ -65,7 +65,7 @@ BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
 
 # The `:;' works around a Bash 3.2 bug when the output is not writeable.
 $(srcdir)/package.m4: $(top_srcdir)/configure.ac
-	@ :;{ \
+	$(AM_V_GEN) :;{ \
 	echo '# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).' && \
 	echo '#' && \
 	echo '# This file is part of UniversalCodeGrep.' && \
@@ -123,23 +123,22 @@ AUTOTEST = $(AUTOM4TE) --language=autotest
 ### See <http://sources.redhat.com/automake/automake.html#distcleancheck> for more info.
 ###
 $(TESTSUITE): $(srcdir)/package.m4 $(TESTSUITE_AT)
-	$(AUTOTEST) -I '$(srcdir)' $(srcdir)/testsuite.at -o "$@.tmp"
-	mv "$@.tmp" "$@"
+	$(AM_V_GEN) $(AUTOTEST) -I '$(srcdir)' $(srcdir)/testsuite.at -o "$@.tmp" && mv "$@.tmp" "$@"
 	
 # It appears that at least up to autoconf 2.68, atconfig doesn't get a dependency
 # and rebuild rule generated for it.  Do that manually here.
 atconfig: $(top_builddir)/config.status
-	cd $(top_builddir) && ./config.status tests/$@
+	$(AM_V_GEN) cd $(top_builddir) && ./config.status tests/$@
 
 ###
 ### Rules to hook the AutoTest functionality into Automake.
 ###
      
 clean-local:
-	test ! -f '$(TESTSUITE)' ||	$(SHELL) '$(TESTSUITE)' --clean
+	$(AM_V_GEN) test ! -f '$(TESTSUITE)' ||	$(SHELL) '$(TESTSUITE)' --clean
 	
 check-local: atconfig atlocal $(TESTSUITE)
-	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) ; RETVAL=$$? ; \
+	$(AM_V_GEN) $(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) ; RETVAL=$$? ; \
 	if test $$RETVAL != 0; then \
 		LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \
 		for FN in $$LOGS; do \
@@ -150,7 +149,7 @@ check-local: atconfig atlocal $(TESTSUITE)
 	exit $$RETVAL;
      
 installcheck-local: atconfig atlocal $(TESTSUITE)
-	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) AUTOTEST_PATH='$(bindir)' ; RETVAL=$$? ; \
+	$(AM_V_GEN) $(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) AUTOTEST_PATH='$(bindir)' ; RETVAL=$$? ; \
 	if test $$RETVAL != 0; then \
 		LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \
 		for FN in $$LOGS; do \
