@@ -518,6 +518,10 @@ DIR *FileID::OpenDir()
 	{
 		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
 	}
+	else
+	{
+		fd = dup(fd);
+	}
 	return fdopendir(fd);
 }
 
