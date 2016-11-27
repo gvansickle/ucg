@@ -18,6 +18,7 @@
 /** @file Dummy cpp file to get this otherwise header-only lib to build portably. */
 
 #include <config.h>
+#include "../libext/static_diagnostics.hpp"
 
 #include <static_diagnostics.hpp>
 
@@ -38,5 +39,47 @@ STATIC_MSG("Have POPCNT")
 STATIC_MSG("__has_include is defined.")
 #else
 STATIC_MSG_WARN("__has_include is not defined.")
+#endif
+
+#if defined(__cpp_lib_make_unique)
+STATIC_MSG("__cpp_lib_make_unique is defined.")
+#else
+STATIC_MSG_WARN("__cpp_lib_make_unique is not defined.")
+#endif
+
+///
+#if __cpp_lib_shared_timed_mutex
+STATIC_MSG("__cpp_lib_shared_timed_mutex is defined")
+#else
+STATIC_MSG_WARN("__cpp_lib_shared_timed_mutex not defined")
+#endif
+#if __cpp_lib_shared_mutex
+STATIC_MSG("__cpp_lib_shared_mutex is defined")
+#else
+STATIC_MSG_WARN("__cpp_lib_shared_mutex not defined")
+#endif
+
+#if __has_include(<shared_mutex>)
+STATIC_MSG("Have __has_include(<shared_mutex>)")
+#else
+STATIC_MSG("No __has_include(<shared_mutex>)")
+#endif
+
+#ifndef _GLIBCXX_USE_C99_STDINT_TR1
+STATIC_MSG_WARN("No _GLIBCXX_USE_C99_STDINT_TR1")
+#endif
+
+#ifndef _GLIBCXX_HAS_GTHREADS
+STATIC_MSG_WARN("No _GLIBCXX_HAS_GTHREADS")
+#endif
+
+
+#if 0 /// @note Put this in to see at compile time what types are really being used for the shared locks.
+std::shared_mutex i;
+std::shared_timed_mutex j;
+std::shared_lock<std::shared_timed_mutex> k;
+std::shared_lock<std::shared_mutex> l;
+auto testVar = std::make_tuple(i, j, k, l);
+static_assert(decltype(testVar)::dummy_error, "TYPES" );
 #endif
 

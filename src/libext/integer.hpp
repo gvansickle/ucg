@@ -23,6 +23,7 @@
 #include <config.h>
 
 #include <cstdint>
+#include <tuple>
 
 #include "hints.hpp"
 
@@ -33,7 +34,7 @@
 
 /**
  * Recursive template for creating an unsigned integral type with at least #NumBits bits.
- * Boost has a template of this nature, but more complete.
+ * Boost has a more complete template of this nature.
  *
  * Example:
  * @code{.cpp}
@@ -54,6 +55,29 @@ template<> struct uint_t<128> { using fast = unsigned __int128; };
 //template<> struct uint_t<128> { using fast = __m128i; }; ///< @todo Use something like this for platforms without a builtin 128-bit type.
 template<> struct uint_t<64> { using fast = uint_fast64_t; };
 template<> struct uint_t<32> { using fast = uint_fast32_t; };
+
+/**
+ * Recursive template for creating a signed integral type with at least #NumBits bits.
+ * Boost has a more complete template of this nature.
+ */
+template <unsigned char NumBits>
+struct int_t
+{
+	static_assert(NumBits <= 128, "NumBits > 128 not supported");
+
+	/// @name Member Types
+	/// @{
+	using type = typename int_t<NumBits+1>::type;
+	/// @}
+
+	// The number of bits this type can hold (ala std::bitset).
+	static constexpr auto size =  NumBits;
+};
+template<> struct int_t<128> { using type = __int128; };
+template<> struct int_t<64> { using type = int64_t; };
+template<> struct int_t<32> { using type = int32_t; };
+template<> struct int_t<16> { using type = int16_t; };
+template<> struct int_t<8> { using type = int8_t; };
 
 
 /**
@@ -86,8 +110,20 @@ constexpr
 };
 
 // Separate declaration here to avoid "attributes are not allowed on a function-definition" error.
-constexpr inline uint32_t bswap(uint32_t x) ATTR_CONST ATTR_ARTIFICIAL;
-constexpr inline uint32_t bswap(uint32_t x)
+template < typename T >
+constexpr inline T bswap(T x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template < typename T >
+constexpr inline T bswap(T x) noexcept
+{
+	// Should never get to this unspecialized version.
+	///@note This tuple business is to get the compiler to dump the name of the type when it errors out.  E.g.:
+	/// "error: ‘dummy’ is not a member of ‘std::tuple<long unsigned int>’"
+	auto test_var = std::make_tuple(x);
+	static_assert(decltype(test_var)::dummy, "No template specialization for type T.");
+}
+
+template <> constexpr inline uint32_t bswap<uint32_t>(uint32_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <> constexpr inline uint32_t bswap<uint32_t>(uint32_t x) noexcept
 {
 #if defined(HAVE___BUILTIN_BSWAP32)
 	return __builtin_bswap32(x);
@@ -97,19 +133,31 @@ constexpr inline uint32_t bswap(uint32_t x)
 #endif
 }
 
+template <> constexpr inline uint64_t bswap<uint64_t>(uint64_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <> constexpr inline uint64_t bswap<uint64_t>(uint64_t x) noexcept
+{
+#if defined(HAVE___BUILTIN_BSWAP64)
+	return __builtin_bswap64(x);
+#else
+	/// @todo create a fallback.
+	static_assert(false, "Generic bswap64() not yet implemented.");
+#endif
+}
+
 /**
  * Portable byte-order conversion of a value from Host order to big-endian.
- * This overload is for unsigned 32-bit values.
  *
  * @param x
  * @return
  */
 // Separate declaration here to avoid "attributes are not allowed on a function-definition" error.
-constexpr inline uint32_t host_to_be(uint32_t x) ATTR_CONST ATTR_ARTIFICIAL;
-constexpr inline uint32_t host_to_be(uint32_t x)
+template <typename T>
+constexpr inline T host_to_be(T x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <typename T>
+constexpr inline T host_to_be(T x) noexcept
 {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-	return bswap(x);
+	return bswap<T>(x);
 #else
 	return x;
 #endif

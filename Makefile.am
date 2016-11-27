@@ -41,7 +41,7 @@ libtool: $(LIBTOOL_DEPS)
 
 # The Automake rules for the ucg executable.
 bin_PROGRAMS=ucg
-ucg_SOURCES=main.cpp build_info.h
+ucg_SOURCES=main.cpp build_info.h libtool
 nodist_ucg_SOURCES=build_info.cpp
 CLEANFILES += build_info.cpp
 ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) $(PCRE_CPPFLAGS) $(PCRE2_CPPFLAGS)
@@ -71,8 +71,8 @@ build_info.cpp: FORCE verify-provenance
 	echo "const char *g_cxx = \"$(CXX)\";" >> "$@.tmp";
 # This is known to work for g++ and clang++.
 	$(AM_V_GEN) CXX_VERSION_STR=$$(if $$($(CXX) --version > /dev/null); then echo "$$($(CXX) --version | $(ESED) '/^Configured.*$$/d;' | head -n 1)"; else echo "unknown"; fi;); \
-	echo "const char *g_cxx_version_str = \"$${CXX_VERSION_STR}\";" >> "$@.tmp";\
-	mv "$@.tmp" "$@"
+	echo "const char *g_cxx_version_str = \"$${CXX_VERSION_STR}\";" >> "$@.tmp";
+	$(AM_V_GEN) mv "$@.tmp" "$@"
 
 # Make sure we're either trying to build from a git repo or a tarball, and not in some weird state.
 verify-provenance:
@@ -115,4 +115,14 @@ dist-hook:
 .PHONY: reconf
 reconf: ./config.status
 	$(SHELL) ./config.status --recheck
+	
+.PHONY: autoreconf
+autoreconf:
+	$(SHELL) cd $(abs_top_srcdir) && autoreconf -if
 
+check-malloc:
+	export MALLOC_CHECK_=3 && $(MAKE) check
+
+check-comp:
+	$(MAKE) distclean && ../configure CC=clang CXX=clang++ && $(MAKE)
+	$(MAKE) distclean && ../configure

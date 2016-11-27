@@ -19,7 +19,7 @@
 
 EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in \
 	gen_test_script.py stats.awk \
-	benchmark_progs.csv opts_defs.csv test_cases.csv \
+	$(BENCHMARK_DATABASE_FILES) \
 	$(BENCHMARKSCRIPTS)
 CLEANFILES = perf_test_results.txt
 DISTCLEANFILES = atconfig
@@ -53,7 +53,9 @@ BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
 	$(srcdir)/TC3.sh \
 	$(srcdir)/TC4.sh \
 	$(srcdir)/TC5.sh \
-	$(srcdir)/TC6.sh
+	$(srcdir)/TC6.sh \
+	$(srcdir)/TC7.sh \
+	$(srcdir)/TC8.sh
 
      
 # This line appears in the Autoconf/Autotest manual, but see configure.ac.
@@ -121,8 +123,8 @@ AUTOTEST = $(AUTOM4TE) --language=autotest
 ### See <http://sources.redhat.com/automake/automake.html#distcleancheck> for more info.
 ###
 $(TESTSUITE): $(srcdir)/package.m4 $(TESTSUITE_AT)
-	$(AUTOTEST) -I '$(srcdir)' $(srcdir)/testsuite.at -o $@.tmp
-	mv $@.tmp $@
+	$(AUTOTEST) -I '$(srcdir)' $(srcdir)/testsuite.at -o "$@.tmp"
+	mv "$@.tmp" "$@"
 	
 # It appears that at least up to autoconf 2.68, atconfig doesn't get a dependency
 # and rebuild rule generated for it.  Do that manually here.
@@ -164,8 +166,10 @@ installcheck-local: atconfig atlocal $(TESTSUITE)
 ### I.e. these are built, distributed files.
 ###
 
+BENCHMARK_DATABASE_FILES = benchmark_progs.csv opts_defs.csv test_cases.csv
+
 BENCHMARK_SCRIPT_DEPS = gen_test_script.py stats.awk \
-	benchmark_progs.csv opts_defs.csv test_cases.csv Makefile.am
+	$(BENCHMARK_DATABASE_FILES) Makefile.am
 
 dist_check_SCRIPTS = $(BENCHMARKSCRIPTS)
 
@@ -174,21 +178,10 @@ dist_check_SCRIPTS = $(BENCHMARKSCRIPTS)
 # regenerated from a tarball.  Hence, we're using the $(MAINTPYTHON) variable here, which is either
 # a python interpreter or the "missing" script.
 
-$(srcdir)/TC1.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC1 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
-
-$(srcdir)/TC2.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC2 $${top_srcdir}/../boost_1_58_0 -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+$(BENCHMARKSCRIPTS) : $(BENCHMARK_SCRIPT_DEPS)
+	$(AM_V_GEN) TEST_CASE_NUM=$$(echo $@ | $(ESED) -n 's/.*TC([0-9]+).*/\1/p') && \
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC$${TEST_CASE_NUM} -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 
 $(srcdir)/TC3.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC3 "$${builddir}/500MBLoremIpsum.cpp" -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
-
-$(srcdir)/TC4.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC4 "$${builddir}/500MBLoremIpsum.cpp" -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
-
-$(srcdir)/TC5.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC5 '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
-
-$(srcdir)/TC6.sh : $(BENCHMARK_SCRIPT_DEPS)
-	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC6 --opt=exclude_dir_literal=docs '$${top_srcdir}/../boost_1_58_0' -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
+	$(MAINTPYTHON) $(srcdir)/gen_test_script.py --csv-dir=$(srcdir) --test-case=TC3 --opt=exclude_dir_literal=docs -r '$${builddir}/perf_test_results.txt' -o $@ && chmod +x $@
 

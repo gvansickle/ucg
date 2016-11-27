@@ -4,35 +4,55 @@ language: cpp
 dist: trusty
 sudo: required
 
-# For OS X builds:
-# @note xcode7.3 and above are OSX 10.11, removed until we have a fix for #103, tabs->spaces.
+#compiler:
+#  - gcc
+#  - clang
 
+#env:
+#  - CFG_CC= CFG_CXX=
+#  - CFG_CC=clang CFG_CXX=clang++
+#  - CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
+
+# Build matrix:
 matrix:
     include:
-        - os: osx
-          osx_image: xcode8
-        - os: osx
-          osx_image: xcode7.1
-        - os: osx
-          osx_image: beta-xcode6.1
         - os: linux
           compiler: gcc
         - os: linux
           compiler: clang
-
-#compiler:
-#  - clang
-#  - gcc
+        - os: osx
+          osx_image: xcode8
+        - os: osx
+          osx_image: xcode8
+          env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z'
+        - os: osx
+          osx_image: xcode8
+          env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
+#        - os: osx
+#          osx_image: xcode7.3
+#        - os: osx
+#          osx_image: xcode7.2
+#        - os: osx
+#          osx_image: xcode7.2
+#        - os: osx
+#          osx_image: xcode7
+        - os: osx
+          osx_image: xcode6.4
+          env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z'
+        - os: osx
+          osx_image: xcode6.4
+          env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
 
 before_install:
  - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
  # Travis CI has a broken libtool/sed issue in the OSX image(s) <see e.g. https://github.com/libgd/libgd/issues/266#issuecomment-234697932>.
  # This is the recommended work-around until they fix it.
- - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew uninstall libtool && brew install libtool; fi
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew uninstall libtool && brew install libtool; fi
  - if [ $TRAVIS_OS_NAME == osx ]; then brew install pcre pcre2 argp-standalone the_silver_searcher; fi
  # Install gnu grep to test against. @todo Make things work so this can be installed only after a successful build.
  - if [ $TRAVIS_OS_NAME == osx ]; then brew tap homebrew/dupes; brew install grep; fi
- - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq && sudo apt-get install -qq libpcre3-dev && sudo apt-get install -qq silversearcher-ag; fi
+ - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq; fi
+ - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -qq libpcre3-dev && sudo apt-get install -qq silversearcher-ag; fi
 
 before_script:
  - echo "g++ --version:" && g++ --version && autoreconf --version && automake --version && echo "===="
@@ -47,20 +67,22 @@ before_script:
  - git fetch --unshallow  # Travis limits its pull by default to 50 revs.  The build then can't do a proper "git describe".
 
 script:
- - if [ $TRAVIS_OS_NAME == osx ]; then IS_OSX=1; fi
- - if [ $TRAVIS_OS_NAME == linux ]; then IS_LINUX=1; fi
- - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help; fi 
+ - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help; fi
  - #if [ $TRAVIS_OS_NAME == osx ]; then ls -l -R $(brew --prefix pcre); fi
+ - pkg-config --list-all | grep argp || true
+ - find /usr -iname '*argp*' || true
  - pkg-config --list-all | grep pcre
  - pkg-config libpcre --print-variables
  - pkg-config libpcre --print-provides
+ - # Actual build starts here.
  - autoreconf -i
  - mkdir build
  - cd build
- - ../configure
+ - echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"
+ - ../configure CC="$CFG_CC" CXX="$CFG_CXX"
  - make
- - make check 'TESTSUITEFLAGS=--keywords=!performance,!characterize'
- - find . -iname '*.log' -exec cat "{}" \; 
+ - make check 'TESTSUITEFLAGS=--keywords=!benchmark,!characterize'
+ - find . -iname '*.log' -exec cat "{}" \;
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
 
 after_success:
@@ -72,4 +94,4 @@ after_success:
  - cat tests/perf_test_results.txt
  - if [ $TRAVIS_OS_NAME == osx ]; then otool -L ucg && otool -l ucg; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then LD_DEBUG=all && ldd -v ucg; fi
- - #find . -iname '*.log' -exec cat "{}" \; 
+ - #find . -iname '*.log' -exec cat "{}" \;

@@ -11,14 +11,15 @@
 # UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([UniversalCodeGrep],[0.3.0],[https://github.com/gvansickle/ucg/issues],[],[https://gvansickle.github.io/ucg/])
+LT_PREREQ([2.4.2])
+AC_INIT([UniversalCodeGrep], [0.3.0], [https://github.com/gvansickle/ucg/issues], [], [https://gvansickle.github.io/ucg/])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -54,6 +55,14 @@ AM_INIT_AUTOMAKE([1.14
 	-Werror
 ])
 
+AM_SILENT_RULES([yes])
+
+# Figure out who we're building for.
+case $host_os in
+	*cygwin* ) CYGWIN=yes;;
+    * ) CYGWIN=no;;
+esac
+
 # Set up the maintainer compiler flags.
 # Increase the default GCC warning level.
 AC_SUBST([AM_CPPFLAGS], ["-Wall -Wextra"])
@@ -70,8 +79,12 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 ## Checks for the programs needed to do a build.
 AS_BOX([Checking for programs needed to do the build...])
 
-AC_PROG_INSTALL
-AC_PROG_CC_C99
+# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
+# This will do that for us.
+# @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
+#       calling LT_INIT, or it will complain.
+AC_USE_SYSTEM_EXTENSIONS
+AC_PROG_CC([gcc clang])
 # To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
 # This will do that for us.
 # @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
@@ -81,31 +94,71 @@ AC_USE_SYSTEM_EXTENSIONS
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
 #AM_PROG_CC_C_O
-AC_PROG_CXX
-AC_PROG_CXXCPP # Needed for any C++ AC_PREPROC_IFELSE() checks below.
-## Make sure we get a C++ compiler which supports C++11.
-# Determine what switches we need to get at least some level of C++11 support.
+AC_PROG_CXX([g++ clang++])
+AC_PROG_CXXCPP([g++ clang++]) # Needed for any C++ AC_PREPROC_IFELSE() checks below.
+
+# @temp? Tell clang to use its own library.
+#AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
+#[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
+#CXXCPPFLAGS="$CXXCPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
+#LDFLAGS="$LDFLAGS -stdlib=libc++ --rtlib=compiler-rt"])
+
+AS_BOX([Checking C compiler language standard support])
+
+AC_LANG_PUSH([C])
+AX_CHECK_COMPILE_FLAG([-std=gnu11], [AX_APPEND_FLAG([-std=gnu11], [CC])],
+	[AX_CHECK_COMPILE_FLAG([-std=c11], [AX_APPEND_FLAG([-std=c11], [CC])],
+		[AC_MSG_ERROR([no C11 support])], [], [])
+	], [], [])
+AC_LANG_POP([C])
+
+AS_BOX([Checking C++ compiler language standard support])
+## Make sure we get a C++ compiler which supports the highest level of C++17/C++14/C++11 available.
+# Determine what switches we need to get the highest level of C++17/C++14/C++11 available.
 # We do this here because this macro will replace $CXX with "$CXX -c++11switch", so we'll use this
 # in the AC_LANG_PUSH([C++]) tests below.
-# NOTE: The odd-looking ordering here (this before AC_PROG_CXXCPP) is required until the next version
-# of this macro gets released.  See http://lists.gnu.org/archive/html/autoconf-archive-maintainers/2016-03/msg00034.html.
-# @note 2016-10-8 Macro has been updated, trying to change the ordering.
-AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])
-# @note The following line is to work around an arguable bug in Autoconf 1.12/Libtool.
-# (q.v. http://lists.gnu.org/archive/html/automake/2012-05/msg00014.html).
-# Probably remove this when/if that is fixed. 
-#m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
-# @note We still need AM_PROG_AR when we're using Libtool, or it will complain about a non-POSIX linker.
+AC_LANG_PUSH([C++])
+# @note No AX_CXX_COMPILE_STDCXX_17() macro yet, we'll do it manually.
+AX_CHECK_COMPILE_FLAG([-std=gnu++1z],
+	[# action-if-success
+	AC_SUBST([HAVE_CXX1Z], [1])
+	AC_DEFINE([HAVE_CXX1Z], [1], [Define if compiler supports C++1z])
+	AX_APPEND_FLAG([-std=gnu++1z], [CXX])
+	AX_APPEND_FLAG([-std=gnu++1z], [CXXCPP])
+	],
+	[# action-if-fail
+	AX_CHECK_COMPILE_FLAG([-std=c++1z],
+		[# action-if-success
+		AC_SUBST([HAVE_CXX1Z], [1])
+		AC_DEFINE([HAVE_CXX1Z], [1], [Define if compiler supports C++1z])
+		AX_APPEND_FLAG([-std=c++1z], [CXX])
+		AX_APPEND_FLAG([-std=c++1z], [CXXCPP])
+		],
+		[# action-if-fail
+		AC_SUBST([HAVE_CXX1Z], [0])
+		])
+	])
+AS_IF([test "x$HAVE_CXX1Z" = "x0"],
+[
+	AX_CXX_COMPILE_STDCXX_14([], [optional])
+	AS_IF([test "x$HAVE_CXX14" != "x1"],
+		[AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])], [])
+], [])
+AC_LANG_POP([C++])
+
+AC_PROG_INSTALL
+# @note We still need AM_PROG_AR before LT_INIT(), or it will complain about a non-POSIX linker.
 # See e.g. https://lists.gnu.org/archive/html/libtool/2012-11/msg00019.html.
 AM_PROG_AR
 # Shouldn't need ranlib since we're using libtool.
 #AC_PROG_RANLIB
-
 # Initialize Libtool.
-LT_INIT([static disable-shared])
+LT_INIT([static disable-fast-install disable-shared])
 AC_SUBST([LIBTOOL_DEPS])
+# Output a libtool script so we can run the rest of the compile checks with it.
+LT_OUTPUT
 
-PKG_PROG_PKG_CONFIG([0.9.0])
+PKG_PROG_PKG_CONFIG([0.20.0])
 AC_PROG_SED
 # Find the sed option which turns on Extended Regular Expressions.
 AC_CACHE_CHECK([for $SED option that supports extended regexes], [ac_cv_path_ESED],
@@ -155,7 +208,7 @@ AS_IF([test "$LN_S" = 'ln -s'],
 	[AC_SUBST([TEST_LN_S], [$LN_S])],
 	[AC_SUBST([TEST_LN_S], [:])
 	AC_MSG_WARN([couldn't find a real 'ln -s', will not be able to run all tests])])
-	
+
 # Try to find GNU grep.
 AC_CACHE_CHECK([for GNU grep], [ac_cv_path_PROG_GNU_GREP],
 [
@@ -184,8 +237,6 @@ AC_CACHE_CHECK([for a grep which supports PCREs], [ac_cv_path_PROG_GREP_P],
 ])
 AC_SUBST([PROG_GREP_P], [$ac_cv_path_PROG_GREP_P])
 
-# See if we have a pcre2grep.
-AC_PATH_PROG([PROG_PCRE2GREP], [pcre2grep], [])
 
 ###
 ### Checks for maintainer tools.
@@ -195,20 +246,20 @@ AS_BOX([Checking for maintainer tools...])
 
 # Python, for generation of test suite.
 AM_PATH_PYTHON([2.7],,[:])
-AM_CONDITIONAL([HAVE_PYTHON], [test "x$PYTHON" != "x"])  #<< Automake conditional for skipping tests which require python.
+AM_CONDITIONAL([HAVE_PYTHON], [test "x$PYTHON" != "x"])  #<< Automake conditional for skipping anything which requires Python.
 AM_COND_IF([HAVE_PYTHON],
 	[AX_PYTHON_MODULE([sqlite3],,[python])],
 	[])
 # @todo If we don't have the Python Sqlite3 library, we might as well not have python at all for
 # our purposes here.  This is intended to scuttle the AM_MISSING_PROG([MAINTPYTHON]...) below, but
-# it likely could be done better. 
+# it likely could be done better.
 AS_IF([test $HAVE_PYMOD_SQLITE3 = no], [PYTHON=:])
 
 # Define a maintainer-only version of python, so a tarball builder doesn't need
 # a real python runtime.
 AM_MISSING_PROG([MAINTPYTHON], [$PYTHON])
 
-# Autotest needs autom4te, or 'missing's stub for it post-distribution. 
+# Autotest needs autom4te, or 'missing's stub for it post-distribution.
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 # Add Valgrind support.
@@ -244,18 +295,16 @@ AS_BOX([Checking for libraries...])
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
-	[
-		# Found it.  Remember to add $PCRE_LIBS, $PCRE_CFLAGS, and $PCRE_CPPFLAGS to the appropriate automake vars.
-		AC_SUBST([HAVE_LIBPCRE], [yes])
-		AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])
+	[# Found it.  Remember to add $PCRE_LIBS, $PCRE_CFLAGS, and $PCRE_CPPFLAGS to the appropriate automake vars.
+	AC_SUBST([HAVE_LIBPCRE], [yes])
+	AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])
 	],
 	[AC_SUBST([HAVE_LIBPCRE], [no])])
 
 PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
-	[
-		# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
-		AC_SUBST([HAVE_LIBPCRE2], [yes])
-		AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
+	[# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
+	AC_SUBST([HAVE_LIBPCRE2], [yes])
+	AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
 	],
 	[AC_SUBST([HAVE_LIBPCRE2], [no])])
 
@@ -281,12 +330,35 @@ AC_LANG_POP([C++])
 
 AC_LANG_PUSH([C++])
 
-AS_BOX([Checking for the existence of needed types...])
+AS_BOX([Checking for needed C++ types...])
 
 AC_CHECK_TYPES([std::is_trivial<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIAL], [1],
 	[Define if the std::is_trival<> template exists.])], [], [#include <type_traits>])
 AC_CHECK_TYPES([std::is_trivially_copyable<int>::value_type], [AC_DEFINE([HAVE_IS_TRIVIALLY_COPYABLE], [1],
 	[Define if the std::is_trivally_copyable<> template exists.])], [], [#include <type_traits>])
+
+# See if we have std::string_view.
+AC_CHECK_TYPES([std::string_view], [],
+[	# No std::string_view, see if we have a pre-standardization string_view class available.
+	AC_CHECK_TYPES([std::experimental::string_view], [], [], [#include <experimental/string_view>])
+], [#include <string_view>])
+
+# shared mutexes
+AC_CHECK_TYPES([[std::shared_mutex], [std::shared_timed_mutex]], [], [], [AC_INCLUDES_DEFAULT
+#include <shared_mutex>
+])
+
+AC_CHECK_TYPES([[std::shared_lock<std::shared_mutex>]],
+	[AC_DEFINE([HAVE_SHARED_LOCK_SHARED_MUTEX], [1], [[Define if std::shared_lock<std::shared_mutex> exists.]])], [],
+	[AC_INCLUDES_DEFAULT
+	#include <shared_mutex>
+])
+
+AC_CHECK_TYPES([[std::shared_lock<std::shared_timed_mutex>]],
+	[AC_DEFINE([HAVE_SHARED_LOCK_SHARED_TIMED_MUTEX], [1], [[Define if std::shared_lock<std::shared_timed_mutex> exists.]])], [],
+	[AC_INCLUDES_DEFAULT
+	#include <shared_mutex>
+])
 
 AC_LANG_POP([C++])
 
@@ -321,7 +393,7 @@ AC_LANG_PUSH([C++])
 # Append them to AM_CXXFLAGS if it does.
 AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm
-#AX_APPEND_COMPILE_FLAGS([-Wnoexcept], [AM_CXXFLAGS]) # Warn if something isn't marked noexcept when it could be. @note Doesn't seem to do anything.
+AX_APPEND_COMPILE_FLAGS([-fdiagnostics-color=auto], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CXXFLAGS]) # -fopt-info-optimized -fopt-info-vec-all
 #AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
@@ -342,20 +414,53 @@ AX_GCC_BUILTIN(__builtin_unreachable)
 AX_GCC_BUILTIN(__builtin_expect)
 AX_GCC_BUILTIN(__builtin_popcount)
 AX_GCC_BUILTIN(__builtin_bswap32)
+AX_GCC_BUILTIN(__builtin_bswap64)
 AX_GCC_BUILTIN(__builtin_ctzll)
+
+## The checks below for C++ feature-test macros are mainly for diagnostic purposes.  The way they're defined
+## <https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations> makes them mostly
+## usable directly from the C++ code; using them by way of configure isn't required or helpful.
 
 # Detect __has_include() support.
 AC_MSG_CHECKING([for __has_include])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-#if __has_include(<iostream>)
-#include <iostream>
+#ifdef __has_include
+#define HAVE_HAS_INCLUDE yes
 #endif
-], [std::cout << "Have __has_include()" << std::endl;])],
+],
+[
+#ifndef HAVE_HAS_INCLUDE
+#error "Do not have __has_include()."
+#endif
+])],
 	[AC_MSG_RESULT([yes])],
 	[# Not defined, define a substitute in config.h.
 	AC_MSG_RESULT([no])
 	AC_DEFINE([__has_include(h)], [0], [Defined to a dummy replacement if __has_include() doesn't exist.])
 	])
+
+#
+# C++11 features
+#
+AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_templates])
+
+#
+# C++14 features
+#
+#AC_CHECK_DECLS([__cpp_lib_make_unique], [], [],
+#[[AC_INCLUDES_DEFAULT
+##include <memory>]])
+#AC_CHECK_DECLS([__cpp_lib_transformation_trait_aliases], [], [],
+#[AC_INCLUDES_DEFAULT()
+##include <type_traits>])
+
+#
+# C++17 features
+#
+#AC_CHECK_DECLS([__cpp_lib_type_trait_variable_templates], [], [],
+#[AC_INCLUDES_DEFAULT()
+##include <type_traits>])
+
 
 # Check for x86-64 ISA extensions we can use for function multiversioning.
 AS_BOX([Checking for ISA extensions supported by the compiler...])
@@ -385,24 +490,19 @@ AS_IF([test "x$ax_pthread_ok" = xyes],
         [AC_LANG_PROGRAM([
         					#include <type_traits>
         					#include <thread>
-        					#include <pthread.h> 					
+        					#include <pthread.h>
         				],
                          [
                          	static_assert(std::is_same<std::thread::native_handle_type, pthread_t>::value, "C++11 underlying thread implementation is not pthreads");
-                         ])],
-        [
-        	AC_DEFINE([CXX11_THREADS_ARE_PTHREADS], [1],
-				[Define if the C++11 underlying thread implementation is pthreads])
-        	AC_MSG_RESULT([yes])
+                         ])
         ],
         [
-        	AC_MSG_RESULT([no])
-        ])
-		
+        	AC_DEFINE([CXX11_THREADS_ARE_PTHREADS], [1], [Define if the C++11 underlying thread implementation is pthreads])
+        	AC_MSG_RESULT([yes])
+        ],
+        [AC_MSG_RESULT([no])])
 	],
-	[
-		AC_MSG_NOTICE([no pthreads found])
-	])
+	[AC_MSG_NOTICE([no pthreads found])])
 
 AC_LANG_POP([C++])
 
@@ -428,6 +528,10 @@ AC_CHECK_DECLS([std::to_string(int)],
 				],
 				[], [#include <string>])
 
+# See if we have a std::make_unique<>().  Note that checking for __cpp_lib_make_unique does not seem to
+# work properly under clang++; i.e., it won't be defined even though a std::make_unique() exists.
+AC_CHECK_DECLS([std::make_unique<int>(int)], [], [], [#include <memory>])
+
 # We need the argp library.
 AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
 
@@ -435,13 +539,13 @@ AC_CHECK_FUNCS([sched_setaffinity])
 
 AC_CHECK_FUNCS([get_current_dir_name])
 
-AC_CHECK_FUNCS([openat])
+AC_CHECK_FUNCS([openat fstatat])
 
 AC_CHECK_FUNCS([aligned_alloc posix_memalign])
 AS_IF([test "x$ac_cv_func_aligned_alloc" = xno -a "x$ac_cv_func_posix_memalign" = xno],
 	[AC_MSG_ERROR([cannot find an aligned memory allocator.])],
 	[AC_MSG_NOTICE([found a usable aligned memory allocator.])])
-	
+
 AC_CHECK_FUNCS([posix_fadvise])
 
 AC_MSG_CHECKING([if the GNU C library program_invocation{_short}_name strings are defined])
@@ -523,22 +627,49 @@ AC_CONFIG_FILES([Makefile
 	])
 AC_OUTPUT
 
-# Print a configure summary.
+###
+### Print a configure summary.
+###
 AC_MSG_RESULT([
-*** Configuration Summary ***
+  Configuration Summary for $PACKAGE $VERSION
+  =================================================
 
   Compilers
   ---------
   C compiler:                 $CC
+  [AM_CFLAGS]:                  $AM_CFLAGS
+  CFLAGS:                     $CFLAGS
+
   C preprocessor:             $CPP
+  [AM_CPPFLAGS]:                $AM_CPPFLAGS
+  CPPFLAGS:                   $CPPFLAGS
+
   C++ compiler:               $CXX
+  [AM_CXXFLAGS]:                $AM_CXXFLAGS
+  CXXFLAGS:                   $CXXFLAGS
+
   C++ preprocessor:           $CXXCPP
-  
+
+  LTCC:                       $LTCC
+  LTCFLAGS:                   $LTCFLAGS
+  [AM_LDFLAGS]:                 $AM_LDFLAGS
+  LD:                         $LD
+  LDFLAGS:                    $LDFLAGS
+  LIBS:                       $LIBS
+
+  $CXX Search Paths
+  -----------------
+$($CXX -print-search-dirs | tr ':' '\n' | sed -E 's/^ [=]?//g' | sed 's/^ */  /g')
+
+  $CXXCPP Include Paths
+  ---------------------
+$(echo | $CXXCPP -v -x c++ - 2>&1 | sed -n '/^ *#include/,/^ *End of/ p' | sed 's/^ */  /g')
+
   PCRE Info
   ---------
   HAVE_LIBPCRE                $HAVE_LIBPCRE
   HAVE_LIBPCRE2               $HAVE_LIBPCRE2
-  
+
   libtool info
   ------------
   sys_lib_search_path_spec:   $sys_lib_search_path_spec

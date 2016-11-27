@@ -15,7 +15,9 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file */
+/** @file filesystem.hpp
+ * Take care of some filesystem API portability and convenience issues.
+ */
 
 #ifndef SRC_LIBEXT_FILESYSTEM_HPP_
 #define SRC_LIBEXT_FILESYSTEM_HPP_
@@ -23,7 +25,7 @@
 #include <config.h>
 
 #include <cstdio>  // For perror() on FreeBSD.
-#include <fcntl.h> // For openat() etc.
+#include <fcntl.h> // For openat() and other *at() functions, AT_* defines.
 #include <unistd.h> // For close().
 #include <sys/stat.h>
 #include <sys/types.h> // for dev_t, ino_t
@@ -156,13 +158,13 @@ namespace portable
 {
 
 /**
- * A more usable and portable replacement for glibc and POSIX dirname().
+ * A more usable and portable replacement for glibc and POSIX dirname()'s.
  *
  * @param path  const ref to a path string.  Guaranteed to not be modified in any way by the function call.
- * @return  A std::string representing the path to return the directory of.  Guaranteed to be a normal std::string with which you may do
+ * @return  A std::string representing the dirname part of #path.  Guaranteed to be a normal std::string with which you may do
  *          whatever you can do with any other std::string.
  */
-inline std::string dirname(const std::string &path)
+inline std::string dirname(const std::string &path) noexcept
 {
 	// Get a copy of the path string which dirname() can modify all it wants.
 	char * modifiable_path = strdup(path.c_str());
@@ -176,9 +178,28 @@ inline std::string dirname(const std::string &path)
 	return retval;
 }
 
-/// @todo basename().
+/**
+ * A more usable and portable replacement for glibc and POSIX basename()'s.
+ *
+ * @param path  const ref to a path string.  Guaranteed to not be modified in any way by the function call.
+ * @return  A std::string representing the basename part of path.  Guaranteed to be a normal std::string with which you may do
+ *          whatever you can do with any other std::string.
+ */
+inline std::string basename(const std::string &path) noexcept
+{
+	// Get a copy of the path string which dirname() can modify all it wants.
+	char * modifiable_path = strdup(path.c_str());
 
+	// Copy the output of dirname into a std:string.  We don't ever free the string basename() returns
+	// because it's either a static buffer, or it's a pointer to modifiable_path.  The latter we'll free below.
+	std::string retval(::basename(modifiable_path));
+
+	free(modifiable_path);
+
+	return retval;
 }
+
+} // namespace
 
 /**
  * Examines the given #path and determines if it is absolute.
@@ -201,6 +222,36 @@ inline bool is_pathname_absolute(const std::string &path) noexcept
 #error "Only POSIX-like systems currently supported."
 	return false;
 #endif
+}
+
+/**
+ * Takes an absolute or relative path, possibly with trailing slashes, and removes the unnecessary trailing
+ * slashes, and any unnecessary non-existent directory (e.g. "./" gets removed).
+ *
+ * @param path
+ * @return
+ */
+inline std::string clean_up_path(const std::string &path) noexcept
+{
+	// For Posix, there are three situations we need to consider here:
+	// 1. An absolute path starting with 1 or 2 slashes needs those slashes left alone.
+	// 2. An absolute path with >= 3 slashes can be stripped down to 1 slash.
+	// 3. Any number of slashes not at the beginning of the path should be stripped.
+
+	auto dir = portable::dirname(path);
+	auto base = portable::basename(path);
+	if(dir.empty() || dir == ".")
+	{
+		// There is no "dir" component.  If dirname() finds no slashes in the path,
+		// it returns a ".".  We don't want to append a "./" to the name, so we just return the basename.
+		// Note that GNU grep does not appear to do this; all paths it prints look like they're dirname()+"/"+basename().
+		// ag and ack however do appear to be doing this "empty dirname() elision".
+		return base;
+	}
+	else
+	{
+		return dir + "/" + base;
+	}
 }
 
 
