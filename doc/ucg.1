@@ -38,8 +38,7 @@ Treat all characters in
 as literal.
 .TP
 .B \-w, \-\-word\-regexp
-\fIPATTERN\fR
-Must match a complete word.
+\fIPATTERN\fR must match a complete word.
 .SS Search Output:
 .TP
 .B \-\-column
@@ -59,15 +58,15 @@ Render the output without ANSI color codes.
 \fB\-\-[no]ignore\-dir\fR=\fINAME\fR, \fB\-\-[no]ignore\-directory=\fINAME\fR
 [Do not] exclude directories with \fINAME\fR.
 .TP
-.B \-\-exclude=GLOB, \-\-ignore=GLOB
-Files matching GLOB will be ignored.
+.B \-\-exclude=\fIGLOB\fR, \fB\-\-ignore=\fIGLOB\fR
+Files matching \fIGLOB\fR will be ignored.
 .TP
-.B \-\-ignore\-file=FILTER:FILTERARGS
-Files matching FILTER:FILTERARGS
+.B \-\-ignore\-file=\fIFILTER\fB:\fIFILTERARGS\fR
+Files matching \fIFILTER\fR:\fIFILTERARGS\fR
 (e.g. ext:txt,cpp) will be ignored.
 .TP
-.B \-\-include=GLOB
-Only files matching GLOB will be searched.
+.B \-\-include=\fIGLOB\fR
+Only files matching \fIGLOB\fR will be searched.
 .TP
 .B \-k, \-\-known\-types
 Only search in files of recognized types (default: on).
@@ -78,23 +77,23 @@ Do not recurse into subdirectories.
 .B \-r, \-R , \-\-recurse
 Recurse into subdirectories (default: on).
 .TP
-.B \-\-type=[no]TYPE
+.B \-\-type=\fI[no]TYPE\fR
 Include only [exclude all] TYPE files.
-Types may also be specified as \-\-[no]TYPE.
+Types may also be specified as \fI\-\-[no]TYPE\fR.
 .SS File type specifications:
 .TP
-.B \-\-type\-add=TYPE:FILTER:FILTERARGS
-Files FILTERed with the given FILTERARGS are treated as
-belonging to type TYPE. Any existing definition of type
-TYPE is appended to.
+.B \-\-type\-add=\fITYPE\fB:\fIFILTER\fB:\fIFILTERARGS\fR
+Files \fIFILTER\fRed with the given \fIFILTERARGS\fR are treated as
+belonging to type \fITYPE\fR. Any existing definition of type
+\fITYPE\fR is appended to.
 .TP
-.B \-\-type\-del=TYPE
-Remove any existing definition of type TYPE.
+.B \-\-type\-del=\fITYPE\fR
+Remove any existing definition of type \fITYPE\fR.
 .TP
-.B \-\-type\-set=\fITYPE:FILTER:FILTERARGS\fR
-Files FILTERed with the given FILTERARGS are treated as
-belonging to type TYPE. Any existing definition of type
-TYPE is replaced.
+.B \-\-type\-set=\fITYPE\fB:\fIFILTER\fB:\fIFILTERARGS\fR
+Files \fIFILTER\fRed with the given \fIFILTERARGS\fR are treated as
+belonging to type \fITYPE\fR. Any existing definition of type
+\fITYPE\fR is replaced.
 .SS Performance tuning:
 .TP
 .B \-\-dirjobs=\fINUM_JOBS\fR
@@ -108,7 +107,7 @@ Number of scanner jobs (std::thread<>s) to use.
 .B \-\-noenv
 Ignore
 .B .ucgrc
-files.
+configuration files.
 .SS Informational options:
 .TP
 .B \-?, \-\-help
@@ -138,10 +137,10 @@ and per-directory-hierarchy basis.
 .B .ucgrc
 files are text files with a simple format. Each line of text 
 can be either:
-.IP
+.IP * 4
 A single-line comment. The line must start with a # and the
 comment continues for the rest of the line.
-.IP
+.IP * 4
 A command-line parameter. This must be exactly as if it was
 given on the command line.
 .SS Location and Read Order:
@@ -149,45 +148,59 @@ When
 .B ucg
 is invoked, it looks for command-line options from
 the following locations in the following order:
-.IP
-1. The 
+.TP 4
+1.
+The 
 .B .ucgrc
 file in the user's $HOME directory, if any.
-.IP
-2. The first
+.TP 4
+2.
+The first
 .B .ucgrc
 file found, if any, by walking up the component directories
 of the current working directory. This traversal stops at either
 the user's $HOME directory or the root directory. This is the
 project config file, and is intended to live in the top-level
 directory of a project directory hierarchy.
-.IP
-3. The command line itself.
+.TP 4
+3.
+The command line itself.
 .PP
 Options read later will override earlier options.
-.SS User-Defined File Types:
+.SS Creating User-Defined File Types:
 .B ucg
-supports user-defined file types with the
+supports the creation of user-defined file types with the following options:
+.HP 4
+\fB\-\-type\-set=\fITYPE\fB:\fIFILTER\fB:\fIFILTERARGS\fR
+.HP 4
+\fB\-\-type\-add=\fITYPE\fB:\fIFILTER\fB:\fIFILTERARGS\fR
 .PP
-\-\-type\-set=TYPE:FILTER:FILTERARGS and
-.PP
-\-\-type\-add=TYPE:FILTER:FILTERARGS command-line options.
-.PP
-Three FILTERs are currently supported:
-.IP
-ext (extension list)
-.IP
-is (literal filename)
-.IP
-glob (glob pattern)
-.IP
+Three \fIFILTER\fRs are currently supported:
+.TP 4
+*
+\fBext\fR (extension list)
+.TP 4
+*
+\fBis\fR (literal filename)
+.TP 4
+*
+\fBglob\fR (glob pattern)
+.RS 4
 .SS Extension List Filter
-.IP
+.PP
 The extension list filter allows you to specify a comma-separated
 list of file extensions which are to be considered as belonging to
-file type TYPE.
-.IP
-Example: \-\-type\-set=type1:ext:abc,xqz,def
+file type \fITYPE\fR.  For example:
+.PP
+.nf
+.RS
+\fBucg\fR \-\-type\-set=type1:ext:abc,xqz,def --type1 'Pattern'
+.RE
+.fi
+.PP
+will search all files with extensions *.abc, *.xqz, and *.def in the directory
+tree rooted at the current working directory for the literal string 'Pattern'.  
+.RE
 .SS Literal Filename Filter
 .IP
 The literal filename filter simply specifies a single literal

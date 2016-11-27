@@ -194,7 +194,7 @@ static struct argp_option options[] = {
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
 		{"dirjobs",  OPT_PERF_DIRJOBS, "NUM_JOBS",      0,  "Number of directory traversal jobs (std::thread<>s) to use." },
 		{0,0,0,0, "Miscellaneous:" },
-		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc files."},
+		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc configuration files."},
 		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
 		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
 		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
