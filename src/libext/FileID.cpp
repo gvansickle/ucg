@@ -247,6 +247,17 @@ const std::string& FileID::impl::ResolvePath() const
 	return m_path;
 }
 
+dev_t FileID::impl::GetDev() const noexcept
+{
+	if(m_dev == static_cast<dev_t>(-1))
+	{
+		LazyLoadStatInfo();
+	}
+
+	return m_dev;
+}
+
+
 /// //////////////////////////////
 
 
@@ -474,22 +485,7 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-#if 1 //LEAN_FD
 	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
-#else
-	int retval;
-	int fd = m_pimpl->TryGetFD();
-	if(fd < 0)
-	{
-		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
-		retval = fstatat(fd, name.c_str(), statbuf, flags);
-		close(fd);
-	}
-	else
-	{
-		retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
-	}
-#endif
 
 	if(retval == -1)
 	{
@@ -548,9 +544,12 @@ const FileDescriptor& FileID::GetFileDescriptor()
 
 dev_t FileID::GetDev() const noexcept
 {
-	WriterLock wl(m_mutex);
-	return m_pimpl->GetDev();
-};
+	//WriterLock wl(m_mutex);
+	//return m_pimpl->GetDev();
+	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+
+	return m_pimpl->m_dev;
+}
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
