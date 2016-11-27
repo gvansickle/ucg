@@ -126,3 +126,7 @@ check-malloc:
 check-comp:
 	$(MAKE) distclean && ../configure CC=clang CXX=clang++ && $(MAKE)
 	$(MAKE) distclean && ../configure
+	
+check-man: $(builddir)/doc/mancheck.man
+	run meld "$<" "$(srcdir)/doc/ucg.1"
+

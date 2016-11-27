@@ -6,7 +6,7 @@ ucg \- a grep-like tool for searching source code
 [
 .I OPTIONS
 ]
-.B PATTERN
+.I PATTERN
 [
 .I FILES OR DIRECTORIES
 ]
@@ -23,46 +23,41 @@ regular expressions.
 .SH OPTIONS
 .SS Searching:
 .TP
-.B \-\-[no]\-smart\-case
+.B \-\-[no]smart\-case
 Ignore case if 
-.B PATTERN
+.I PATTERN
 is all lowercase (default: enabled).
 .TP
 .B \-i, \-\-ignore\-case
 Ignore case distinctions in
-.B PATTERN
-.
-.TP
-.B \-n, \-\-no\=recurse
-Do not recurse into subdirectories.
+.I PATTERN
 .TP
 .B \-Q, \-\-literal
 Treat all characters in
-.B PATTERN
+.I PATTERN
 as literal.
 .TP
-.B \-r, \-R , \-\-recurse
-Recurse into subdirectories (default: on).
-.TP
-.B \-w, \-\-word\-regexp PATTERN
+.B \-w, \-\-word\-regexp
+\fIPATTERN\fR
 Must match a complete word.
 .SS Search Output:
 .TP
 .B \-\-column
 Print column of first match after line number.
 .TP
-.B \-\-no\-column
+.B \-\-nocolumn
 Don't print column of first match (default).
+.SS "File presentation:"
 .TP
 .B \-\-color, \-\-colour
 Render the output with ANSI color codes.
 .TP
 .B \-\-nocolor, \-\-nocolour
 Render the output without ANSI color codes.
-.SS Inclusion and exclusion:
+.SS "File/directory inclusion/exclusion:"
 .TP
-.B \-\-[no]ignore\-dir=NAME, \-\-[no]ignore\-directory=NAME
-[Do not] exclude directories with this NAME.
+\fB\-\-[no]ignore\-dir\fR=\fINAME\fR, \fB\-\-[no]ignore\-directory=\fINAME\fR
+[Do not] exclude directories with \fINAME\fR.
 .TP
 .B \-\-exclude=GLOB, \-\-ignore=GLOB
 Files matching GLOB will be ignored.
@@ -77,6 +72,12 @@ Only files matching GLOB will be searched.
 .B \-k, \-\-known\-types
 Only search in files of recognized types (default: on).
 .TP
+.B \-n, \-\-no\-recurse
+Do not recurse into subdirectories.
+.TP
+.B \-r, \-R , \-\-recurse
+Recurse into subdirectories (default: on).
+.TP
 .B \-\-type=[no]TYPE
 Include only [exclude all] TYPE files.
 Types may also be specified as \-\-[no]TYPE.
@@ -90,17 +91,17 @@ TYPE is appended to.
 .B \-\-type\-del=TYPE
 Remove any existing definition of type TYPE.
 .TP
-.B \-\-type\-set=TYPE:FILTER:FILTERARGS
+.B \-\-type\-set=\fITYPE:FILTER:FILTERARGS\fR
 Files FILTERed with the given FILTERARGS are treated as
 belonging to type TYPE. Any existing definition of type
 TYPE is replaced.
 .SS Performance tuning:
 .TP
-.B \-\-dirjobs=NUM_JOBS
+.B \-\-dirjobs=\fINUM_JOBS\fR
 Number of directory traversal jobs (std::thread<>s)
 to use.
 .TP
-.B \-j, \-\-jobs=NUM_JOBS
+.B \-j, \-\-jobs=\fINUM_JOBS\fR
 Number of scanner jobs (std::thread<>s) to use.
 .SS Miscellaneous:
 .TP
@@ -208,3 +209,4 @@ is written by Gary R. Van Sickle <grvs@users.sourceforge.net>
 .SH SEE ALSO
 .BR grep (1)
 .BR pcre (3)
+.BR pcre2 (3)

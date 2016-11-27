@@ -17,3 +17,9 @@
 
 dist_man1_MANS = ucg.1
 
+# Built source for the check.
+nodist_man1_MANS = mancheck.man
+
+mancheck.man: $(top_builddir)/ucg$(EXEEXT) Makefile
+	export ARGP_HELP_FMT=header-col=0,short-opt-col=2,long-opt-col=2 && help2man --no-info --section=1 "$<" > "$@"
+
