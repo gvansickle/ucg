@@ -239,3 +239,32 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 }
 
 
+// 256-byte array used to match the first char.
+static __m128i m_compiled_cu_bitmap[16];
+static uint16_t last_index = 0;
+
+bool MULTIVERSION(ConstructCodeUnitTable)(const uint8_t *pcre2_bitmap)
+{
+	uint16_t out_index = 0;
+	for(uint16_t i=0; i<=256; ++i)
+	{
+		if((pcre2_bitmap[i/8] & (0x01 << i)) == 0)
+		{
+			// This bit isn't set, skip to the next one.
+			continue;
+		}
+		else
+		{
+			// @note This depends on little-endianness.
+			((uint8_t*)&(m_compiled_cu_bitmap[out_index/16]))[out_index%16] = i;
+			out_index++;
+		}
+	}
+	last_index = out_index;
+}
+
+size_t MULTIVERSION(FindFirstPossibleCodeUnit)(const char * __restrict__ *cbegin, size_t len)
+{
+
+}
+
