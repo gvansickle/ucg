@@ -329,7 +329,6 @@ public:
 
 	const dev_ino_pair GetUniqueFileIdentifier() const noexcept { if(m_unique_file_identifier.empty()) { LazyLoadStatInfo(); }; return m_unique_file_identifier; };
 
-	dev_t GetDev() const noexcept;
 	void SetDevIno(dev_t d, ino_t i) noexcept;
 
 	/// @todo size_t GetResolvedPathLength() const noexcept;

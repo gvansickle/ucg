@@ -172,24 +172,15 @@ void* FileID::impl::LazyLoadStatInfo() const noexcept
 
 	struct stat stat_buf;
 	bool fstat_success = m_at_dir->FStatAt(m_basename, &stat_buf, AT_NO_AUTOMOUNT);
-#if 0
-	if(fstatat(m_at_dir->GetFileDescriptor().GetFD(), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
-	{
-		// Error.
-		m_file_type = FT_STAT_FAILED;
-		LOG(INFO) << "fstatat() failed: " << LOG_STRERROR();
-		// Note: We don't clear errno here, we want to be able to look at it in the caller.
-		//errno = 0;
-	}
-	else
-	{
-#endif
 
 	if(fstat_success)
 	{
 		SetStatInfo(stat_buf);
 	}
-	//}
+	else
+	{
+		m_file_type = FT_STAT_FAILED;
+	}
 
 	return (void*)1;
 }
@@ -246,17 +237,6 @@ const std::string& FileID::impl::ResolvePath() const
 
 	return m_path;
 }
-
-dev_t FileID::impl::GetDev() const noexcept
-{
-	if(m_dev == static_cast<dev_t>(-1))
-	{
-		LazyLoadStatInfo();
-	}
-
-	return m_dev;
-}
-
 
 /// //////////////////////////////
 
@@ -391,8 +371,7 @@ FileID::~FileID()
 
 std::string FileID::GetBasename() const noexcept
 {
-	//ReaderLock rl(m_mutex);
-	// This is read-only after construction, so it doesn't need a lock here.
+	// This is const after construction, and always exists, so it doesn't need a lock here.
 	return m_pimpl->GetBasename();
 };
 
@@ -421,11 +400,6 @@ const std::string& FileID::GetPath() const noexcept
 
 FileType FileID::GetFileType() const noexcept
 {
-#if 0
-	WriterLock rl(m_mutex);
-
-	return m_pimpl->GetFileType();
-#endif
 	/// @todo Not reliant on stat, could be optimized.
 	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_file_type;
@@ -433,38 +407,18 @@ FileType FileID::GetFileType() const noexcept
 
 off_t FileID::GetFileSize() const noexcept
 {
-#if 0
-	{
-		ReaderLock rl(m_mutex);
-		if(m_pimpl->m_stat_info_valid)
-		{
-			return m_pimpl->m_size;
-		}
-	}
-	WriterLock rl(m_mutex);
-	return m_pimpl->GetFileSize();
-#endif
-	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ m_pimpl->GetFileSize(); return (void*)1;});
+	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_size;
 };
 
 blksize_t FileID::GetBlockSize() const noexcept
 {
-#if 0
-	WriterLock wl(m_mutex);
-	return m_pimpl->GetBlockSize();
-#endif
 	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_block_size;
 };
 
 const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
-#if 0
-	WriterLock wl(m_mutex);
-	return m_pimpl->GetUniqueFileIdentifier();
-#endif
-
 	/// @todo This is not necessarily dependent on stat info, could be optimized.
 
 	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo();});
@@ -490,7 +444,8 @@ bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 	if(retval == -1)
 	{
 		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' failed: " << LOG_STRERROR();
-		errno = 0;
+		// Note: We don't clear errno here, we want to be able to look at it in the caller.
+		//errno = 0;
 		return false;
 	}
 
@@ -528,17 +483,6 @@ void FileID::CloseDir(DIR *d)
 
 const FileDescriptor& FileID::GetFileDescriptor()
 {
-#if 0
-	{
-		ReaderLock rl(m_mutex);
-		if(!m_pimpl->m_file_descriptor.empty())
-		{
-			return m_pimpl->m_file_descriptor;
-		}
-	}
-	WriterLock wl(m_mutex);
-	return m_pimpl->GetFileDescriptor();
-#endif
 	return *DoubleCheckedLock<FileDescriptor*>(m_file_descriptor_witness, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
 }
 
