@@ -1,4 +1,5 @@
 .TH UCG 1 2016-10-31
+.mso www.tmac
 .SH NAME
 ucg \- a grep-like tool for searching source code
 .SH SYNOPSIS
@@ -201,25 +202,52 @@ file type \fITYPE\fR.  For example:
 will search all files with extensions *.abc, *.xqz, and *.def in the directory
 tree rooted at the current working directory for the literal string 'Pattern'.  
 .RE
+.RS 4
 .SS Literal Filename Filter
-.IP
+.PP
 The literal filename filter simply specifies a single literal
-filename which is to be considered as belonging to file type TYPE.
-.IP
-Example: \-\-type\-add=autoconf:is:configure.ac
+filename which is to be considered as belonging to file type \fITYPE\fR.
+.PP
+Example:
+.nf
+.RS
+\fBucg\fR \-\-type\-add=autoconf:is:configure.ac --autoconf 'Pattern'
+.RE
+.fi
+.PP
+This will search only files named exactly 'configure.ac' for the literal
+string 'Pattern'.
+.RE
+.RS 4
 .SS Glob filter
-.IP
+.PP
 The glob filter allows you to specify a glob pattern to match
 against filenames. If the glob matches, the file is considered
-as belonging to the file type TYPE.
-.IP
-Example: \-\-type\-set=mk:glob:?akefile*
+as belonging to the file type \fITYPE\fR.
+.PP
+Example:
+.nf
+.RS
+\fBucg\fR \-\-type\-set=mk:glob:?akefile* --mk 'Pattern'
+.RE
+.fi
+.PP
+This will search only files which match the shell glob pattern '?akefile*'
+(e.g. Makefile, makefile, Bakefile.bkl, etc.) for the literal string 'Pattern'
+.RE
 .SH BUGS
-Report bugs to https://github.com/gvansickle/ucg/issues
+Report bugs to
+.URL https://github.com/gvansickle/ucg/issues
 .SH AUTHOR
 .B ucg
-is written by Gary R. Van Sickle <grvs@users.sourceforge.net>
+is written by
+.URL "grvs@users.sourceforge.net" "Gary R. Van Sickle"
 .SH SEE ALSO
+.PP
+The official
+.URL "https://github.com/gvansickle/ucg" "UniversalCodeGrep site"
+on GitHub.
+.PP
 .BR grep (1)
 .BR pcre (3)
 .BR pcre2 (3)
