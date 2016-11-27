@@ -106,6 +106,7 @@ const FileDescriptor* FileID::impl::GetFileDescriptor()
 		}
 		}
 #endif
+
 		if(m_at_dir)
 		{
 			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
@@ -117,19 +118,6 @@ const FileDescriptor* FileID::impl::GetFileDescriptor()
 			}
 			m_file_descriptor = make_shared_fd(tempfd);
 		}
-#if 0
-		else
-		{
-			// We should only get here if we are the root of the traversal.
-			int tempfd = openat(AT_FDCWD, GetBasename().c_str(), m_open_flags);
-			if(tempfd == -1)
-			{
-				//LOG(DEBUG) << "OPENAT FAIL: " << explain_openat(AT_FDCWD, GetBasename().c_str(), m_open_flags, 0666);
-				throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with invalid m_at_dir=" + std::to_string(AT_FDCWD) + " failed");
-			}
-			m_file_descriptor = make_shared_fd(tempfd);
-		}
-#endif
 	}
 
 	return &m_file_descriptor;
@@ -465,15 +453,17 @@ FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 DIR *FileID::OpenDir()
 {
 	int fd = m_pimpl->TryGetFD();
+	int dirfd {0};
 	if(fd < 0)
 	{
-		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
+		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
 	}
 	else
 	{
-		fd = dup(fd);
+		// We already had a file descriptor.  Dup it, because fdopendir() takes ownership of it.
+		dirfd = dup(fd);
 	}
-	return fdopendir(fd);
+	return fdopendir(dirfd);
 }
 
 void FileID::CloseDir(DIR *d)
