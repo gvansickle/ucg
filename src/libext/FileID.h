@@ -199,7 +199,7 @@ public:
 	 * @param statbuf
 	 * @param flags
 	 */
-	void FStatAt(const std::string &name, struct stat *statbuf, int flags);
+	bool FStatAt(const std::string &name, struct stat *statbuf, int flags);
 
 	FileID OpenAt(const std::string &name, FileType type, int flags);
 
