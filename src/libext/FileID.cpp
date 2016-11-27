@@ -171,7 +171,7 @@ void* FileID::impl::LazyLoadStatInfo() const noexcept
 #pragma GCC diagnostic pop
 
 	struct stat stat_buf;
-	m_at_dir->FStatAt(m_basename, &stat_buf, AT_NO_AUTOMOUNT);
+	bool fstat_success = m_at_dir->FStatAt(m_basename, &stat_buf, AT_NO_AUTOMOUNT);
 #if 0
 	if(fstatat(m_at_dir->GetFileDescriptor().GetFD(), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
 	{
@@ -184,7 +184,11 @@ void* FileID::impl::LazyLoadStatInfo() const noexcept
 	else
 	{
 #endif
+
+	if(fstat_success)
+	{
 		SetStatInfo(stat_buf);
+	}
 	//}
 
 	return (void*)1;
@@ -339,11 +343,6 @@ FileID& FileID::operator=(const FileID& other)
 	{
 		WriterLock this_lock(m_mutex, std::defer_lock);
 		ReaderLock other_lock(other.m_mutex, std::defer_lock);
-		/// @todo
-#if 0
-		std::unique_lock<std::mutex> this_l2(m_the_mutex, std::defer_lock);
-		std::unique_lock<std::mutex> other_l2(other.m_the_mutex, std::defer_lock);
-#endif
 		std::lock(this_lock, other_lock);
 		LOG(DEBUG) << "COPY ASSIGN";
 		m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
@@ -361,11 +360,6 @@ FileID& FileID::operator=(FileID&& other)
 	{
 		WriterLock this_lock(m_mutex, std::defer_lock);
 		WriterLock other_lock(other.m_mutex, std::defer_lock);
-#if 0
-		/// @todo
-		std::unique_lock<std::mutex> this_l2(m_the_mutex, std::defer_lock);
-		std::unique_lock<std::mutex> other_l2(other.m_the_mutex, std::defer_lock);
-#endif
 		LOG(DEBUG) << "MOVE ASSIGN";
 		std::lock(this_lock, other_lock);
 
@@ -478,7 +472,7 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 	}
 }
 
-void FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
+bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
 #if 1 //LEAN_FD
 	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
@@ -501,10 +495,13 @@ void FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 	{
 		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' failed: " << LOG_STRERROR();
 		errno = 0;
-		return;
+		return false;
 	}
+
+	return true;
 }
 
+#if 0
 FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 {
 	FileID retval;
@@ -512,6 +509,7 @@ FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 	/// @todo
 	return retval;
 }
+#endif
 
 DIR *FileID::OpenDir()
 {
@@ -519,6 +517,10 @@ DIR *FileID::OpenDir()
 	if(fd < 0)
 	{
 		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
+	}
+	else
+	{
+		fd = dup(fd);
 	}
 	return fdopendir(fd);
 }

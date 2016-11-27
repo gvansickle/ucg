@@ -388,6 +388,7 @@ AC_LANG_PUSH([C++])
 # Check if the C++ compiler supports a "restrict" variant.
 ### @todo Works on Fedora 23/g++5.3.1 20160406 (Red Hat 5.3.1-6), doesn't work on Cygwin/g++ (GCC) 5.4.0.
 #AC_C_RESTRICT
+AX_CXX_VAR_PRETTYFUNC
 
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does.

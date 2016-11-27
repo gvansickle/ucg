@@ -184,7 +184,7 @@ public:
 
 /// @name Macros for logging messages which are not intended for end-user consumption.
 ///@{
-#define LOG(logger) logger::IsEnabled() && logger().m_tempstream << __PRETTY_FUNCTION__ << ": "
+#define LOG(logger) logger::IsEnabled() && logger().m_tempstream << __PRETTYFUNC__ << ": "
 ///@}
 
 /// @name Macros for output intended for the end user.

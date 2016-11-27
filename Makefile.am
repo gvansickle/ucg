@@ -123,6 +123,15 @@ autoreconf:
 check-malloc:
 	export MALLOC_CHECK_=3 && $(MAKE) check
 
+.PHONY: check-vg-memcheck
+check-vg-memcheck: ./ucg$(EXEEXT)
+	valgrind --log-file=$(builddir)/vg_memcheck_log.txt --track-fds=yes --read-inline-info=yes --read-var-info=yes --show-emwarns=yes \
+		--tool=memcheck -v --track-origins=yes --leak-check=full \
+		--partial-loads-ok=no --show-leak-kinds=all --expensive-definedness-checks=yes ./ucg --cpp 'BOOST.*HPP' ~/src/boost_1_58_0/
+
+check-vg-drd: ./ucg$(EXEEXT)
+	valgrind --tool=drd --read-var-info=yes --trace-hb==yes --trace-mutex=yes --trace-rwlock=yes  ./ucg --cpp  'BOOST.*HPP' ~/src/boost_1_58_0
+
 check-comp:
 	$(MAKE) distclean && ../configure CC=clang CXX=clang++ && $(MAKE)
 	$(MAKE) distclean && ../configure
