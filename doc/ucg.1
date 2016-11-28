@@ -1,0 +1,280 @@
+.\" man page for UniversalCodeGrep.
+.\"
+.\" Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+.\"
+.\" This file is part of UniversalCodeGrep.
+.\"
+.\" UniversalCodeGrep is free software: you can redistribute it and/or modify it under the
+.\" terms of version 3 of the GNU General Public License as published by the Free
+.\" Software Foundation.
+.\"
+.\" UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
+.\" WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+.\" PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License along with
+.\" UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
+.\"
+.\" troff macro logic to backfill if we don't have .URL
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+.if \n[.g] .mso www.tmac
+.\"
+.\" Start of the actual man page text.
+.\"
+.TH UCG 1 2016-10-31
+.SH NAME
+ucg \- a grep-like tool for searching source code
+.SH SYNOPSIS
+.B ucg
+[
+.I OPTIONS
+]
+.I PATTERN
+[
+.I FILES OR DIRECTORIES
+]
+.SH DESCRIPTION
+.B ucg
+(UniversalCodeGrep) is an extremely fast grep-like
+tool specialized for searching large bodies of source code.
+It is intended to be largely command-line compatible with ack,
+to some extent with ag, and - where appropriate - with
+.BR grep (1).
+Search patterns are specified as
+.BR pcre (3)
+regular expressions.
+.SH OPTIONS
+.SS Searching:
+.TP
+.B \-\-[no]smart\-case
+Ignore case if
+.I PATTERN
+is all lowercase (default: enabled).
+.TP
+.B \-i, \-\-ignore\-case
+Ignore case distinctions in
+.I PATTERN
+.TP
+.B \-Q, \-\-literal
+Treat all characters in
+.I PATTERN
+as literal.
+.TP
+.B \-w, \-\-word\-regexp
+\fIPATTERN\fR must match a complete word.
+.SS Search Output:
+.TP
+.B \-\-column
+Print column of first match after line number.
+.TP
+.B \-\-nocolumn
+Don't print column of first match (default).
+.SS "File presentation:"
+.TP
+.B \-\-color, \-\-colour
+Render the output with ANSI color codes.
+.TP
+.B \-\-nocolor, \-\-nocolour
+Render the output without ANSI color codes.
+.SS "File/directory inclusion/exclusion:"
+.TP
+\fB\-\-[no]ignore\-dir\fR=\fINAME\fR, \fB\-\-[no]ignore\-directory=\fINAME\fR
+[Do not] exclude directories with \fINAME\fR.
+.TP
+.B \-\-exclude=\fIGLOB\fR, \fB\-\-ignore=\fIGLOB\fR
+Files matching \fIGLOB\fR will be ignored.
+.TP
+.B \-\-ignore\-file=\fIFILTER\fB:\fIFILTERARGS\fR
+Files matching \fIFILTER\fR:\fIFILTERARGS\fR
+(e.g. ext:txt,cpp) will be ignored.
+.TP
+.B \-\-include=\fIGLOB\fR
+Only files matching \fIGLOB\fR will be searched.
+.TP
+.B \-k, \-\-known\-types
+Only search in files of recognized types (default: on).
+.TP
+.B \-n, \-\-no\-recurse
+Do not recurse into subdirectories.
+.TP
+.B \-r, \-R , \-\-recurse
+Recurse into subdirectories (default: on).
+.TP
+.B \-\-type=\fI[no]TYPE\fR
+Include only [exclude all] TYPE files.
+Types may also be specified as \fI\-\-[no]TYPE\fR.
+.SS File type specifications:
+.TP
+.B \-\-type\-add=\fITYPE\fB:\fIFILTER\fB:\fIFILTERARGS\fR
+Files \fIFILTER\fRed with the given \fIFILTERARGS\fR are treated as
+belonging to type \fITYPE\fR. Any existing definition of type
+\fITYPE\fR is appended to.
+.TP
+.B \-\-type\-del=\fITYPE\fR
+Remove any existing definition of type \fITYPE\fR.
+.TP
+.B \-\-type\-set=\fITYPE\fB:\fIFILTER\fB:\fIFILTERARGS\fR
+Files \fIFILTER\fRed with the given \fIFILTERARGS\fR are treated as
+belonging to type \fITYPE\fR. Any existing definition of type
+\fITYPE\fR is replaced.
+.SS Performance tuning:
+.TP
+.B \-\-dirjobs=\fINUM_JOBS\fR
+Number of directory traversal jobs (std::thread<>s)
+to use.
+.TP
+.B \-j, \-\-jobs=\fINUM_JOBS\fR
+Number of scanner jobs (std::thread<>s) to use.
+.SS Miscellaneous:
+.TP
+.B \-\-noenv
+Ignore
+.B .ucgrc
+configuration files.
+.SS Informational options:
+.TP
+.B \-?, \-\-help
+Print a list of options.
+.TP
+.B \-\-help\-types, \-\-list\-file\-types
+Print a list of supported file types.
+.TP
+.B \-\-usage
+Print a brief usage message.
+.TP
+.B \-V, \-\-version
+Print program version.
+.PP
+Mandatory or optional arguments to long options are also
+mandatory or optional for any corresponding short options.
+.SH EXIT STATUS
+Exit status is 0 if any matches were found, 1 if no matches,
+2 or greater on error.
+.SH FILES
+.B ucg
+supports configuration files with the name
+.B .ucgrc
+in which command-line options can be stored on a per-user
+and per-directory-hierarchy basis.
+.SS Format:
+.B .ucgrc
+files are text files with a simple format. Each line of text
+can be either:
+.IP * 4
+A single-line comment. The line must start with a # and the
+comment continues for the rest of the line.
+.IP * 4
+A command-line parameter. This must be exactly as if it was
+given on the command line.
+.SS Location and Read Order:
+When
+.B ucg
+is invoked, it looks for command-line options from
+the following locations in the following order:
+.TP 4
+1.
+The
+.B .ucgrc
+file in the user's $HOME directory, if any.
+.TP 4
+2.
+The first
+.B .ucgrc
+file found, if any, by walking up the component directories
+of the current working directory. This traversal stops at either
+the user's $HOME directory or the root directory. This is the
+project config file, and is intended to live in the top-level
+directory of a project directory hierarchy.
+.TP 4
+3.
+The command line itself.
+.PP
+Options read later will override earlier options.
+.SS Creating User-Defined File Types:
+.B ucg
+supports the creation of user-defined file types with the following options:
+.HP 4
+\fB\-\-type\-set=\fITYPE\fB:\fIFILTER\fB:\fIFILTERARGS\fR
+.HP 4
+\fB\-\-type\-add=\fITYPE\fB:\fIFILTER\fB:\fIFILTERARGS\fR
+.PP
+Any number of type filters, in any combination, can be added to a single
+file \fITYPE\fR.
+.PP
+Three types of \fIFILTER\fRs are currently supported:
+.TP 4
+*
+\fBext\fR (extension list)
+.TP 4
+*
+\fBis\fR (literal filename)
+.TP 4
+*
+\fBglob\fR (glob pattern)
+.RS 4
+.SS Extension List Filter
+.PP
+The extension list filter allows you to specify a comma-separated
+list of file extensions which are to be considered as belonging to
+file type \fITYPE\fR.  For example:
+.PP
+.nf
+.RS
+\fBucg\fR \-\-type\-set=type1:ext:abc,xqz,def --type1 'Pattern'
+.RE
+.fi
+.PP
+will search all files with extensions *.abc, *.xqz, and *.def in the directory
+tree rooted at the current working directory for the literal string 'Pattern'.
+.RE
+.RS 4
+.SS Literal Filename Filter
+.PP
+The literal filename filter simply specifies a single literal
+filename which is to be considered as belonging to file type \fITYPE\fR.
+.PP
+Example:
+.nf
+.RS
+\fBucg\fR \-\-type\-add=autoconf:is:configure.ac --autoconf 'Pattern'
+.RE
+.fi
+.PP
+This will search only files named exactly 'configure.ac' for the literal
+string 'Pattern'.
+.RE
+.RS 4
+.SS Glob filter
+.PP
+The glob filter allows you to specify a glob pattern to match
+against filenames. If the glob matches, the file is considered
+as belonging to the file type \fITYPE\fR.
+.PP
+Example:
+.nf
+.RS
+\fBucg\fR \-\-type\-set=mk:glob:?akefile* --mk 'Pattern'
+.RE
+.fi
+.PP
+This will search only files which match the shell glob pattern '?akefile*'
+(e.g. Makefile, makefile, Bakefile.bkl, etc.) for the literal string 'Pattern'
+.RE
+.SH BUGS
+Report bugs to
+.URL https://github.com/gvansickle/ucg/issues
+.SH AUTHOR
+.B ucg
+is written by
+.URL grvs@users.sourceforge.net "Gary R. Van Sickle" .
+.SH SEE ALSO
+.PP
+The official
+.URL https://github.com/gvansickle/ucg "UniversalCodeGrep site"
+on GitHub.
+.PP
+.BR grep (1)
+.BR pcre (3)
+.BR pcre2 (3)

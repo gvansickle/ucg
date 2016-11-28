@@ -1,5 +1,10 @@
 # NEWS file for the UniversalCodeGrep project.
 
+## [UNRELEASED]
+
+### New Features
+- Full `man` page, courtesy @larryhynes.
+
 ## [0.3.0] - 2016-10-23
 
 Major feature/bugfix release of UniversalCodeGrep (ucg).
