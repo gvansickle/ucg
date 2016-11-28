@@ -1,7 +1,28 @@
+.\" man page for UniversalCodeGrep.
+.\"
+.\" Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+.\"
+.\" This file is part of UniversalCodeGrep.
+.\"
+.\" UniversalCodeGrep is free software: you can redistribute it and/or modify it under the
+.\" terms of version 3 of the GNU General Public License as published by the Free
+.\" Software Foundation.
+.\"
+.\" UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
+.\" WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+.\" PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License along with
+.\" UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
+.\"
+.\" troff macro logic to backfill if we don't have .URL
 .de URL
-\\$2 \\(laURL: \\$1 \\(ra\\$3
+\\$2 \(laURL: \\$1 \(ra\\$3
 ..
 .if \n[.g] .mso www.tmac
+.\"
+.\" Start of the actual man page text.
+.\"
 .TH UCG 1 2016-10-31
 .SH NAME
 ucg \- a grep-like tool for searching source code
@@ -16,7 +37,7 @@ ucg \- a grep-like tool for searching source code
 ]
 .SH DESCRIPTION
 .B ucg
-(UniversalCodeGrep) is an extremely fast grep-like 
+(UniversalCodeGrep) is an extremely fast grep-like
 tool specialized for searching large bodies of source code.
 It is intended to be largely command-line compatible with ack,
 to some extent with ag, and - where appropriate - with
@@ -28,7 +49,7 @@ regular expressions.
 .SS Searching:
 .TP
 .B \-\-[no]smart\-case
-Ignore case if 
+Ignore case if
 .I PATTERN
 is all lowercase (default: enabled).
 .TP
@@ -139,7 +160,7 @@ in which command-line options can be stored on a per-user
 and per-directory-hierarchy basis.
 .SS Format:
 .B .ucgrc
-files are text files with a simple format. Each line of text 
+files are text files with a simple format. Each line of text
 can be either:
 .IP * 4
 A single-line comment. The line must start with a # and the
@@ -154,7 +175,7 @@ is invoked, it looks for command-line options from
 the following locations in the following order:
 .TP 4
 1.
-The 
+The
 .B .ucgrc
 file in the user's $HOME directory, if any.
 .TP 4
@@ -206,7 +227,7 @@ file type \fITYPE\fR.  For example:
 .fi
 .PP
 will search all files with extensions *.abc, *.xqz, and *.def in the directory
-tree rooted at the current working directory for the literal string 'Pattern'.  
+tree rooted at the current working directory for the literal string 'Pattern'.
 .RE
 .RS 4
 .SS Literal Filename Filter
@@ -243,20 +264,15 @@ This will search only files which match the shell glob pattern '?akefile*'
 .RE
 .SH BUGS
 Report bugs to
-.UR https://github.com/gvansickle/ucg/issues
-.UE .
+.URL https://github.com/gvansickle/ucg/issues
 .SH AUTHOR
 .B ucg
 is written by
-.MT grvs@users.sourceforge.net
-Gary R. Van Sickle
-.ME .
+.URL grvs@users.sourceforge.net "Gary R. Van Sickle" .
 .SH SEE ALSO
 .PP
 The official
-.UR https://github.com/gvansickle/ucg
-UniversalCodeGrep site
-.UE
+.URL https://github.com/gvansickle/ucg "UniversalCodeGrep site"
 on GitHub.
 .PP
 .BR grep (1)
