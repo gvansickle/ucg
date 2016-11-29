@@ -334,13 +334,25 @@ bool FileScanner::ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) no
 			out_index++;
 		}
 	}
-	m_last_index = out_index;
+	m_end_index = out_index;
 	return true;
 }
 
 const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) noexcept
 {
-	auto first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_last_index);
+	const char *first_possible_cu = nullptr;
+	if(m_end_index > 1)
+	{
+		first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_end_index);
+	}
+	else if(m_end_index == 1)
+	{
+		first_possible_cu = std::find(cbegin, cbegin+len, m_compiled_cu_bitmap[0]);
+	}
+	else
+	{
+		first_possible_cu = cbegin;
+	}
 	return first_possible_cu;
 }
 

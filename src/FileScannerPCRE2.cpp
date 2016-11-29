@@ -162,14 +162,34 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 		throw FileScannerException(std::string("Callouts not supported."));
 	}
 
-	// Check for .....
-	//if(pcre2_pattern_info(PCRE2_INFO_FIRSTCODETYPE)
-	const uint8_t *first_bitmap {nullptr};
-	pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTBITMAP, &first_bitmap);
-	if(first_bitmap != nullptr)
+	// Check for a static first code unit or units.
+	uint32_t first_code_type {0};
+	pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTCODETYPE, &first_code_type);
+	if(first_code_type == 1)
 	{
-		ConstructCodeUnitTable_default(first_bitmap);
+		// There is a singular first code unit.
+		uint32_t first_code_unit {0};
+		pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTCODEUNIT, &first_code_unit);
+		m_compiled_cu_bitmap[0] = first_code_unit;
+		m_end_index = 1;
 		m_use_find_first_of = true;
+
+	}
+	else if(first_code_type == 2)
+	{
+		// The "first code unit" is the start of any line.
+		/// @todo Not sure we can make good use of this.
+	}
+	else
+	{
+		// Check for a first code unit bitmap.
+		const uint8_t *first_bitmap {nullptr};
+		pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTBITMAP, &first_bitmap);
+		if(first_bitmap != nullptr)
+		{
+			ConstructCodeUnitTable_default(first_bitmap);
+			m_use_find_first_of = true;
+		}
 	}
 
 #endif
@@ -265,7 +285,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 				break;
 			}
 		}
-		/// ////
+		///////
 
 		// Try to match the regex to whatever's left of the file.
 		int rc = pcre2_match(
