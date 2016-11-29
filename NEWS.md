@@ -1,9 +1,24 @@
 # NEWS file for the UniversalCodeGrep project.
 
-## [UNRELEASED]
+## [0.3.1] - 2016-11-28
+
+UniversalCodeGrep (ucg) 0.3.1 is a minor feature and bugfix release.
 
 ### New Features
 - Full `man` page, courtesy @larryhynes.
+
+### Changed
+- Checks for and makes use of some C++14 and C++1y (C++17) features if available.
+- Refactoring of the benchmark section of the testsuite.
+- Added ".deps" to the default directory ignore list.
+
+### Fixed
+- Fixed compile breakage on FreeBSD due to undefined macro.
+- Builds on TrueOS (nee PC-BSD) with gcc 6.  Configure with `../configure CC=gcc6 CXX=g++6`.
+- Builds on Mac OS X in three configurations:
+  - No special `configure` options
+  - With `clang` plus the GNU `libstdc++`
+  - With `clang` plus its own `libc++` 
 
 ## [0.3.0] - 2016-10-23
 
