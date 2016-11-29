@@ -117,17 +117,17 @@ makepkg -sri
 
 ### openSUSE Binary RPMs
 
-Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/tag/0.3.0).
+Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/tag/0.3.1).
 
 -->
 
 ### Building the Source Tarball
 
-UniversalCodeGrep can be built and installed from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.3.0/universalcodegrep-0.3.0.tar.gz)) in the standard autotools manner:
+UniversalCodeGrep can be built and installed from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.3.1/universalcodegrep-0.3.1.tar.gz)) in the standard autotools manner:
 
 ```sh
-tar -xaf universalcodegrep-0.3.0.tar.gz
-cd universalcodegrep-0.3.0.tar.gz
+tar -xaf universalcodegrep-0.3.1.tar.gz
+cd universalcodegrep-0.3.1.tar.gz
 ./configure
 make
 make install
@@ -167,7 +167,7 @@ One or both of these should be available from your Linux/OS X/*BSD distro's pack
 
 ### Supported OSes and Distributions
 
-UniversalCodeGrep 0.3.0 should build and run anywhere the prerequisites are available.  It has been built and tested on the following OSes/distros:
+UniversalCodeGrep 0.3.1 should build and run anywhere the prerequisites are available.  It has been built and tested on the following OSes/distros:
 
 - Linux
   - Fedora 22, 23, 24, rawhide
@@ -196,7 +196,7 @@ If no `FILES OR DIRECTORIES` are specified, searching starts in the current dire
 
 ### Command Line Options
 
-Version 0.3.0 of `ucg` supports a significant subset of the options supported by `ack`.  In general, options specified later
+Version 0.3.1 of `ucg` supports a significant subset of the options supported by `ack`.  In general, options specified later
 on the command line override options specified earlier on the command line.
 
 #### Searching
