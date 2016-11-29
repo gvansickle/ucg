@@ -322,15 +322,15 @@ bool FileScanner::ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) no
 	uint16_t out_index = 0;
 	for(uint16_t i=0; i<=256; ++i)
 	{
-		if((pcre2_bitmap[i/8] & (0x01 << i)) == 0)
+		if((pcre2_bitmap[i/8] & (0x01 << (i%8))) == 0)
 		{
 			// This bit isn't set, skip to the next one.
 			continue;
 		}
 		else
 		{
-			//? @todo This depends on little-endianness.
-			((uint8_t*)&(m_compiled_cu_bitmap[out_index/16]))[out_index%16] = i;
+			/// @todo This depends on little-endianness.
+			m_compiled_cu_bitmap[out_index] = i;
 			out_index++;
 		}
 	}
@@ -348,6 +348,14 @@ const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restr
 	else if(m_end_index == 1)
 	{
 		first_possible_cu = std::find(cbegin, cbegin+len, m_compiled_cu_bitmap[0]);
+		/// @todo Trying memchr(), no real difference.
+#if 0
+		first_possible_cu = (const char *)std::memchr(cbegin, m_compiled_cu_bitmap[0], len);
+		if(first_possible_cu == nullptr)
+		{
+			first_possible_cu = cbegin + len;
+		}
+#endif
 	}
 	else
 	{

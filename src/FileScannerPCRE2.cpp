@@ -109,6 +109,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 	if(ignore_case)
 	{
 		// Ignore case while matching.
+		LOG(INFO) << "Ignoring case.";
 		regex_compile_options |= PCRE2_CASELESS;
 	}
 
@@ -165,7 +166,9 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 	// Check for a static first code unit or units.
 	uint32_t first_code_type {0};
 	pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTCODETYPE, &first_code_type);
-	if(first_code_type == 1)
+	if(first_code_type == 1 && !m_ignore_case) /// @todo This looks like a bug in PCRE2. If PCRE2_CASELESS is given, you can still get
+												/// a single FIRSTCODEUNIT back which has the case you passed in.  Same bug does not
+												/// seem to exist for the BITMAP.
 	{
 		// There is a singular first code unit.
 		uint32_t first_code_unit {0};
@@ -173,6 +176,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 		m_compiled_cu_bitmap[0] = first_code_unit;
 		m_end_index = 1;
 		m_use_find_first_of = true;
+		LOG(INFO) << "First code unit of pattern is '" << m_compiled_cu_bitmap << "'.";
 
 	}
 	else if(first_code_type == 2)
@@ -189,6 +193,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 		{
 			ConstructCodeUnitTable_default(first_bitmap);
 			m_use_find_first_of = true;
+			LOG(INFO) << "First code unit of pattern is one of '" << std::string((const char*)m_compiled_cu_bitmap, m_end_index) << "'.";
 		}
 	}
 
