@@ -254,7 +254,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		{
 			// Burn through chars we know aren't at the start of the match.
 			auto first_possible_char = FindFirstPossibleCodeUnit_default(file_data+start_offset, file_size-start_offset);
-			if(first_possible_char != file_data+start_offset)
+			if(first_possible_char != file_data+file_size)
 			{
 				// Found one.
 				start_offset = first_possible_char - file_data;
