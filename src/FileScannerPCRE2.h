@@ -59,6 +59,8 @@ private:
 	//std::unique_ptr<pcre2_code, void(*)(pcre2_code*)> m_pcre2_regex;
 	pcre2_code *m_pcre2_regex;
 #endif
+
+	bool m_use_find_first_of {false};
 };
 
 #endif /* SRC_FILESCANNERPCRE2_H_ */

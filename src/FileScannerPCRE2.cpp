@@ -161,6 +161,17 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 		pcre2_code_free(m_pcre2_regex);
 		throw FileScannerException(std::string("Callouts not supported."));
 	}
+
+	// Check for .....
+	//if(pcre2_pattern_info(PCRE2_INFO_FIRSTCODETYPE)
+	const uint8_t *first_bitmap {nullptr};
+	pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTBITMAP, &first_bitmap);
+	if(first_bitmap != nullptr)
+	{
+		ConstructCodeUnitTable_default(first_bitmap);
+		m_use_find_first_of = true;
+	}
+
 #endif
 }
 
@@ -237,6 +248,24 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 			// Not done, set options for another try for a non-empty match at the same point.
 			options = PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED;
 		}
+
+		/////
+		if(m_use_find_first_of)
+		{
+			// Burn through chars we know aren't at the start of the match.
+			auto first_possible_char = FindFirstPossibleCodeUnit_default(file_data+start_offset, file_size-start_offset);
+			if(first_possible_char != file_data+start_offset)
+			{
+				// Found one.
+				start_offset = first_possible_char - file_data;
+			}
+			else
+			{
+				// Found nothing, the regex can't match.
+				break;
+			}
+		}
+		/// ////
 
 		// Try to match the regex to whatever's left of the file.
 		int rc = pcre2_match(
