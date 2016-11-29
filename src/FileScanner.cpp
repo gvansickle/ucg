@@ -314,3 +314,33 @@ std::tuple<const char *, size_t> FileScanner::GetEOL(const char *search_start, c
 		return std::make_tuple(p, p-search_start);
 	}
 }
+
+
+
+bool FileScanner::ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) noexcept
+{
+	uint16_t out_index = 0;
+	for(uint16_t i=0; i<=256; ++i)
+	{
+		if((pcre2_bitmap[i/8] & (0x01 << i)) == 0)
+		{
+			// This bit isn't set, skip to the next one.
+			continue;
+		}
+		else
+		{
+			//? @todo This depends on little-endianness.
+			((uint8_t*)&(m_compiled_cu_bitmap[out_index/16]))[out_index%16] = i;
+			out_index++;
+		}
+	}
+	m_last_index = out_index;
+	return true;
+}
+
+const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) noexcept
+{
+	auto first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_last_index);
+	return first_possible_cu;
+}
+

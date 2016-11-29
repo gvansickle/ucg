@@ -130,6 +130,11 @@ protected:
 	static size_t CountLinesSinceLastMatch_sse2(const char * __restrict__ prev_lineno_search_end,
 					const char * __restrict__ start_of_current_match) noexcept;
 
+
+	bool ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) noexcept;
+	const char * FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) noexcept;
+
+
 	///@}
 
 	std::tuple<const char *, size_t> GetEOL(const char *search_start, const char * buff_one_past_end);
@@ -180,6 +185,10 @@ private:
 	 * Maintaining this for experimental purposes.
 	 */
 	bool m_manually_assign_cores;
+
+	// 256-byte array used to match the first char.
+	uint8_t m_compiled_cu_bitmap[256];
+	uint16_t m_last_index = 0;
 };
 
 #endif /* FILESCANNER_H_ */
