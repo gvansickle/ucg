@@ -167,12 +167,12 @@ static struct argp_option options[] = {
 		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
 		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
 		{0,0,0,0, "File/directory inclusion/exclusion:"},
-		{"[no]ignore-dir", OPT_BRACKET_NO_STANDIN, "name", 0, "[Do not] exclude directories with this name."},
-		{"[no]ignore-directory", OPT_BRACKET_NO_STANDIN, "name", OPTION_ALIAS },
-		{"ignore-dir",  OPT_IGNORE_DIR, "name", OPTION_HIDDEN,  ""},
-		{"ignore-directory", OPT_IGNORE_DIR, "name", OPTION_HIDDEN | OPTION_ALIAS },
-		{"noignore-dir",  OPT_NOIGNORE_DIR, "name", OPTION_HIDDEN,  ""},
-		{"noignore-directory", OPT_NOIGNORE_DIR, "name", OPTION_HIDDEN | OPTION_ALIAS },
+		{"[no]ignore-dir", OPT_BRACKET_NO_STANDIN, "NAME", 0, "[Do not] exclude directories with NAME."},
+		{"[no]ignore-directory", OPT_BRACKET_NO_STANDIN, "NAME", OPTION_ALIAS },
+		{"ignore-dir",  OPT_IGNORE_DIR, "NAME", OPTION_HIDDEN,  ""},
+		{"ignore-directory", OPT_IGNORE_DIR, "NAME", OPTION_HIDDEN | OPTION_ALIAS },
+		{"noignore-dir",  OPT_NOIGNORE_DIR, "NAME", OPTION_HIDDEN,  ""},
+		{"noignore-directory", OPT_NOIGNORE_DIR, "NAME", OPTION_HIDDEN | OPTION_ALIAS },
 		// ack-style --ignore-file=FILTER:FILTERARGS
 		{"ignore-file", OPT_IGNORE_FILE, "FILTER:FILTERARGS", 0, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored."},
 		// grep-style --include=glob and --exclude=glob
@@ -194,7 +194,7 @@ static struct argp_option options[] = {
 		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
 		{"dirjobs",  OPT_PERF_DIRJOBS, "NUM_JOBS",      0,  "Number of directory traversal jobs (std::thread<>s) to use." },
 		{0,0,0,0, "Miscellaneous:" },
-		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc files."},
+		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc configuration files."},
 		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
 		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
 		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.

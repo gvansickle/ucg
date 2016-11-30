@@ -24,6 +24,8 @@
 #include "memory.hpp"
 
 
+#include <static_diagnostics.hpp>
+
 const char *link_me = "dummy";
 
 // Use this file for printing out some info at compile time regarding our compile-time environment.

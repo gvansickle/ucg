@@ -19,7 +19,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
 LT_PREREQ([2.4.2])
-AC_INIT([UniversalCodeGrep], [0.3.0], [https://github.com/gvansickle/ucg/issues], [], [https://gvansickle.github.io/ucg/])
+AC_INIT([UniversalCodeGrep], [0.3.1], [https://github.com/gvansickle/ucg/issues], [], [https://gvansickle.github.io/ucg/])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -85,6 +85,11 @@ AS_BOX([Checking for programs needed to do the build...])
 #       calling LT_INIT, or it will complain.
 #AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC([gcc clang])
+# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
+# This will do that for us.
+# @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
+#       calling LT_INIT, or it will complain.
+AC_USE_SYSTEM_EXTENSIONS
 # Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
@@ -617,13 +622,15 @@ AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 #AH_BOTTOM([#include <valgrind_support.h>])
 
 ###
-### Create the Makefiles for the program.
+### Create the Makefiles for the program and docs.
 ###
 AC_CONFIG_FILES([Makefile
 	src/Makefile
 	src/future/Makefile
 	src/libext/Makefile
-	third_party/Makefile])
+	third_party/Makefile
+	doc/Makefile
+	])
 AC_OUTPUT
 
 ###
