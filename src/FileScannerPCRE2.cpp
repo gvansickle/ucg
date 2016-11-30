@@ -184,17 +184,15 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 		// The "first code unit" is the start of any line.
 		/// @todo Not sure we can make good use of this.
 	}
-	else
+
+	// Check for a first code unit bitmap.
+	const uint8_t *first_bitmap {nullptr};
+	pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTBITMAP, &first_bitmap);
+	if(first_bitmap != nullptr)
 	{
-		// Check for a first code unit bitmap.
-		const uint8_t *first_bitmap {nullptr};
-		pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTBITMAP, &first_bitmap);
-		if(first_bitmap != nullptr)
-		{
-			ConstructCodeUnitTable_default(first_bitmap);
-			m_use_find_first_of = true;
-			LOG(INFO) << "First code unit of pattern is one of '" << std::string((const char*)m_compiled_cu_bitmap, m_end_index) << "'.";
-		}
+		ConstructCodeUnitTable_default(first_bitmap);
+		m_use_find_first_of = true;
+		LOG(INFO) << "First code unit of pattern is one of '" << std::string((const char*)m_compiled_cu_bitmap, m_end_index) << "'.";
 	}
 
 #endif
