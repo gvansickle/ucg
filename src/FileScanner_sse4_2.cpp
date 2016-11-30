@@ -39,50 +39,7 @@ STATIC_MSG("Have SSE4_2")
 STATIC_MSG("Have POPCNT")
 #endif
 
-// Declaration here only so we can apply gcc attributes.
-inline uint8_t popcount16(uint16_t bits) noexcept ATTR_CONST /* Doesn't access globals, has no side-effects.*/
-	ATTR_ARTIFICIAL; /* Should appear in debug info even after being inlined. */
 
-#if defined(__POPCNT__) && __POPCNT__==1 && defined(HAVE___BUILTIN_POPCOUNT)
-
-/**
- * For systems that support the POPCNT instruction, we can use it through the gcc/clang builtin __builtin_popcount().
- * It inlines nicely into the POPCNT instruction.
- *
- * @param bits
- * @return
- */
-inline uint8_t popcount16(uint16_t bits) noexcept
-{
-	return __builtin_popcount(bits);
-}
-
-
-#else
-
-/**
- * Count the number of bits set in #bits using the Brian Kernighan method (https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan).
- * Iterates once per set bit, i.e. a maximum of 16 times.
- *
- * @note On systems which do not support POPCNT, we can't use the __builtin_popcount() here.  It expands into a function call
- *       to a generic implementation which is much too slow for our needs here.
- *
- * @param bits  The 16-bit value to count the set bits of.
- * @return The number of bits set in #bits.
- */
-inline uint8_t popcount16(uint16_t bits) noexcept
-{
-	uint8_t num_set_bits { 0 };
-
-	for(; bits; ++num_set_bits)
-	{
-		bits &= bits-1;
-	}
-
-	return num_set_bits;
-}
-
-#endif
 
 static constexpr size_t f_alignment { alignof(__m128i) };
 static constexpr uintptr_t f_alignment_mask { f_alignment-1 };
