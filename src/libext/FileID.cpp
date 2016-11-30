@@ -106,6 +106,7 @@ const FileDescriptor* FileID::impl::GetFileDescriptor()
 		}
 		}
 #endif
+
 		if(m_at_dir)
 		{
 			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
@@ -117,19 +118,6 @@ const FileDescriptor* FileID::impl::GetFileDescriptor()
 			}
 			m_file_descriptor = make_shared_fd(tempfd);
 		}
-#if 0
-		else
-		{
-			// We should only get here if we are the root of the traversal.
-			int tempfd = openat(AT_FDCWD, GetBasename().c_str(), m_open_flags);
-			if(tempfd == -1)
-			{
-				//LOG(DEBUG) << "OPENAT FAIL: " << explain_openat(AT_FDCWD, GetBasename().c_str(), m_open_flags, 0666);
-				throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with invalid m_at_dir=" + std::to_string(AT_FDCWD) + " failed");
-			}
-			m_file_descriptor = make_shared_fd(tempfd);
-		}
-#endif
 	}
 
 	return &m_file_descriptor;
@@ -172,24 +160,15 @@ void* FileID::impl::LazyLoadStatInfo() const noexcept
 
 	struct stat stat_buf;
 	bool fstat_success = m_at_dir->FStatAt(m_basename, &stat_buf, AT_NO_AUTOMOUNT);
-#if 0
-	if(fstatat(m_at_dir->GetFileDescriptor().GetFD(), m_basename.c_str(), &stat_buf, AT_NO_AUTOMOUNT) != 0)
-	{
-		// Error.
-		m_file_type = FT_STAT_FAILED;
-		LOG(INFO) << "fstatat() failed: " << LOG_STRERROR();
-		// Note: We don't clear errno here, we want to be able to look at it in the caller.
-		//errno = 0;
-	}
-	else
-	{
-#endif
 
 	if(fstat_success)
 	{
 		SetStatInfo(stat_buf);
 	}
-	//}
+	else
+	{
+		m_file_type = FT_STAT_FAILED;
+	}
 
 	return (void*)1;
 }
@@ -380,8 +359,7 @@ FileID::~FileID()
 
 std::string FileID::GetBasename() const noexcept
 {
-	//ReaderLock rl(m_mutex);
-	// This is read-only after construction, so it doesn't need a lock here.
+	// This is const after construction, and always exists, so it doesn't need a lock here.
 	return m_pimpl->GetBasename();
 };
 
@@ -410,11 +388,6 @@ const std::string& FileID::GetPath() const noexcept
 
 FileType FileID::GetFileType() const noexcept
 {
-#if 0
-	WriterLock rl(m_mutex);
-
-	return m_pimpl->GetFileType();
-#endif
 	/// @todo Not reliant on stat, could be optimized.
 	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_file_type;
@@ -422,38 +395,18 @@ FileType FileID::GetFileType() const noexcept
 
 off_t FileID::GetFileSize() const noexcept
 {
-#if 0
-	{
-		ReaderLock rl(m_mutex);
-		if(m_pimpl->m_stat_info_valid)
-		{
-			return m_pimpl->m_size;
-		}
-	}
-	WriterLock rl(m_mutex);
-	return m_pimpl->GetFileSize();
-#endif
-	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ m_pimpl->GetFileSize(); return (void*)1;});
+	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_size;
 };
 
 blksize_t FileID::GetBlockSize() const noexcept
 {
-#if 0
-	WriterLock wl(m_mutex);
-	return m_pimpl->GetBlockSize();
-#endif
 	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_block_size;
 };
 
 const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
-#if 0
-	WriterLock wl(m_mutex);
-	return m_pimpl->GetUniqueFileIdentifier();
-#endif
-
 	/// @todo This is not necessarily dependent on stat info, could be optimized.
 
 	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo();});
@@ -474,27 +427,13 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-#if 1 //LEAN_FD
 	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
-#else
-	int retval;
-	int fd = m_pimpl->TryGetFD();
-	if(fd < 0)
-	{
-		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
-		retval = fstatat(fd, name.c_str(), statbuf, flags);
-		close(fd);
-	}
-	else
-	{
-		retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
-	}
-#endif
 
 	if(retval == -1)
 	{
 		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' failed: " << LOG_STRERROR();
-		errno = 0;
+		// Note: We don't clear errno here, we want to be able to look at it in the caller.
+		//errno = 0;
 		return false;
 	}
 
@@ -514,15 +453,17 @@ FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 DIR *FileID::OpenDir()
 {
 	int fd = m_pimpl->TryGetFD();
+	int dirfd {0};
 	if(fd < 0)
 	{
-		fd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
+		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
 	}
 	else
 	{
-		fd = dup(fd);
+		// We already had a file descriptor.  Dup it, because fdopendir() takes ownership of it.
+		dirfd = dup(fd);
 	}
-	return fdopendir(fd);
+	return fdopendir(dirfd);
 }
 
 void FileID::CloseDir(DIR *d)
@@ -532,25 +473,17 @@ void FileID::CloseDir(DIR *d)
 
 const FileDescriptor& FileID::GetFileDescriptor()
 {
-#if 0
-	{
-		ReaderLock rl(m_mutex);
-		if(!m_pimpl->m_file_descriptor.empty())
-		{
-			return m_pimpl->m_file_descriptor;
-		}
-	}
-	WriterLock wl(m_mutex);
-	return m_pimpl->GetFileDescriptor();
-#endif
 	return *DoubleCheckedLock<FileDescriptor*>(m_file_descriptor_witness, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
 }
 
 dev_t FileID::GetDev() const noexcept
 {
-	WriterLock wl(m_mutex);
-	return m_pimpl->GetDev();
-};
+	//WriterLock wl(m_mutex);
+	//return m_pimpl->GetDev();
+	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+
+	return m_pimpl->m_dev;
+}
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
