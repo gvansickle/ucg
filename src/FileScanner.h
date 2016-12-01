@@ -152,6 +152,7 @@ protected:
 
 	// 256-byte array used to match the first char.
 	uint8_t m_compiled_cu_bitmap[256] alignas(16);
+	// 1+index of last valid character in m_compiled_cu_bitmap.
 	uint16_t m_end_index {0};
 
 private:

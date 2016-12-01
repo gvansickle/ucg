@@ -208,17 +208,17 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 		__m128i xmm0 = _mm_loadu_si128((const __m128i *)(cbegin+i));
 
 		assume(m_end_index <= 16);
-		for(uint8_t j=0; j<m_end_index; ++j)
+		for(uint8_t j=0; j<m_end_index/16; j+=16)
 		{
 			// Load our compare-to strings.
-			__m128i xmm1 = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap)+j);
+			__m128i xmm1 = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
 			// Do the "find_first_of()".
-			int lsb_set = _mm_cmpestri(xmm0, (len_left>16)?16:len_left, xmm1, 16 /**@todo*/,
+			int lsb_set = _mm_cmpestri(xmm0, (len_left>16)?16:len_left, xmm1, 16,
 					_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_LEAST_SIGNIFICANT);
 
 			if(lsb_set > 0)
 			{
-				return cbegin + i + j*16 + (lsb_set-1);
+				return std::min(cbegin + i + j*16 + (lsb_set-1), cbegin + len);
 			}
 		}
 		len_left -= 16;
