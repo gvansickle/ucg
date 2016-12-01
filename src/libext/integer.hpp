@@ -237,4 +237,20 @@ inline uint8_t popcount16(uint16_t bits) noexcept
 
 #endif
 
+/**
+ * Find the first set bit in @p bits.
+ * @param bits
+ * @return  0 if no bits set. 1+bit_index for the first set bit.
+ */
+inline uint8_t findfirstsetbit(uint32_t bits) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+#if defined(HAVE___BUILTIN_FFS)
+// Use gcc's built-in.
+inline uint8_t findfirstsetbit(uint32_t bits) noexcept
+{
+	return __builtin_ffs(bits);
+}
+#else
+#error "generic findfirstsetbit() not yet implemented."
+#endif
+
 #endif /* SRC_LIBEXT_INTEGER_HPP_ */

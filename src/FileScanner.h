@@ -133,6 +133,7 @@ protected:
 
 	bool ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) noexcept;
 	const char * FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) noexcept;
+	const char * find_first_of_sse4_2(const char * __restrict__ cbegin, size_t len) noexcept;
 
 
 	///@}
