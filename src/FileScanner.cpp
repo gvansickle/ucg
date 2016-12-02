@@ -33,8 +33,8 @@
 
 #include <iostream>
 #include <string>
-#include <libext/string.hpp>
 #include <future/string.hpp>
+#include <libext/string.hpp>
 #include <thread>
 #include <mutex>
 #include <cstring> // For memchr().
@@ -46,6 +46,10 @@
 #endif
 
 #include "ResizableArray.h"
+
+/// @todo REMOVE
+#include <immintrin.h>
+
 
 static std::mutex f_assign_affinity_mutex;
 
@@ -338,28 +342,62 @@ bool FileScanner::ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) no
 	return true;
 }
 
+
 const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) noexcept
 {
 	const char *first_possible_cu = nullptr;
 	if(m_end_index > 1)
 	{
+#if 0
 		first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_end_index);
+#else
+		first_possible_cu = find_first_of_sse4_2_popcnt(cbegin, len);
+#endif
 	}
 	else if(m_end_index == 1)
 	{
-		first_possible_cu = std::find(cbegin, cbegin+len, m_compiled_cu_bitmap[0]);
-		/// @todo Trying memchr(), no real difference.
 #if 0
-		first_possible_cu = (const char *)std::memchr(cbegin, m_compiled_cu_bitmap[0], len);
-		if(first_possible_cu == nullptr)
+		first_possible_cu = std::find(cbegin, cbegin+len, m_compiled_cu_bitmap[0]);
+		/// @note Tried memchr() here, no real difference.
+#else
+		// The character we're looking for, broadcast to all 16 bytes of the looking_for xmm register.
+		// SSE2.
+		const __m128i looking_for = _mm_set1_epi8(m_compiled_cu_bitmap[0]);
+		for(size_t i=0; i<len; i+=32)
 		{
-			first_possible_cu = cbegin + len;
+			// Load an xmm register with 16 aligned bytes.  SSE2, L/Th: 1/0.25-0.5, plus cache effects.
+			__m128i xmm1 = _mm_loadu_si128((const __m128i *)(cbegin+i));
+			// Compare the 16 bytes with searchchar.  SSE2, L/Th: 1/0.5.
+			// match_bytemask will contain a 0xFF for a matching byte, 0 for a non-matching byte.
+			__m128i match_bytemask = _mm_cmpeq_epi8(xmm1, looking_for);
+			// Convert the bytemask into a bitmask in the lower 16 bits of match_bitmask.  SSE2, L/Th: 3-1/1
+			uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
+
+			__m128i xmm2 = _mm_loadu_si128((const __m128i *)(cbegin+i+16));
+			__m128i xmm3 = _mm_cmpeq_epi8(xmm2, looking_for);
+			match_bitmask |= _mm_movemask_epi8(xmm3) << 16;
+
+			// The above should never result in more than the bottom 16 bits of match_bitmask being set.
+			// Hint this to the compiler.  This prevents gcc from adding an unnecessary movzwl %rNw,%rNd before the popcount16() call.
+			//assume(match_bitmask <= 0xFFFFU);
+
+			// Did we find any chars?
+			if(match_bitmask > 0)
+			{
+				// Find the first bit set.
+				auto lowest_bit = findfirstsetbit(match_bitmask);
+				if(lowest_bit > 0 && (i + lowest_bit -1 < len))
+				{
+					return cbegin + i + lowest_bit - 1;
+				}
+			}
 		}
+		return cbegin+len;
 #endif
 	}
 	else
 	{
-		first_possible_cu = cbegin;
+		first_possible_cu = cbegin+len;
 	}
 	return first_possible_cu;
 }

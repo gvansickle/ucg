@@ -133,6 +133,9 @@ protected:
 
 	bool ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) noexcept;
 	const char * FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) noexcept;
+	const char * find_first_of_sse4_2_no_popcnt(const char * __restrict__ cbegin, size_t len) noexcept;
+	const char * find_first_of_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) noexcept;
+	const char * find_first_of_default(const char * __restrict__ cbegin, size_t len) noexcept;
 
 
 	///@}
@@ -148,8 +151,9 @@ protected:
 	bool m_pattern_is_literal;
 
 	// 256-byte array used to match the first char.
-	uint8_t m_compiled_cu_bitmap[256];
-	uint16_t m_end_index = 0;
+	uint8_t m_compiled_cu_bitmap[256] alignas(16);
+	// 1+index of last valid character in m_compiled_cu_bitmap.
+	uint16_t m_end_index {0};
 
 private:
 
