@@ -117,7 +117,7 @@ constexpr inline T bswap(T x) noexcept
 {
 	// Should never get to this unspecialized version.
 	///@note This tuple business is to get the compiler to dump the name of the type when it errors out.  E.g.:
-	/// "error: �dummy� is not a member of �std::tuple<long unsigned int>�"
+	/// "error:'dummy' is not a member of 'std::tuple<long unsigned int>'"
 	auto test_var = std::make_tuple(x);
 	static_assert(decltype(test_var)::dummy, "No template specialization for type T.");
 }
