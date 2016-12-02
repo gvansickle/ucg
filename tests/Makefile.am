@@ -55,7 +55,8 @@ BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
 	$(srcdir)/TC5.sh \
 	$(srcdir)/TC6.sh \
 	$(srcdir)/TC7.sh \
-	$(srcdir)/TC8.sh
+	$(srcdir)/TC8.sh \
+	$(srcdir)/TC9.sh
 
      
 # This line appears in the Autoconf/Autotest manual, but see configure.ac.

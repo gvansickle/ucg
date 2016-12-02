@@ -201,27 +201,44 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 
 const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ cbegin, size_t len) noexcept
 {
-	ssize_t len_left = len;
-	for(size_t i=0; i<len; i+=16)
+	uint16_t j=0;
+	size_t i=0;
+	for(i=0; i < (len & ~static_cast<decltype(len)>(15)) ; i+=16)
 	{
 		// Load an xmm register with 16 unaligned bytes.  SSE2, L/Th: 1/0.25-0.5, plus cache effects.
 		__m128i xmm0 = _mm_loadu_si128((const __m128i *)(cbegin+i));
 
-		assume(m_end_index <= 16);
-		for(uint8_t j=0; j<m_end_index/16; j+=16)
+		assume(m_end_index <= 256+16);
+		for(j=0; j < (m_end_index & ~static_cast<decltype(len)>(0x0F)); j+=16)
 		{
 			// Load our compare-to strings.
 			__m128i xmm1 = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
 			// Do the "find_first_of()".
-			int lsb_set = _mm_cmpestri(xmm0, (len_left>16)?16:len_left, xmm1, 16,
+			int len_a = ((len-i)>16) ? 16 : (len-i);
+			int lsb_set = _mm_cmpestri(xmm0, len_a, xmm1, 16,
 					_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_LEAST_SIGNIFICANT);
 
 			if(lsb_set > 0)
 			{
-				return std::min(cbegin + i + j*16 + (lsb_set-1), cbegin + len);
+				return std::min(cbegin + i + (lsb_set-1), cbegin + len);
 			}
 		}
-		len_left -= 16;
+
+		if(j != m_end_index)
+		{
+			// One partial xmm compare-to register to handle.
+			__m128i xmm1 = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
+			// Do the "find_first_of()".
+			int len_a = ((len-i)>16) ? 16 : (len-i);
+			int lsb_set = _mm_cmpestri(xmm0, len_a, xmm1, m_end_index & 0x000F,
+					_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_LEAST_SIGNIFICANT);
+
+			if(lsb_set > 0)
+			{
+				return std::min(cbegin + i + (lsb_set-1), cbegin + len);
+			}
+
+		}
 	}
 	return cbegin+len;
 }
