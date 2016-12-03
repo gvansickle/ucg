@@ -197,13 +197,13 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 	return num_lines_since_last_match;
 }
 
-#ifdef __SSE4_2__
+#if defined(__SSE4_2__)
 
 const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ cbegin, size_t len) noexcept
 {
 	uint16_t j=0;
 	size_t i=0;
-	for(i=0; i < (len & ~static_cast<decltype(len)>(15)) ; i+=16)
+	for(i=0; i < (len /*& ~static_cast<decltype(len)>(15)*/) ; i+=16)
 	{
 		// Load an xmm register with 16 unaligned bytes.  SSE2, L/Th: 1/0.25-0.5, plus cache effects.
 		__m128i xmm0 = _mm_loadu_si128((const __m128i *)(cbegin+i));
