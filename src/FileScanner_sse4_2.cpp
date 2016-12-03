@@ -199,7 +199,7 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 
 #if defined(__SSE4_2__)
 
-const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ cbegin, size_t len) noexcept
+const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ cbegin, size_t len) const noexcept
 {
 	uint16_t j=0;
 	size_t i=0;

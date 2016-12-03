@@ -303,6 +303,8 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 	return retval;
 }
 
+extern "C"
+
 std::tuple<const char *, size_t> FileScanner::GetEOL(const char *search_start, const char * buff_one_past_end)
 {
 	std::ptrdiff_t max_len = buff_one_past_end-search_start;
@@ -348,7 +350,7 @@ const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restr
 	const char *first_possible_cu = nullptr;
 	if(m_end_index > 1)
 	{
-#if 0
+#if defined(_GLIBCXX_PARALLEL)
 		first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_end_index);
 #else
 		first_possible_cu = find_first_of_sse4_2_popcnt(cbegin, len);
@@ -356,7 +358,7 @@ const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restr
 	}
 	else if(m_end_index == 1)
 	{
-#if 0
+#if defined(_GLIBCXX_PARALLEL)
 		first_possible_cu = std::find(cbegin, cbegin+len, m_compiled_cu_bitmap[0]);
 		/// @note Tried memchr() here, no real difference.
 #else
@@ -376,10 +378,6 @@ const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restr
 			__m128i xmm2 = _mm_loadu_si128((const __m128i *)(cbegin+i+16));
 			__m128i xmm3 = _mm_cmpeq_epi8(xmm2, looking_for);
 			match_bitmask |= _mm_movemask_epi8(xmm3) << 16;
-
-			// The above should never result in more than the bottom 16 bits of match_bitmask being set.
-			// Hint this to the compiler.  This prevents gcc from adding an unnecessary movzwl %rNw,%rNd before the popcount16() call.
-			//assume(match_bitmask <= 0xFFFFU);
 
 			// Did we find any chars?
 			if(match_bitmask > 0)

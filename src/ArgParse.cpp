@@ -919,7 +919,7 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 				//   ./ucg: option '--i' is ambiguous; possibilities: '--ignore-case' '--ignore' '--include' '--ignore-file' '--ignore-directory' '--ignore-dir'
 				//   Try `ucg --help' or `ucg --usage' for more information.
 				std::string possibilities = "'--" + join(type_name_list, "' '--") + "'";
-				throw ArgParseException("option '--" + argtxt + "' is ambiguous; possibilities: " + possibilities);
+				throw ArgParseException(std::string("option '--") + argtxt + "' is ambiguous; possibilities: " + possibilities);
 			}
 
 			// Is this a type specification of the form '--noTYPE'?
