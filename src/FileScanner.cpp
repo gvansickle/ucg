@@ -324,7 +324,7 @@ std::tuple<const char *, size_t> FileScanner::GetEOL(const char *search_start, c
 bool FileScanner::ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) noexcept
 {
 	uint16_t out_index = 0;
-	for(uint16_t i=0; i<=256; ++i)
+	for(uint16_t i=0; i<256; ++i)
 	{
 		if((pcre2_bitmap[i/8] & (0x01 << (i%8))) == 0)
 		{
