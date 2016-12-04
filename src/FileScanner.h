@@ -166,6 +166,7 @@ protected:
 	uint16_t m_end_index {0};
 
 	std::unique_ptr<uint8_t,void(*)(void*)> m_literal_search_string { nullptr, std::free };
+	size_t m_literal_search_string_len {0};
 
 private:
 
