@@ -160,7 +160,7 @@ protected:
 	bool m_pattern_is_literal;
 
 	/// 256-byte array used to match the first possible code unit.
-	uint8_t m_compiled_cu_bitmap[256] alignas(16);
+	alignas(16) uint8_t m_compiled_cu_bitmap[256];
 
 	/// 1+index of last valid value in m_compiled_cu_bitmap.
 	uint16_t m_end_index {0};
