@@ -21,8 +21,10 @@
 
 #include "FileScannerPCRE2.h"
 
-#include <iostream>
 #include <future/string.hpp>
+#include <libext/exception.hpp>
+
+#include <iostream>
 #include <cstring>
 #include <cstdlib> // For aligned_alloc().
 
@@ -226,7 +228,8 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 		//constexpr auto vec_size_mask = ~static_cast<decltype(len)>(vec_size_bytes-1);
 		LOG(INFO) << "Using caseful literal optimization";
 		// This is a simple string comparison, we can bypass libpcre2 entirely.
-		size_t size_to_alloc = regex_passed_in.size()+1;
+		m_literal_search_string_len = regex_passed_in.size();
+		size_t size_to_alloc = m_literal_search_string_len+1;
 		m_literal_search_string.reset(static_cast<uint8_t*>(overaligned_alloc(vec_size_bytes, size_to_alloc)));
 		std::memcpy(static_cast<void*>(m_literal_search_string.get()), static_cast<const void*>(regex_passed_in.c_str()), size_to_alloc);
 	}
@@ -258,6 +261,8 @@ struct default_delete<pcre2_match_context>
 void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
 #ifdef HAVE_LIBPCRE2
+	try
+	{
 	// Pointer to the offset vector returned by pcre2_match().
 	PCRE2_SIZE *ovector;
 
@@ -318,7 +323,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		///////
 
 		int rc = 0;
-		if(!m_literal_search_string)
+		if(m_literal_search_string_len == 0)
 		{
 			// Try to match the regex to whatever's left of the file.
 			rc = pcre2_match(
@@ -333,21 +338,23 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		}
 		else
 		{
-			const char* str_match = std::strstr(file_data+start_offset,
-					(const char *)m_literal_search_string.get());
+			const char* str_match = (const char*)memmem((const void*)(file_data+start_offset), file_size - start_offset,
+					(const void *)m_literal_search_string.get(), m_literal_search_string_len);
+
 			LOG(DEBUG) << "Searching for literal: '" << (const char *)m_literal_search_string.get() << "'";
 			if(str_match == nullptr)
 			{
 				// No match.
 				rc = PCRE2_ERROR_NOMATCH;
-				/// @todo ovector[0] = file_size?
+				ovector[0] = file_size;
+				ovector[1] = file_size;
 			}
 			else
 			{
 				// Found a match.
 				rc = 1;
 				ovector[0] = str_match - file_data;
-				ovector[1] = str_match + strlen((const char*)m_literal_search_string.get()) - file_data;
+				ovector[1] = ovector[0] + m_literal_search_string_len;
 			}
 		}
 
@@ -421,18 +428,37 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 			return;
 		}
 
-		// There was a match.  Package it up in the MatchList which was passed in.
-		line_no += CountLinesSinceLastMatch(prev_lineno_search_end, file_data+ovector[0]);
-		prev_lineno_search_end = file_data+ovector[0];
-		if(line_no == prev_lineno)
+		try
 		{
-			// Skip multiple matches on one line.
-			continue;
-		}
-		prev_lineno = line_no;
-		Match m(file_data, file_size, ovector[0], ovector[1], line_no);
+			// There was a match.  Package it up in the MatchList which was passed in.
+			line_no += CountLinesSinceLastMatch(prev_lineno_search_end, file_data+ovector[0]);
+			prev_lineno_search_end = file_data+ovector[0];
+			if(line_no == prev_lineno)
+			{
+				// Skip multiple matches on one line.
+				continue;
+			}
+			prev_lineno = line_no;
+			Match m(file_data, file_size, ovector[0], ovector[1], line_no);
 
-		ml.AddMatch(std::move(m));
+			ml.AddMatch(std::move(m));
+		}
+		catch(...)
+		{
+			RETHROW("file_size=" + std::to_string(file_size) + ", ovector[0]=" + std::to_string(ovector[0])
+				+ ", ovector[1]=" + std::to_string(ovector[1])
+				+ ", start_offset=" + std::to_string(start_offset)
+			);
+		}
+	}
+	}
+	catch(const std::exception& e)
+	{
+		print_exception_stack(e);
+	}
+	catch(...)
+	{
+		RETHROW("Caught exception here.");
 	}
 #endif // HAVE_LIBPCRE2
 }

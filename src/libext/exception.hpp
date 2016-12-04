@@ -20,8 +20,29 @@
 #ifndef SRC_LIBEXT_EXCEPTION_HPP_
 #define SRC_LIBEXT_EXCEPTION_HPP_
 
+#include <config.h>
 
+#include <future/string.hpp>
+#include <exception>
 
+inline void print_exception_stack(const std::exception& e, size_t indentation_level = 0)
+{
+	std::cerr << std::string(indentation_level, '\t') << "Exception: " << e.what() << "\n";
 
+	try
+	{
+		std::rethrow_if_nested(e);
+	}
+	catch (const std::exception& e)
+	{
+		print_exception_stack(e, indentation_level+1);
+	}
+	catch(...)
+	{
+
+	}
+}
+
+#define RETHROW(str) std::throw_with_nested(std::runtime_error(std::string(__PRETTY_FUNCTION__) + ":" + std::to_string(__LINE__) + ": " + (str) ))
 
 #endif /* SRC_LIBEXT_EXCEPTION_HPP_ */
