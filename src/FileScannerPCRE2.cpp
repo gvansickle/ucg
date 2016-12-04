@@ -217,7 +217,7 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 
 	// If we have a static first code unit, let's check and see if the string is not a regex but a literal.
 	auto patinfo = IsPatternLiteral(regex_passed_in);
-	if((m_ignore_case || std::get<1>(patinfo)) && (m_pattern_is_literal || std::get<0>(patinfo)))
+	if((!m_ignore_case || std::get<1>(patinfo)) && (m_pattern_is_literal || std::get<0>(patinfo)))
 	{
 		constexpr auto vec_size_bytes = 16;
 		//constexpr auto vec_size_mask = ~static_cast<decltype(len)>(vec_size_bytes-1);
