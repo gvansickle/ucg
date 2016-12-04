@@ -27,6 +27,8 @@
 #include <cstdlib>
 
 #include "hints.hpp"
+#include "integer.hpp"
+
 
 #ifdef HAVE_ALIGNED_ALLOC
 // Nothing to do.
