@@ -77,15 +77,10 @@ typename ContainerType::value_type join(const ContainerType& container_of_string
 	// size of the resulting string we'll end up with so we can reserve it, eliminating any reallocations.
 	// The second scan then does the actual join of the contained strings into this preallocated space.
 
-	// In C++17, this could be std::reduce() instead for a possible performance improvement (no order guarantee).
-	// Would likely be minimal though unless you were joining millions of strings.
-	size_t len = std::accumulate(container_of_strings.cbegin(), container_of_strings.cend(), 0,
-			[&separator](size_t accumulator, const typename ContainerType::value_type &str)
-				{
-					size_t retval = accumulator == 0 ? 0 : separator.length();
-					retval += str.length();
-					return retval;
-				});
+	size_t len = 0;
+	size_t seplen = separator.length();
+	std::for_each(container_of_strings.cbegin(), container_of_strings.cend(),
+			[&len, seplen](const typename ContainerType::value_type &str){ len += seplen + str.length();});
 	len += 1; // For any trailing '\0'.
 
 	// Create the return value and allocate the space we'll need.

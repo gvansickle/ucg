@@ -24,8 +24,10 @@
 #include <iostream>
 #include <future/string.hpp>
 #include <cstring>
+#include <cstdlib> // For aligned_alloc().
 
-#include "libext/hints.hpp"
+#include <libext/hints.hpp>
+#include <libext/memory.hpp>
 
 #include "Logger.h"
 
@@ -163,7 +165,23 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 		throw FileScannerException(std::string("Callouts not supported."));
 	}
 
+	// Do our own analysis and see if there's anything we can do to help speed up the matching.
+	AnalyzeRegex(regex);
+
+#endif
+}
+
+FileScannerPCRE2::~FileScannerPCRE2()
+{
+#ifdef HAVE_LIBPCRE2
+	pcre2_code_free(m_pcre2_regex);
+#endif
+}
+
+void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
+{
 	// Check for a static first code unit or units.
+
 	// Check for a first code unit bitmap.
 	const uint8_t *first_bitmap {nullptr};
 	pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTBITMAP, &first_bitmap);
@@ -196,14 +214,19 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 			/// @todo Not sure we can make good use of this.
 		}
 	}
-#endif
-}
 
-FileScannerPCRE2::~FileScannerPCRE2()
-{
-#ifdef HAVE_LIBPCRE2
-	pcre2_code_free(m_pcre2_regex);
-#endif
+	// If we have a static first code unit, let's check and see if the string is not a regex but a literal.
+	auto patinfo = IsPatternLiteral(regex_passed_in);
+	if((m_ignore_case || std::get<1>(patinfo)) && (m_pattern_is_literal || std::get<0>(patinfo)))
+	{
+		constexpr auto vec_size_bytes = 16;
+		//constexpr auto vec_size_mask = ~static_cast<decltype(len)>(vec_size_bytes-1);
+
+		// This is a simple string comparison, we can bypass libpcre2 entirely.
+		size_t size_to_alloc = regex_passed_in.size()+1;
+		m_literal_search_string.reset(static_cast<uint8_t*>(overaligned_alloc(vec_size_bytes, size_to_alloc)));
+		std::memcpy(static_cast<void*>(m_literal_search_string.get()), static_cast<const void*>(regex_passed_in.c_str()), size_to_alloc);
+	}
 }
 
 #ifdef HAVE_LIBPCRE2
@@ -291,16 +314,37 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		}
 		///////
 
-		// Try to match the regex to whatever's left of the file.
-		int rc = pcre2_match(
-				m_pcre2_regex,
-				reinterpret_cast<PCRE2_SPTR>(file_data),
-				file_size,
-				start_offset,
-				options,
-				match_data.get(),
-				mctx.get()
-				);
+		int rc = 0;
+		if(!m_literal_search_string)
+		{
+			// Try to match the regex to whatever's left of the file.
+			rc = pcre2_match(
+					m_pcre2_regex,
+					reinterpret_cast<PCRE2_SPTR>(file_data),
+					file_size,
+					start_offset,
+					options,
+					match_data.get(),
+					mctx.get()
+					);
+		}
+		else
+		{
+			auto str_match = std::strstr(file_data+start_offset,
+					(const char *)m_literal_search_string.get());
+			if(str_match == nullptr || str_match == file_data+start_offset)
+			{
+				// No match.
+				rc = PCRE2_ERROR_NOMATCH;
+			}
+			else
+			{
+				// Found a match.
+				rc = 1;
+				ovector[0] = str_match - file_data;
+				ovector[1] = str_match + strlen((const char*)m_literal_search_string.get()) - file_data;
+			}
+		}
 
 		// Check for no match.
 		if(rc == PCRE2_ERROR_NOMATCH)

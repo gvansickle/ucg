@@ -24,6 +24,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <valarray>
 #include <memory>
 
 #include "sync_queue_impl_selector.h"
@@ -132,10 +133,16 @@ protected:
 
 
 	bool ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) noexcept;
-	const char * FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) noexcept;
-	const char * find_first_of_sse4_2_no_popcnt(const char * __restrict__ cbegin, size_t len) noexcept;
-	const char * find_first_of_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) noexcept;
-	const char * find_first_of_default(const char * __restrict__ cbegin, size_t len) noexcept;
+	const char * FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) const noexcept;
+
+	//friend void* ::resolve_find_first_of(void);
+	//__attribute__((target("default")))
+	const char * find_first_of_default(const char * __restrict__ cbegin, size_t len) const noexcept;
+	const char * find_first_of_sse4_2_no_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
+	const char * find_first_of_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
+
+	const char * find_sse4_2_no_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
+	const char * find_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
 
 
 	///@}
@@ -144,16 +151,22 @@ protected:
 
 	static const char * LiteralPrescan(std::string regex, const char * __restrict__ start_of_array, const char * __restrict__ end_of_array) noexcept;
 
+	// Literal, At least one upper-case char.
+	std::tuple<bool, bool> IsPatternLiteral(const std::string &) const noexcept;
+
 	bool m_ignore_case;
 
 	bool m_word_regexp;
 
 	bool m_pattern_is_literal;
 
-	// 256-byte array used to match the first char.
+	/// 256-byte array used to match the first possible code unit.
 	uint8_t m_compiled_cu_bitmap[256] alignas(16);
-	// 1+index of last valid character in m_compiled_cu_bitmap.
+
+	/// 1+index of last valid value in m_compiled_cu_bitmap.
 	uint16_t m_end_index {0};
+
+	std::unique_ptr<uint8_t,void(*)(void*)> m_literal_search_string { nullptr, std::free };
 
 private:
 
