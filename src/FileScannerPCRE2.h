@@ -43,6 +43,12 @@ public:
 private:
 
 	/**
+	 * Perform post-compilation/pre-scan analysis of the regular expression to determine if there's
+	 * any additional ways we can assist the PCRE2 engine.
+	 */
+	void AnalyzeRegex(const std::string &regex_passed_in) noexcept;
+
+	/**
 	 * Scan @a file_data for matches of m_pcre2_regex using libpcre2.  Add hits to @a ml.
 	 *
 	 * @param file_data

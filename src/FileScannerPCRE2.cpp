@@ -24,6 +24,7 @@
 #include <iostream>
 #include <future/string.hpp>
 #include <cstring>
+#include <cstdlib> // For aligned_alloc().
 
 #include "libext/hints.hpp"
 
@@ -163,7 +164,23 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 		throw FileScannerException(std::string("Callouts not supported."));
 	}
 
+	// Do our own analysis and see if there's anything we can do to help speed up the matching.
+	AnalyzeRegex(regex);
+
+#endif
+}
+
+FileScannerPCRE2::~FileScannerPCRE2()
+{
+#ifdef HAVE_LIBPCRE2
+	pcre2_code_free(m_pcre2_regex);
+#endif
+}
+
+void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
+{
 	// Check for a static first code unit or units.
+
 	// Check for a first code unit bitmap.
 	const uint8_t *first_bitmap {nullptr};
 	pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTBITMAP, &first_bitmap);
@@ -196,14 +213,19 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 			/// @todo Not sure we can make good use of this.
 		}
 	}
-#endif
-}
 
-FileScannerPCRE2::~FileScannerPCRE2()
-{
-#ifdef HAVE_LIBPCRE2
-	pcre2_code_free(m_pcre2_regex);
-#endif
+	// If we have a static first code unit, let's check and see if the string is not a regex but a literal.
+	if(m_pattern_is_literal && m_ignore_case)
+	{
+		constexpr auto vec_size_bytes = sizeof(__m128i);
+		//constexpr auto vec_size_mask = ~static_cast<decltype(len)>(vec_size_bytes-1);
+
+		// This is a simple string comparison, we can bypass libpcre2 entirely.
+		size_t size_to_alloc = regex_passed_in.size();
+		size_to_alloc =
+		m_literal_search_string.reset(std::aligned_alloc());
+
+	}
 }
 
 #ifdef HAVE_LIBPCRE2

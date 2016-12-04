@@ -15,6 +15,8 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** @file */
+
 #ifndef SRC_RESIZABLEARRAY_H_
 #define SRC_RESIZABLEARRAY_H_
 
@@ -86,6 +88,7 @@ public:
 			// aligned_alloc() requires size == a power of 2 of the alignment.
 			/// @todo Additionally, if the end of the requested size is within ??? bytes of the next page, we want to allocate the next page as well,
 			/// so that we don't have to worry about reading past the end of the buffer causing a page fault.
+			/// For now, we'll over-compensate and just allocate an additional page.
 			auto requested_size = (needed_size + needed_alignment) - (needed_size & (needed_alignment-1));
 			m_current_buffer = static_cast<pointer>(aligned_alloc(needed_alignment, requested_size));
 			// We might have gotten a more-aligned block than we requested.
