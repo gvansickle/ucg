@@ -26,7 +26,8 @@
 #include <cstring>
 #include <cstdlib> // For aligned_alloc().
 
-#include "libext/hints.hpp"
+#include <libext/hints.hpp>
+#include <libext/memory.hpp>
 
 #include "Logger.h"
 
@@ -217,14 +218,13 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 	// If we have a static first code unit, let's check and see if the string is not a regex but a literal.
 	if(m_pattern_is_literal && m_ignore_case)
 	{
-		constexpr auto vec_size_bytes = sizeof(__m128i);
+		constexpr auto vec_size_bytes = 16;
 		//constexpr auto vec_size_mask = ~static_cast<decltype(len)>(vec_size_bytes-1);
 
 		// This is a simple string comparison, we can bypass libpcre2 entirely.
-		size_t size_to_alloc = regex_passed_in.size();
-		size_to_alloc =
-		m_literal_search_string.reset(std::aligned_alloc());
-
+		size_t size_to_alloc = regex_passed_in.size()+1;
+		m_literal_search_string.reset(static_cast<uint8_t*>(overaligned_alloc(vec_size_bytes, size_to_alloc)));
+		std::memcpy(static_cast<void*>(m_literal_search_string.get()), static_cast<const void*>(regex_passed_in.c_str()), size_to_alloc);
 	}
 }
 

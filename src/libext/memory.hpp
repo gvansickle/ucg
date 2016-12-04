@@ -39,16 +39,44 @@ inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign
 #endif
 
 /**
- * Everything anyone could ever hope for in a memory allocation interface.
+ * Everything anyone could ever hope for in an aligned memory allocation interface, without all the guff.
+ *
+ * @returns Pointer to heap-allocated memory aligned as requested.  Call std::free() to deallocate it.
  */
-inline void * overaligned_alloc(std::size_t alignment, std::size_t min_bytes_needed) ATTR_ALLOC_SIZE(2)
+inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed_size) ATTR_ALLOC_SIZE(2);
+inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed_size)
 {
 	static long page_size = sysconf(_SC_PAGESIZE);
 
 	// aligned_alloc() requires size == a power of 2 of the alignment.
-	/// @todo Additionally, if the end of the requested size is within ??? bytes of the next page, we want to allocate the next page as well,
-	/// so that we don't have to worry about reading past the end of the buffer causing a page fault.
-	/// For now, we'll over-compensate and just allocate an additional page.
+	// Additionally, it requires alignment to be "a valid alignment supported by the implementation", per
+	// http://en.cppreference.com/w/cpp/memory/c/aligned_alloc.  Practically, this means that on POSIX systems which
+	// implement aligned_alloc() via posix_memalign(), "alignment must be a power of two multiple of sizeof(void*)", per
+	// http://pubs.opengroup.org/onlinepubs/9699919799/functions/posix_memalign.html.
+
+	// From the caller's perspective, he/she would also rather not worry about "running off the end" and into the next page (which could be
+	// owned by a different process), which could happen with e.g. unchecked but legitimate use of multibyte load and store functions (q.v.
+	// SSE etc).  The memory-efficient way to address this would be to check if the end of the requested size is within ??? bytes of the
+	// next page, and if so, allocate another page as well.  That would require getting the "???" from the user, though we could probably
+	// just use the alignment, or the max vector size supported by the platform.
+	// For now, we'll just always over-compensate and allocate the additional page.
+
+	// Here's where we sort all this out:
+	if(!is_power_of_2(needed_alignment) || (needed_alignment < sizeof(void*)))
+	{
+		// needed_alignment is not a power of two multiple of sizof(void*).
+		// Technically, sizeof(void*) could be a non-power-of-two here, but then we have much bigger problems.
+		throw std::bad_alloc();
+	}
+	auto requested_size = (needed_size + page_size + needed_alignment) - ((needed_size + page_size) & (needed_alignment-1));
+
+	void* retval = aligned_alloc(needed_alignment, requested_size);
+	if(retval == nullptr)
+	{
+		throw std::bad_alloc();
+	}
+
+	return retval;
 }
 
 
