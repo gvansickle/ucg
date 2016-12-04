@@ -216,7 +216,8 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 	}
 
 	// If we have a static first code unit, let's check and see if the string is not a regex but a literal.
-	if(m_pattern_is_literal && m_ignore_case)
+	auto patinfo = IsPatternLiteral(regex_passed_in);
+	if((m_ignore_case || std::get<1>(patinfo)) && (m_pattern_is_literal || std::get<0>(patinfo)))
 	{
 		constexpr auto vec_size_bytes = 16;
 		//constexpr auto vec_size_mask = ~static_cast<decltype(len)>(vec_size_bytes-1);
@@ -313,16 +314,37 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		}
 		///////
 
-		// Try to match the regex to whatever's left of the file.
-		int rc = pcre2_match(
-				m_pcre2_regex,
-				reinterpret_cast<PCRE2_SPTR>(file_data),
-				file_size,
-				start_offset,
-				options,
-				match_data.get(),
-				mctx.get()
-				);
+		int rc = 0;
+		if(!m_literal_search_string)
+		{
+			// Try to match the regex to whatever's left of the file.
+			rc = pcre2_match(
+					m_pcre2_regex,
+					reinterpret_cast<PCRE2_SPTR>(file_data),
+					file_size,
+					start_offset,
+					options,
+					match_data.get(),
+					mctx.get()
+					);
+		}
+		else
+		{
+			auto str_match = std::strstr(file_data+start_offset,
+					(const char *)m_literal_search_string.get());
+			if(str_match == nullptr || str_match == file_data+start_offset)
+			{
+				// No match.
+				rc = PCRE2_ERROR_NOMATCH;
+			}
+			else
+			{
+				// Found a match.
+				rc = 1;
+				ovector[0] = str_match - file_data;
+				ovector[1] = str_match + strlen((const char*)m_literal_search_string.get()) - file_data;
+			}
+		}
 
 		// Check for no match.
 		if(rc == PCRE2_ERROR_NOMATCH)

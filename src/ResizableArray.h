@@ -26,7 +26,6 @@
 
 #include <libext/hints.hpp>
 #include <libext/memory.hpp>
-#include <libext/integer.hpp>
 
 #include "Logger.h"
 
@@ -64,12 +63,6 @@ public:
 	{
 		if(m_current_buffer==nullptr || m_current_buffer_size < needed_size || m_current_buffer_alignment < needed_alignment)
 		{
-			// Check that requested alignment is a power of two.
-			if(!is_power_of_2(needed_alignment))
-			{
-				throw std::invalid_argument("requested alignment is not a power of 2");
-			}
-
 			// Need to allocate a new raw buffer.
 			if(m_current_buffer!=nullptr)
 			{

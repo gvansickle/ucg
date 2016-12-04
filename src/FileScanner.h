@@ -151,6 +151,9 @@ protected:
 
 	static const char * LiteralPrescan(std::string regex, const char * __restrict__ start_of_array, const char * __restrict__ end_of_array) noexcept;
 
+	// Literal, At least one upper-case char.
+	std::tuple<bool, bool> IsPatternLiteral(const std::string &) const noexcept;
+
 	bool m_ignore_case;
 
 	bool m_word_regexp;
