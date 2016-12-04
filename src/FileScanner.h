@@ -149,9 +149,9 @@ protected:
 
 	/**
 	 *
-	 * @returns  std::tuple of bools: Is literal, At least one upper-case char.
+	 * @returns  true if regex is literal.
 	 */
-	std::tuple<bool, bool> IsPatternLiteral(const std::string &) const noexcept;
+	bool IsPatternLiteral(const std::string &regex) const noexcept;
 
 	bool m_ignore_case;
 

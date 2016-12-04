@@ -232,27 +232,15 @@ size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ p
 	return num_lines_since_last_match;
 }
 
-std::tuple<bool, bool> FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
+bool FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
 {
 	// Search the string for any of the PCRE2 metacharacters.  This will cause some false negatives (e.g. anything with escapes
 	// will be determined to be a non-literal), but is quick and easy.
-	auto metachar_pos = regex.find_first_of("\\^$.[]()?*+{");
+	auto metachar_pos = regex.find_first_of("\\^$.[]()?*+{}|");
 
 	bool is_lit = (metachar_pos == std::string::npos);
 
-	bool at_least_one_upper = false;
-	for(auto i : regex)
-	{
-		if(std::isalnum(i))
-		{
-			if(std::isupper(i))
-			{
-				at_least_one_upper=true;
-			}
-		}
-	}
-
-	return std::make_tuple(is_lit, at_least_one_upper);
+	return is_lit;
 }
 
 extern "C" void * resolve_CountLinesSinceLastMatch(void)
