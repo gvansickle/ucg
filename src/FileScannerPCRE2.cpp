@@ -103,6 +103,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 	int error_code;
 	PCRE2_SIZE error_offset;
 	uint32_t regex_compile_options = 0;
+	std::string original_pattern = regex;
 
 	// For now, we won't support capturing.  () will be treated as (?:).
 	regex_compile_options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE | PCRE2_NEVER_BACKSLASH_C | PCRE2_NEVER_UTF | PCRE2_NEVER_UCP
@@ -166,7 +167,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 	}
 
 	// Do our own analysis and see if there's anything we can do to help speed up the matching.
-	AnalyzeRegex(regex);
+	AnalyzeRegex(original_pattern);
 
 #endif
 }
@@ -216,12 +217,14 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 	}
 
 	// If we have a static first code unit, let's check and see if the string is not a regex but a literal.
-	auto patinfo = IsPatternLiteral(regex_passed_in);
-	if((m_ignore_case || std::get<1>(patinfo)) && (m_pattern_is_literal || std::get<0>(patinfo)))
+	auto pat_is_lit = IsPatternLiteral(regex_passed_in);
+	if(!m_ignore_case              // If we're not ignoring case (smart case set this in ArgParse, @todo probably should move)...
+			&& !m_word_regexp                   // ... and we aren't doing a --word-regexp...
+			&& (m_pattern_is_literal || pat_is_lit))  // And we've been told to treat the pattern as literal, or it actually is literal
 	{
 		constexpr auto vec_size_bytes = 16;
 		//constexpr auto vec_size_mask = ~static_cast<decltype(len)>(vec_size_bytes-1);
-
+		LOG(INFO) << "Using caseful literal optimization";
 		// This is a simple string comparison, we can bypass libpcre2 entirely.
 		size_t size_to_alloc = regex_passed_in.size()+1;
 		m_literal_search_string.reset(static_cast<uint8_t*>(overaligned_alloc(vec_size_bytes, size_to_alloc)));
@@ -330,12 +333,14 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		}
 		else
 		{
-			auto str_match = std::strstr(file_data+start_offset,
+			const char* str_match = std::strstr(file_data+start_offset,
 					(const char *)m_literal_search_string.get());
-			if(str_match == nullptr || str_match == file_data+start_offset)
+			LOG(DEBUG) << "Searching for literal: '" << (const char *)m_literal_search_string.get() << "'";
+			if(str_match == nullptr)
 			{
 				// No match.
 				rc = PCRE2_ERROR_NOMATCH;
+				/// @todo ovector[0] = file_size?
 			}
 			else
 			{

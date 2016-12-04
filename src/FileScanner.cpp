@@ -232,74 +232,15 @@ size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ p
 	return num_lines_since_last_match;
 }
 
-const char * FileScanner::LiteralPrescan(std::string regex, const char * __restrict__ start_of_array, const char * __restrict__ end_of_array) noexcept
-{
-	size_t prefix_literal_len { 0 };
-	bool at_least_one_upper = false;
-	for(auto i : regex)
-	{
-		if(std::isalnum(i))
-		{
-			prefix_literal_len++;
-			if(std::isupper(i))
-			{
-				at_least_one_upper=true;
-			}
-		}
-	}
-
-	if((prefix_literal_len == 0) || (!at_least_one_upper))
-	{
-		return start_of_array;
-	}
-
-	// Search for the literal prefix.
-	const char * __restrict__ possible_match_end { start_of_array+(prefix_literal_len-1) };
-	const char * __restrict__ possible_match_start { start_of_array };
-	do
-	{
-		possible_match_end = (const char*)std::memchr(possible_match_end, regex[prefix_literal_len-1], (end_of_array-possible_match_end));
-		if(possible_match_end != NULL)
-		{
-			// Check if the string matched.
-			possible_match_start = possible_match_end - (prefix_literal_len-1);
-			if(std::memcmp(possible_match_start, regex.c_str(), prefix_literal_len-1) == 0)
-			{
-				// Found the prefix string.
-				return possible_match_start;
-			}
-			else
-			{
-				possible_match_end+=1;
-			}
-		}
-	} while(possible_match_end != nullptr);
-
-	// If we drop out of the while(), we didn't find it.
-	return start_of_array;
-}
-
-std::tuple<bool, bool> FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
+bool FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
 {
 	// Search the string for any of the PCRE2 metacharacters.  This will cause some false negatives (e.g. anything with escapes
 	// will be determined to be a non-literal), but is quick and easy.
-	auto metachar_pos = regex.find_first_of("\\^$.[]()?*+{");
+	auto metachar_pos = regex.find_first_of("\\^$.[]()?*+{}|");
 
 	bool is_lit = (metachar_pos == std::string::npos);
 
-	bool at_least_one_upper = false;
-	for(auto i : regex)
-	{
-		if(std::isalnum(i))
-		{
-			if(std::isupper(i))
-			{
-				at_least_one_upper=true;
-			}
-		}
-	}
-
-	return std::make_tuple(is_lit, at_least_one_upper);
+	return is_lit;
 }
 
 extern "C" void * resolve_CountLinesSinceLastMatch(void)
@@ -328,24 +269,6 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 
 /// @todo
 //extern "C" resolve_XXxx()
-
-std::tuple<const char *, size_t> FileScanner::GetEOL(const char *search_start, const char * buff_one_past_end)
-{
-	std::ptrdiff_t max_len = buff_one_past_end-search_start;
-	const char * p = (const char *)std::memchr(search_start, '\n', max_len);
-
-	if(p == nullptr)
-	{
-		// Not found.
-		return std::make_tuple(buff_one_past_end, max_len);
-	}
-	else
-	{
-		return std::make_tuple(p, p-search_start);
-	}
-}
-
-
 
 bool FileScanner::ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) noexcept
 {
