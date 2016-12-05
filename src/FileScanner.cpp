@@ -102,6 +102,7 @@ FileScanner::FileScanner(sync_queue<FileID> &in_queue,
 				m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex),
 				m_next_core(0), m_use_mmap(false), m_manually_assign_cores(false)
 {
+	LiteralMatch = resolve_LiteralMatch(this);
 }
 
 FileScanner::~FileScanner()
@@ -243,6 +244,31 @@ bool FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
 	return is_lit;
 }
 
+int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector)
+{
+	int rc = 0;
+
+	const char* str_match = (const char*)memmem((const void*)(file_data+start_offset), file_size - start_offset,
+						(const void *)m_literal_search_string.get(), m_literal_search_string_len);
+
+	if(str_match == nullptr)
+	{
+		// No match.
+		rc = PCRE2_ERROR_NOMATCH;  /// @todo This will probably break non-PCRE2 builds.
+		ovector[0] = file_size;
+		ovector[1] = file_size;
+	}
+	else
+	{
+		// Found a match.
+		rc = 1;
+		ovector[0] = str_match - file_data;
+		ovector[1] = ovector[0] + m_literal_search_string_len;
+	}
+
+	return rc;
+}
+
 extern "C" void * resolve_CountLinesSinceLastMatch(void)
 {
 	void *retval;
@@ -267,8 +293,21 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 	return retval;
 }
 
-/// @todo
-//extern "C" resolve_XXxx()
+FileScanner::LiteralMatch_type FileScanner::resolve_LiteralMatch(FileScanner *obj) noexcept
+{
+	FileScanner::LiteralMatch_type retval;
+
+	if(sys_has_sse4_2())
+	{
+		retval = &FileScanner::LiteralMatch_sse4_2;
+	}
+	else
+	{
+		retval = &FileScanner::LiteralMatch_default;
+	}
+
+	return retval;
+}
 
 bool FileScanner::ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) noexcept
 {

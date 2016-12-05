@@ -26,6 +26,7 @@
 #include <string>
 #include <valarray>
 #include <memory>
+#include <functional>
 
 #include "sync_queue_impl_selector.h"
 #include "FileID.h"
@@ -145,6 +146,18 @@ protected:
 	const char * find_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
 
 
+	using LiteralMatch_type = std::function<int (FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector)>;
+
+	static LiteralMatch_type resolve_LiteralMatch(FileScanner *obj) noexcept;
+
+	LiteralMatch_type LiteralMatch;
+
+	//int (*FileScanner::LiteralMatch)(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept;
+
+	int LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector);
+
+	int LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector);
+
 	///@}
 
 	/**
@@ -152,6 +165,7 @@ protected:
 	 * @returns  true if regex is literal.
 	 */
 	bool IsPatternLiteral(const std::string &regex) const noexcept;
+
 
 	bool m_ignore_case;
 

@@ -286,5 +286,33 @@ const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, s
 	return cbegin+len;
 }
 
+#ifdef __POPCNT__ // To eliminate multiple defs.
+
+int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector)
+{
+	int rc = 0;
+
+	const char* str_match = (const char*)memmem((const void*)(file_data+start_offset), file_size - start_offset,
+						(const void *)m_literal_search_string.get(), m_literal_search_string_len);
+
+	if(str_match == nullptr)
+	{
+		// No match.
+		rc = -1; //PCRE2_ERROR_NOMATCH;  /// @todo This will probably break non-PCRE2 builds.
+		ovector[0] = file_size;
+		ovector[1] = file_size;
+	}
+	else
+	{
+		// Found a match.
+		rc = 1;
+		ovector[0] = str_match - file_data;
+		ovector[1] = ovector[0] + m_literal_search_string_len;
+	}
+
+	return rc;
+}
+
+#endif
 
 #endif
