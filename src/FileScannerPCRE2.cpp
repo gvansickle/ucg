@@ -183,6 +183,9 @@ FileScannerPCRE2::~FileScannerPCRE2()
 
 void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 {
+#if !defined(HAVE_LIBPCRE2)
+	(void)regex_passed_in;
+#else
 	// Check for a static first code unit or units.
 
 	// Check for a first code unit bitmap.
@@ -233,6 +236,7 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 		m_literal_search_string.reset(static_cast<uint8_t*>(overaligned_alloc(vec_size_bytes, size_to_alloc)));
 		std::memcpy(static_cast<void*>(m_literal_search_string.get()), static_cast<const void*>(regex_passed_in.c_str()), size_to_alloc);
 	}
+#endif
 }
 
 #ifdef HAVE_LIBPCRE2
