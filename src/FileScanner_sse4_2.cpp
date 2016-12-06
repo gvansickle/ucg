@@ -23,6 +23,7 @@
 
 #include <libext/multiversioning.hpp>
 #include <libext/hints.hpp>
+#include <libext/memory.hpp>
 
 #include <cstdint>
 #include <immintrin.h>
@@ -225,9 +226,9 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 			int lsb_set = _mm_cmpestri(xmm0, len_a, xmm1, vec_size_bytes,
 					_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_LEAST_SIGNIFICANT);
 
-			if(lsb_set > 0)
+			if(lsb_set < 16)
 			{
-				return std::min(cbegin + i + (lsb_set-1), cbegin + len);
+				return std::min(cbegin + i + lsb_set, cbegin + len);
 			}
 		}
 
@@ -240,9 +241,9 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 			int lsb_set = _mm_cmpestri(xmm0, len_a, xmm1, m_end_index & vec_size_mask,
 					_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_LEAST_SIGNIFICANT);
 
-			if(lsb_set > 0)
+			if(lsb_set < 16)
 			{
-				return std::min(cbegin + i + (lsb_set-1), cbegin + len);
+				return std::min(cbegin + i + lsb_set, cbegin + len);
 			}
 
 		}
@@ -253,7 +254,6 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, size_t len) const noexcept
 {
 	constexpr auto vec_size_bytes = sizeof(__m128i);
-	constexpr auto vec_size_mask = ~static_cast<decltype(len)>(vec_size_bytes-1);
 
 	// Broadcast the character we're looking for to all 16 bytes of an xmm register.
 	// SSE2.
@@ -268,9 +268,9 @@ const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, s
 		// Convert the bytemask into a bitmask in the lower 16 bits of match_bitmask.  SSE2, L/Th: 3-1/1
 		uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
 
-		__m128i xmm2 = _mm_loadu_si128((const __m128i *)(cbegin+i+16));
+		__m128i xmm2 = _mm_loadu_si128((const __m128i *)(cbegin+i+vec_size_bytes));
 		__m128i xmm3 = _mm_cmpeq_epi8(xmm2, xmm0);
-		match_bitmask |= _mm_movemask_epi8(xmm3) << 16;
+		match_bitmask |= _mm_movemask_epi8(xmm3) << vec_size_bytes;
 
 		// Did we find any chars?
 		if(match_bitmask > 0)
@@ -291,9 +291,46 @@ const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, s
 int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector)
 {
 	int rc = 0;
+	const char* str_match;
+	constexpr uint8_t vec_size_bytes = 16;
+	const size_t bytes_to_search = file_size - start_offset;
 
-	const char* str_match = (const char*)memmem((const void*)(file_data+start_offset), file_size - start_offset,
+#if 0
+	str_match = (const char*)memmem((const void*)(file_data+start_offset), bytes_to_search,
 						(const void *)m_literal_search_string.get(), m_literal_search_string_len);
+#elif 1
+	str_match = (const char*)memmem<16>((const void*)(file_data+start_offset), bytes_to_search,
+			(const void *)m_literal_search_string.get(), m_literal_search_string_len);
+#else
+
+	// Load the first 1 to 16 bytes of the string we're looking for.
+	__m128i xmm0 = _mm_load_si128((const __m128i*)m_literal_search_string.get());
+	int len_a = std::min(m_literal_search_string_len, (size_t)vec_size_bytes);
+	size_t i;
+
+	// Look for the first possibly partial match.
+	int lsb_set = vec_size_bytes;
+	for(i=0; i<bytes_to_search; i+=vec_size_bytes)
+	{
+		const char *looking_at_ptr = file_data + start_offset + i;
+		__m128i xmm1 = _mm_loadu_si128((const __m128i*)looking_at_ptr);
+		lsb_set = _mm_cmpestri(xmm1, std::min((size_t)vec_size_bytes, bytes_to_search-i), xmm0, len_a,
+							_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ORDERED | _SIDD_LEAST_SIGNIFICANT);
+		if(lsb_set < vec_size_bytes) break;
+	}
+
+	// Did we find it?
+	if(lsb_set == vec_size_bytes)
+	{
+		// No.
+		str_match = nullptr;
+	}
+	else
+	{
+		str_match = (file_data + start_offset) + i + lsb_set;
+	}
+
+#endif
 
 	if(str_match == nullptr)
 	{
