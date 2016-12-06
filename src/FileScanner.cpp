@@ -297,7 +297,7 @@ FileScanner::LiteralMatch_type FileScanner::resolve_LiteralMatch(FileScanner *ob
 {
 	FileScanner::LiteralMatch_type retval;
 
-	if(sys_has_sse4_2())
+	if(true)///@todo sys_has_sse4_2())
 	{
 		retval = &FileScanner::LiteralMatch_sse4_2;
 	}
