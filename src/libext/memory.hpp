@@ -91,7 +91,7 @@ inline const void *memmem(const void *mem_to_search, size_t len1, const void *pa
 }
 #endif
 
-#if defined(__SSE4_2__)
+#if 1//defined(__SSE4_2__)
 
 template<>
 inline const void* memmem<16>(const void *mem_to_search, size_t len1, const void *pattern, size_t len2)
@@ -139,7 +139,7 @@ inline const void* memmem<16>(const void *mem_to_search, size_t len1, const void
 			}
 			cmp2 = 16;
 			rcnt2 = len2 - 16 - (ssize_t) ((char *)p2-(char *)pattern);
-			while( cmp2 == 16 && rcnt2)
+			while(cmp2 == 16 && rcnt2)
 			{
 				// each 16B frag matches,
 				rcnt1 = len1 - 16 -(ssize_t) ((char *)p1-(char *)mem_to_search);
@@ -152,6 +152,128 @@ inline const void* memmem<16>(const void *mem_to_search, size_t len1, const void
 				frag1 = _mm_loadu_si128(p1);// load up to 16 bytes of fragment
 				frag2 = _mm_loadu_si128(p2);// load up to 16 bytes of fragment
 				cmp2 = _mm_cmpestri(frag2, (rcnt2>ln2)? ln2: rcnt2, frag1, (rcnt1>ln1)? ln1: rcnt1, 0x18); // lsb, eq each
+			};
+
+			if(!rcnt2 || rcnt2 == cmp2)
+			{
+				idx = (size_t) ((char *) pt - (char *) mem_to_search) ;
+				return (char *)mem_to_search + idx;
+			}
+			else if(rcnt1 <= 0)
+			{
+				// also cmp2 < 16, non match
+				if( cmp2 == 16 && ((rcnt1 + 16) >= (rcnt2+16) ) )
+				{
+					idx = (int) ((char *) pt - (char *) mem_to_search) ;
+					return (char *)mem_to_search + idx;
+				}
+				else
+				{
+					return nullptr;
+				}
+			}
+			else
+			{
+				// Advance the attempted match offset in the mem_to_search by 1
+				p1 = (__m128i *)(((char *)pt) + 1);
+				rcnt1 = len1 - (ssize_t) ((char *)p1-(char *)mem_to_search);
+				pt = NULL;
+				p2 = (__m128i *)((char *)pattern) ;
+				rcnt2 = len2 - (ssize_t) ((char *)p2-(char *)pattern);
+				// Load the next 1-16-byte chunks.
+				frag1 = _mm_loadu_si128(p1);
+				frag2 = _mm_loadu_si128(p2);
+			}
+		}
+		else
+		{
+			if(cmp == 16)
+			{
+				p1 = (__m128i *)(((char *)p1) + 16);
+			}
+			else
+			{
+				p1 = (__m128i *)(((char *)p1) + cmp);
+			}
+
+			rcnt1 = len1 - (ssize_t) ((char *)p1-(char *)mem_to_search);
+			if( pt && cmp )
+			{
+				pt = NULL;
+			}
+			// Load next 1-16 bytes from mem_to_search.
+			frag1 = _mm_loadu_si128(p1);
+		}
+	}
+	// Didn't find a match.
+	return nullptr;
+}
+
+template <uint8_t VecSizeBytes>
+inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, const void *pattern, size_t len2)
+{
+	static_assert(VecSizeBytes == 16, "Only 128-bit vectorization supported");
+
+	size_t idx=0;
+	ssize_t ln1= 16, ln2=16;
+	ssize_t rcnt1 = len1, rcnt2= len2;
+	__m128i *p1 = (__m128i *) mem_to_search;
+	__m128i *p2 = (__m128i *) pattern;
+	__m128i frag1, frag2;
+	int cmp, cmp2, cmp_s;
+	__m128i *pt = nullptr;
+
+	// Return nullptr if there's no possibility of a match.
+	if( len2 > len1 || !len1) return nullptr;
+
+	assume(rcnt2 <= 16);
+	assume(len2 <= 16);
+
+	// Load the first 1 to 16 bytes of the string to search and the pattern.
+	frag1 = _mm_loadu_si128(p1);
+	frag2 = _mm_loadu_si128(p2);
+
+	while(rcnt1 > 0)
+	{
+		cmp_s = _mm_cmpestrs(frag2, rcnt2, frag1, (rcnt1>ln1)? ln1: rcnt1, _SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ORDERED);
+		cmp = _mm_cmpestri(frag2, rcnt2, frag1, (rcnt1>ln1)? ln1: rcnt1, _SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ORDERED);
+		if(!cmp)
+		{
+			// we have a partial match that needs further analysis
+			if(cmp_s)
+			{
+				// if we're done with the pattern...
+				if(pt)
+				{
+					idx = (size_t) ((char *) pt - (char *) mem_to_search) ;
+				}
+				else
+				{
+					idx = (size_t) ((char *) p1 - (char *) mem_to_search) ;
+				}
+				return (char *)mem_to_search + idx;
+			}
+			// we do a round of string compare to verify full match till end of pattern
+			if(pt == nullptr)
+			{
+				pt = p1;
+			}
+			cmp2 = 16;
+			rcnt2 = len2 - 16 - (ssize_t) ((char *)p2-(char *)pattern);
+			while(cmp2 == 16 && rcnt2)
+			{
+				// each 16B frag matches,
+				rcnt1 = len1 - 16 -(ssize_t) ((char *)p1-(char *)mem_to_search);
+				rcnt2 = len2 - 16 -(ssize_t) ((char *)p2-(char *)pattern);
+
+				if(rcnt1 <= 0 || rcnt2 <= 0 ) break;
+
+				p1 = (__m128i *)(((char *)p1) + 16);
+				p2 = (__m128i *)(((char *)p2) + 16);
+				frag1 = _mm_loadu_si128(p1);// load up to 16 bytes of fragment
+				frag2 = _mm_loadu_si128(p2);// load up to 16 bytes of fragment
+				cmp2 = _mm_cmpestri(frag2, (rcnt2>ln2)? ln2: rcnt2, frag1, (rcnt1>ln1)? ln1: rcnt1,
+						_SIDD_LEAST_SIGNIFICANT | _SIDD_UBYTE_OPS | _SIDD_NEGATIVE_POLARITY | _SIDD_CMP_EQUAL_EACH); // lsb, eq each
 			};
 
 			if(!rcnt2 || rcnt2 == cmp2)

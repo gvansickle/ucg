@@ -298,36 +298,16 @@ int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, si
 #if 0
 	str_match = (const char*)memmem((const void*)(file_data+start_offset), bytes_to_search,
 						(const void *)m_literal_search_string.get(), m_literal_search_string_len);
-#elif 1
-	str_match = (const char*)memmem<16>((const void*)(file_data+start_offset), bytes_to_search,
-			(const void *)m_literal_search_string.get(), m_literal_search_string_len);
 #else
-
-	// Load the first 1 to 16 bytes of the string we're looking for.
-	__m128i xmm0 = _mm_load_si128((const __m128i*)m_literal_search_string.get());
-	int len_a = std::min(m_literal_search_string_len, (size_t)vec_size_bytes);
-	size_t i;
-
-	// Look for the first possibly partial match.
-	int lsb_set = vec_size_bytes;
-	for(i=0; i<bytes_to_search; i+=vec_size_bytes)
+	if(m_literal_search_string_len <= 16)
 	{
-		const char *looking_at_ptr = file_data + start_offset + i;
-		__m128i xmm1 = _mm_loadu_si128((const __m128i*)looking_at_ptr);
-		lsb_set = _mm_cmpestri(xmm1, std::min((size_t)vec_size_bytes, bytes_to_search-i), xmm0, len_a,
-							_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ORDERED | _SIDD_LEAST_SIGNIFICANT);
-		if(lsb_set < vec_size_bytes) break;
-	}
-
-	// Did we find it?
-	if(lsb_set == vec_size_bytes)
-	{
-		// No.
-		str_match = nullptr;
+		str_match = (const char*)memmem_short_pattern<16>((const void*)(file_data+start_offset), bytes_to_search,
+				(const void *)m_literal_search_string.get(), m_literal_search_string_len);
 	}
 	else
 	{
-		str_match = (file_data + start_offset) + i + lsb_set;
+		str_match = (const char*)memmem<16>((const void*)(file_data+start_offset), bytes_to_search,
+				(const void *)m_literal_search_string.get(), m_literal_search_string_len);
 	}
 
 #endif
