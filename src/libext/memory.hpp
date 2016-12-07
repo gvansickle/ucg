@@ -224,7 +224,6 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 	__m128i frag1, frag2;
 	int cmp, cmp_s;
 	const __m128i *pt = nullptr;
-	constexpr int cmp2 = 16;
 
 	// Return nullptr if there's no possibility of a match.
 	if( len2 > len1 || !len1) return nullptr;
@@ -238,44 +237,47 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 
 	while(rcnt1 > 0)
 	{
-		cmp_s = _mm_cmpestrs(frag2, rcnt2, frag1, (rcnt1>ln1)? ln1: rcnt1, _SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ORDERED);
-		cmp = _mm_cmpestri(frag2, rcnt2, frag1, (rcnt1>ln1)? ln1: rcnt1, _SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ORDERED);
+		cmp_s = _mm_cmpestrs(frag2, rcnt2, frag1, (rcnt1>ln1)? ln1: rcnt1,
+				_SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
+		cmp = _mm_cmpestri(frag2, rcnt2, frag1, (rcnt1>ln1)? ln1: rcnt1,
+				_SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
 		if(!cmp)
 		{
-			// we have a partial match that needs further analysis
+			// We have at least a partial match that needs further analysis.
 			if(cmp_s)
 			{
-				// if we're done with the pattern...
+				// Per MS: "When 1 is returned [by _mm_cmpestrs], it means that [frag2] contains the ending fragment
+				// of the string that is being compared."
+				// So we found a complete match, either the second half of one started in the previous 16 bytes,
+				// or one completely contained in this 16 bytes.
 				if(pt)
 				{
-					idx = (size_t) ((char *) pt - (char *) mem_to_search) ;
+					return pt;
 				}
 				else
 				{
-					idx = (size_t) ((char *) p1 - (char *) mem_to_search) ;
+					return p1;
 				}
-				return (char *)mem_to_search + idx;
 			}
+
 			// we do a round of string compare to verify full match till end of pattern
 			if(pt == nullptr)
 			{
+				// Save the start address of the potential match.
 				pt = p1;
 			}
 
-			rcnt2 = len2 - 16; // <= 0
+			rcnt2 = len2 - 16; /// @todo <= 0
 
-			if(!rcnt2 || rcnt2 == cmp2)
+			if(!rcnt2)
 			{
-				idx = (size_t) ((char *) pt - (char *) mem_to_search) ;
-				return (char *)mem_to_search + idx;
+				return pt;
 			}
 			else if(rcnt1 <= 0)
 			{
-				// also cmp2 < 16, non match
-				if(cmp2 == 16 && ((rcnt1 + 16) >= (rcnt2+16) ) )
+				if(rcnt1 >= rcnt2)
 				{
-					idx = (size_t) ((char *) pt - (char *) mem_to_search) ;
-					return (char *)mem_to_search + idx;
+					return pt;
 				}
 				else
 				{
@@ -285,9 +287,9 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 			else
 			{
 				// Advance the attempted match offset in mem_to_search by 1
-				p1 = (__m128i *)(((char *)pt) + 1);
+				p1 = (const __m128i *)(((char *)pt) + 1);
 				rcnt1 = len1 - (ssize_t) ((char *)p1-(char *)mem_to_search);
-				pt = NULL;
+				pt = nullptr;
 
 				// Load the next 1-16-byte chunk of the memory we're searching.
 				frag1 = _mm_loadu_si128(p1);
@@ -295,14 +297,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 		}
 		else
 		{
-			if(cmp == 16)
-			{
-				p1 = (__m128i *)(((char *)p1) + 16);
-			}
-			else
-			{
-				p1 = (__m128i *)(((char *)p1) + cmp);
-			}
+			p1 = (__m128i *)(((char *)p1) + cmp);
 
 			rcnt1 = len1 - (ssize_t) ((char *)p1-(char *)mem_to_search);
 			if( pt && cmp )
