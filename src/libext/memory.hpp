@@ -239,9 +239,12 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 	{
 		cmp_s = _mm_cmpestrs(frag2, rcnt2, frag1, (rcnt1>ln1)? ln1: rcnt1,
 				_SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
+		// Returns offset of least significant bit set in IntRes2 if IntRes2 != 0.
+		// Otherwise returns the number of data elements per 16 bytes.
 		cmp = _mm_cmpestri(frag2, rcnt2, frag1, (rcnt1>ln1)? ln1: rcnt1,
 				_SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
-		if(!cmp)
+
+		if(cmp == 0)
 		{
 			// We have at least a partial match that needs further analysis.
 			if(cmp_s)
@@ -260,7 +263,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 				}
 			}
 
-			// we do a round of string compare to verify full match till end of pattern
+			// We have the first part of a match. Look at the next 16 bytes for the rest.
 			if(pt == nullptr)
 			{
 				// Save the start address of the potential match.
@@ -302,7 +305,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 			rcnt1 = len1 - (ssize_t) ((char *)p1-(char *)mem_to_search);
 			if( pt && cmp )
 			{
-				pt = NULL;
+				pt = nullptr;
 			}
 			// Load next 1-16 bytes from mem_to_search.
 			frag1 = _mm_loadu_si128(p1);
