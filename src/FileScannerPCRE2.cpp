@@ -309,7 +309,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		}
 
 		/////
-		if(m_use_find_first_of)
+		if(false)//m_use_find_first_of)
 		{
 			// Burn through chars we know aren't at the start of the match.
 			auto first_possible_char = FindFirstPossibleCodeUnit_default(file_data+start_offset, file_size-start_offset);
@@ -342,24 +342,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		}
 		else
 		{
-			const char* str_match = (const char*)memmem((const void*)(file_data+start_offset), file_size - start_offset,
-					(const void *)m_literal_search_string.get(), m_literal_search_string_len);
-
-			LOG(DEBUG) << "Searching for literal: '" << (const char *)m_literal_search_string.get() << "'";
-			if(str_match == nullptr)
-			{
-				// No match.
-				rc = PCRE2_ERROR_NOMATCH;
-				ovector[0] = file_size;
-				ovector[1] = file_size;
-			}
-			else
-			{
-				// Found a match.
-				rc = 1;
-				ovector[0] = str_match - file_data;
-				ovector[1] = ovector[0] + m_literal_search_string_len;
-			}
+			rc = LiteralMatch(this, file_data, file_size, start_offset, ovector);
 		}
 
 		// Check for no match.
