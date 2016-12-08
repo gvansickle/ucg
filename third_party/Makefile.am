@@ -42,6 +42,16 @@ EXTRA_DIST =
 MOSTLYCLEANFILES =
 CLEANFILES =
 
+
+###
+### Google Test
+###
+
+check_LTLIBRARIES = libgtest_all.la
+libgtest_all_la_SOURCES = googletest/src/gtest-all.cc
+libgtest_all_la_CPPFLAGS= -I$(srcdir)/googletest/include -I$(srcdir)/googletest
+libgtest_all_la_CXXFLAGS = -pthread
+
 ###
 ### Include third-party Makefile.am's here.
 ###

@@ -244,6 +244,16 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 		cmp = _mm_cmpestri(frag2, rcnt2, frag1, (rcnt1>ln1)? ln1: rcnt1,
 				_SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
 
+		if(cmp == 16 && pt == nullptr)
+		{
+			// No match and we're not in the middle of a partial.
+			p1 = (__m128i *)(((char *)p1) + 16);
+			rcnt1 -= 16;
+			// Load next 1-16 bytes from mem_to_search.
+			frag1 = _mm_loadu_si128(p1);
+			continue;
+		}
+
 		if(cmp == 0)
 		{
 			// We have at least a partial match that needs further analysis.
