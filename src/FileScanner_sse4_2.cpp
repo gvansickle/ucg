@@ -27,6 +27,7 @@
 
 #include <cstdint>
 #include <immintrin.h>
+#include <asmlib.h>
 
 #include <algorithm> /// @todo for std::find_first_of().
 
@@ -298,6 +299,8 @@ int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, si
 #if 0
 	str_match = (const char*)memmem((const void*)(file_data+start_offset), bytes_to_search,
 						(const void *)m_literal_search_string.get(), m_literal_search_string_len);
+#elif 0
+	str_match = A_strstr((file_data+start_offset), (const char*)m_literal_search_string.get());
 #else
 	if(m_literal_search_string_len <= 16)
 	{

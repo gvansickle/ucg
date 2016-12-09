@@ -46,7 +46,7 @@ libsrc_la_SOURCES = \
 	sync_queue_impl_selector.h \
 	TypeManager.cpp TypeManager.h
 
-libsrc_la_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_la_CPPFLAGS = -I$(top_srcdir)/third_party/asmlib $(AM_CPPFLAGS)
 libsrc_la_CFLAGS = $(AM_CFLAGS)
 libsrc_la_CXXFLAGS = $(AM_CXXFLAGS)
 libsrc_la_LIBADD =
@@ -111,7 +111,7 @@ libsrc_la_LIBADD += libsrc_sse2.fmv.la
 MOSTLYCLEANFILES += libsrc_sse2.fmv.la libsrc_sse2.la
 endif
 libsrc_sse2_la_SOURCES = FileScanner_sse4_2.cpp
-libsrc_sse2_la_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_sse2_la_CPPFLAGS = -I$(top_srcdir)/third_party/asmlib  $(AM_CPPFLAGS)
 libsrc_sse2_la_CFLAGS = $(AM_CFLAGS)
 libsrc_sse2_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE2)
 
@@ -125,7 +125,7 @@ MOSTLYCLEANFILES += libsrc_sse4_2_no_popcnt.fmv.la libsrc_sse4_2_no_popcnt.la
 endif
 endif
 libsrc_sse4_2_no_popcnt_la_SOURCES = FileScanner_sse4_2.cpp
-libsrc_sse4_2_no_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_sse4_2_no_popcnt_la_CPPFLAGS = -I$(top_srcdir)/third_party/asmlib $(AM_CPPFLAGS)
 libsrc_sse4_2_no_popcnt_la_CFLAGS = $(AM_CFLAGS)
 libsrc_sse4_2_no_popcnt_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_NO_POPCNT)
 
@@ -139,7 +139,7 @@ MOSTLYCLEANFILES += libsrc_sse4_2_popcnt.fmv.la libsrc_sse4_2_popcnt.la
 endif
 endif
 libsrc_sse4_2_popcnt_la_SOURCES = FileScanner_sse4_2.cpp
-libsrc_sse4_2_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_sse4_2_popcnt_la_CPPFLAGS = -I$(top_srcdir)/third_party/asmlib $(AM_CPPFLAGS)
 libsrc_sse4_2_popcnt_la_CFLAGS = $(AM_CFLAGS)
 libsrc_sse4_2_popcnt_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
 
