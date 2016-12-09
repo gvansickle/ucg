@@ -211,9 +211,9 @@ inline const void* memmem<16>(const void *mem_to_search, size_t len1, const void
 }
 
 template <uint8_t VecSizeBytes>
-inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, const void *pattern, size_t len2) ATTR_CONST ATTR_ARTIFICIAL;
+inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, const void *pattern, size_t len2) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 template <uint8_t VecSizeBytes>
-inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, const void *pattern, size_t len2)
+inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, const void *pattern, size_t len2) noexcept
 {
 	static_assert(VecSizeBytes == 16, "Only 128-bit vectorization supported");
 
@@ -249,39 +249,41 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 			frag1 = _mm_loadu_si128((const __m128i*)p1);
 
 			// Do the search.
-			// Per MS: "When 1 is returned [by _mm_cmpestrs], it means that [frag1] contains the ending fragment
-			// of the string that is being compared."
-			// So we found a complete match, either the second half of one started in the previous 16 bytes,
-			// or one completely contained in this 16 bytes.
-			// @note Ordering here is correct: pattern first, string to search second.
+
 			constexpr uint8_t imm8 = _SIDD_BIT_MASK | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS;
 
-			//cmp_s = _mm_cmpestrs(frag2, len2, frag1, 16, imm);
-			//cmp_z = _mm_cmpestrz(frag2, len2, frag1, 16, imm);
-			//cmp = _mm_cmpestrc(frag2, len2, frag1, 16, imm);
-
 			// Returns bitmask of bits set in IntRes2. (SSE4.2)
+			/// @note Ordering here is correct: pattern first, string to search second.
 			/// @note The multiple _mm_cmpestr?()'s here compile down into a single pcmpestrm insruction,
 			/// and serve only to expose the processor flags to the C++ code.  This would probably be easier in
 			/// the end if I did it in actual assembly.
 			auto cf = _mm_cmpestrc(xmm_patt, len2, frag1, 16, imm8);
 			xmm0 = _mm_cmpestrm(xmm_patt, len2, frag1, 16, imm8);
 
-			// Get the bitmask into a non-SSE register.
-			//register uint32_t esi = xmm0[0];
-
-			// _mm_testz_si128() (SSE4.1) returns 1 if the bitwise AND of the operands is zero.
-			if(unlikely(cf))//unlikely(esi))
+			if(unlikely(cf))
 			{
 				// Some bits in xmm0 are set.  Found at least the start of a match, maybe a full match, maybe more than one match.
+
+				// Get the bitmask into a non-SSE register.
 				/// @todo This depends on GCC's definition of __m128i as a vector of 2 long longs.
 				register uint32_t esi = xmm0[0];
+
 				auto fsb = findfirstsetbit(esi);
 				if(fsb && ((fsb-1) + len2 <= 16))
 				{
 					// Found a full match.
-					return reinterpret_cast<const char*>(p1) + (fsb-1);
+					return reinterpret_cast<const void*>(p1) + (fsb-1);
 				}
+				else if(fsb)
+				{
+					// Only found a partial match.
+					// Adjust the pointer into the mem_to_search to point at the first matching char,
+					// then 'goto' (via break+while) the next for-loop iteration without adding 16.  This will then
+					// result in either a full match (since p1 and xmm_pat are now aligned), or no match.
+					p1 += fsb-1;
+					break;
+				}
+				// Should never get here.
 			}
 			// Else no match starts in this 16 bytes, go to the next 16 bytes of the mem_to_search string.
 		}
