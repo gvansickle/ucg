@@ -244,7 +244,7 @@ bool FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
 	return is_lit;
 }
 
-int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector)
+int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept
 {
 	int rc = 0;
 

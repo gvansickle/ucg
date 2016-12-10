@@ -146,7 +146,7 @@ protected:
 	const char * find_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
 
 
-	using LiteralMatch_type = std::function<int (FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector)>;
+	using LiteralMatch_type = std::function<int (FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept>;
 
 	static LiteralMatch_type resolve_LiteralMatch(FileScanner *obj) noexcept;
 
@@ -154,9 +154,9 @@ protected:
 
 	//int (*FileScanner::LiteralMatch)(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept;
 
-	int LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector);
+	int LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept;
 
-	int LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector);
+	int LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept;
 
 	///@}
 
