@@ -49,7 +49,8 @@ inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign
 inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed_size) ATTR_ALLOC_SIZE(2) ATTR_MALLOC;
 inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed_size)
 {
-	static long page_size = sysconf(_SC_PAGESIZE);
+	//static long page_size = sysconf(_SC_PAGESIZE);
+	constexpr size_t vector_size = 1024/8;
 
 	// aligned_alloc() requires size == a power of 2 of the alignment.
 	// Additionally, it requires alignment to be "a valid alignment supported by the implementation", per
@@ -71,7 +72,7 @@ inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed
 		// Technically, sizeof(void*) could be a non-power-of-two here, but then we have much bigger problems.
 		throw std::bad_alloc();
 	}
-	auto requested_size = (needed_size + page_size + needed_alignment) - ((needed_size + page_size) & (needed_alignment-1));
+	auto requested_size = (needed_size + vector_size + needed_alignment) - ((needed_size + vector_size) & (needed_alignment-1));
 
 	void* retval = aligned_alloc(needed_alignment, requested_size);
 	if(retval == nullptr)
@@ -82,14 +83,8 @@ inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed
 	return retval;
 }
 
-#if 1
-template <uint8_t VecSizeBytes>
-inline const void *memmem(const void *mem_to_search, size_t len1, const void *pattern, size_t len2)
-{
-	static_assert(VecSizeBytes != 0, "No vectorization of memmem() for this vector size");
-	return nullptr;
-}
-#endif
+
+#if defined(__SSE4_2__)
 
 template <uint8_t VecSizeBytes>
 inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept ATTR_CONST ATTR_ARTIFICIAL;
@@ -198,5 +193,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 	// Searched the whole string, no matches.
 	return nullptr;
 }
+
+#endif // __SSE4_2__
 
 #endif /* SRC_LIBEXT_MEMORY_HPP_ */
