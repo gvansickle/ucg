@@ -290,7 +290,7 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 	return retval;
 }
 
-FileScanner::LiteralMatch_type FileScanner::resolve_LiteralMatch(FileScanner *obj) noexcept
+FileScanner::LiteralMatch_type FileScanner::resolve_LiteralMatch(FileScanner * obj [[maybe_unused]]) noexcept
 {
 	FileScanner::LiteralMatch_type retval;
 
@@ -306,7 +306,7 @@ FileScanner::LiteralMatch_type FileScanner::resolve_LiteralMatch(FileScanner *ob
 	return retval;
 }
 
-bool FileScanner::ConstructCodeUnitTable_default(const uint8_t *pcre2_bitmap) noexcept
+bool FileScanner::ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept
 {
 	uint16_t out_index = 0;
 	for(uint16_t i=0; i<256; ++i)

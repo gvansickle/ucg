@@ -68,7 +68,7 @@ static int callout_handler(pcre2_callout_block *cob, void *ctx)
 	}
 }
 
-static int count_callouts_callback([[maybe_unused]] pcre2_callout_enumerate_block *ceb, void *ctx)
+static int count_callouts_callback(pcre2_callout_enumerate_block *ceb [[maybe_unused]], void *ctx)
 {
 	size_t * ctr { reinterpret_cast<size_t*>(ctx) };
 
@@ -193,7 +193,7 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 	pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTBITMAP, &first_bitmap);
 	if(first_bitmap != nullptr)
 	{
-		ConstructCodeUnitTable_default(first_bitmap);
+		ConstructCodeUnitTable(first_bitmap);
 		m_use_find_first_of = true;
 		LOG(INFO) << "First code unit of pattern is one of '" << std::string((const char*)m_compiled_cu_bitmap, m_end_index) << "'.";
 	}
