@@ -19,9 +19,11 @@ noinst_LTLIBRARIES = libext.la
 libext_la_SOURCES = \
 	cpuidex.hpp cpuidex.cpp \
 	DirTree.h DirTree.cpp \
+	exception.hpp \
 	filesystem.hpp \
 	hints.hpp \
 	integer.hpp \
+	memory.hpp \
 	multiversioning.hpp multiversioning.cpp \
 	static_diagnostics.hpp \
 	string.hpp

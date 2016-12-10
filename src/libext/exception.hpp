@@ -17,26 +17,32 @@
 
 /** @file  */
 
-#ifndef SRC_LIBEXT_DIRTREE_H_
-#define SRC_LIBEXT_DIRTREE_H_
+#ifndef SRC_LIBEXT_EXCEPTION_HPP_
+#define SRC_LIBEXT_EXCEPTION_HPP_
 
 #include <config.h>
 
-#include <vector>
-#include <string>
+#include <future/string.hpp>
+#include <exception>
 
-#include "hints.hpp"
-
-/*
- *
- */
-class DirTree
+inline void print_exception_stack(const std::exception& e, size_t indentation_level = 0)
 {
-public:
-	DirTree();
-	~DirTree();
+	std::cerr << std::string(indentation_level, '\t') << "Exception: " << e.what() << "\n";
 
-	void Read(std::vector<std::string> start_paths [[maybe_unused]]);
-};
+	try
+	{
+		std::rethrow_if_nested(e);
+	}
+	catch (const std::exception& e)
+	{
+		print_exception_stack(e, indentation_level+1);
+	}
+	catch(...)
+	{
 
-#endif /* SRC_LIBEXT_DIRTREE_H_ */
+	}
+}
+
+#define RETHROW(str) std::throw_with_nested(std::runtime_error(std::string(__PRETTY_FUNCTION__) + ":" + std::to_string(__LINE__) + ": " + (str) ))
+
+#endif /* SRC_LIBEXT_EXCEPTION_HPP_ */

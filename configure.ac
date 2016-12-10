@@ -262,6 +262,9 @@ AM_MISSING_PROG([MAINTPYTHON], [$PYTHON])
 # Autotest needs autom4te, or 'missing's stub for it post-distribution.
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
+# Google Test
+AM_CONDITIONAL([HAVE_GOOGLETEST], [test -d ${top_srcdir}/third_party/googletest])
+
 # Add Valgrind support.
 # @todo Note that this expands to GNU-make-only constructs, which fails on the BSDs.
 #AX_VALGRIND_DFLT([memcheck], [off])
@@ -416,6 +419,9 @@ AX_GCC_BUILTIN(__builtin_popcount)
 AX_GCC_BUILTIN(__builtin_bswap32)
 AX_GCC_BUILTIN(__builtin_bswap64)
 AX_GCC_BUILTIN(__builtin_ctzll)
+AX_GCC_BUILTIN(__builtin_ffs) # 32-bit.
+AX_GCC_BUILTIN(__builtin_ffsl) # 64-bit.
+
 
 ## The checks below for C++ feature-test macros are mainly for diagnostic purposes.  The way they're defined
 ## <https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations> makes them mostly

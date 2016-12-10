@@ -23,6 +23,7 @@
 
 #include <libext/multiversioning.hpp>
 #include <libext/hints.hpp>
+#include <libext/memory.hpp>
 
 #include <cstdint>
 #include <immintrin.h>
@@ -37,50 +38,7 @@ STATIC_MSG("Have SSE4_2")
 STATIC_MSG("Have POPCNT")
 #endif
 
-// Declaration here only so we can apply gcc attributes.
-inline uint8_t popcount16(uint16_t bits) noexcept ATTR_CONST /* Doesn't access globals, has no side-effects.*/
-	ATTR_ARTIFICIAL; /* Should appear in debug info even after being inlined. */
 
-#if defined(__POPCNT__) && __POPCNT__==1 && defined(HAVE___BUILTIN_POPCOUNT)
-
-/**
- * For systems that support the POPCNT instruction, we can use it through the gcc/clang builtin __builtin_popcount().
- * It inlines nicely into the POPCNT instruction.
- *
- * @param bits
- * @return
- */
-inline uint8_t popcount16(uint16_t bits) noexcept
-{
-	return __builtin_popcount(bits);
-}
-
-
-#else
-
-/**
- * Count the number of bits set in #bits using the Brian Kernighan method (https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan).
- * Iterates once per set bit, i.e. a maximum of 16 times.
- *
- * @note On systems which do not support POPCNT, we can't use the __builtin_popcount() here.  It expands into a function call
- *       to a generic implementation which is much too slow for our needs here.
- *
- * @param bits  The 16-bit value to count the set bits of.
- * @return The number of bits set in #bits.
- */
-inline uint8_t popcount16(uint16_t bits) noexcept
-{
-	uint8_t num_set_bits { 0 };
-
-	for(; bits; ++num_set_bits)
-	{
-		bits &= bits-1;
-	}
-
-	return num_set_bits;
-}
-
-#endif
 
 static constexpr size_t f_alignment { alignof(__m128i) };
 static constexpr uintptr_t f_alignment_mask { f_alignment-1 };
@@ -238,4 +196,129 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 	return num_lines_since_last_match;
 }
 
+#if defined(__SSE4_2__)
 
+const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ cbegin, size_t len) const noexcept
+{
+	constexpr auto vec_size_bytes = sizeof(__m128i);
+	constexpr auto vec_size_mask = ~static_cast<decltype(len)>(vec_size_bytes-1);
+
+	uint16_t j=0;
+	size_t i=0;
+
+	// @note The last vector may spill over the end of the input.  That's ok here, we catch any false
+	// hits in the return statements, and our input should have been allocated with at least a page worth of
+	// padding so we don't hit problems there.
+	for(i=0; i < len ; i+=vec_size_bytes)
+	{
+		// Load an xmm register with 16 unaligned bytes.  SSE2, L/Th: 1/0.25-0.5, plus cache effects.
+		__m128i xmm0 = _mm_loadu_si128((const __m128i *)(cbegin+i));
+
+		assume(m_end_index <= 256);
+		for(j=0; j < (m_end_index & vec_size_mask); j+=vec_size_bytes)
+		{
+			// Load our compare-to strings.
+			__m128i xmm1 = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
+			// Do the "find_first_of()".
+			int len_a = ((len-i)>vec_size_bytes) ? vec_size_bytes : (len-i);
+			int lsb_set = _mm_cmpestri(xmm0, len_a, xmm1, vec_size_bytes,
+					_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_LEAST_SIGNIFICANT);
+
+			if(lsb_set < 16)
+			{
+				return std::min(cbegin + i + lsb_set, cbegin + len);
+			}
+		}
+
+		if(j != m_end_index)
+		{
+			// One partial xmm compare-to register to handle.
+			__m128i xmm1 = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
+			// Do the "find_first_of()".
+			int len_a = ((len-i)>vec_size_bytes) ? vec_size_bytes : (len-i);
+			int lsb_set = _mm_cmpestri(xmm0, len_a, xmm1, m_end_index & vec_size_mask,
+					_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_LEAST_SIGNIFICANT);
+
+			if(lsb_set < 16)
+			{
+				return std::min(cbegin + i + lsb_set, cbegin + len);
+			}
+
+		}
+	}
+	return cbegin+len;
+}
+
+const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, size_t len) const noexcept
+{
+	constexpr auto vec_size_bytes = sizeof(__m128i);
+
+	// Broadcast the character we're looking for to all 16 bytes of an xmm register.
+	// SSE2.
+	const __m128i xmm0 = _mm_set1_epi8(m_compiled_cu_bitmap[0]);
+	for(size_t i=0; i<len; i+=vec_size_bytes)
+	{
+		// Load an xmm register with 16 aligned bytes.  SSE2, L/Th: 1/0.25-0.5, plus cache effects.
+		__m128i xmm1 = _mm_loadu_si128((const __m128i *)(cbegin+i));
+		// Compare the 16 bytes with searchchar.  SSE2, L/Th: 1/0.5.
+		// match_bytemask will contain a 0xFF for a matching byte, 0 for a non-matching byte.
+		__m128i match_bytemask = _mm_cmpeq_epi8(xmm1, xmm0);
+		// Convert the bytemask into a bitmask in the lower 16 bits of match_bitmask.  SSE2, L/Th: 3-1/1
+		uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
+
+		assume(match_bitmask <= 16);
+
+		// Did we find any chars?
+		if(match_bitmask > 0)
+		{
+			// Find the first bit set.
+			auto lowest_bit = findfirstsetbit(match_bitmask);
+			if(lowest_bit > 0 && (i + lowest_bit - 1 < len))
+			{
+				return std::min(cbegin + i + lowest_bit - 1, cbegin + len);
+			}
+		}
+	}
+	return cbegin+len;
+}
+
+#ifndef __POPCNT__ // To eliminate multiple defs.
+
+int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept
+{
+	int rc = 0;
+	const char* str_match;
+	const size_t bytes_to_search = file_size - start_offset;
+
+	if(m_literal_search_string_len <= 16)
+	{
+		str_match = (const char*)memmem_short_pattern<16>((const void*)(file_data+start_offset), bytes_to_search,
+				(const void *)m_literal_search_string.get(), m_literal_search_string_len);
+	}
+	else
+	{
+		str_match = (const char*)memmem((const void*)(file_data+start_offset), bytes_to_search,
+								(const void *)m_literal_search_string.get(), m_literal_search_string_len);
+	}
+
+	if(str_match == nullptr)
+	{
+		// No match.
+		rc = -1; /// @note Both PCRE_ERROR_NOMATCH and PCRE2_ERROR_NOMATCH are both -1.
+		ovector[0] = file_size;
+		ovector[1] = file_size;
+	}
+	else
+	{
+		// Found a match.
+		rc = 1;
+		ovector[0] = str_match - file_data;
+		ovector[1] = ovector[0] + m_literal_search_string_len;
+	}
+
+	return rc;
+}
+
+#endif
+
+#endif

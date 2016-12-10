@@ -15,6 +15,8 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** @file */
+
 #ifndef SRC_RESIZABLEARRAY_H_
 #define SRC_RESIZABLEARRAY_H_
 
@@ -23,19 +25,9 @@
 #include <cstdlib>
 
 #include <libext/hints.hpp>
-
-#ifdef HAVE_ALIGNED_ALLOC
-// Nothing to do.
-#elif HAVE_POSIX_MEMALIGN
-// Create a thin wrapper around posix_memalign().
-inline void* aligned_alloc(size_t algn, size_t size) ATTR_ALLOC_SIZE(2) ATTR_MALLOC;
-inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign(&p, algn, size); return p; };
-#else
-#error "Could not find aligned memory allocator."
-#endif
+#include <libext/memory.hpp>
 
 #include "Logger.h"
-#include <libext/integer.hpp>
 
 /**
  * This is sort of a poor-man's std::allocator<>, without the std.  We use it in the File() constructor
@@ -71,30 +63,21 @@ public:
 	{
 		if(m_current_buffer==nullptr || m_current_buffer_size < needed_size || m_current_buffer_alignment < needed_alignment)
 		{
-			// Check that requested alignment is a power of two.
-			if(!is_power_of_2(needed_alignment))
-			{
-				throw std::invalid_argument("requested alignment is not a power of 2");
-			}
-
 			// Need to allocate a new raw buffer.
 			if(m_current_buffer!=nullptr)
 			{
 				std::free(m_current_buffer);
 			}
 
-			// aligned_alloc() requires size == a power of 2 of the alignment.
-			/// @todo Additionally, if the end of the requested size is within ??? bytes of the next page, we want to allocate the next page as well,
-			/// so that we don't have to worry about reading past the end of the buffer causing a page fault.
-			auto requested_size = (needed_size + needed_alignment) - (needed_size & (needed_alignment-1));
-			m_current_buffer = static_cast<pointer>(aligned_alloc(needed_alignment, requested_size));
+			/// @note See overaligned_alloc() for requirements on params.
+			m_current_buffer = static_cast<pointer>(overaligned_alloc(needed_alignment, needed_size));
+
 			// We might have gotten a more-aligned block than we requested.
 			m_current_buffer_alignment = 1U << count_trailing_zeros((uintptr_t)m_current_buffer);
-			m_current_buffer_size = requested_size;
+			m_current_buffer_size = needed_size+1024/8;  /// @todo Hackish, relies on special knowledge of overaligned_alloc()'s internals.
 
 			LOG(INFO) << "reserve_no_copy() realloc: needed_size=" << needed_size << ", needed_alignment=" << needed_alignment
-					<< ", requested_size=" << requested_size << ", requested_alignment= " << needed_alignment
-					<< ", returned alignment =" << m_current_buffer_alignment;
+					<< ", returned size=" << m_current_buffer_alignment << ", returned alignment =" << m_current_buffer_alignment;
 		}
 	}
 

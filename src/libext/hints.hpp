@@ -96,7 +96,7 @@
 #else
 	// Not supported.
 	//STATIC_MSG("C++17 attribute [[maybe_unused]] not supported")
-#	define maybe_unused
+#	define maybe_unused /* */
 #endif
 
 
