@@ -7,5 +7,6 @@ TC5, "rg's linux_alternates", "Benchmark: 'ERR_SYS|PME_TURN_OFF|LINK_REQ_RST|CFG
 TC6, "rg's linux_re_literal_suffix", "Benchmark: '[A-Z]+_RESUME' on Linux source.", [A-Z]+_RESUME, "${top_srcdir}/../TestCorpus/linux"
 TC7, "rg's subtitles_literal", "Benchmark: 'Sherlock Holmes' on OpenSubtitles2016.raw.en", "Sherlock Holmes", "${top_srcdir}/../TestCorpus/subtitles/OpenSubtitles2016.raw.en.disable"
 TC8, Test Case 8, "Benchmark: regex 'iudice[\\w]*umputo' on single ~500MB file.", iudice[\\w]*umputo, "${builddir}/500MBLoremIpsum.cpp"
-TC9, Test Case 9, "Benchmark: literal string on 500MB file with match at end.", iudicemaequumputo, "${builddir}/500MBLoremIpsum.cpp"
+TC9, Test Case 9, "Benchmark: 'iudicemaequumputo' on 500MB file with match at end.", iudicemaequumputo, "${builddir}/500MBLoremIpsum.cpp"
+TC10, Test Case 10, "Benchmark: 'NO_MATCH' on 500MB file with no match.", NO_MATCH, "${builddir}/500MBLoremIpsum.cpp"
 
