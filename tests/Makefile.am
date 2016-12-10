@@ -50,7 +50,7 @@ portable_time_LDFLAGS = $(AM_LDFLAGS)
 ###
 unittests_SOURCES = unittests.cpp
 unittests_CPPFLAGS = -I $(top_srcdir)/third_party/googletest/include $(AM_CPPFLAGS)
-unittests_CXXFLAGS = $(AM_CXXFLAGS)
+unittests_CXXFLAGS = -msse4.2 $(AM_CXXFLAGS)
 unittests_LDFLAGS = $(AM_LDFLAGS)
 unittests_LDADD = ../third_party/libgtest_all.la
 
