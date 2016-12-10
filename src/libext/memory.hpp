@@ -211,39 +211,33 @@ inline const void* memmem<16>(const void *mem_to_search, size_t len1, const void
 }
 
 template <uint8_t VecSizeBytes>
-inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, const void *pattern, size_t len2) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 template <uint8_t VecSizeBytes>
-inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, const void *pattern, size_t len2) noexcept
+inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept
 {
 	static_assert(VecSizeBytes == 16, "Only 128-bit vectorization supported");
 
-	constexpr auto vec_size_mask = ~static_cast<decltype(len1)>(VecSizeBytes-1);
+	constexpr auto vec_size_mask = ~static_cast<decltype(memlen)>(VecSizeBytes-1);
 
-	size_t idx=0;
-	ssize_t ln1=16;
-	ssize_t rcnt1=len1, rcnt2=len2;
 	const char* p1 = (const char *) mem_to_search;
 	__m128i frag1;
-	int cmp, cmp_s, cmp_z;
 	__m128i xmm0;
-	const __m128i *pt = nullptr;
 
 	// Return nullptr if there's no possibility of a match.
-	if( len2 > len1 || !len1 || !len2)
+	if( pattlen > memlen || !memlen || !pattlen)
 	{
 		return nullptr;
 	}
 
-	assume(rcnt2 <= 16);
-	assume(len2 <= 16);
+	assume(pattlen <= 16);
 
 	// Load the pattern.
 	const __m128i xmm_patt = _mm_loadu_si128((const __m128i *)pattern);
 
-	while(p1 < (char*)mem_to_search+(len1&vec_size_mask))
+	while(p1 < (char*)mem_to_search+(memlen&vec_size_mask))
 	{
 		// Find the start of a match.
-		for(; p1 < (char*)mem_to_search+(len1&vec_size_mask); p1+=VecSizeBytes)
+		for(; p1 < (char*)mem_to_search+(memlen&vec_size_mask); p1+=VecSizeBytes)
 		{
 			// Load 16 bytes from mem_to_search.
 			frag1 = _mm_loadu_si128((const __m128i*)p1);
@@ -257,8 +251,8 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 			/// @note The multiple _mm_cmpestr?()'s here compile down into a single pcmpestrm insruction,
 			/// and serve only to expose the processor flags to the C++ code.  This would probably be easier in
 			/// the end if I did it in actual assembly.
-			auto cf = _mm_cmpestrc(xmm_patt, len2, frag1, 16, imm8);
-			xmm0 = _mm_cmpestrm(xmm_patt, len2, frag1, 16, imm8);
+			auto cf = _mm_cmpestrc(xmm_patt, pattlen, frag1, 16, imm8);
+			xmm0 = _mm_cmpestrm(xmm_patt, pattlen, frag1, 16, imm8);
 
 			if(unlikely(cf))
 			{
@@ -269,10 +263,10 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 				register uint32_t esi = xmm0[0];
 
 				auto fsb = findfirstsetbit(esi);
-				if(fsb && ((fsb-1) + len2 <= 16))
+				if(fsb && ((fsb-1) + pattlen <= 16))
 				{
 					// Found a full match.
-					return reinterpret_cast<const void*>(p1) + (fsb-1);
+					return reinterpret_cast<const void*>(p1 + (fsb-1));
 				}
 				else if(fsb)
 				{
@@ -288,99 +282,39 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t len1, 
 			// Else no match starts in this 16 bytes, go to the next 16 bytes of the mem_to_search string.
 		}
 	}
-	// Searched the whole string, no matches.
-	return nullptr;
 
-#if 0
-	while(rcnt1 > 0)
+	if(p1 < (const char*)mem_to_search+memlen)
 	{
-		size_t flen1 = (rcnt1>ln1)? ln1: rcnt1;
-		cmp_s = _mm_cmpestrs(xmm_patt, rcnt2, frag1, flen1,
-				_SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
-		// Returns offset of least significant bit set in IntRes2 if IntRes2 != 0.
-		// Otherwise returns the number of data elements per 16 bytes.
-		cmp = _mm_cmpestri(xmm_patt, rcnt2, frag1, flen1,
-				_SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
+		auto remaining_len = memlen & 0x0F;
 
-		if(likely(cmp == 16 && pt == nullptr))
+		if(remaining_len)
 		{
-			// No match and we're not in the middle of a partial.
-			p1 = (__m128i *)(((char *)p1) + 16);
-			rcnt1 -= 16;
-			// Load next 1-16 bytes from mem_to_search.
-			frag1 = _mm_loadu_si128(p1);
-			continue;
-		}
-
-		if(cmp == 0)
-		{
-			// We have at least a partial match that needs further analysis.
-			if(cmp_s)
+			// There are less than a vector's worth of bytes at the end, but at least one byte.
+			if(pattlen > remaining_len)
 			{
-				// Per MS: "When 1 is returned [by _mm_cmpestrs], it means that [frag2] contains the ending fragment
-				// of the string that is being compared."
-				// So we found a complete match, either the second half of one started in the previous 16 bytes,
-				// or one completely contained in this 16 bytes.
-				if(pt)
-				{
-					return pt;
-				}
-				else
-				{
-					return p1;
-				}
+				// Pattern can't match, not enough bytes left.
+				return nullptr;
 			}
-
-			// We have the first part of a match. Look at the next 16 bytes for the rest.
-			if(pt == nullptr)
+			else
 			{
-				// Save the start address of the potential match.
-				pt = p1;
-			}
+				frag1 = _mm_loadu_si128((const __m128i*)p1);
+				auto last_match = _mm_cmpestri(xmm_patt, pattlen, frag1, remaining_len,
+						_SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
 
-			rcnt2 = len2 - 16; /// @todo <= 0
-
-			if(!rcnt2)
-			{
-				return pt;
-			}
-			else if(rcnt1 <= 0)
-			{
-				if(rcnt1 >= rcnt2)
+				if(last_match == pattlen)
 				{
-					return pt;
+					// Found a match in there.
+					return p1 + last_match;
 				}
 				else
 				{
 					return nullptr;
 				}
 			}
-			else
-			{
-				// Advance the attempted match offset in mem_to_search by 1
-				p1 = (const __m128i *)(((char *)pt) + 1);
-				rcnt1 = len1 - (ssize_t) ((char *)p1-(char *)mem_to_search);
-				pt = nullptr;
-
-				// Load the next 1-16-byte chunk of the memory we're searching.
-				frag1 = _mm_loadu_si128(p1);
-			}
-		}
-		else
-		{
-			p1 = (__m128i *)(((char *)p1) + cmp);
-
-			rcnt1 = len1 - (ssize_t) ((char *)p1-(char *)mem_to_search);
-			if( pt && cmp )
-			{
-				pt = nullptr;
-			}
-			// Load next 1-16 bytes from mem_to_search.
-			frag1 = _mm_loadu_si128(p1);
 		}
 	}
-#endif
-	// Didn't find a match.
+
+	// Searched the whole string, no matches.
 	return nullptr;
 }
 
