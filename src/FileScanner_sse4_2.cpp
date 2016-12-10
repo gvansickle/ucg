@@ -28,8 +28,6 @@
 #include <cstdint>
 #include <immintrin.h>
 
-#include <algorithm> /// @todo for std::find_first_of().
-
 #ifdef __SSE2__
 STATIC_MSG("Have SSE2")
 #endif
@@ -306,7 +304,7 @@ int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, si
 	if(str_match == nullptr)
 	{
 		// No match.
-		rc = -1; //PCRE2_ERROR_NOMATCH;  /// @todo This will probably break non-PCRE2 builds.
+		rc = -1; /// @note Both PCRE_ERROR_NOMATCH and PCRE2_ERROR_NOMATCH are both -1.
 		ovector[0] = file_size;
 		ovector[1] = file_size;
 	}

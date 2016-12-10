@@ -46,7 +46,7 @@ libsrc_la_SOURCES = \
 	sync_queue_impl_selector.h \
 	TypeManager.cpp TypeManager.h
 
-libsrc_la_CPPFLAGS = -I$(top_srcdir)/third_party/asmlib $(AM_CPPFLAGS)
+libsrc_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_la_CFLAGS = $(AM_CFLAGS)
 libsrc_la_CXXFLAGS = $(AM_CXXFLAGS)
 libsrc_la_LIBADD =
@@ -64,7 +64,7 @@ libsrc_la_LIBADD =
 # of these files.
 # We essentially do two things:
 #
-# 1. Create a new make variable, CXXFLAGS_MULTIVERSION, which is equal to the user's CXXFLAGS, but with
+# 1. Create a set of new make variables, e.g. CXXFLAGS_MULTIVERSION etc., which are equal to the user's CXXFLAGS, but with
 #    any options which would change the ISA and/or extensions required for these functions filtered out.
 # 2. Build the source file for a given ISA+extension set by invoking $(MAKE) on this same Makefile,
 #    but passing CXXFLAGS_MULTIVERSION for CXXFLAGS.

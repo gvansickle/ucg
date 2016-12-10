@@ -89,7 +89,7 @@ DirTree::~DirTree()
 }
 
 
-void DirTree::Read(std::vector<std::string> start_paths)
+void DirTree::Read(std::vector<std::string> start_paths [[maybe_unused]])
 {
 #if 0 /// @obsolete
 	///int num_entries {0};

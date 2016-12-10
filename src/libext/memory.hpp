@@ -174,7 +174,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 			else
 			{
 				frag1 = _mm_loadu_si128((const __m128i*)p1);
-				auto last_match = _mm_cmpestri(xmm_patt, pattlen, frag1, remaining_len,
+				uint32_t last_match = _mm_cmpestri(xmm_patt, pattlen, frag1, remaining_len,
 						_SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
 
 				if(last_match == pattlen)
