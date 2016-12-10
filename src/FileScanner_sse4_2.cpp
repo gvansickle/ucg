@@ -293,15 +293,8 @@ int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, si
 {
 	int rc = 0;
 	const char* str_match;
-	constexpr uint8_t vec_size_bytes = 16;
 	const size_t bytes_to_search = file_size - start_offset;
 
-#if 0
-	str_match = (const char*)memmem((const void*)(file_data+start_offset), bytes_to_search,
-						(const void *)m_literal_search_string.get(), m_literal_search_string_len);
-#elif 0
-	str_match = A_strstr((file_data+start_offset), (const char*)m_literal_search_string.get());
-#else
 	if(m_literal_search_string_len <= 16)
 	{
 		str_match = (const char*)memmem_short_pattern<16>((const void*)(file_data+start_offset), bytes_to_search,
@@ -309,11 +302,9 @@ int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, si
 	}
 	else
 	{
-		str_match = (const char*)memmem<16>((const void*)(file_data+start_offset), bytes_to_search,
-				(const void *)m_literal_search_string.get(), m_literal_search_string_len);
+		str_match = (const char*)memmem((const void*)(file_data+start_offset), bytes_to_search,
+								(const void *)m_literal_search_string.get(), m_literal_search_string_len);
 	}
-
-#endif
 
 	if(str_match == nullptr)
 	{
