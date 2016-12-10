@@ -47,9 +47,6 @@
 
 #include "ResizableArray.h"
 
-/// @todo REMOVE
-#include <immintrin.h>
-
 
 static std::mutex f_assign_affinity_mutex;
 

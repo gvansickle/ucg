@@ -286,7 +286,7 @@ const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, s
 	return cbegin+len;
 }
 
-#ifdef __POPCNT__ // To eliminate multiple defs.
+#ifndef __POPCNT__ // To eliminate multiple defs.
 
 int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept
 {
