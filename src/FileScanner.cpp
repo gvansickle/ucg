@@ -244,7 +244,7 @@ bool FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
 	return is_lit;
 }
 
-int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector)
+int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept
 {
 	int rc = 0;
 
@@ -254,7 +254,7 @@ int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, s
 	if(str_match == nullptr)
 	{
 		// No match.
-		rc = PCRE2_ERROR_NOMATCH;  /// @todo This will probably break non-PCRE2 builds.
+		rc = -1; //PCRE2_ERROR_NOMATCH;  /// @todo This will probably break non-PCRE2 builds.
 		ovector[0] = file_size;
 		ovector[1] = file_size;
 	}
