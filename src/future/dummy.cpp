@@ -20,7 +20,7 @@
 #include <config.h>
 #include "../libext/static_diagnostics.hpp"
 
-#include <static_diagnostics.hpp>
+#include "memory.hpp"
 
 const char *link_me = "dummy";
 

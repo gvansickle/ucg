@@ -11,13 +11,13 @@
 # UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
 AT_BANNER([UniversalCodeGrep directory traversal checks])
 
-# Create a cross-linked directory tree.
+# Macro which creates a cross-linked directory tree.
 m4_define([UCG_CREATE_CROSSLINKED_DIR], [
 AS_MKDIR_P([dir1/dir2])
 AS_MKDIR_P([dir1/dir3])
@@ -30,10 +30,10 @@ line 5
 line 6
 ])
 (cd dir1/dir2 && $TEST_LN_S ../dir3 link_to_dir3)
-(cd dir1/dir3 && $TEST_LN_S ../dir2 link_to_dir2) 
+(cd dir1/dir3 && $TEST_LN_S ../dir2 link_to_dir2)
 ])
 
-# Create a normal directory tree.
+# Macro which creates a normal directory tree.
 m4_define([UCG_CREATE_NORMAL_DIRTREE], [
 AS_MKDIR_P([dir1/dir2])
 AS_MKDIR_P([dir1/dir3])

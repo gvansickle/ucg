@@ -24,7 +24,7 @@
 
 #include <unistd.h> // For sysconf().
 
-#include <cstdlib>
+#include <cstdlib>  // For aligned_alloc().
 
 #include "hints.hpp"
 #include "integer.hpp"
@@ -43,6 +43,9 @@ inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign
 
 /**
  * Everything anyone could ever hope for in an aligned memory allocation interface, without all the guff.
+ *
+ * @note aligned_alloc() is declared in cstdlib, and posix_memalign() is in stdlib.h.  I'm bucking the trend here by
+ *       putting this in memory.hpp, but it seems not unreasonable.
  *
  * @returns Pointer to heap-allocated memory, aligned as requested, with an additional 1024 kbits at the end,
  *          so you don't have to worry about a vector read "going off the end" and into the next page (==segfault).

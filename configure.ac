@@ -83,7 +83,7 @@ AS_BOX([Checking for programs needed to do the build...])
 # This will do that for us.
 # @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
 #       calling LT_INIT, or it will complain.
-AC_USE_SYSTEM_EXTENSIONS
+#AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC([gcc clang])
 # To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
 # This will do that for us.
@@ -96,7 +96,7 @@ AC_USE_SYSTEM_EXTENSIONS
 #AM_PROG_CC_C_O
 AC_PROG_CXX([g++ clang++])
 AC_PROG_CXXCPP([g++ clang++]) # Needed for any C++ AC_PREPROC_IFELSE() checks below.
-
+AC_USE_SYSTEM_EXTENSIONS
 # @temp? Tell clang to use its own library.
 #AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
 #[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
@@ -297,19 +297,23 @@ AS_BOX([Checking for libraries...])
 # We use libpcre or libpcre2 for regex matching.  As of this writing there are no C++11 implementations
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
+AC_SUBST([HAVE_LIBPCRE], [no])
+AC_SUBST([HAVE_LIBPCRE2], [no])
+PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
+	[# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
+	AC_SUBST([HAVE_LIBPCRE2], [yes])
+	AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
+	],
+	[
+AC_SUBST([HAVE_LIBPCRE2], [no])
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 	[# Found it.  Remember to add $PCRE_LIBS, $PCRE_CFLAGS, and $PCRE_CPPFLAGS to the appropriate automake vars.
 	AC_SUBST([HAVE_LIBPCRE], [yes])
 	AC_DEFINE([HAVE_LIBPCRE], [1], [Define if libpcre is available.])
 	],
 	[AC_SUBST([HAVE_LIBPCRE], [no])])
+])
 
-PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
-	[# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
-	AC_SUBST([HAVE_LIBPCRE2], [yes])
-	AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
-	],
-	[AC_SUBST([HAVE_LIBPCRE2], [no])])
 
 AC_LANG_POP([C++])
 
@@ -391,6 +395,7 @@ AC_LANG_PUSH([C++])
 # Check if the C++ compiler supports a "restrict" variant.
 ### @todo Works on Fedora 23/g++5.3.1 20160406 (Red Hat 5.3.1-6), doesn't work on Cygwin/g++ (GCC) 5.4.0.
 #AC_C_RESTRICT
+AX_CXX_VAR_PRETTYFUNC
 
 # Check if the C++ compiler supports some flags we'd like to set.
 # Append them to AM_CXXFLAGS if it does.
@@ -637,7 +642,7 @@ AC_OUTPUT
 ### Print a configure summary.
 ###
 AC_MSG_RESULT([
-  Configuration Summary for $PACKAGE $VERSION
+  Configuration Summary for $PACKAGE_NAME $VERSION
   =================================================
 
   Compilers
@@ -665,11 +670,11 @@ AC_MSG_RESULT([
 
   $CXX Search Paths
   -----------------
-$($CXX -print-search-dirs | tr ':' '\n' | sed -E 's/^ [=]?//g' | sed 's/^ */  /g')
+$($CXX -print-search-dirs | tr ':' '\n' | $ESED 's/^ [=]?//g' | sed 's/^ */  /g')
 
   $CXXCPP Include Paths
   ---------------------
-$(echo | $CXXCPP -v -x c++ - 2>&1 | sed -n '/^ *#include/,/^ *End of/ p' | sed 's/^ */  /g')
+$(echo | $CXXCPP -v -x c++ - 2>&1 | $SED -n '/^ *#include/,/^ *End of/ p' | $SED 's/^ */  /g')
 
   PCRE Info
   ---------
