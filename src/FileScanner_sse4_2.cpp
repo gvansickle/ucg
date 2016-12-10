@@ -258,7 +258,7 @@ const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, s
 	// Broadcast the character we're looking for to all 16 bytes of an xmm register.
 	// SSE2.
 	const __m128i xmm0 = _mm_set1_epi8(m_compiled_cu_bitmap[0]);
-	for(size_t i=0; i<len; i+=2*vec_size_bytes)
+	for(size_t i=0; i<len; i+=vec_size_bytes)
 	{
 		// Load an xmm register with 16 aligned bytes.  SSE2, L/Th: 1/0.25-0.5, plus cache effects.
 		__m128i xmm1 = _mm_loadu_si128((const __m128i *)(cbegin+i));
@@ -268,16 +268,14 @@ const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, s
 		// Convert the bytemask into a bitmask in the lower 16 bits of match_bitmask.  SSE2, L/Th: 3-1/1
 		uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
 
-		__m128i xmm2 = _mm_loadu_si128((const __m128i *)(cbegin+i+vec_size_bytes));
-		__m128i xmm3 = _mm_cmpeq_epi8(xmm2, xmm0);
-		match_bitmask |= _mm_movemask_epi8(xmm3) << vec_size_bytes;
+		assume(match_bitmask <= 16);
 
 		// Did we find any chars?
 		if(match_bitmask > 0)
 		{
 			// Find the first bit set.
 			auto lowest_bit = findfirstsetbit(match_bitmask);
-			if(lowest_bit > 0 && (i + lowest_bit -1 < len))
+			if(lowest_bit > 0 && (i + lowest_bit - 1 < len))
 			{
 				return std::min(cbegin + i + lowest_bit - 1, cbegin + len);
 			}
