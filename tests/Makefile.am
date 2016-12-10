@@ -29,7 +29,10 @@ MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE) $(BENCHMARKSCRIPTS)
 ### Dummy file generator exe.
 ### Only built during a "make check", and not installed.
 ###
-check_PROGRAMS = dummy-file-gen portable_time unittests
+check_PROGRAMS = dummy-file-gen portable_time
+if HAVE_GOOGLETEST
+check_PROGRAMS += unittests
+endif
 dummy_file_gen_SOURCES = dummy-file-gen.cpp lorem_ipsum.hpp
 dummy_file_gen_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
 dummy_file_gen_CFLAGS = $(AM_CFLAGS)

@@ -47,10 +47,12 @@ CLEANFILES =
 ### Google Test
 ###
 
+if HAVE_GOOGLETEST
 check_LTLIBRARIES = libgtest_all.la
 libgtest_all_la_SOURCES = googletest/src/gtest-all.cc
 libgtest_all_la_CPPFLAGS= -I$(srcdir)/googletest/include -I$(srcdir)/googletest
 libgtest_all_la_CXXFLAGS = -pthread
+endif
 
 ###
 ### Include third-party Makefile.am's here.
