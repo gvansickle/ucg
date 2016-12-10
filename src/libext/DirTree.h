@@ -25,6 +25,8 @@
 #include <vector>
 #include <string>
 
+#include "hints.hpp"
+
 /*
  *
  */
@@ -34,7 +36,7 @@ public:
 	DirTree();
 	~DirTree();
 
-	void Read(std::vector<std::string> start_paths);
+	void Read(std::vector<std::string> start_paths [[maybe_unused]]);
 };
 
 #endif /* SRC_LIBEXT_DIRTREE_H_ */
