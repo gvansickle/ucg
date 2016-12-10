@@ -141,7 +141,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 
 				// Get the bitmask into a non-SSE register.
 				/// @todo This depends on GCC's definition of __m128i as a vector of 2 long longs.
-				register uint32_t esi = xmm0[0];
+				uint32_t esi = xmm0[0];
 
 				auto fsb = findfirstsetbit(esi);
 				if(fsb && ((fsb-1) + pattlen <= 16))
