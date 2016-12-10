@@ -74,11 +74,10 @@ public:
 
 			// We might have gotten a more-aligned block than we requested.
 			m_current_buffer_alignment = 1U << count_trailing_zeros((uintptr_t)m_current_buffer);
-			m_current_buffer_size = needed_size+4096;  /// @todo Hackish.  Returned buffer currently is larger than that.
+			m_current_buffer_size = needed_size+1024/8;  /// @todo Hackish, relies on special knowledge of overaligned_alloc()'s internals.
 
 			LOG(INFO) << "reserve_no_copy() realloc: needed_size=" << needed_size << ", needed_alignment=" << needed_alignment
-					<< ", requested_size=" << needed_size << ", requested_alignment= " << needed_alignment
-					<< ", returned alignment =" << m_current_buffer_alignment;
+					<< ", returned size=" << m_current_buffer_alignment << ", returned alignment =" << m_current_buffer_alignment;
 		}
 	}
 

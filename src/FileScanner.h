@@ -24,7 +24,6 @@
 
 #include <stdexcept>
 #include <string>
-#include <valarray>
 #include <memory>
 #include <functional>
 

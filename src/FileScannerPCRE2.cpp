@@ -26,7 +26,6 @@
 
 #include <iostream>
 #include <cstring>
-#include <cstdlib> // For aligned_alloc().
 
 #include <libext/hints.hpp>
 #include <libext/memory.hpp>

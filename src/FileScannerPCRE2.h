@@ -43,7 +43,7 @@ public:
 private:
 
 	/**
-	 * Perform post-compilation/pre-scan analysis of the regular expression to determine if there's
+	 * Perform post-compilation/pre-scan analysis of the regular expression to determine if there are
 	 * any additional ways we can assist the PCRE2 engine.
 	 */
 	void AnalyzeRegex(const std::string &regex_passed_in) noexcept;
