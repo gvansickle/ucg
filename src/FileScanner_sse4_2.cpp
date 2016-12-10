@@ -27,7 +27,6 @@
 
 #include <cstdint>
 #include <immintrin.h>
-#include <asmlib.h>
 
 #include <algorithm> /// @todo for std::find_first_of().
 
