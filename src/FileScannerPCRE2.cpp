@@ -227,10 +227,11 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 			&& !m_word_regexp                   // ... and we aren't doing a --word-regexp...
 			&& (m_pattern_is_literal || pat_is_lit))  // And we've been told to treat the pattern as literal, or it actually is literal
 	{
-		constexpr auto vec_size_bytes = 16;
-		//constexpr auto vec_size_mask = ~static_cast<decltype(len)>(vec_size_bytes-1);
-		LOG(INFO) << "Using caseful literal optimization";
 		// This is a simple string comparison, we can bypass libpcre2 entirely.
+
+		constexpr auto vec_size_bytes = 16;
+
+		LOG(INFO) << "Using caseful literal search optimization";
 		m_literal_search_string_len = regex_passed_in.size();
 		size_t size_to_alloc = m_literal_search_string_len+1;
 		m_literal_search_string.reset(static_cast<uint8_t*>(overaligned_alloc(vec_size_bytes, size_to_alloc)));
