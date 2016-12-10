@@ -1,5 +1,15 @@
 # NEWS file for the UniversalCodeGrep project.
 
+## [UNRELEASED]
+
+### New Features
+
+### Changed
+- Performance: Literal string search now bypasses libpcre2 in certain cases and uses vectorized search instead.
+
+### Fixed
+
+
 ## [0.3.1] - 2016-11-28
 
 UniversalCodeGrep (ucg) 0.3.1 is a minor feature and bugfix release.
