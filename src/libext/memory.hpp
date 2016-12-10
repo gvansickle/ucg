@@ -44,7 +44,9 @@ inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign
 /**
  * Everything anyone could ever hope for in an aligned memory allocation interface, without all the guff.
  *
- * @returns Pointer to heap-allocated memory aligned as requested.  Call std::free() to deallocate it.
+ * @returns Pointer to heap-allocated memory, aligned as requested, with an additional 1024 kbits at the end,
+ *          so you don't have to worry about a vector read "going off the end" and into the next page (==segfault).
+ *          Call std::free() to deallocate the memory.
  */
 inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed_size) ATTR_ALLOC_SIZE(2) ATTR_MALLOC;
 inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed_size)
