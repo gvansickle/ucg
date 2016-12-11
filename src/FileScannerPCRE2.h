@@ -40,6 +40,8 @@ public:
 			bool pattern_is_literal);
 	virtual ~FileScannerPCRE2();
 
+	static std::string GetPCRE2Version() noexcept;
+
 private:
 
 	/**
