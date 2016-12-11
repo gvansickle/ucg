@@ -505,7 +505,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 
 	// In addition, we want to print the compiler/version we were built with, the libpcre version and some other info on it,
 	// and any source control version info we can get.
-#if 0
+
 	std::fprintf(stream, "\n\nBuild info\n");
 
 	//
@@ -517,7 +517,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 	// Compiler info
 	//
 	std::fprintf(stream, "\nCompiler info:\n");
-	std::fprintf(stream, " Name ($(CXX)): %s\n", g_cxx);
+	std::fprintf(stream, " Name ($(CXX)): \"%s\"\n", g_cxx);
 	std::fprintf(stream, " Version string: \"%s\"\n", g_cxx_version_str);
 
 	//
@@ -569,6 +569,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 #endif
 	}
 
+#if 0
 	//
 	// libpcre2 info
 	//
