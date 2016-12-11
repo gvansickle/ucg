@@ -43,8 +43,7 @@
 #include <pcre.h>
 #endif
 #if HAVE_LIBPCRE2 == 1
-#define PCRE2_CODE_UNIT_WIDTH 8
-#include <pcre2.h>
+#include <FileScannerPCRE2.h>
 #endif
 #include <cstdlib>
 #include <cstring>
@@ -517,7 +516,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 	// Compiler info
 	//
 	std::fprintf(stream, "\nCompiler info:\n");
-	std::fprintf(stream, " Name ($(CXX)): %s\n", g_cxx);
+	std::fprintf(stream, " Name ($(CXX)): \"%s\"\n", g_cxx);
 	std::fprintf(stream, " Version string: \"%s\"\n", g_cxx_version_str);
 
 	//
@@ -577,9 +576,8 @@ void ArgParse::PrintVersionText(FILE* stream)
 #if HAVE_LIBPCRE2 == 0
 		std::fprintf(stream, " Not linked against libpcre2-8.\n");
 #else
-		char buffer[13];
-		pcre2_config(PCRE2_CONFIG_VERSION, buffer);
-		std::fprintf(stream, " Version: %s\n", buffer);
+		std::fprintf(stream, " Version: %s\n", FileScannerPCRE2::GetPCRE2Version().c_str());
+
 		std::string s;
 		uint32_t is_jit;
 		s = "no";

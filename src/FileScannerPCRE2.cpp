@@ -22,6 +22,7 @@
 #include "FileScannerPCRE2.h"
 
 #include <future/string.hpp>
+#include <libext/string.hpp>
 #include <libext/exception.hpp>
 
 #include <iostream>
@@ -177,6 +178,19 @@ FileScannerPCRE2::~FileScannerPCRE2()
 {
 #if HAVE_LIBPCRE2
 	pcre2_code_free(m_pcre2_regex);
+#endif
+}
+
+std::string FileScannerPCRE2::GetPCRE2Version() noexcept
+{
+#if HAVE_LIBPCRE2
+
+	/// @note A bug in the PCRE2 docs says the PCRE2_CONFIG_VERSION buffer needs to be 13 code units long.
+	/// That isn't correct.  The version will come back as e.g. "10.22 2016-07-29", which is 17 chars including
+	/// the terminating '\0'.
+	return to_string(pcre2_config, PCRE2_CONFIG_VERSION);
+#else
+	return "none";
 #endif
 }
 

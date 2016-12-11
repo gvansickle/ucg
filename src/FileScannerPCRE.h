@@ -42,6 +42,7 @@ public:
 			bool pattern_is_literal);
 	virtual ~FileScannerPCRE();
 
+
 private:
 
 	/**
