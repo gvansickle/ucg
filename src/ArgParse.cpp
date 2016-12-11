@@ -526,7 +526,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 	std::fprintf(stream, "\nISA extensions in use:\n");
 	std::fprintf(stream, " sse4.2: %s\n", sys_has_sse4_2() ? "yes" : "no");
 	std::fprintf(stream, " popcnt: %s\n", sys_has_popcnt() ? "yes" : "no");
-#if 1
+
 	//
 	// libpcre info
 	//
@@ -569,6 +569,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 #endif
 	}
 
+#if 0
 	//
 	// libpcre2 info
 	//
