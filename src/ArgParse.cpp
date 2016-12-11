@@ -505,14 +505,14 @@ void ArgParse::PrintVersionText(FILE* stream)
 
 	// In addition, we want to print the compiler/version we were built with, the libpcre version and some other info on it,
 	// and any source control version info we can get.
-#if 1
+
 	std::fprintf(stream, "\n\nBuild info\n");
 
 	//
 	// Provenance info.
 	//
 	std::fprintf(stream, "\nRepo version: %s\n", g_git_describe);
-
+#if 0
 	//
 	// Compiler info
 	//
