@@ -40,6 +40,12 @@ public:
 			bool pattern_is_literal);
 	virtual ~FileScannerPCRE2();
 
+	/**
+	 * Returns the version string of the PCRE2 library.
+	 * @return
+	 */
+	static std::string GetPCRE2Version() noexcept;
+
 private:
 
 	/**

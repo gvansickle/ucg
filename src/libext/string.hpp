@@ -119,6 +119,30 @@ std::string to_string(T val, std::ios_base & (*base)(std::ios_base&))
 
 
 /**
+ * Wrapper for those (mostly C) functions which take a buffer which they will fill with a string of unknown
+ * length, making you guess at how large a buffer you need.  This template papers over that nonsense.
+ * Requires #func to have the following properties:
+ * - Must take two parameters, the first being a "selector" of some type for selecting which string you want, the second
+ *   being a pointer to a buffer.
+ * - Must return the necessary length of the buffer when passed #tellmethelength as its second parameter.
+ *
+ * @param func
+ * @param s
+ * @return  A std:string containing the string #func put in the temporary buffer.
+ */
+template <typename CallableTwoParam, typename SelectorType, typename BuffType = char, BuffType *tellmethelength = nullptr>
+std::string to_string(CallableTwoParam func, SelectorType s)
+{
+	auto len = func(s, tellmethelength);
+	auto buffer = new BuffType[len+1];
+	len = func(s, buffer);
+	std::string retval {buffer};
+	delete [] buffer;
+	return retval;
+}
+
+
+/**
  * Class for very short strings.  Basically a thin facade over a built-in integral type which allows very fast comparisons, copies, and moves.
  */
 class microstring

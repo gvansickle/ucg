@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <future/string.hpp>
+#include <libext/string.hpp>
 #include <cstring>
 
 #include "Logger.h"
