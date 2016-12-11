@@ -158,7 +158,8 @@ AC_SUBST([LIBTOOL_DEPS])
 # Output a libtool script so we can run the rest of the compile checks with it.
 LT_OUTPUT
 
-PKG_PROG_PKG_CONFIG([0.20.0])
+# Require pkg-config >= 0.24, which was the first to AC_SUBST() its output vars.
+PKG_PROG_PKG_CONFIG([0.24.0])
 AC_PROG_SED
 # Find the sed option which turns on Extended Regular Expressions.
 AC_CACHE_CHECK([for $SED option that supports extended regexes], [ac_cv_path_ESED],
@@ -299,15 +300,12 @@ AS_BOX([Checking for libraries...])
 # or even exist (clang has no Linux <regex> support) for production use.
 AC_SUBST([HAVE_LIBPCRE], [no])
 AC_SUBST([HAVE_LIBPCRE2], [no])
-AC_DEFINE([HAVE_LIBPCRE], [0], [Define if libpcre is available.])
-AC_DEFINE([HAVE_LIBPCRE2], [0], [Define if libpcre2 is available.])
 PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
 	[# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
 	AC_SUBST([HAVE_LIBPCRE2], [yes])
 	AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
 	],
 	[
-AC_SUBST([HAVE_LIBPCRE2], [no])
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 	[# Found it.  Remember to add $PCRE_LIBS, $PCRE_CFLAGS, and $PCRE_CPPFLAGS to the appropriate automake vars.
 	AC_SUBST([HAVE_LIBPCRE], [yes])
