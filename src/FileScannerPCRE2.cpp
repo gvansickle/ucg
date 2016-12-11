@@ -182,7 +182,7 @@ FileScannerPCRE2::~FileScannerPCRE2()
 
 void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 {
-#if !defined(HAVE_LIBPCRE2)
+#if HAVE_LIBPCRE2 == 0
 	(void)regex_passed_in;
 #else
 	// Check for a static first code unit or units.
