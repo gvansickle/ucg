@@ -693,7 +693,7 @@ $(echo | $CXXCPP -v -x c++ - 2>&1 | $SED -n '/^ *#include/,/^ *End of/ p' | $SED
 
 
 # Make sure we found at least one of the PCRE libs.
-AS_IF([test "x$HAVE_LIBPCRE" = x -a "x$HAVE_LIBPCRE2" = x],
+AS_IF([test "x$HAVE_LIBPCRE" = "xno" && test "x$HAVE_LIBPCRE2" = "xno"],
 	[AC_MSG_ERROR([unable to find a suitable pcre library.])],
 	[AC_MSG_NOTICE([found at least one usable pcre library.])])
 
