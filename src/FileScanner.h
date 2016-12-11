@@ -160,10 +160,18 @@ protected:
 	///@}
 
 	/**
+	 * Analyzes the given #regex and returns true if it's a literal string.
 	 *
 	 * @returns  true if regex is literal.
 	 */
 	bool IsPatternLiteral(const std::string &regex) const noexcept;
+
+	/**
+	 *
+	 * @param regex
+	 * @return
+	 */
+	uint8_t GetLiteralPrefixLen(const std::string &regex) noexcept;
 
 
 	bool m_ignore_case;
@@ -180,6 +188,8 @@ protected:
 
 	std::unique_ptr<uint8_t,void(*)(void*)> m_literal_search_string { nullptr, std::free };
 	size_t m_literal_search_string_len {0};
+	bool m_use_literal {false};
+	bool m_use_lit_prefix {false};
 
 private:
 

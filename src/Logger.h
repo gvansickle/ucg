@@ -36,6 +36,7 @@
 #include <thread>
 #include <mutex>
 
+#include <libext/hints.hpp>
 
 /**
  * Call this from inside the thread's callable object to set its name.
@@ -179,7 +180,7 @@ public:
 
 /// @name Macros for logging messages which are not intended for end-user consumption.
 ///@{
-#define LOG(logger) logger::IsEnabled() && logger().m_tempstream
+#define LOG(logger) unlikely(logger::IsEnabled()) && logger().m_tempstream
 ///@}
 
 /// @name Macros for output intended for the end user.

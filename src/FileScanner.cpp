@@ -241,6 +241,42 @@ bool FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
 	return is_lit;
 }
 
+uint8_t FileScanner::GetLiteralPrefixLen(const std::string &regex) noexcept
+{
+	// Bail if there are any alternates anywhere in the pattern.  This avoids having to
+	// deal with situations like '(cat|cab|car|cot)', which is a likely an overall loss anyway.
+	auto alt_pos = regex.find_first_of("|");
+	if(alt_pos != std::string::npos)
+	{
+		return 1;
+	}
+
+	// Otherwise, keep going until we find something non-literal.
+	auto first_metachar_pos = regex.find_first_of("\\^$.[]()?*+{}");
+	if(first_metachar_pos == std::string::npos)
+	{
+		// The whole char was literal, we shouldn't have gotten here.
+		LOG(INFO) << "No non-literal chars in regex.";
+		return 1;
+	}
+
+	if(first_metachar_pos > 1)
+	{
+		// There is at least one possible additional literal char.
+		// "Possible" because the non-literal following it could "de-literalize" it; e.g.,
+		// 'abc*' has a literal prefix of only 'ab', not 'abc'.  We adjust for such situations here.
+		/// @note '{' here because it could be e.g. 'abc{0,1}'.  We could get fancier about this case.
+		if(std::string("?*{").find(regex[first_metachar_pos]) != std::string::npos)
+		{
+			// It was one of the optional modifiers.  Remove the last char.
+			--first_metachar_pos;
+		}
+	}
+
+	return std::min(first_metachar_pos, static_cast<decltype(first_metachar_pos)>(255));
+}
+
+
 int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept
 {
 	int rc = 0;
