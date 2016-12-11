@@ -32,7 +32,7 @@
 
 #include "Logger.h"
 
-#ifdef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2
 /**
  * This callout handler is invoked by PCRE2 at the end of a potentially successful match.  It's purpose
  * is to prevent a regex like 'abc\s+def' from matching across an eol boundary, since '\s' matches both
@@ -99,7 +99,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 		bool word_regexp,
 		bool pattern_is_literal) : FileScanner(in_queue, output_queue, regex, ignore_case, word_regexp, pattern_is_literal)
 {
-#ifdef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2
 	// Compile the regex.
 	int error_code;
 	PCRE2_SIZE error_offset;
@@ -175,7 +175,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 
 FileScannerPCRE2::~FileScannerPCRE2()
 {
-#ifdef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2
 	pcre2_code_free(m_pcre2_regex);
 #endif
 }
@@ -239,7 +239,7 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 #endif
 }
 
-#ifdef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2
 /// @name Custom deleters for the PCRE2 objects we'll be using.
 /// These are implemented as specializations of the std::default_delete<> template.
 /// @{
@@ -264,7 +264,7 @@ struct default_delete<pcre2_match_context>
 
 void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
-#ifdef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2
 	try
 	{
 	// Pointer to the offset vector returned by pcre2_match().
@@ -453,7 +453,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 std::string FileScannerPCRE2::PCRE2ErrorCodeToErrorString(int errorcode)
 {
 	std::string retstr = "";
-#ifdef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2
 	PCRE2_SIZE error_msg_buf_size = 512;
 	PCRE2_UCHAR *error_msg_buf = new PCRE2_UCHAR[error_msg_buf_size];
 	int retval = pcre2_get_error_message(errorcode, error_msg_buf, error_msg_buf_size);

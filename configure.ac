@@ -299,6 +299,8 @@ AS_BOX([Checking for libraries...])
 # or even exist (clang has no Linux <regex> support) for production use.
 AC_SUBST([HAVE_LIBPCRE], [no])
 AC_SUBST([HAVE_LIBPCRE2], [no])
+AC_DEFINE([HAVE_LIBPCRE], [0], [Define if libpcre is available.])
+AC_DEFINE([HAVE_LIBPCRE2], [0], [Define if libpcre2 is available.])
 PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
 	[# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
 	AC_SUBST([HAVE_LIBPCRE2], [yes])

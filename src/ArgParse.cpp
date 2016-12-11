@@ -39,10 +39,10 @@
 #include <system_error>
 
 #include <argp.h>
-#ifdef HAVE_LIBPCRE
+#if HAVE_LIBPCRE == 1
 #include <pcre.h>
 #endif
-#ifdef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2 == 1
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 #endif
@@ -532,7 +532,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 	//
 	{
 		std::fprintf(stream, "\nlibpcre info:\n");
-#ifndef HAVE_LIBPCRE
+#if HAVE_LIBPCRE == 0
 		std::fprintf(stream, " Not linked against libpcre.\n");
 #else
 		std::fprintf(stream, " Version: %s\n", pcre_version());
@@ -574,7 +574,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 	//
 	{
 		std::fprintf(stream, "\nlibpcre2-8 info:\n");
-#ifndef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2 == 0
 		std::fprintf(stream, " Not linked against libpcre2-8.\n");
 #else
 		char buffer[13];

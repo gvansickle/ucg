@@ -24,7 +24,7 @@
 
 #include "FileScanner.h"
 
-#ifdef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 #endif
@@ -59,7 +59,7 @@ private:
 
 	std::string PCRE2ErrorCodeToErrorString(int errorcode);
 
-#ifdef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2
 	/// The compiled libpcre2 regex.
 	/// @todo Make this a unique_ptr<>, RAII-ify it.
 	//std::unique_ptr<pcre2_code, void(*)(pcre2_code*)> m_pcre2_regex;
