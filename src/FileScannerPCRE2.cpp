@@ -235,37 +235,39 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 
 	constexpr auto vec_size_bytes = 16;
 
-	// If we have a static first code unit, let's check and see if the string is not a regex but a literal.
-	auto pat_is_lit = IsPatternLiteral(regex_passed_in);
-	if(!m_ignore_case              // If we're not ignoring case (smart case set this in ArgParse, @todo probably should move)...
-			&& !m_word_regexp                   // ... and we aren't doing a --word-regexp...
-			&& (m_pattern_is_literal || pat_is_lit))  // And we've been told to treat the pattern as literal, or it actually is literal
+	if(!m_ignore_case  // If we're not ignoring case (smart case set this in ArgParse, @todo probably should move)...
+			&& !m_word_regexp)  // ... and we aren't doing a --word-regexp...
 	{
-		// This is a simple string comparison, we can bypass libpcre2 entirely.
-		LOG(INFO) << "Using caseful literal search optimization";
-		m_literal_search_string_len = regex_passed_in.size();
-		size_t size_to_alloc = m_literal_search_string_len+1;
-		m_literal_search_string.reset(static_cast<uint8_t*>(overaligned_alloc(vec_size_bytes, size_to_alloc)));
-		std::memcpy(static_cast<void*>(m_literal_search_string.get()), static_cast<const void*>(regex_passed_in.c_str()), size_to_alloc);
-		m_use_literal = true;
-	}
-	else if(!m_ignore_case && !m_word_regexp && m_use_find_first_of && (m_end_index==1) && !(m_pattern_is_literal || pat_is_lit))
-	{
-		// Analyze the regex and see if we can't extend this single code unit into a longer literal prefix.
-		auto lit_prefix_len = GetLiteralPrefixLen(regex_passed_in);
-
-		if(lit_prefix_len > 1)
+		// If we have a static first code unit, let's check and see if the string is not a regex but a literal.
+		auto pat_is_lit = IsPatternLiteral(regex_passed_in);
+		if(m_pattern_is_literal || pat_is_lit)  // If we've been told to treat the pattern as literal, or it actually is literal
 		{
-			LOG(INFO) << "Using caseful literal prefix optimization of '" << regex_passed_in.substr(0, lit_prefix_len) << "'";
-			m_literal_search_string_len = lit_prefix_len;
+			// This is a simple string comparison, we can bypass libpcre2 entirely.
+			LOG(INFO) << "Using caseful literal search optimization";
+			m_literal_search_string_len = regex_passed_in.size();
 			size_t size_to_alloc = m_literal_search_string_len+1;
 			m_literal_search_string.reset(static_cast<uint8_t*>(overaligned_alloc(vec_size_bytes, size_to_alloc)));
-					std::memcpy(static_cast<void*>(m_literal_search_string.get()), static_cast<const void*>(regex_passed_in.c_str()), size_to_alloc);
-			m_use_lit_prefix = true;
+			std::memcpy(static_cast<void*>(m_literal_search_string.get()), static_cast<const void*>(regex_passed_in.c_str()), size_to_alloc);
+			m_use_literal = true;
+		}
+		else if(m_use_find_first_of && (m_end_index==1) && !(m_pattern_is_literal || pat_is_lit))
+		{
+			// Analyze the regex and see if we can't extend this single code unit into a longer literal prefix.
+			auto lit_prefix_len = GetLiteralPrefixLen(regex_passed_in);
+
+			if(lit_prefix_len > 1)
+			{
+				LOG(INFO) << "Using caseful literal prefix optimization of '" << regex_passed_in.substr(0, lit_prefix_len) << "'";
+				m_literal_search_string_len = lit_prefix_len;
+				size_t size_to_alloc = m_literal_search_string_len+1;
+				m_literal_search_string.reset(static_cast<uint8_t*>(overaligned_alloc(vec_size_bytes, size_to_alloc)));
+						std::memcpy(static_cast<void*>(m_literal_search_string.get()), static_cast<const void*>(regex_passed_in.c_str()), size_to_alloc);
+				m_use_lit_prefix = true;
+			}
 		}
 	}
 
-#endif
+#endif // HAVE_LIBPCRE2
 }
 
 #if HAVE_LIBPCRE2
