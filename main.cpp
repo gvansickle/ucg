@@ -19,6 +19,7 @@
 
 #include <config.h>
 
+#include <src/libext/Logger.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -27,7 +28,6 @@
 #include <cstdlib> // For abort().
 
 #include "sync_queue_impl_selector.h"
-#include "Logger.h"
 #include "ArgParse.h"
 #include "FileID.h"
 #include "Globber.h"

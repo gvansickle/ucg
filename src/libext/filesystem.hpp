@@ -42,11 +42,19 @@
 #include <string.h>
 #include <cstdlib>   // For free().
 #include <string>
-#include <type_traits>
+#include <future/type_traits.hpp>
 
 #include "integer.hpp"
-#include "../Logger.h"
+#include "Logger.h"
 
+
+/// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
+/// - No AT_FDCWD, no openat, no fdopendir, no fstatat.
+/// Cygwin:
+/// - No O_NOATIME, no AT_NO_AUTOMOUNT.
+/// Linux:
+/// - No O_SEARCH.
+/// @{
 #if !defined(HAVE_OPENAT) || HAVE_OPENAT == 0
 // No native openat() support.  Assume no *at() functions at all.  Stubs to allow this to compile for now.
 #define AT_FDCWD -200
@@ -56,39 +64,90 @@ inline DIR *fdopendir(int fd) { return nullptr; };
 inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags) { return -1; };
 #endif
 
-/// @name Take care of some portability issues.
-/// OSX (clang-600.0.54) (based on LLVM 3.5svn)/x86_64-apple-darwin13.4.0:
-/// - No AT_FDCWD, no openat, no fdopendir, no fstatat.
-/// Cygwin:
-/// - No O_NOATIME, no AT_NO_AUTOMOUNT.
-/// Linux:
-/// - No O_SEARCH.
-/// @{
-#ifndef O_SEARCH
+// Cygwin has *at() functions, but is missing some AT_* defines.
+#if !defined(AT_NO_AUTOMOUNT)
+#define AT_NO_AUTOMOUNT 0
+#endif
+
+#if !defined(O_NOATIME)
+// From "The GNU C Library" manual <https://www.gnu.org/software/libc/manual/html_mono/libc.html#toc-File-System-Interface-1>
+// 13.14.3 I/O Operating Modes: "Only the owner of the file or the superuser may use this bit."
+#define O_NOATIME 0  // Not defined on at least Cygwin.
+#endif
+
+#if !defined(O_SEARCH)
 // O_SEARCH is POSIX.1-2008, but not defined on at least Linux/glibc 2.24.
 // Possible reason, quoted from the standard: "Since O_RDONLY has historically had the value zero, implementations are not able to distinguish
 // between O_SEARCH and O_SEARCH | O_RDONLY, and similarly for O_EXEC."
-#define O_SEARCH 0
+//
+// What O_SEARCH does, from POSIX.1-2008 <http://pubs.opengroup.org/onlinepubs/9699919799/functions/open.html>:
+// "The openat() function shall be equivalent to the open() function except in the case where path specifies a relative path. In this case
+// the file to be opened is determined relative to the directory associated with the file descriptor fd instead of the current working
+// directory. If the access mode of the open file description associated with the file descriptor is not O_SEARCH, the function shall check
+// whether directory searches are permitted using the current permissions of the directory underlying the file descriptor. If the access
+// mode is O_SEARCH, the function shall not perform the check."
+// So, it benefits us to specify O_SEARCH when we can.
+#define O_SEARCH O_RDONLY
+#endif
+
+// Per POSIX.1-2008:
+// "If path resolves to a non-directory file, fail and set errno to [ENOTDIR]."
+#if !defined(O_DIRECTORY)
+#define O_DIRECTORY 0
+#endif
+
+// Per POSIX.1-2008:
+// "If set and path identifies a terminal device, open() shall not cause the terminal device to become the controlling terminal
+// for the process. If path does not identify a terminal device, O_NOCTTY shall be ignored."
+#if !defined(O_NOCTTY)
+#define O_NOCTTY 0
 #endif
 /// @}
 
-using dev_ino_pair_type = std::conditional<
-		sizeof(__int128) < (sizeof(dev_t)+sizeof(ino_t)),
-		/*static_assert(false, "uintmax_t not big enough.")*/ int,
-		uint_t<(sizeof(dev_t)+sizeof(ino_t))*8>::fast
-		>::type;
 
+/**
+ * Class intended to abstract the concept of a UUID for a file or directory.
+ * @todo Currently only supports POSIX-like OSes, and not necessarily all filesystems.  Needs to be expanded.
+ */
 struct dev_ino_pair
 {
 	dev_ino_pair() = default;
-	dev_ino_pair(dev_t d, ino_t i) noexcept { m_val = d, m_val <<= sizeof(ino_t)*8, m_val |= i; };
+	constexpr dev_ino_pair(dev_t d, ino_t i) noexcept : m_dev(d), m_ino(i) { };
+	~dev_ino_pair() = default;
 
-	constexpr bool operator<(const dev_ino_pair& other) const { return m_val < other.m_val; };
+	inline bool operator<(const dev_ino_pair& other) const noexcept { return m_dev < other.m_dev || m_ino < other.m_ino; };
+
+	inline bool operator==(dev_ino_pair other) const noexcept { return m_dev == other.m_dev && m_ino == other.m_ino; };
+
+	inline bool empty() const noexcept { return m_dev == 0 && m_ino == 0; };
 
 private:
-	dev_ino_pair_type m_val { 0 };
+	friend struct std::hash<dev_ino_pair>;
+
+	//dev_ino_pair_type m_val { 0 };
+	dev_t m_dev {0};
+	ino_t m_ino {0};
 };
 
+namespace std
+{
+	// Inject a specialization of std::hash<> into std:: for dev_ino_pair.
+	template <>
+	struct hash<dev_ino_pair>
+	{
+		std::size_t operator()(const dev_ino_pair p) const
+		{
+			const std::size_t h1 (std::hash<dev_t>{}(p.m_dev));
+			const std::size_t h2 (std::hash<dev_t>{}(p.m_ino));
+			return h1 ^ (h2 << 1);
+		}
+	};
+}
+
+// Check that dev_ino_pair meets the LiteralType concept.
+static_assert(std::is_trivially_destructible<dev_ino_pair>::value, "no trivial destructor.");
+static_assert(std::is_class<dev_ino_pair>::value, "not an aggregate type");
+static_assert(std::is_literal_type<dev_ino_pair>::value, "dev_ino_pair isn't trivial");
 
 /**
  * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as possible.

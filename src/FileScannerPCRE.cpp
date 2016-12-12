@@ -26,7 +26,6 @@
 #include <libext/string.hpp>
 #include <cstring>
 
-#include "Logger.h"
 
 #if HAVE_LIBPCRE
 

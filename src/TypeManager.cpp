@@ -22,8 +22,6 @@
 #include <libext/hints.hpp>
 #include "TypeManager.h"
 
-#include "Logger.h"
-
 #include <algorithm>
 #include <set>
 #include <iterator>
@@ -32,6 +30,7 @@
 #include <string>
 #include <libext/string.hpp>
 #include <fnmatch.h>
+#include <libext/Logger.h>
 
 struct Type
 {
