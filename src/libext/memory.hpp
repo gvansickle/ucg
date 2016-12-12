@@ -121,7 +121,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 		for(; p1 < (char*)mem_to_search+(memlen&vec_size_mask); p1+=VecSizeBytes)
 		{
 			// Load 16 bytes from mem_to_search.
-			frag1 = _mm_loadu_si128((const __m128i*)p1);
+			frag1 = _mm_lddqu_si128((const __m128i*)p1);
 
 			// Do the search.
 
@@ -143,7 +143,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 				/// @todo This depends on GCC's definition of __m128i as a vector of 2 long longs.
 				uint32_t esi = xmm0[0];
 
-				auto fsb = findfirstsetbit(esi);
+				auto fsb = find_first_set_bit(esi);
 				if(fsb && ((fsb-1) + pattlen <= 16))
 				{
 					// Found a full match.
@@ -178,7 +178,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 			}
 			else
 			{
-				frag1 = _mm_loadu_si128((const __m128i*)p1);
+				frag1 = _mm_lddqu_si128((const __m128i*)p1);
 				uint32_t last_match = _mm_cmpestri(xmm_patt, pattlen, frag1, remaining_len,
 						_SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
 

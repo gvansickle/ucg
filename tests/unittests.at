@@ -22,6 +22,8 @@ AT_BANNER([UniversalCodeGrep Unit Tests])
 ###
 AT_SETUP([All unit tests])
 
+AT_SKIP_IF([test ! -x $builddir/unittests])
+
 AT_CHECK([unittests], [0], [stdout], [stderr])
 
 AT_CLEANUP
