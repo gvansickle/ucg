@@ -71,8 +71,24 @@ TEST_F(OptimizationsTest, memmem_short_pattern_works) {
   EXPECT_EQ("cd", rs);
 }
 
+TEST_F(OptimizationsTest, memmem_short_pattern_vs_32_bytes)
+{
+  std::string str = "0123456789ABCDEFfedcba9876543210";
+  std::string rs = "10";
+  std::string matchstr {(const char*)memmem_short_pattern<16>(str.c_str(), 32, rs.c_str(), 2), rs.length()};
+  EXPECT_EQ(rs, matchstr);
+}
+
+TEST_F(OptimizationsTest, memmem_short_pattern_vs_38_bytes)
+{
+  std::string str = "0123456789ABCDEFfedcba9876543210qwerty";
+  std::string rs = "0qw";
+  std::string matchstr {(const char*)memmem_short_pattern<16>(str.c_str(), str.length(), rs.c_str(), rs.length()), rs.length()};
+  EXPECT_EQ(rs, matchstr);
+}
+
 // Tests that Foo does Xyz.
-TEST_F(OptimizationsTest, SomeOtherTest) {
+TEST_F(OptimizationsTest, Renamed) {
   // Exercises the Xyz feature of Foo.
 }
 

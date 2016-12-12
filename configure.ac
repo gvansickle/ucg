@@ -264,7 +264,7 @@ AM_MISSING_PROG([MAINTPYTHON], [$PYTHON])
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 # Google Test
-AM_CONDITIONAL([HAVE_GOOGLETEST], [test -d ${top_srcdir}/third_party/googletest])
+AM_CONDITIONAL([HAVE_GOOGLETEST], [test -e $srcdir/third_party/googletest])
 
 # Add Valgrind support.
 # @todo Note that this expands to GNU-make-only constructs, which fails on the BSDs.
