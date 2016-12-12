@@ -126,7 +126,7 @@ constexpr inline T bswap(T x) noexcept
 {
 	// Should never get to this unspecialized version.
 	///@note This tuple business is to get the compiler to dump the name of the type when it errors out.  E.g.:
-	/// "error: ‘dummy’ is not a member of ‘std::tuple<long unsigned int>’"
+	/// "error:'dummy' is not a member of 'std::tuple<long unsigned int>'"
 	auto test_var = std::make_tuple(x);
 	static_assert(decltype(test_var)::dummy, "No template specialization for type T.");
 }
@@ -200,5 +200,71 @@ constexpr inline uintptr_t count_trailing_zeros(uintptr_t x)
 	static_assert(false, "Generic count_trailing_zeros() not yet implemented.");
 #endif
 }
+
+// Declaration here only so we can apply gcc attributes.
+inline uint8_t popcount16(uint16_t bits) noexcept ATTR_CONST /* Doesn't access globals, has no side-effects.*/
+	ATTR_ARTIFICIAL; /* Should appear in debug info even after being inlined. */
+
+#if defined(__POPCNT__) && __POPCNT__==1 && defined(HAVE___BUILTIN_POPCOUNT)
+
+/**
+ * For systems that support the POPCNT instruction, we can use it through the gcc/clang builtin __builtin_popcount().
+ * It inlines nicely into the POPCNT instruction.
+ *
+ * @param bits
+ * @return
+ */
+inline uint8_t popcount16(uint16_t bits) noexcept
+{
+	return __builtin_popcount(bits);
+}
+
+
+#else
+
+/**
+ * Count the number of bits set in #bits using the Brian Kernighan method (https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan).
+ * Iterates once per set bit, i.e. a maximum of 16 times.
+ *
+ * @note On systems which do not support POPCNT, we can't use the __builtin_popcount() here.  It expands into a function call
+ *       to a generic implementation which is much too slow for our needs here.
+ *
+ * @param bits  The 16-bit value to count the set bits of.
+ * @return The number of bits set in #bits.
+ */
+inline uint8_t popcount16(uint16_t bits) noexcept
+{
+	uint8_t num_set_bits { 0 };
+
+	for(; bits; ++num_set_bits)
+	{
+		bits &= bits-1;
+	}
+
+	return num_set_bits;
+}
+
+#endif
+
+/**
+ * Find the first set bit in @p bits.
+ * @param bits
+ * @return  0 if no bits set. 1+bit_index for the first set bit.
+ */
+inline uint8_t findfirstsetbit(uint32_t bits) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+inline uint8_t findfirstsetbit(uint64_t bits) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+#if defined(HAVE___BUILTIN_FFS) && defined(HAVE___BUILTIN_FFSL)
+// Use gcc's built-in.
+inline uint8_t findfirstsetbit(uint32_t bits) noexcept
+{
+	return __builtin_ffs(bits);
+}
+inline uint8_t findfirstsetbit(uint64_t bits) noexcept
+{
+	return __builtin_ffsl(bits);
+}
+#else
+#error "generic findfirstsetbit() not yet implemented."
+#endif
 
 #endif /* SRC_LIBEXT_INTEGER_HPP_ */

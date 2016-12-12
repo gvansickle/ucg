@@ -24,7 +24,7 @@
 
 #include "FileScanner.h"
 
-#ifdef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 #endif
@@ -40,7 +40,19 @@ public:
 			bool pattern_is_literal);
 	virtual ~FileScannerPCRE2();
 
+	/**
+	 * Returns the version string of the PCRE2 library.
+	 * @return
+	 */
+	static std::string GetPCRE2Version() noexcept;
+
 private:
+
+	/**
+	 * Perform post-compilation/pre-scan analysis of the regular expression to determine if there are
+	 * any additional ways we can assist the PCRE2 engine.
+	 */
+	void AnalyzeRegex(const std::string &regex_passed_in) noexcept;
 
 	/**
 	 * Scan @a file_data for matches of m_pcre2_regex using libpcre2.  Add hits to @a ml.
@@ -53,12 +65,14 @@ private:
 
 	std::string PCRE2ErrorCodeToErrorString(int errorcode);
 
-#ifdef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2
 	/// The compiled libpcre2 regex.
 	/// @todo Make this a unique_ptr<>, RAII-ify it.
 	//std::unique_ptr<pcre2_code, void(*)(pcre2_code*)> m_pcre2_regex;
 	pcre2_code *m_pcre2_regex;
 #endif
+
+	bool m_use_find_first_of {false};
 };
 
 #endif /* SRC_FILESCANNERPCRE2_H_ */

@@ -30,6 +30,9 @@ MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE) $(BENCHMARKSCRIPTS)
 ### Only built during a "make check", and not installed.
 ###
 check_PROGRAMS = dummy-file-gen portable_time
+if HAVE_GOOGLETEST
+check_PROGRAMS += unittests
+endif
 dummy_file_gen_SOURCES = dummy-file-gen.cpp lorem_ipsum.hpp
 dummy_file_gen_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
 dummy_file_gen_CFLAGS = $(AM_CFLAGS)
@@ -46,6 +49,16 @@ portable_time_CXXFLAGS = $(AM_CXXFLAGS)
 portable_time_LDFLAGS = $(AM_LDFLAGS)
 
 ###
+### Unit test main program.
+###
+unittests_SOURCES = unittests.cpp
+unittests_CPPFLAGS = -I $(top_srcdir)/third_party/googletest/include $(AM_CPPFLAGS)
+unittests_CXXFLAGS = -msse4.2 $(AM_CXXFLAGS)
+unittests_LDFLAGS = $(AM_LDFLAGS)
+unittests_LDADD = ../third_party/libgtest_all.la
+
+
+###
 ### Benchmark scripts.  These are maintainer-built source.
 ###
 BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
@@ -55,7 +68,9 @@ BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
 	$(srcdir)/TC5.sh \
 	$(srcdir)/TC6.sh \
 	$(srcdir)/TC7.sh \
-	$(srcdir)/TC8.sh
+	$(srcdir)/TC8.sh \
+	$(srcdir)/TC9.sh \
+	$(srcdir)/TC10.sh
 
      
 # This line appears in the Autoconf/Autotest manual, but see configure.ac.

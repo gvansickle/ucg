@@ -62,7 +62,7 @@ libsrc_la_LIBADD =
 # of these files.
 # We essentially do two things:
 #
-# 1. Create a new make variable, CXXFLAGS_MULTIVERSION, which is equal to the user's CXXFLAGS, but with
+# 1. Create a set of new make variables, e.g. CXXFLAGS_MULTIVERSION etc., which are equal to the user's CXXFLAGS, but with
 #    any options which would change the ISA and/or extensions required for these functions filtered out.
 # 2. Build the source file for a given ISA+extension set by invoking $(MAKE) on this same Makefile,
 #    but passing CXXFLAGS_MULTIVERSION for CXXFLAGS.

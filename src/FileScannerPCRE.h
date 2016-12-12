@@ -24,7 +24,7 @@
 
 #include "FileScanner.h"
 
-#ifdef HAVE_LIBPCRE
+#if HAVE_LIBPCRE
 #include <pcre.h>
 #endif
 
@@ -42,6 +42,7 @@ public:
 			bool pattern_is_literal);
 	virtual ~FileScannerPCRE();
 
+
 private:
 
 	/**
@@ -53,7 +54,7 @@ private:
 	 */
 	void ScanFile(const char * __restrict__ file_data, size_t file_size, MatchList &ml) override final;
 
-#ifdef HAVE_LIBPCRE
+#if HAVE_LIBPCRE
 	/// The compiled libpcre regex.
 	pcre *m_pcre_regex;
 

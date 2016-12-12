@@ -6,6 +6,7 @@
 - Major overhaul of directory tree traversal.
 
 ### Changed
+- Performance: Literal string search now bypasses libpcre2 in certain cases and uses vectorized search instead.
 
 ### Fixed
 

@@ -32,8 +32,8 @@
 
 #include <iostream>
 #include <string>
-#include <libext/string.hpp>
 #include <future/string.hpp>
+#include <libext/string.hpp>
 #include <libext/Logger.h>
 #include <thread>
 #include <mutex>
@@ -46,6 +46,7 @@
 #endif
 
 #include "ResizableArray.h"
+
 
 static std::mutex f_assign_affinity_mutex;
 
@@ -98,6 +99,7 @@ FileScanner::FileScanner(sync_queue<FileID> &in_queue,
 				m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex),
 				m_next_core(0), m_use_mmap(false), m_manually_assign_cores(false)
 {
+	LiteralMatch = resolve_LiteralMatch(this);
 }
 
 FileScanner::~FileScanner()
@@ -230,51 +232,40 @@ size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ p
 	return num_lines_since_last_match;
 }
 
-const char * FileScanner::LiteralPrescan(std::string regex, const char * __restrict__ start_of_array, const char * __restrict__ end_of_array) noexcept
+bool FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
 {
-	size_t prefix_literal_len { 0 };
-	bool at_least_one_upper = false;
-	for(auto i : regex)
+	// Search the string for any of the PCRE2 metacharacters.  This will cause some false negatives (e.g. anything with escapes
+	// will be determined to be a non-literal), but is quick and easy.
+	auto metachar_pos = regex.find_first_of("\\^$.[]()?*+{}|");
+
+	bool is_lit = (metachar_pos == std::string::npos);
+
+	return is_lit;
+}
+
+int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept
+{
+	int rc = 0;
+
+	const char* str_match = (const char*)memmem((const void*)(file_data+start_offset), file_size - start_offset,
+						(const void *)m_literal_search_string.get(), m_literal_search_string_len);
+
+	if(str_match == nullptr)
 	{
-		if(std::isalnum(i))
-		{
-			prefix_literal_len++;
-			if(std::isupper(i))
-			{
-				at_least_one_upper=true;
-			}
-		}
+		// No match.
+		rc = -1; //PCRE2_ERROR_NOMATCH;  /// @todo This will probably break non-PCRE2 builds.
+		ovector[0] = file_size;
+		ovector[1] = file_size;
+	}
+	else
+	{
+		// Found a match.
+		rc = 1;
+		ovector[0] = str_match - file_data;
+		ovector[1] = ovector[0] + m_literal_search_string_len;
 	}
 
-	if((prefix_literal_len == 0) || (!at_least_one_upper))
-	{
-		return start_of_array;
-	}
-
-	// Search for the literal prefix.
-	const char * __restrict__ possible_match_end { start_of_array+(prefix_literal_len-1) };
-	const char * __restrict__ possible_match_start { start_of_array };
-	do
-	{
-		possible_match_end = (const char*)std::memchr(possible_match_end, regex[prefix_literal_len-1], (end_of_array-possible_match_end));
-		if(possible_match_end != NULL)
-		{
-			// Check if the string matched.
-			possible_match_start = possible_match_end - (prefix_literal_len-1);
-			if(std::memcmp(possible_match_start, regex.c_str(), prefix_literal_len-1) == 0)
-			{
-				// Found the prefix string.
-				return possible_match_start;
-			}
-			else
-			{
-				possible_match_end+=1;
-			}
-		}
-	} while(possible_match_end != nullptr);
-
-	// If we drop out of the while(), we didn't find it.
-	return start_of_array;
+	return rc;
 }
 
 extern "C" void * resolve_CountLinesSinceLastMatch(void)
@@ -301,18 +292,68 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 	return retval;
 }
 
-std::tuple<const char *, size_t> FileScanner::GetEOL(const char *search_start, const char * buff_one_past_end)
+FileScanner::LiteralMatch_type FileScanner::resolve_LiteralMatch(FileScanner * obj [[maybe_unused]]) noexcept
 {
-	std::ptrdiff_t max_len = buff_one_past_end-search_start;
-	const char * p = (const char *)std::memchr(search_start, '\n', max_len);
+	FileScanner::LiteralMatch_type retval;
 
-	if(p == nullptr)
+	if(sys_has_sse4_2())
 	{
-		// Not found.
-		return std::make_tuple(buff_one_past_end, max_len);
+		retval = &FileScanner::LiteralMatch_sse4_2;
 	}
 	else
 	{
-		return std::make_tuple(p, p-search_start);
+		retval = &FileScanner::LiteralMatch_default;
 	}
+
+	return retval;
 }
+
+bool FileScanner::ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept
+{
+	uint16_t out_index = 0;
+	for(uint16_t i=0; i<256; ++i)
+	{
+		if((pcre2_bitmap[i/8] & (0x01 << (i%8))) == 0)
+		{
+			// This bit isn't set, skip to the next one.
+			continue;
+		}
+		else
+		{
+			/// @todo This depends on little-endianness.
+			m_compiled_cu_bitmap[out_index] = i;
+			out_index++;
+		}
+	}
+	m_end_index = out_index;
+	return true;
+}
+
+
+const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) const noexcept
+{
+	const char *first_possible_cu = nullptr;
+	if(m_end_index > 1)
+	{
+#if 0
+		first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_end_index);
+#else
+		first_possible_cu = find_first_of_sse4_2_popcnt(cbegin, len);
+#endif
+	}
+	else if(m_end_index == 1)
+	{
+#if 0
+		first_possible_cu = std::find(cbegin, cbegin+len, m_compiled_cu_bitmap[0]);
+		/// @note Tried memchr() here, no real difference.
+#else
+		first_possible_cu = find_sse4_2_popcnt(cbegin, len);
+#endif
+	}
+	else
+	{
+		first_possible_cu = cbegin+len;
+	}
+	return first_possible_cu;
+}
+

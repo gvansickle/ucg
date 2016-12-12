@@ -23,11 +23,11 @@
 
 #include <iostream>
 #include <future/string.hpp>
-#include <libext/Logger.h>
+#include <libext/string.hpp>
 #include <cstring>
 
 
-#ifdef HAVE_LIBPCRE
+#if HAVE_LIBPCRE
 
 /// Old enough libpcre's don't have this define.
 #ifndef PCRE_NEVER_UTF
@@ -75,7 +75,7 @@ FileScannerPCRE::FileScannerPCRE(sync_queue<FileID> &in_queue,
 		bool word_regexp,
 		bool pattern_is_literal) : FileScanner(in_queue, output_queue, regex, ignore_case, word_regexp, pattern_is_literal)
 {
-#ifdef HAVE_LIBPCRE
+#if HAVE_LIBPCRE
 	// Compile the regex.
 	const char *error;
 	int error_offset;
@@ -129,7 +129,7 @@ FileScannerPCRE::FileScannerPCRE(sync_queue<FileID> &in_queue,
 
 FileScannerPCRE::~FileScannerPCRE()
 {
-#ifdef HAVE_LIBPCRE
+#if HAVE_LIBPCRE
 	pcre_free_study(m_pcre_extra);
 	pcre_free(m_pcre_regex);
 #endif
@@ -137,7 +137,7 @@ FileScannerPCRE::~FileScannerPCRE()
 
 void FileScannerPCRE::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
-#if !defined(HAVE_LIBPCRE)
+#if HAVE_LIBPCRE == 0
 	(void)file_data;
 	(void)file_size;
 	(void)ml;

@@ -158,7 +158,8 @@ AC_SUBST([LIBTOOL_DEPS])
 # Output a libtool script so we can run the rest of the compile checks with it.
 LT_OUTPUT
 
-PKG_PROG_PKG_CONFIG([0.20.0])
+# Require pkg-config >= 0.24, which was the first to AC_SUBST() its output vars.
+PKG_PROG_PKG_CONFIG([0.24.0])
 AC_PROG_SED
 # Find the sed option which turns on Extended Regular Expressions.
 AC_CACHE_CHECK([for $SED option that supports extended regexes], [ac_cv_path_ESED],
@@ -262,6 +263,9 @@ AM_MISSING_PROG([MAINTPYTHON], [$PYTHON])
 # Autotest needs autom4te, or 'missing's stub for it post-distribution.
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
+# Google Test
+AM_CONDITIONAL([HAVE_GOOGLETEST], [test -d ${top_srcdir}/third_party/googletest])
+
 # Add Valgrind support.
 # @todo Note that this expands to GNU-make-only constructs, which fails on the BSDs.
 #AX_VALGRIND_DFLT([memcheck], [off])
@@ -294,7 +298,7 @@ AS_BOX([Checking for libraries...])
 # We use libpcre or libpcre2 for regex matching.  As of this writing there are no C++11 implementations
 # of <regex> in wide circulation (gcc 5.2, clang 3.7) which are robust enough (gcc SIGSEGVs on simple regexs)
 # or even exist (clang has no Linux <regex> support) for production use.
-AC_SUBST([HAVE_LIBPCRE2], [no])
+AC_SUBST([HAVE_LIBPCRE], [no])
 AC_SUBST([HAVE_LIBPCRE2], [no])
 PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
 	[# Found it.  Remember to add $PCRE2_LIBS, $PCRE2_CFLAGS, and $PCRE2_CPPFLAGS to the appropriate automake vars.
@@ -302,7 +306,6 @@ PKG_CHECK_MODULES([PCRE2], [libpcre2-8 >= 10.20],
 	AC_DEFINE([HAVE_LIBPCRE2], [1], [Define if libpcre2 is available.])
 	],
 	[
-AC_SUBST([HAVE_LIBPCRE2], [no])
 PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 	[# Found it.  Remember to add $PCRE_LIBS, $PCRE_CFLAGS, and $PCRE_CPPFLAGS to the appropriate automake vars.
 	AC_SUBST([HAVE_LIBPCRE], [yes])
@@ -422,6 +425,9 @@ AX_GCC_BUILTIN(__builtin_popcount)
 AX_GCC_BUILTIN(__builtin_bswap32)
 AX_GCC_BUILTIN(__builtin_bswap64)
 AX_GCC_BUILTIN(__builtin_ctzll)
+AX_GCC_BUILTIN(__builtin_ffs) # 32-bit.
+AX_GCC_BUILTIN(__builtin_ffsl) # 64-bit.
+
 
 ## The checks below for C++ feature-test macros are mainly for diagnostic purposes.  The way they're defined
 ## <https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations> makes them mostly
@@ -686,7 +692,7 @@ $(echo | $CXXCPP -v -x c++ - 2>&1 | $SED -n '/^ *#include/,/^ *End of/ p' | $SED
 
 
 # Make sure we found at least one of the PCRE libs.
-AS_IF([test "x$HAVE_LIBPCRE" = x -a "x$HAVE_LIBPCRE2" = x],
+AS_IF([test "x$HAVE_LIBPCRE" = "xno" && test "x$HAVE_LIBPCRE2" = "xno"],
 	[AC_MSG_ERROR([unable to find a suitable pcre library.])],
 	[AC_MSG_NOTICE([found at least one usable pcre library.])])
 

@@ -39,12 +39,11 @@
 #include <system_error>
 
 #include <argp.h>
-#ifdef HAVE_LIBPCRE
+#if HAVE_LIBPCRE == 1
 #include <pcre.h>
 #endif
-#ifdef HAVE_LIBPCRE2
-#define PCRE2_CODE_UNIT_WIDTH 8
-#include <pcre2.h>
+#if HAVE_LIBPCRE2 == 1
+#include <FileScannerPCRE2.h>
 #endif
 #include <cstdlib>
 #include <cstring>
@@ -99,7 +98,7 @@ const char *argp_program_version = PACKAGE_STRING "\n"
 const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 
 /**
- * The pre- and post-opion help text.
+ * The pre- and post-option help text.
  */
 static const char doc[] = "\nucg: the UniversalCodeGrep code search tool."
 		"\vExit status is 0 if any matches were found, 1 if no matches, 2 or greater on error.";
@@ -517,7 +516,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 	// Compiler info
 	//
 	std::fprintf(stream, "\nCompiler info:\n");
-	std::fprintf(stream, " Name ($(CXX)): %s\n", g_cxx);
+	std::fprintf(stream, " Name ($(CXX)): \"%s\"\n", g_cxx);
 	std::fprintf(stream, " Version string: \"%s\"\n", g_cxx_version_str);
 
 	//
@@ -532,7 +531,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 	//
 	{
 		std::fprintf(stream, "\nlibpcre info:\n");
-#ifndef HAVE_LIBPCRE
+#if HAVE_LIBPCRE == 0
 		std::fprintf(stream, " Not linked against libpcre.\n");
 #else
 		std::fprintf(stream, " Version: %s\n", pcre_version());
@@ -574,12 +573,11 @@ void ArgParse::PrintVersionText(FILE* stream)
 	//
 	{
 		std::fprintf(stream, "\nlibpcre2-8 info:\n");
-#ifndef HAVE_LIBPCRE2
+#if HAVE_LIBPCRE2 == 0
 		std::fprintf(stream, " Not linked against libpcre2-8.\n");
 #else
-		char buffer[13];
-		pcre2_config(PCRE2_CONFIG_VERSION, buffer);
-		std::fprintf(stream, " Version: %s\n", buffer);
+		std::fprintf(stream, " Version: %s\n", FileScannerPCRE2::GetPCRE2Version().c_str());
+
 		std::string s;
 		uint32_t is_jit;
 		s = "no";
@@ -932,7 +930,7 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 				//   ./ucg: option '--i' is ambiguous; possibilities: '--ignore-case' '--ignore' '--include' '--ignore-file' '--ignore-directory' '--ignore-dir'
 				//   Try `ucg --help' or `ucg --usage' for more information.
 				std::string possibilities = "'--" + join(type_name_list, "' '--") + "'";
-				throw ArgParseException("option '--" + argtxt + "' is ambiguous; possibilities: " + possibilities);
+				throw ArgParseException(std::string("option '--") + argtxt + "' is ambiguous; possibilities: " + possibilities);
 			}
 
 			// Is this a type specification of the form '--noTYPE'?
