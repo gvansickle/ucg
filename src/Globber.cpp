@@ -25,7 +25,6 @@
 #include <libext/DirTree.h>
 
 
-#include "Logger.h"
 #include <iomanip>
 #include "TypeManager.h"
 #include "DirInclusionManager.h"
@@ -33,6 +32,7 @@
 #include <fts.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <libext/Logger.h>
 #include <unistd.h>
 #include <cstring>
 #include <iostream>

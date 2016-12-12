@@ -23,8 +23,8 @@
  * @todo Redirecting to streams/files, timestamp, maybe sorting by timestamp, more log severity levels: trace, debug, info, warning, error, fatal.
  */
 
-#ifndef SRC_LOGGER_H_
-#define SRC_LOGGER_H_
+#ifndef SRC_LIBEXT_LOGGER_H_
+#define SRC_LIBEXT_LOGGER_H_
 
 #include <config.h>
 
@@ -86,7 +86,7 @@ public:
 		set_thread_name(m_program_invocation_short_name);
 	}
 
-	/// Helper function for converting a C errno into
+	/// Helper function for converting a C errno into a human-readable string.
 	static std::string strerror(int c_errno = errno) noexcept
 	{
 		// Convert the errno to a string and return it.
@@ -110,11 +110,16 @@ private:
 	static std::mutex m_cerr_mutex;
 };
 
-
+/**
+ * A Logger which can be enabled or disabled.
+ */
 template <typename T>
 class EnableableLogger : public Logger
 {
 public:
+	/// Primary constructor.
+	/// @param reporting_name  This is something like "INFO" or "DEBUG", indicating the severity level.  It gets set
+	///                        automatically in the INFO, DEBUG, etc. subclasses below.
 	EnableableLogger(const char *reporting_name) { m_tempstream << reporting_name << ": " << get_thread_name() << ": "; };
 	~EnableableLogger() noexcept override  = default;
 
@@ -180,14 +185,16 @@ public:
 
 /// @name Macros for logging messages which are not intended for end-user consumption.
 ///@{
-#define LOG(logger) unlikely(logger::IsEnabled()) && logger().m_tempstream
+#define LOG(logger) unlikely(logger::IsEnabled()) && logger().m_tempstream << __PRETTYFUNC__ << ": "
 ///@}
 
 /// @name Macros for output intended for the end user.
 ///@{
-#define NOTICE() LOG(STDERR)
-#define WARN()   LOG(STDERR) << "warning: "
-#define ERROR()  LOG(STDERR) << "error: "
+/// @note CERR() doesn't capture the function name, unlike LOG().
+#define CERR(logger) logger::IsEnabled() && logger().m_tempstream
+#define NOTICE() CERR(STDERR)
+#define WARN()   CERR(STDERR) << "warning: "
+#define ERROR()  CERR(STDERR) << "error: "
 ///@}
 
-#endif /* SRC_LOGGER_H_ */
+#endif /* SRC_LIBEXT_LOGGER_H_ */

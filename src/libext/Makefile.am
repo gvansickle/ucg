@@ -23,6 +23,8 @@ libext_la_SOURCES = \
 	filesystem.hpp \
 	hints.hpp \
 	integer.hpp \
+	Logger.h Logger.cpp \
+	microstring.hpp \
 	memory.hpp \
 	multiversioning.hpp multiversioning.cpp \
 	static_diagnostics.hpp \

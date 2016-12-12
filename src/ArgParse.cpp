@@ -62,7 +62,7 @@
 
 #include "TypeManager.h"
 #include "File.h"
-#include "Logger.h"
+#include <libext/Logger.h>
 
 // The sweet spot for the number of directory tree traversal threads seems to be 2 on Linux, independent of the
 // number of scanner threads.  Cygwin does better with 3 or 4 here (and more dirjobs with more scanner threads) since it

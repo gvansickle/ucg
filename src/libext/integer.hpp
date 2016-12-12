@@ -49,12 +49,21 @@ template <unsigned char NumBits>
 struct uint_t
 {
 	static_assert(NumBits <= 128, "NumBits > 128 not supported");
-	using fast = typename uint_t<NumBits+1>::fast;
+
+	/// @name Member Types
+	/// @{
+	using type = typename uint_t<NumBits+1>::type;
+	/// @}
+
+	// The number of bits this type can hold (ala std::bitset).
+	static constexpr auto size =  NumBits;
 };
-template<> struct uint_t<128> { using fast = unsigned __int128; };
-//template<> struct uint_t<128> { using fast = __m128i; }; ///< @todo Use something like this for platforms without a builtin 128-bit type.
-template<> struct uint_t<64> { using fast = uint_fast64_t; };
-template<> struct uint_t<32> { using fast = uint_fast32_t; };
+template<> struct uint_t<128> { using type = unsigned __int128; };
+//template<> struct uint_t<128> { using type = __m128i; }; ///< @todo Use something like this for platforms without a builtin 128-bit type.
+template<> struct uint_t<64> { using type = uint64_t; };
+template<> struct uint_t<32> { using type = uint32_t; };
+template<> struct uint_t<16> { using type = uint16_t; };
+template<> struct uint_t<8> { using type = uint8_t; };
 
 /**
  * Recursive template for creating a signed integral type with at least #NumBits bits.
