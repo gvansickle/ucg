@@ -25,9 +25,10 @@
 #include <sstream>
 #include <future/string.hpp>
 
-MatchList::MatchList(const std::string &filename) : m_filename(filename)
-{
 
+void MatchList::SetFilename(std::string filename)
+{
+	m_filename = filename;
 }
 
 void MatchList::AddMatch(Match &&match)
@@ -35,6 +36,11 @@ void MatchList::AddMatch(Match &&match)
 	m_match_list.push_back(std::move(match));
 }
 
+void MatchList::clear() noexcept
+{
+	m_filename.clear();
+	m_match_list.clear();
+}
 
 void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 {
