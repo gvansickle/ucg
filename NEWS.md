@@ -3,6 +3,7 @@
 ## [UNRELEASED]
 
 ### New Features
+- Added '--[no]follow' option.  Default is now to not follow symlinks.
 
 ### Changed
 - Performance: Literal string search now bypasses libpcre2 in certain cases and uses vectorized search instead.
@@ -28,7 +29,7 @@ UniversalCodeGrep (ucg) 0.3.1 is a minor feature and bugfix release.
 - Builds on Mac OS X in three configurations:
   - No special `configure` options
   - With `clang` plus the GNU `libstdc++`
-  - With `clang` plus its own `libc++` 
+  - With `clang` plus its own `libc++`
 
 ## [0.3.0] - 2016-10-23
 
@@ -44,7 +45,7 @@ Major feature/bugfix release of UniversalCodeGrep (ucg).
 - Files and directories specified on the command line (including hidden files) are now scanned regardless of ignore settings, and in the case of files, whether they are recognized as text files.
 - `--TYPE`- and `--noTYPE`-style options now support unique-prefix matching.  E.g., `--py`, `--pyth`, and `--python` all select the Python file type.
 - New file type filter: `glob`.  E.g. '--type-set=mk:glob:?akefile*'.
-- OS X and some *BSDs now supported.  Builds and runs on Xcode 6.1/OS X 10.9 through Xcode 8gm/OS X 10.11. 
+- OS X and some *BSDs now supported.  Builds and runs on Xcode 6.1/OS X 10.9 through Xcode 8gm/OS X 10.11.
 - Now compiles and links with either or both of libpcre and libpcre2, if available.  Defaults to using libpcre2 for matching.
 - Directory tree traversal now uses more than one thread (two by default).  Can be overridden with new "--dirjobs" command-line parameter.  Overall performance improvement on all platforms vs. 0.2.2 (e.g., ~25% on Fedora 23 with hot cache).
 - New portable function multiversioning infrastructure.  Currently used by the following features:
@@ -52,11 +53,11 @@ Major feature/bugfix release of UniversalCodeGrep (ucg).
 - Added ".awk" as a builtin file type.
 
 ### Changed
-- Improved error reporting when directory traversal runs into problems.  
+- Improved error reporting when directory traversal runs into problems.
 - A number of portability improvements related to OSX and PC-BSD support.
 - Reduce unnecessary mutex contention, spurious thread wakes in sync_queue<>.
 - Scanner threads now use a reusable buffer when reading in files, reducing memory allocations by ~10% (and ~40% fewer bytes allocated) compared to version 0.2.2.
-- Refactored FileScanner to be a base class with derived classes handling the particulars of using libpcre or libpcre2 to do the scanning. 
+- Refactored FileScanner to be a base class with derived classes handling the particulars of using libpcre or libpcre2 to do the scanning.
 - Added a basic diagnostic/debug logging facility.
 - ResizableArray now takes an alignment parameter.  File buffer allocations are now done on max(ST_BLKSIZE,128k)-byte boundaries.
 - Testing/Benchmarking infrastructure expansion and improvements.
@@ -74,7 +75,7 @@ Major feature/bugfix release of UniversalCodeGrep (ucg).
 Minor feature/bugfix release of UniversalCodeGrep (ucg).
 
 ### New Features
-- Added --[no]smart-case option, which is on by default.  With this feature enabled, matching is done case-insensitively if the given PATTERN is all lower-case. 
+- Added --[no]smart-case option, which is on by default.  With this feature enabled, matching is done case-insensitively if the given PATTERN is all lower-case.
 - Added --[no]column option which prints the column number of a match after the line number.  Default is --nocolumn.  Note that tabs count as only one column, consistent with the behavior of ack and ag.
 - Added -k/--known-types option for compatibility with ack.
 
