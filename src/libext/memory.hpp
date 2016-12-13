@@ -116,7 +116,7 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 	assume(pattlen <= 16);
 
 	// Load the pattern.
-	const __m128i xmm_patt = _mm_loadu_si128((const __m128i *)pattern);
+	const __m128i xmm_patt = _mm_lddqu_si128((const __m128i *)pattern);
 
 	while(p1 < (char*)mem_to_search+(memlen&vec_size_mask))
 	{
@@ -169,7 +169,7 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 
 	if(p1 < (const char*)mem_to_search+memlen)
 	{
-		auto remaining_len = memlen & 0x0F;
+		auto remaining_len = p1-(const char *)mem_to_search;
 
 		if(remaining_len)
 		{
