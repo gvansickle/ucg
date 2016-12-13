@@ -28,6 +28,7 @@
 
 #include "hints.hpp"
 #include "integer.hpp"
+#include "multiversioning.hpp"
 
 #include "immintrin.h"
 
@@ -91,14 +92,16 @@ inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed
 
 #if defined(__SSE4_2__)
 
-template <uint8_t VecSizeBytes>
-inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept ATTR_CONST ATTR_ARTIFICIAL;
-template <uint8_t VecSizeBytes>
-inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept
-{
-	static_assert(VecSizeBytes == 16, "Only 128-bit vectorization supported");
+//template <typename BaseISA, BaseISA ISAExtensions>
+//inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 
-	constexpr auto vec_size_mask = ~static_cast<decltype(memlen)>(VecSizeBytes-1);
+MULTIVERSION_DEF(ISA_x86_64::SSE4_2, const void*)
+inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept
+{
+	static_assert(ISAIsSubsetOf(ISAExtensions, ISA_x86_64::SSE4_2), "Only SSE4.2 vectorization currently supported");
+
+	constexpr auto vec_size_bytes = 16;
+	constexpr auto vec_size_mask = ~static_cast<decltype(memlen)>(vec_size_bytes-1);
 
 	const char* p1 = (const char *) mem_to_search;
 	__m128i frag1;
@@ -113,12 +116,12 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 	assume(pattlen <= 16);
 
 	// Load the pattern.
-	const __m128i xmm_patt = _mm_loadu_si128((const __m128i *)pattern);
+	const __m128i xmm_patt = _mm_lddqu_si128((const __m128i *)pattern);
 
 	while(p1 < (char*)mem_to_search+(memlen&vec_size_mask))
 	{
 		// Find the start of a match.
-		for(; p1 < (char*)mem_to_search+(memlen&vec_size_mask); p1+=VecSizeBytes)
+		for(; p1 < (char*)mem_to_search+(memlen&vec_size_mask); p1+=vec_size_bytes)
 		{
 			// Load 16 bytes from mem_to_search.
 			frag1 = _mm_lddqu_si128((const __m128i*)p1);
@@ -166,7 +169,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 
 	if(p1 < (const char*)mem_to_search+memlen)
 	{
-		auto remaining_len = memlen & 0x0F;
+		auto remaining_len = p1-(const char *)mem_to_search;
 
 		if(remaining_len)
 		{
