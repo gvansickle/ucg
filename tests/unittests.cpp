@@ -60,12 +60,12 @@ TEST_F(OptimizationsTest, memmem_short_pattern_works) {
 
 #define M_STRCLEN(str) (str), strlen(str)
 
-  const char* retval = (const char*)memmem_short_pattern<16>("abcde", 5, "cd", 2);
+  const char* retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)("abcde", 5, "cd", 2);
   std::string rs(retval, 2);
 
   EXPECT_EQ("cd", rs);
 
-  retval = (const char*)memmem_short_pattern<16>(M_STRCLEN("abcdefghijklmnopqrstuvwxyz"), "cd", 2);
+  retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(M_STRCLEN("abcdefghijklmnopqrstuvwxyz"), "cd", 2);
   rs = std::string(retval, 2);
 
   EXPECT_EQ("cd", rs);
@@ -75,7 +75,7 @@ TEST_F(OptimizationsTest, memmem_short_pattern_vs_32_bytes)
 {
   std::string str = "0123456789ABCDEFfedcba9876543210";
   std::string rs = "10";
-  std::string matchstr {(const char*)memmem_short_pattern<16>(str.c_str(), 32, rs.c_str(), 2), rs.length()};
+  std::string matchstr {(const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(str.c_str(), 32, rs.c_str(), 2), rs.length()};
   EXPECT_EQ(rs, matchstr);
 }
 
@@ -83,7 +83,7 @@ TEST_F(OptimizationsTest, memmem_short_pattern_vs_38_bytes)
 {
   std::string str = "0123456789ABCDEFfedcba9876543210qwerty";
   std::string rs = "0qw";
-  std::string matchstr {(const char*)memmem_short_pattern<16>(str.c_str(), str.length(), rs.c_str(), rs.length()), rs.length()};
+  std::string matchstr {(const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(str.c_str(), str.length(), rs.c_str(), rs.length()), rs.length()};
   EXPECT_EQ(rs, matchstr);
 }
 
