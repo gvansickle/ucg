@@ -46,6 +46,13 @@
 #define TRAVERSE_ONLY 0
 #define USE_DIRTREE 0
 
+#ifndef FTS_DEFER_STAT
+#define FTS_DEFER_STAT 0
+#endif
+#ifndef FTS_NOATIME
+#define FTS_NOATIME 0
+#endif
+
 std::string ftsent_name(FTSENT*p)
 {
 	if(p != nullptr)
@@ -128,6 +135,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
 		DirInclusionManager &dir_inc_manager,
 		bool recurse_subdirs,
+		bool follow_symlinks,
 		int dirjobs,
 		sync_queue<FileID>& out_queue)
 		: m_start_paths(start_paths),
@@ -135,6 +143,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 		  m_type_manager(type_manager),
 		  m_dir_inc_manager(dir_inc_manager),
 		  m_recurse_subdirs(recurse_subdirs),
+		  m_follow_symlinks(follow_symlinks),
 		  m_dirjobs(dirjobs),
 		  m_out_queue(out_queue)
 {
@@ -229,11 +238,11 @@ void Globber::RunSubdirScan(sync_queue<std::string> &dir_queue, int thread_index
 		/// check for these and use them if they exist.  Note the following though regarding O_NOATIME from the GNU libc
 		/// docs <https://www.gnu.org/software/libc/manual/html_node/Operating-Modes.html#Operating-Modes>:
 		/// "Only the owner of the file or the superuser may use this bit. This is a GNU extension."
-		int fts_options = FTS_LOGICAL /*| FTS_NOSTAT*/;
+		int fts_options = m_follow_symlinks ? FTS_LOGICAL : FTS_PHYSICAL;
 #if defined(FTS_CWDFD)
-		fts_options |= FTS_CWDFD | FTS_TIGHT_CYCLE_CHECK | FTS_DEFER_STAT | FTS_NOATIME;
+		fts_options |= FTS_CWDFD | FTS_TIGHT_CYCLE_CHECK ;
 #else
-		fts_options |= FTS_NOCHDIR;
+		fts_options |= FTS_NOCHDIR | FTS_DEFER_STAT | FTS_NOATIME;
 #endif
 		FTS *fts = fts_open(dirs, fts_options, NULL);
 		if(fts == nullptr)
