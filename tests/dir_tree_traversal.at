@@ -56,7 +56,7 @@ AT_SETUP([Tree with cross-linked symlinks, single-threaded])
 UCG_CREATE_CROSSLINKED_DIR
 
 # Single-threaded.
-AT_CHECK([ucg --noenv --dirjobs=1 'line'], [0], [stdout], [stderr])
+AT_CHECK([ucg --noenv --follow --dirjobs=1 'line'], [0], [stdout], [stderr])
 
 # Check the results.
 # Results now match ack and ag here, and also the multithreaded case, in that we get 6 matches, not the 12
@@ -78,7 +78,7 @@ AT_SETUP([Tree with cross-linked symlinks, multithreaded])
 UCG_CREATE_CROSSLINKED_DIR
 
 # Multi-threaded.
-AT_CHECK([ucg --noenv --dirjobs=2 'line'], [0], [stdout], [stderr])
+AT_CHECK([ucg --noenv --follow --dirjobs=2 'line'], [0], [stdout], [stderr])
 
 # Check the results.
 AT_CHECK([cat stdout | LCT], [0], [6])

@@ -51,6 +51,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
 		DirInclusionManager &dir_inc_manager,
 		bool recurse_subdirs,
+		bool follow_symlinks,
 		int dirjobs,
 		sync_queue<FileID>& out_queue)
 		: m_start_paths(start_paths),
@@ -58,6 +59,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 		  m_type_manager(type_manager),
 		  m_dir_inc_manager(dir_inc_manager),
 		  m_recurse_subdirs(recurse_subdirs),
+		  m_follow_symlinks(follow_symlinks),
 		  m_dirjobs(dirjobs),
 		  m_out_queue(out_queue)
 {

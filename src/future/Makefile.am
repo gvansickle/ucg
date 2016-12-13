@@ -28,6 +28,7 @@ libfuture_la_SOURCES = \
 	string.hpp \
 	string_view.hpp \
 	type_traits.hpp
+	type_traits.hpp
 
 libfuture_la_CPPFLAGS = -I$(top_srcdir)/src -I$(srcdir)/../libext $(AM_CPPFLAGS)
 libfuture_la_CFLAGS = $(AM_CFLAGS)
