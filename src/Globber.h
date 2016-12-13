@@ -100,18 +100,6 @@ private:
 #undef M_STATLIST
 };
 
-struct DirQueueEntry
-{
-	DirQueueEntry() = default;
-	DirQueueEntry(DirQueueEntry&&) = default;
-	~DirQueueEntry() = default;
-
-	DirQueueEntry& operator=(DirQueueEntry&&) = default;
-	DirQueueEntry& operator=(const DirQueueEntry&) = default;
-
-	std::string m_pathname;
-};
-
 
 /**
  * This class does the directory tree traversal.
@@ -131,9 +119,6 @@ public:
 	void Run();
 
 private:
-
-	void RunSubdirScan(sync_queue<DirQueueEntry> &dir_queue, int thread_index);
-
 
 	/// Vector of the paths which the user gave on the command line.
 	std::vector<std::string> m_start_paths;
