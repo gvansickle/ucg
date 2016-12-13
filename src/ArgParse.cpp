@@ -186,8 +186,8 @@ static struct argp_option options[] = {
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
 		{"[no]follow", OPT_BRACKET_NO_STANDIN, 0, 0, "[Do not] follow symlinks (default: nofollow)."},
-		{"follow", OPT_FOLLOW, 0, 0, ""},
-		{"nofollow", OPT_NOFOLLOW, 0, 0, ""},
+		{"follow", OPT_FOLLOW, 0, OPTION_HIDDEN, ""},
+		{"nofollow", OPT_NOFOLLOW, 0, OPTION_HIDDEN, ""},
 		{"known-types", 'k', 0, 0, "Only search in files of recognized types (default: on)."},
 		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 		{0,0,0,0, "File type specification:"},
@@ -273,6 +273,12 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		break;
 	case 'n':
 		arguments->m_recurse = false;
+		break;
+	case OPT_FOLLOW:
+		arguments->m_follow_symlinks = true;
+		break;
+	case OPT_NOFOLLOW:
+		arguments->m_follow_symlinks = false;
 		break;
 	case 'k':
 		// No argument variable because currently we only support searching known types.

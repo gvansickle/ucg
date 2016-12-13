@@ -100,6 +100,7 @@ public:
 			TypeManager &type_manager,
 			DirInclusionManager &dir_inc_manager,
 			bool recurse_subdirs,
+			bool follow_symlinks,
 			int dirjobs,
 			sync_queue<FileID> &out_queue);
 	~Globber() = default;
@@ -122,6 +123,8 @@ private:
 	DirInclusionManager &m_dir_inc_manager;
 
 	bool m_recurse_subdirs;
+
+	bool m_follow_symlinks;
 
 	int m_dirjobs;
 

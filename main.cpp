@@ -72,7 +72,8 @@ int main(int argc, char **argv)
 		sync_queue<MatchList> match_queue;
 
 		// Set up the globber.
-		Globber globber(arg_parser.m_paths, type_manager, dir_inclusion_manager, arg_parser.m_recurse, arg_parser.m_dirjobs, files_to_scan_queue);
+		Globber globber(arg_parser.m_paths, type_manager, dir_inclusion_manager, arg_parser.m_recurse, arg_parser.m_follow_symlinks,
+				arg_parser.m_dirjobs, files_to_scan_queue);
 
 		// Set up the output task object.
 		OutputTask output_task(arg_parser.m_color, arg_parser.m_nocolor, arg_parser.m_column, match_queue);
