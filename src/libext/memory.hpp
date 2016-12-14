@@ -169,7 +169,7 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 
 	if(p1 < (const char*)mem_to_search+memlen)
 	{
-		auto remaining_len = p1-(const char *)mem_to_search;
+		size_t remaining_len = p1-(memlen+(const char *)mem_to_search);
 
 		if(remaining_len)
 		{

@@ -19,6 +19,7 @@
 
 
 #include "../src/libext/memory.hpp"
+#include <cstring>
 #include "gtest/gtest.h"
 
 namespace {
@@ -51,6 +52,14 @@ class OptimizationsTest : public ::testing::Test {
   }
 
   // Objects declared here can be used by all tests in the test case for Foo.
+
+  const char *padstrdup(const char* s) const
+  {
+	  char * retval = (char*)overaligned_alloc(16, std::strlen(s));
+	  std::strcpy(retval, s);
+	  return retval;
+  };
+
 };
 
 // Tests that the Foo::Bar() method does Abc.
@@ -60,15 +69,22 @@ TEST_F(OptimizationsTest, memmem_short_pattern_works) {
 
 #define M_STRCLEN(str) (str), strlen(str)
 
+  const char* str;
   const char* retval;
   std::string rs;
-#if 0
-  retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)("abcde", 5, "cd", 2);
+#if 1
+  str = padstrdup("abcde");
+  retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(str, 5, "cd", 2);
+
+  EXPECT_NE(nullptr, retval);
+
   rs = std::string(retval, 2);
 
   EXPECT_EQ("cd", rs);
 #endif
   retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(M_STRCLEN("abcdefghijklmnopqrstuvwxyz"), "cd", 2);
+  EXPECT_NE(nullptr, retval);
+
   rs = std::string(retval, 2);
 
   EXPECT_EQ("cd", rs);
