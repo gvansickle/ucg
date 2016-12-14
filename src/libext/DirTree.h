@@ -111,7 +111,8 @@ public:
 
 	DirTree(sync_queue<FileID>& output_queue,
 			const file_basename_filter_type &file_basename_filter,
-			const dir_basename_filter_type &dir_basename_filter);
+			const dir_basename_filter_type &dir_basename_filter,
+			bool follow_symlinks);
 	~DirTree();
 
 	void Scandir(std::vector<std::string> start_paths, int dirjobs);
@@ -119,7 +120,7 @@ public:
 private:
 
 	/// Flag indicating whether we should traverse symlinks or not.
-	bool m_logical {true};
+	bool m_follow_symlinks { false };
 
 	int m_dirjobs {2};
 

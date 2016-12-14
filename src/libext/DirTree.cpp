@@ -43,8 +43,10 @@ constexpr auto M_INITIAL_NUM_DIR_ESTIMATE = 10000;
 
 DirTree::DirTree(sync_queue<FileID>& output_queue,
 		const file_basename_filter_type &file_basename_filter,
-		const dir_basename_filter_type &dir_basename_filter)
-	: m_out_queue(output_queue), m_file_basename_filter(file_basename_filter), m_dir_basename_filter(dir_basename_filter)
+		const dir_basename_filter_type &dir_basename_filter,
+		bool follow_symlinks)
+	: m_out_queue(output_queue), m_file_basename_filter(file_basename_filter), m_dir_basename_filter(dir_basename_filter),
+	  m_follow_symlinks(follow_symlinks)
 {
 	m_dir_has_been_visited.reserve(M_INITIAL_NUM_DIR_ESTIMATE);
 }
@@ -225,7 +227,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 
 	struct stat *statbuff_ptr = nullptr;
 
-	if((is_unknown) || (m_logical && is_symlink))
+	if((is_unknown) || (m_follow_symlinks && is_symlink))
 	{
 		// We now have one of two situations:
 		// - The dirent didn't know what the type of the file was, or
@@ -237,7 +239,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 		stats.m_num_filetype_stats++;
 
 		// Stat the filename using the directory as the at-descriptor.
-		dse->FStatAt(dname, &statbuf, AT_NO_AUTOMOUNT | (!m_logical ? AT_SYMLINK_NOFOLLOW : 0));
+		dse->FStatAt(dname, &statbuf, AT_NO_AUTOMOUNT | (!m_follow_symlinks ? AT_SYMLINK_NOFOLLOW : 0));
 
 		is_dir = S_ISDIR(statbuf.st_mode);
 		is_file = S_ISREG(statbuf.st_mode);
@@ -321,7 +323,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 			}
 			dir_atfd.SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
 
-			if(m_logical)
+			if(m_follow_symlinks)
 			{
 				// We have to detect any symlink cycles ourselves.
 				if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier()))
@@ -337,7 +339,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 		}
 		else if(is_symlink)
 		{
-			if(m_logical)
+			if(m_follow_symlinks)
 			{
 				// Logical traversal, should never get here.
 				ERROR() << "found unresolved symlink during logical traversal";

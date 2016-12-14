@@ -71,7 +71,7 @@ void Globber::Run()
 	auto file_basename_filter = [this](const DirTree::filter_string_type &basename) noexcept { return m_type_manager.FileShouldBeScanned(basename); };
 	auto dir_basename_filter = [this](const std::string &basename) noexcept { return m_dir_inc_manager.DirShouldBeExcluded(basename); };
 
-	DirTree dt(m_out_queue, file_basename_filter, dir_basename_filter);
+	DirTree dt(m_out_queue, file_basename_filter, dir_basename_filter, m_follow_symlinks);
 
 	dt.Scandir(m_start_paths, m_dirjobs);
 
