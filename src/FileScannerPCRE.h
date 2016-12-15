@@ -34,7 +34,7 @@
 class FileScannerPCRE: public FileScanner
 {
 public:
-	FileScannerPCRE(sync_queue<FileID> &in_queue,
+	FileScannerPCRE(sync_queue<std::shared_ptr<FileID>> &in_queue,
 			sync_queue<MatchList> &output_queue,
 			std::string regex,
 			bool ignore_case,

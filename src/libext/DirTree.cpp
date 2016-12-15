@@ -41,7 +41,7 @@
 /// m_dir_has_been_visited will resize/rehash if it needs more space.
 constexpr auto M_INITIAL_NUM_DIR_ESTIMATE = 10000;
 
-DirTree::DirTree(sync_queue<FileID>& output_queue,
+DirTree::DirTree(sync_queue<file_queue_element_type>& output_queue,
 		const file_basename_filter_type &file_basename_filter,
 		const dir_basename_filter_type &dir_basename_filter,
 		bool follow_symlinks)
@@ -83,7 +83,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		{
 			// Explicitly not filtering files specified on command line.
 			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
-			m_out_queue.wait_push(std::move(*file_or_dir));
+			m_out_queue.wait_push(file_or_dir);
 			break;
 		}
 		case FT_DIR:
@@ -285,15 +285,15 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 
 				LOG(INFO) << "... should be scanned.";
 
-				FileID file_to_scan(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG);
+				auto file_to_scan {std::make_shared<FileID>(FileID(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG))};
 				if(statbuff_ptr == nullptr)
 				{
-					file_to_scan.SetDevIno(dse->GetDev(), current_dirent->d_ino);
+					file_to_scan->SetDevIno(dse->GetDev(), current_dirent->d_ino);
 				}
-				file_to_scan.SetFileDescriptorMode(FAM_RDONLY, FCF_NOCTTY | FCF_NOATIME);
+				file_to_scan->SetFileDescriptorMode(FAM_RDONLY, FCF_NOCTTY | FCF_NOATIME);
 
 				// Queue it up.
-				m_out_queue.wait_push(std::move(file_to_scan));
+				m_out_queue.wait_push(file_to_scan);
 
 				// Count the number of files we found that were included in the search.
 				stats.m_num_files_scanned++;

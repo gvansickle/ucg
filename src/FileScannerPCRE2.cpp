@@ -93,7 +93,7 @@ static size_t pattern_num_callouts(const pcre2_code *code)
 
 #endif
 
-FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
+FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::shared_ptr<FileID>> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case,

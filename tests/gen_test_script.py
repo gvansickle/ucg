@@ -329,7 +329,7 @@ class TestGenDatabase(object):
         print(script, file=fh)
 
     def LoadDatabaseFiles(self, csv_dir=None):
-        print("sqlite3 lib version: {}".format(sqlite3.sqlite_version), file=sys.stderr)
+        #print("sqlite3 lib version: {}".format(sqlite3.sqlite_version), file=sys.stderr)
         self.read_csv_into_table(table_name="opts_defs", filename=csv_dir+'/opts_defs.csv', prim_key='opt_id')
         self.read_csv_into_table(table_name="benchmark_progs", filename=csv_dir+'/benchmark_progs.csv',
                                  foreign_key_tuples=[("opt_only_cpp", "opts_defs(opt_id)")])

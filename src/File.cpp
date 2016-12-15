@@ -36,15 +36,15 @@
 #define MAP_NORESERVE 0
 #endif
 
-File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
+File::File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
 {
-	m_fileid = std::move(file_id);
+	m_fileid = file_id;
 
 	int file_descriptor { -1 };
 
 	try
 	{
-		file_descriptor = m_fileid.GetFileDescriptor().GetFD();
+		file_descriptor = m_fileid->GetFileDescriptor().GetFD();
 
 		/// @todo Does the above ever not throw on error?
 		if(file_descriptor == -1)
@@ -70,9 +70,9 @@ File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_
 		throw;
 	}
 
-	ssize_t file_size = m_fileid.GetFileSize();
+	ssize_t file_size = m_fileid->GetFileSize();
 	LOG(INFO) << "... file size is: " << file_size;
-	LOG(INFO) << "... file type is: " << m_fileid.GetFileType();
+	LOG(INFO) << "... file type is: " << m_fileid->GetFileType();
 
 	// If filesize is 0, skip.
 	if(file_size == 0)
@@ -91,20 +91,20 @@ File::File(FileID&& file_id, std::shared_ptr<ResizableArray<char>> storage) : m_
 	// ...it seems that as of ~2014, experiments show the minimum I/O size should be >=128KB.
 	// *stat() seems to return 4096 in all my experiments so far, so we'll clamp it to a min of 128KB and a max of
 	// something not unreasonable, e.g. 1M.
-	auto io_size = clamp(m_fileid.GetBlockSize(), static_cast<blksize_t>(0x20000), static_cast<blksize_t>(0x100000));
+	auto io_size = clamp(m_fileid->GetBlockSize(), static_cast<blksize_t>(0x20000), static_cast<blksize_t>(0x100000));
 	m_file_data = GetFileData(file_descriptor, file_size, io_size);
 
 	if(m_file_data == MAP_FAILED)
 	{
 		// Mapping failed.
-		ERROR() << "Couldn't map file '" << m_fileid.GetPath() << "'";
+		ERROR() << "Couldn't map file '" << m_fileid->GetPath() << "'";
 		throw FileException("mmapping file failed", errno);
 	}
 }
 
 
 File::File(const std::string &filename, FileAccessMode fam, FileCreationFlag fcf, std::shared_ptr<ResizableArray<char>> storage)
-	: File(FileID(std::make_shared<FileID>(FileID::path_known_cwd_tag()), filename, fam, fcf), storage)
+	: File(std::make_shared<FileID>(std::make_shared<FileID>(FileID(FileID::path_known_cwd_tag())), filename, fam, fcf), storage)
 {
 #if 0 /// @todo DELETE
 	// Save the filename.
@@ -169,7 +169,7 @@ File::File(const std::string &filename, FileAccessMode fam, FileCreationFlag fcf
 File::~File()
 {
 	// Clean up.
-	FreeFileData(m_file_data, m_fileid.GetFileSize());
+	FreeFileData(m_file_data, m_fileid->GetFileSize());
 }
 
 const char* File::GetFileData(int file_descriptor, size_t file_size, size_t preferred_block_size)

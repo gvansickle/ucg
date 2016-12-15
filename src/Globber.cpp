@@ -43,9 +43,6 @@
 #include <algorithm>
 #include <libext/string.hpp>
 
-/// @todo FOR TEST, DELETE
-#define USE_DIRTREE 1
-
 
 Globber::Globber(std::vector<std::string> start_paths,
 		TypeManager &type_manager,
@@ -53,7 +50,7 @@ Globber::Globber(std::vector<std::string> start_paths,
 		bool recurse_subdirs,
 		bool follow_symlinks,
 		int dirjobs,
-		sync_queue<FileID>& out_queue)
+		sync_queue<std::shared_ptr<FileID>>& out_queue)
 		: m_start_paths(start_paths),
 		  m_num_start_paths_remaining(start_paths.size()),
 		  m_type_manager(type_manager),
