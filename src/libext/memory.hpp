@@ -135,8 +135,8 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 			/// @note The multiple _mm_cmpestr?()'s here compile down into a single pcmpestrm insruction,
 			/// and serve only to expose the processor flags to the C++ code.  This would probably be easier in
 			/// the end if I did it in actual assembly.
-			auto cf = _mm_cmpestrc(xmm_patt, pattlen, frag1, 16, imm8);
-			xmm0 = _mm_cmpestrm(xmm_patt, pattlen, frag1, 16, imm8);
+			auto cf = _mm_cmpestrc(xmm_patt, pattlen, frag1, vec_size_bytes, imm8);
+			xmm0 = _mm_cmpestrm(xmm_patt, pattlen, frag1, vec_size_bytes, imm8);
 
 			if(unlikely(cf))
 			{
@@ -169,7 +169,7 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 
 	if(p1 < (const char*)mem_to_search+memlen)
 	{
-		auto remaining_len = p1-(const char *)mem_to_search;
+		size_t remaining_len = p1-(memlen+(const char *)mem_to_search);
 
 		if(remaining_len)
 		{
