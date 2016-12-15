@@ -53,7 +53,7 @@ class OptimizationsTest : public ::testing::Test {
 
   // Objects declared here can be used by all tests in the test case for Foo.
 
-  const char *padstrdup(const char* s) const
+  char *padstrdup(const char* s) const
   {
 	  char * retval = (char*)overaligned_alloc(16, std::strlen(s));
 	  std::strcpy(retval, s);
@@ -72,7 +72,7 @@ TEST_F(OptimizationsTest, memmem_short_pattern_works) {
   const char* str;
   const char* retval;
   std::string rs;
-#if 1
+
   str = padstrdup("abcde");
   retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(str, 5, "cd", 2);
 
@@ -81,7 +81,7 @@ TEST_F(OptimizationsTest, memmem_short_pattern_works) {
   rs = std::string(retval, 2);
 
   EXPECT_EQ("cd", rs);
-#endif
+
   retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(M_STRCLEN("abcdefghijklmnopqrstuvwxyz"), "cd", 2);
   EXPECT_NE(nullptr, retval);
 
@@ -92,10 +92,30 @@ TEST_F(OptimizationsTest, memmem_short_pattern_works) {
 
 TEST_F(OptimizationsTest, memmem_short_pattern_vs_32_bytes)
 {
-  std::string str = "0123456789ABCDEFfedcba9876543210";
-  std::string rs = "10";
-  std::string matchstr {(const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(str.c_str(), 32, rs.c_str(), 2), rs.length()};
-  EXPECT_EQ(rs, matchstr);
+	const char* str;
+	const char* retval;
+	char* rs;
+	std::string matchstr;
+
+	str = padstrdup("0123456789ABCDEFfedcba9876543210");
+	rs = padstrdup("10");
+
+	retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(str, strlen(str), rs, strlen(rs));
+	EXPECT_NE(nullptr, retval);
+	matchstr.assign(retval, strlen(rs));
+	EXPECT_EQ(rs, matchstr);
+
+	std::free(rs);
+
+	// Check for a match spanning a 16-byte boundary.
+	rs = padstrdup("EFfe");
+
+	retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(str, strlen(str), rs, strlen(rs));
+	EXPECT_NE(nullptr, retval);
+	matchstr.assign(retval, strlen(rs));
+	EXPECT_EQ(rs, matchstr);
+
+	std::free(rs);
 }
 
 TEST_F(OptimizationsTest, memmem_short_pattern_vs_38_bytes)
