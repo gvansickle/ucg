@@ -98,6 +98,8 @@ private:
 #undef M_STATLIST
 };
 
+using file_queue_element_type = std::shared_ptr<FileID>;
+
 /**
  * Directory tree traversal class.
  */
@@ -109,7 +111,7 @@ public:
 	using file_basename_filter_type = std::function<bool (const filter_string_type& name) noexcept>;
 	using dir_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
 
-	DirTree(sync_queue<FileID>& output_queue,
+	DirTree(sync_queue<file_queue_element_type>& output_queue,
 			const file_basename_filter_type &file_basename_filter,
 			const dir_basename_filter_type &dir_basename_filter,
 			bool follow_symlinks);
@@ -128,7 +130,7 @@ private:
 	sync_queue<std::shared_ptr<FileID>> m_dir_queue;
 
 	/// File output queue.
-	sync_queue<FileID>& m_out_queue;
+	sync_queue<file_queue_element_type>& m_out_queue;
 
 	file_basename_filter_type m_file_basename_filter;
 	dir_basename_filter_type m_dir_basename_filter;

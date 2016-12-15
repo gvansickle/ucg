@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 		LOG(INFO) << "Num scanner jobs: " << arg_parser.m_jobs;
 
 		// Create the Globber->FileScanner queue.
-		sync_queue<FileID> files_to_scan_queue;
+		sync_queue<std::shared_ptr<FileID>> files_to_scan_queue;
 
 		// Create the FileScanner->OutputTask queue.
 		sync_queue<MatchList> match_queue;

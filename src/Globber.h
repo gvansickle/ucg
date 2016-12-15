@@ -113,7 +113,7 @@ public:
 			bool recurse_subdirs,
 			bool follow_symlinks,
 			int dirjobs,
-			sync_queue<FileID> &out_queue);
+			sync_queue<std::shared_ptr<FileID>> &out_queue);
 	~Globber() = default;
 
 	void Run();
@@ -139,7 +139,7 @@ private:
 
 	int m_dirjobs;
 
-	sync_queue<FileID>& m_out_queue;
+	sync_queue<std::shared_ptr<FileID>>& m_out_queue;
 
 	std::mutex m_dir_mutex;
 	std::set<dev_ino_pair> m_dir_has_been_visited;

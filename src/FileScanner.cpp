@@ -60,7 +60,7 @@ size_t (*FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_l
 		= reinterpret_cast<decltype(FileScanner::CountLinesSinceLastMatch)>(::resolve_CountLinesSinceLastMatch());
 
 
-std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<FileID> &in_queue,
+std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::shared_ptr<FileID>> &in_queue,
 			sync_queue<MatchList> &output_queue,
 			std::string regex,
 			bool ignore_case,
@@ -90,7 +90,7 @@ std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<FileID> &in_queue,
 	return retval;
 }
 
-FileScanner::FileScanner(sync_queue<FileID> &in_queue,
+FileScanner::FileScanner(sync_queue<std::shared_ptr<FileID>> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case,
@@ -125,15 +125,15 @@ void FileScanner::Run(int thread_index)
 	long long total_bytes_read {0};
 
 	// Pull new filenames off the input queue until it's closed.
-	FileID next_file;
-	while(m_in_queue.wait_pull(std::move(next_file)) != queue_op_status::closed)
+	std::shared_ptr<FileID> next_file;
+	while(m_in_queue.wait_pull(next_file) != queue_op_status::closed)
 	{
 		try
 		{
 			// Try to open and read the file.  This could throw.
-			LOG(INFO) << "Attempting to scan file \'" << next_file.GetPath() << "\', fd=" << next_file.GetFileDescriptor().GetFD();
+			LOG(INFO) << "Attempting to scan file \'" << next_file->GetPath() << "\', fd=" << next_file->GetFileDescriptor().GetFD();
 			//steady_clock::time_point start = steady_clock::now();
-			File f(std::move(next_file), file_data_storage);
+			File f(std::move(*next_file), file_data_storage);
 			//steady_clock::time_point end = steady_clock::now();
 			//accum_elapsed_time += (end - start);
 			auto bytes_read = f.size();
