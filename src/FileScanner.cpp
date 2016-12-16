@@ -155,7 +155,7 @@ void FileScanner::Run(int thread_index)
 
 			if(!ml.empty())
 			{
-				ml.SetFilename(next_file.GetPath());
+				ml.SetFilename(next_file->GetPath());
 				// Force move semantics here.
 				m_output_queue.wait_push(std::move(ml));
 				ml.clear();
