@@ -44,11 +44,11 @@ bin_PROGRAMS=ucg
 ucg_SOURCES=main.cpp build_info.h libtool
 nodist_ucg_SOURCES=build_info.cpp
 CLEANFILES += build_info.cpp
-ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) $(PCRE_CPPFLAGS) $(PCRE2_CPPFLAGS)
+ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) $(PCRE_CPPFLAGS) $(PCRE2_CPPFLAGS) $(JEMALLOC_CPPFLAGS)
 ucg_CFLAGS = $(AM_CFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
-ucg_CXXFLAGS = $(AM_CXXFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
+ucg_CXXFLAGS = $(AM_CXXFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS) $(JEMALLOC_CFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la $(PCRE_LIBS) $(PCRE2_LIBS)
+ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la $(PCRE_LIBS) $(PCRE2_LIBS) $(JEMALLOC_LIBS)
 
 # Collect some make-time info. 
 FORCE:
@@ -122,6 +122,15 @@ autoreconf:
 
 check-malloc:
 	export MALLOC_CHECK_=3 && $(MAKE) check
+
+.PHONY: check-vg-memcheck
+check-vg-memcheck: ./ucg$(EXEEXT)
+	valgrind --log-file=$(builddir)/vg_memcheck_log.txt --track-fds=yes --read-inline-info=yes --read-var-info=yes --show-emwarns=yes \
+		--tool=memcheck -v --track-origins=yes --leak-check=full \
+		--partial-loads-ok=no --show-leak-kinds=all --expensive-definedness-checks=yes ./ucg --cpp 'BOOST.*HPP' ~/src/boost_1_58_0/
+
+check-vg-drd: ./ucg$(EXEEXT)
+	valgrind --tool=drd --read-var-info=yes --trace-hb==yes --trace-mutex=yes --trace-rwlock=yes  ./ucg --cpp  'BOOST.*HPP' ~/src/boost_1_58_0
 
 check-comp:
 	$(MAKE) distclean && ../configure CC=clang CXX=clang++ && $(MAKE)

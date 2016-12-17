@@ -315,6 +315,8 @@ PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 ])
 
 
+PKG_CHECK_MODULES([JEMALLOC], [jemalloc])
+
 AC_LANG_POP([C++])
 
 
