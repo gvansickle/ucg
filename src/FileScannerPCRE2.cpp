@@ -335,12 +335,13 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 				break;
 			}
 
-			// Not done, set options for another try for a non-empty match at the same point.
+			// Trying to recover from previous 0-length match.
+			// Set options for another try for a non-empty match at the same point.
 			options = PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED;
 		}
 
 		int rc = 0;
-		if(!m_use_literal)
+		if(options==0 && !m_use_literal)
 		{
 			if(m_use_lit_prefix)
 			{
@@ -375,7 +376,10 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 					break;
 				}
 			}
+		}
 
+		if(!m_use_literal)
+		{
 			// Try to match the regex to whatever's left of the file.
 			rc = pcre2_match(
 					m_pcre2_regex,
