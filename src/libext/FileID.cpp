@@ -365,25 +365,7 @@ std::string FileID::GetBasename() const noexcept
 
 const std::string& FileID::GetPath() const noexcept
 {
-#if 0
-	{
-		ReaderLock rl(m_mutex);
-
-		if(!m_pimpl->m_path.empty())
-		{
-			// m_path has already been lazily evaluated and is available in a std::string.
-			return m_pimpl->m_path;
-		}
-	}
-	// Else, we need to get a write lock, and evaluate the path.
-
-	WriterLock wl(m_mutex);
-	m_pimpl->ResolvePath();
-
-	return m_pimpl->m_path;
-#else
 	return *DoubleCheckedLock<std::string*>(m_path_witness, m_mutex, [this](){ return (std::string*)&(m_pimpl->ResolvePath()); });
-#endif
 }
 
 FileType FileID::GetFileType() const noexcept
