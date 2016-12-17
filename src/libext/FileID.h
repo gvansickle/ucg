@@ -124,6 +124,7 @@ private:
 	mutable MutexType m_mutex;
 
 	mutable std::atomic<FileDescriptor*> m_file_descriptor_witness {nullptr};
+	mutable std::atomic<void*> m_dev_ino_witness {nullptr};
 	mutable std::atomic<void*> m_stat_info_witness {nullptr};
 	mutable std::atomic<std::string*> m_path_witness {nullptr};
 
