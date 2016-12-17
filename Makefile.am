@@ -44,11 +44,11 @@ bin_PROGRAMS=ucg
 ucg_SOURCES=main.cpp build_info.h libtool
 nodist_ucg_SOURCES=build_info.cpp
 CLEANFILES += build_info.cpp
-ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) $(PCRE_CPPFLAGS) $(PCRE2_CPPFLAGS)
+ucg_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) $(PCRE_CPPFLAGS) $(PCRE2_CPPFLAGS) $(JEMALLOC_CPPFLAGS)
 ucg_CFLAGS = $(AM_CFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
-ucg_CXXFLAGS = $(AM_CXXFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS) $(EXPLAIN_CFLAGS)
+ucg_CXXFLAGS = $(AM_CXXFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS) $(JEMALLOC_CFLAGS)
 ucg_LDFLAGS = $(AM_LDFLAGS)
-ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la $(PCRE_LIBS) $(PCRE2_LIBS) $(EXPLAIN_LIBS)
+ucg_LDADD = ./src/libsrc.la ./src/libext/libext.la ./src/future/libfuture.la $(PCRE_LIBS) $(PCRE2_LIBS) $(JEMALLOC_LIBS)
 
 # Collect some make-time info. 
 FORCE:
