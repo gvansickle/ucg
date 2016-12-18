@@ -544,7 +544,7 @@ AC_CHECK_DECLS([std::to_string(int)],
 AC_CHECK_DECLS([std::make_unique<int>(int)], [], [], [#include <memory>])
 
 # We need the argp library.
-AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
+#AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
 
 AC_CHECK_FUNCS([sched_setaffinity])
 
