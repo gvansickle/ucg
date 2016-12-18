@@ -344,6 +344,12 @@ FileScanner::LiteralMatch_type FileScanner::resolve_LiteralMatch(FileScanner * o
 bool FileScanner::ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept
 {
 	uint16_t out_index = 0;
+
+	// Vars for pair finding.
+	uint16_t out_pair_index = 0;
+	uint16_t in_pair_first_index = 0;
+	uint8_t first_range_char = 0, last_range_char = 0;
+
 	for(uint16_t i=0; i<256; ++i)
 	{
 		if((pcre2_bitmap[i/8] & (0x01 << (i%8))) == 0)
@@ -376,7 +382,7 @@ const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restr
 	}
 	else if(m_end_index == 1)
 	{
-#if 0
+#if 1
 		first_possible_cu = std::find(cbegin, cbegin+len, m_compiled_cu_bitmap[0]);
 		/// @note Tried memchr() here, no real difference.
 #else
