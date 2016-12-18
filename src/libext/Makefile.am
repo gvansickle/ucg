@@ -28,7 +28,8 @@ libext_la_SOURCES = \
 	memory.hpp \
 	multiversioning.hpp multiversioning.cpp \
 	static_diagnostics.hpp \
-	string.hpp
+	string.hpp \
+	Terminal.cpp Terminal.h
 
 libext_la_CPPFLAGS = -I$(top_srcdir)/src $(AM_CPPFLAGS)
 libext_la_CFLAGS = $(AM_CFLAGS)
