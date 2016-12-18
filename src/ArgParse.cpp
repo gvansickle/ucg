@@ -38,7 +38,16 @@
 #include <sstream>
 #include <system_error>
 
+#define NEW_OPTS 1
+
 #include <argp.h>
+
+// To avoid clash with "struct option" in argp.h.
+namespace lmcppop_int {
+#include <optionparser.h>
+}
+namespace lmcppop = lmcppop_int::option;
+
 #if HAVE_LIBPCRE == 1
 #include <pcre.h>
 #endif
@@ -68,6 +77,92 @@
 // number of scanner threads.  Cygwin does better with 3 or 4 here (and more dirjobs with more scanner threads) since it
 // spends so much more time in the Windows<->POSIX path resolution logic.
 static constexpr size_t f_default_dirjobs = 2;
+
+#if NEW_OPTS
+
+struct Arg: public lmcppop::Arg
+{
+  static void printError(const char* msg1, const lmcppop::Option& opt, const char* msg2)
+  {
+    fprintf(stderr, "%s", msg1);
+    fwrite(opt.name, opt.namelen, 1, stderr);
+    fprintf(stderr, "%s", msg2);
+  }
+
+  static lmcppop::ArgStatus Unknown(const lmcppop::Option& option, bool msg)
+  {
+    if (msg) printError("Unknown option '", option, "'\n");
+    return lmcppop::ARG_ILLEGAL;
+  }
+
+  static lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
+  {
+    if (option.arg != 0)
+      return lmcppop::ARG_OK;
+
+    if (msg) printError("Option '", option, "' requires an argument\n");
+    return lmcppop::ARG_ILLEGAL;
+  }
+
+  static lmcppop::ArgStatus NonEmpty(const lmcppop::Option& option, bool msg)
+  {
+    if (option.arg != 0 && option.arg[0] != 0)
+      return lmcppop::ARG_OK;
+
+    if (msg) printError("Option '", option, "' requires a non-empty argument\n");
+    return lmcppop::ARG_ILLEGAL;
+  }
+
+  static lmcppop::ArgStatus Numeric(const lmcppop::Option& option, bool msg)
+  {
+    char* endptr = 0;
+    if (option.arg != 0 && strtol(option.arg, &endptr, 10)){};
+    if (endptr != option.arg && *endptr == 0)
+      return lmcppop::ARG_OK;
+
+    if (msg) printError("Option '", option, "' requires a numeric argument\n");
+    return lmcppop::ARG_ILLEGAL;
+  }
+};
+
+enum OptionType { NONE = 0, DISABLE, ENABLE };
+enum optionIndex {UNKNOWN, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY};
+const lmcppop::Descriptor usage[] = {
+		{ UNKNOWN, 0,"", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
+		                                          "Options:" },
+		{ 256, 0, "", "", Arg::Unknown, "Searching:" },
+		{ HELP,    0,"", "help",    Arg::None,    "  \t--help  \tPrint usage and exit." },
+		{ OPTIONAL,0,"o","optional",Arg::Optional,"  -o[<arg>], \t--optional[=<arg>]"
+		                                          "  \tTakes an argument but is happy without one." },
+		{ REQUIRED,0,"r","required",Arg::Required,"  -r <arg>, \t--required=<arg>  \tMust have an argument." },
+		{ NUMERIC, 0,"n","numeric", Arg::Numeric, "  -n <num>, \t--numeric=<num>  \tRequires a number as argument." },
+		{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty,"  -1 <arg>, \t--nonempty=<arg>"
+		                                          "  \tCan NOT take the empty string as argument." },
+		{ UNKNOWN, 0,"", "",        Arg::None,
+		 "\nExamples:\n"
+		 "  example_arg --unknown -o -n10 \n"
+		 "  example_arg -o -n10 file1 file2 \n"
+		 "  example_arg -nfoo file1 file2 \n"
+		 "  example_arg --optional -- file1 file2 \n"
+		 "  example_arg --optional file1 file2 \n"
+		 "  example_arg --optional=file1 file2 \n"
+		 "  example_arg --optional=  file1 file2 \n"
+		 "  example_arg -o file1 file2 \n"
+		 "  example_arg -ofile1 file2 \n"
+		 "  example_arg -unk file1 file2 \n"
+		 "  example_arg -r -- file1 \n"
+		 "  example_arg -r file1 \n"
+		 "  example_arg --required \n"
+		 "  example_arg --required=file1 \n"
+		 "  example_arg --nonempty= file1 \n"
+		 "  example_arg --nonempty=foo --numeric=999 --optional=bla file1 \n"
+		 "  example_arg -1foo \n"
+		 "  example_arg -1 -- \n"
+		 "  example_arg -1 \"\" \n"
+		},
+		{ 0, 0, 0, 0, 0, 0 }
+};
+#endif
 
 // Our --version output isn't just a static string, so we'll register with argp for a version callback.
 static void PrintVersionTextRedirector(FILE *stream, struct argp_state *state)
@@ -414,6 +509,35 @@ static char * cpp_strdup(const char *orig)
 
 void ArgParse::Parse(int argc, char **argv)
 {
+#ifdef NEW_OPTS
+{
+	argc = argc-1;
+	argv = argv+1;
+	lmcppop::Stats stats(usage, argc, argv);
+
+	lmcppop::Option options[stats.options_max], buffer[stats.buffer_max];
+
+	lmcppop::Parser parse(usage, argc, argv, options, buffer);
+
+ 	if (parse.error())
+    	return;
+
+	if (options[HELP] || argc == 0)
+	{
+		char * colstr = getenv("COLUMNS");
+		int columns = getenv("COLUMNS")? atoi(getenv("COLUMNS")) : 80;
+		std::cout << "DEBUG: COLUMNS: " << columns << " COLSTR: " << colstr << "\n";
+		lmcppop::printUsage(fwrite, stdout, usage, columns);
+		return;
+	}
+
+	//...
+
+	for (int i = 0; i < parse.nonOptionsCount(); ++i)
+    	fprintf(stdout, "Non-option argument #%d is %s\n", i, parse.nonOption(i));
+}
+#endif
+
 	std::vector<char*> user_argv, project_argv, combined_argv;
 
 	// Check the command line for the --noenv option.
