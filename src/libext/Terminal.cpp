@@ -31,22 +31,27 @@ Terminal::~Terminal()
 {
 }
 
-uint16_t Terminal::GetColumns() const
+uint16_t Terminal::GetColumns() noexcept
 {
+	int columns = 0;
+
+	// Try the TIOCGWINSZ ioctl first, it's most likely to succeed.
 	struct winsize w;
 	if(ioctl(0, TIOCGWINSZ, &w) != -1)
 	{
 		LOG(INFO) << "Terminal columns: ioctl(TIOCGWINSZ): " << w.ws_col;
-		return w.ws_col;
+		columns = w.ws_col;
 	}
-
-	// Else ioctl() errored out.  Try the COLUMNS env var.
-	int columns = 0;
-	char * colstr = getenv("COLUMNS");
-	LOG(INFO) << "Terminal columns: getenv(\"COLUMNS\"): " << colstr;
-	if(colstr != NULL)
+	else
 	{
-		columns = atoi(colstr);
+		// Else ioctl() errored out.  Try the COLUMNS env var.  This probably won't succeed, since COLUMNS is often not exported from
+		// the shell by default.
+		char * colstr = getenv("COLUMNS");
+		LOG(INFO) << "Terminal columns: getenv(\"COLUMNS\"): " << colstr;
+		if(colstr != NULL)
+		{
+			columns = atoi(colstr);
+		}
 	}
 
 	if(columns == 0)
@@ -54,6 +59,8 @@ uint16_t Terminal::GetColumns() const
 		columns = 80;
 		LOG(INFO) << "Terminal columns: using default of " << columns;
 	}
+
+	LOG(INFO) << "Terminal columns: using columns==" << columns;
 
 	return columns;
 }

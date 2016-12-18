@@ -40,13 +40,15 @@
 
 #define NEW_OPTS 1
 
+#if !NEW_OPTS
 #include <argp.h>
-
+#else
 // To avoid clash with "struct option" in argp.h.
 namespace lmcppop_int {
 #include <optionparser.h>
 }
 namespace lmcppop = lmcppop_int::option;
+#endif
 
 #if HAVE_LIBPCRE == 1
 #include <pcre.h>
@@ -72,105 +74,22 @@ namespace lmcppop = lmcppop_int::option;
 #include "TypeManager.h"
 #include "File.h"
 #include <libext/Logger.h>
+#include <libext/Terminal.h>
 
 // The sweet spot for the number of directory tree traversal threads seems to be 2 on Linux, independent of the
 // number of scanner threads.  Cygwin does better with 3 or 4 here (and more dirjobs with more scanner threads) since it
 // spends so much more time in the Windows<->POSIX path resolution logic.
 static constexpr size_t f_default_dirjobs = 2;
 
-#if NEW_OPTS
 
-struct Arg: public lmcppop::Arg
-{
-  static void printError(const char* msg1, const lmcppop::Option& opt, const char* msg2)
-  {
-    fprintf(stderr, "%s", msg1);
-    fwrite(opt.name, opt.namelen, 1, stderr);
-    fprintf(stderr, "%s", msg2);
-  }
-
-  static lmcppop::ArgStatus Unknown(const lmcppop::Option& option, bool msg)
-  {
-    if (msg) printError("Unknown option '", option, "'\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
-
-  static lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
-  {
-    if (option.arg != 0)
-      return lmcppop::ARG_OK;
-
-    if (msg) printError("Option '", option, "' requires an argument\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
-
-  static lmcppop::ArgStatus NonEmpty(const lmcppop::Option& option, bool msg)
-  {
-    if (option.arg != 0 && option.arg[0] != 0)
-      return lmcppop::ARG_OK;
-
-    if (msg) printError("Option '", option, "' requires a non-empty argument\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
-
-  static lmcppop::ArgStatus Numeric(const lmcppop::Option& option, bool msg)
-  {
-    char* endptr = 0;
-    if (option.arg != 0 && strtol(option.arg, &endptr, 10)){};
-    if (endptr != option.arg && *endptr == 0)
-      return lmcppop::ARG_OK;
-
-    if (msg) printError("Option '", option, "' requires a numeric argument\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
-};
-
-enum OptionType { NONE = 0, DISABLE, ENABLE };
-enum optionIndex {UNKNOWN, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY};
-const lmcppop::Descriptor usage[] = {
-		{ UNKNOWN, 0,"", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
-		                                          "Options:" },
-		{ 256, 0, "", "", Arg::Unknown, "Searching:" },
-		{ HELP,    0,"", "help",    Arg::None,    "  \t--help  \tPrint usage and exit." },
-		{ OPTIONAL,0,"o","optional",Arg::Optional,"  -o[<arg>], \t--optional[=<arg>]"
-		                                          "  \tTakes an argument but is happy without one." },
-		{ REQUIRED,0,"r","required",Arg::Required,"  -r <arg>, \t--required=<arg>  \tMust have an argument." },
-		{ NUMERIC, 0,"n","numeric", Arg::Numeric, "  -n <num>, \t--numeric=<num>  \tRequires a number as argument." },
-		{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty,"  -1 <arg>, \t--nonempty=<arg>"
-		                                          "  \tCan NOT take the empty string as argument." },
-		{ UNKNOWN, 0,"", "",        Arg::None,
-		 "\nExamples:\n"
-		 "  example_arg --unknown -o -n10 \n"
-		 "  example_arg -o -n10 file1 file2 \n"
-		 "  example_arg -nfoo file1 file2 \n"
-		 "  example_arg --optional -- file1 file2 \n"
-		 "  example_arg --optional file1 file2 \n"
-		 "  example_arg --optional=file1 file2 \n"
-		 "  example_arg --optional=  file1 file2 \n"
-		 "  example_arg -o file1 file2 \n"
-		 "  example_arg -ofile1 file2 \n"
-		 "  example_arg -unk file1 file2 \n"
-		 "  example_arg -r -- file1 \n"
-		 "  example_arg -r file1 \n"
-		 "  example_arg --required \n"
-		 "  example_arg --required=file1 \n"
-		 "  example_arg --nonempty= file1 \n"
-		 "  example_arg --nonempty=foo --numeric=999 --optional=bla file1 \n"
-		 "  example_arg -1foo \n"
-		 "  example_arg -1 -- \n"
-		 "  example_arg -1 \"\" \n"
-		},
-		{ 0, 0, 0, 0, 0, 0 }
-};
-#endif
-
+#if !NEW_OPTS
 // Our --version output isn't just a static string, so we'll register with argp for a version callback.
 static void PrintVersionTextRedirector(FILE *stream, struct argp_state *state)
 {
 	static_cast<ArgParse*>(state->input)->PrintVersionText(stream);
 }
 void (*argp_program_version_hook)(FILE *stream, struct argp_state *state) = PrintVersionTextRedirector;
-
+#endif
 
 // Not static, argp.h externs this.
 const char *argp_program_version = PACKAGE_STRING "\n"
@@ -207,7 +126,9 @@ static const char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 enum OPT
 {
 	OPT_RESERVED = 0,
-	OPT_SMART_CASE,
+	OPT_UNKNOWN = 0,
+	OPT_SECTION = 255,
+	OPT_SMART_CASE = 1,
 	OPT_NO_SMART_CASE,
 	OPT_COLOR,
 	OPT_NOCOLOR,
@@ -224,6 +145,7 @@ enum OPT
 	OPT_TYPE_ADD,
 	OPT_TYPE_DEL,
 	OPT_PERF_DIRJOBS,
+	OPT_HELP,
 	OPT_HELP_TYPES,
 	OPT_COLUMN,
 	OPT_NOCOLUMN,
@@ -240,6 +162,7 @@ enum OPT
 // Not static, argp.h externs this.
 error_t argp_err_exit_status = STATUS_EX_USAGE;
 
+#if !NEW_OPTS
 /// Argp Option Definitions
 // Disable (at least on gcc) the large number of spurious warnings about missing initializers
 // the declaration of options[] and ArgParse::argp normally cause.
@@ -309,8 +232,101 @@ static struct argp_option options[] = {
 struct argp ArgParse::argp = { options, ArgParse::parse_opt, args_doc, doc };
 
 #pragma GCC diagnostic pop // Re-enable -Wmissing-field-initializers
+#endif
 
+#if NEW_OPTS
 
+struct Arg: public lmcppop::Arg
+{
+  static void printError(const char* msg1, const lmcppop::Option& opt, const char* msg2)
+  {
+    fprintf(stderr, "%s", msg1);
+    fwrite(opt.name, opt.namelen, 1, stderr);
+    fprintf(stderr, "%s", msg2);
+  }
+
+  static lmcppop::ArgStatus Unknown(const lmcppop::Option& option, bool msg)
+  {
+    if (msg) printError("Unknown option '", option, "'\n");
+    return lmcppop::ARG_ILLEGAL;
+  }
+
+  static lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
+  {
+    if (option.arg != 0)
+      return lmcppop::ARG_OK;
+
+    if (msg) printError("Option '", option, "' requires an argument\n");
+    return lmcppop::ARG_ILLEGAL;
+  }
+
+  static lmcppop::ArgStatus NonEmpty(const lmcppop::Option& option, bool msg)
+  {
+    if (option.arg != 0 && option.arg[0] != 0)
+      return lmcppop::ARG_OK;
+
+    if (msg) printError("Option '", option, "' requires a non-empty argument\n");
+    return lmcppop::ARG_ILLEGAL;
+  }
+
+  static lmcppop::ArgStatus Numeric(const lmcppop::Option& option, bool msg)
+  {
+    char* endptr = 0;
+    if (option.arg != 0 && strtol(option.arg, &endptr, 10)){};
+    if (endptr != option.arg && *endptr == 0)
+      return lmcppop::ARG_OK;
+
+    if (msg) printError("Option '", option, "' requires a numeric argument\n");
+    return lmcppop::ARG_ILLEGAL;
+  }
+};
+
+enum OptionType { NONE = 0, DISABLE, ENABLE };
+//enum optionIndex {UNKNOWN, SECTION, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY};
+
+const lmcppop::Descriptor usage[] = {
+		{ OPT_UNKNOWN, 0, "", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
+		                                          "Options:" },
+		{ OPT_SECTION, 0, "", "", Arg::Unknown, "Searching:" },
+		{ OPT_SMART_CASE, ENABLE, "", "smart-case", Arg::None, "  \t--[no]smart-case  \tIgnore case if PATTERN is all lowercase (default: enabled)."},
+		{ OPT_SMART_CASE, DISABLE, "", "nosmart-case", Arg::None, 0},
+#if 0
+		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
+		                                          "  \tTakes an argument but is happy without one." },
+		{ REQUIRED,0,"r","required",Arg::Required," \t-r <arg>, --required=<arg>  \tMust have an argument." },
+		{ NUMERIC, 0,"n","numeric", Arg::Numeric, " \t-n <num>, --numeric=<num>  \tRequires a number as argument." },
+		{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty," \t-1 <arg>, --nonempty=<arg>"
+		                                          "  \tCan NOT take the empty string as argument." },
+#endif
+		{ OPT_SECTION, 0, "", "", Arg::Unknown, "Informational options:"},
+		{ OPT_HELP,    0,"", "help",    Arg::None,    " \t--help  \tPrint usage and exit." },
+		{ OPT_UNKNOWN, 0,"", "",        Arg::None,
+		 "\nExamples:\n"
+		 "  example_arg --unknown -o -n10 \n"
+		 "  example_arg -o -n10 file1 file2 \n"
+		 "  example_arg -nfoo file1 file2 \n"
+		 "  example_arg --optional -- file1 file2 \n"
+		 "  example_arg --optional file1 file2 \n"
+		 "  example_arg --optional=file1 file2 \n"
+		 "  example_arg --optional=  file1 file2 \n"
+		 "  example_arg -o file1 file2 \n"
+		 "  example_arg -ofile1 file2 \n"
+		 "  example_arg -unk file1 file2 \n"
+		 "  example_arg -r -- file1 \n"
+		 "  example_arg -r file1 \n"
+		 "  example_arg --required \n"
+		 "  example_arg --required=file1 \n"
+		 "  example_arg --nonempty= file1 \n"
+		 "  example_arg --nonempty=foo --numeric=999 --optional=bla file1 \n"
+		 "  example_arg -1foo \n"
+		 "  example_arg -1 -- \n"
+		 "  example_arg -1 \"\" \n"
+		},
+		{ 0, 0, 0, 0, 0, 0 }
+};
+#endif
+
+#if !NEW_OPTS
 error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 {
 	class ArgParse *arguments = static_cast<ArgParse*>(state->input);
@@ -478,7 +494,7 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	}
 	return 0;
 }
-
+#endif
 
 ArgParse::ArgParse(TypeManager &type_manager)
 	: m_type_manager(type_manager)
@@ -522,11 +538,9 @@ void ArgParse::Parse(int argc, char **argv)
  	if (parse.error())
     	return;
 
-	if (options[HELP] || argc == 0)
+	if (options[OPT_HELP] || argc == 0)
 	{
-		char * colstr = getenv("COLUMNS");
-		int columns = getenv("COLUMNS")? atoi(getenv("COLUMNS")) : 80;
-		std::cout << "DEBUG: COLUMNS: " << columns << " COLSTR: " << colstr << "\n";
+		int columns = Terminal::GetColumns();
 		lmcppop::printUsage(fwrite, stdout, usage, columns);
 		return;
 	}
@@ -575,8 +589,10 @@ void ArgParse::Parse(int argc, char **argv)
 	// mechanism.
 	HandleTYPELogic(&combined_argv);
 
+#if !NEW_OPTS
 	// Parse the combined list of arguments.
 	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
+#endif
 
 	//// Now set up some defaults which we can only determine after all arg parsing is complete.
 

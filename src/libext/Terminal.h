@@ -31,7 +31,7 @@ public:
 	Terminal();
 	~Terminal();
 
-	uint16_t GetColumns() const noexcept;
+	static uint16_t GetColumns() noexcept;
 };
 
 #endif /* SRC_LIBEXT_TERMINAL_H_ */
