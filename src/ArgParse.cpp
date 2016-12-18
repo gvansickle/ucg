@@ -26,6 +26,8 @@
 
 #include "../build_info.h"
 
+#include <iterator> /// @todo DELETE
+
 #include <libext/cpuidex.hpp>
 
 #include <locale>
@@ -128,7 +130,8 @@ enum OPT
 	OPT_RESERVED = 0,
 	OPT_UNKNOWN = 0,
 	OPT_SECTION = 255,
-	OPT_SMART_CASE = 1,
+	OPT_IGNORE_CASE = 1,
+	OPT_SMART_CASE,
 	OPT_NO_SMART_CASE,
 	OPT_COLOR,
 	OPT_NOCOLOR,
@@ -284,6 +287,84 @@ struct Arg: public lmcppop::Arg
 enum OptionType { NONE = 0, DISABLE, ENABLE };
 //enum optionIndex {UNKNOWN, SECTION, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY};
 
+static constexpr char m_opt_start_str[] {"  \t"};
+static constexpr char m_help_space_str[] {"  \t"};
+static std::vector<std::shared_ptr<std::string>> delete_us;
+
+struct PreDescriptor
+{
+	const unsigned index;
+	const int type;
+	const char* const shortopts;
+	const char* const longopts;
+	const lmcppop::CheckArg check_arg;
+	const char* help;
+
+	operator lmcppop::Descriptor() const noexcept
+	{
+		const char *fmt_help = help;
+		if((std::strlen(shortopts)!=0 || std::strlen(longopts)!=0) && (help != nullptr))
+		{
+			// Paste together the options and the help text.
+			/// @todo Need to control this lifetime better.
+			std::shared_ptr<std::string> semi_fmt_help = std::make_shared<std::string>(
+					std::string(m_opt_start_str) + std::string("-") + shortopts + ", --" + longopts +
+					m_help_space_str + help);
+			fmt_help = semi_fmt_help->c_str();
+			delete_us.push_back(semi_fmt_help);
+		}
+
+		return lmcppop::Descriptor {index, type, shortopts, longopts, check_arg, fmt_help};
+	}
+
+	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
+};
+
+constexpr PreDescriptor raw_options[] = {
+		{ OPT_UNKNOWN, 0, "", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
+		                                          "Options:" },
+		{ OPT_SECTION, 0, "", "", Arg::Unknown, "Searching:" },
+		{ OPT_IGNORE_CASE, 0, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
+		{ OPT_SMART_CASE, ENABLE, "", "smart-case", Arg::None, "  \t--[no]smart-case  \tIgnore case if PATTERN is all lowercase (default: enabled)."},
+		{ OPT_SMART_CASE, DISABLE, "", "nosmart-case", Arg::None, 0},
+#if 0
+		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
+		                                          "  \tTakes an argument but is happy without one." },
+		{ REQUIRED,0,"r","required",Arg::Required," \t-r <arg>, --required=<arg>  \tMust have an argument." },
+		{ NUMERIC, 0,"n","numeric", Arg::Numeric, " \t-n <num>, --numeric=<num>  \tRequires a number as argument." },
+		{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty," \t-1 <arg>, --nonempty=<arg>"
+		                                          "  \tCan NOT take the empty string as argument." },
+#endif
+		{ OPT_SECTION, 0, "", "", Arg::Unknown, "Informational options:"},
+		{ OPT_HELP,    0,"", "help",    Arg::None,    " \t--help  \tPrint usage and exit." },
+		{ OPT_UNKNOWN, 0,"", "",        Arg::None,
+		 "\nExamples:\n"
+		 "  example_arg --unknown -o -n10 \n"
+		 "  example_arg -o -n10 file1 file2 \n"
+		 "  example_arg -nfoo file1 file2 \n"
+		 "  example_arg --optional -- file1 file2 \n"
+		 "  example_arg --optional file1 file2 \n"
+		 "  example_arg --optional=file1 file2 \n"
+		 "  example_arg --optional=  file1 file2 \n"
+		 "  example_arg -o file1 file2 \n"
+		 "  example_arg -ofile1 file2 \n"
+		 "  example_arg -unk file1 file2 \n"
+		 "  example_arg -r -- file1 \n"
+		 "  example_arg -r file1 \n"
+		 "  example_arg --required \n"
+		 "  example_arg --required=file1 \n"
+		 "  example_arg --nonempty= file1 \n"
+		 "  example_arg --nonempty=foo --numeric=999 --optional=bla file1 \n"
+		 "  example_arg -1foo \n"
+		 "  example_arg -1 -- \n"
+		 "  example_arg -1 \"\" \n"
+		},
+		{ 0, 0, 0, 0, 0, 0 }
+};
+
+static std::vector<lmcppop::Descriptor> dynamic_usage;
+
+#if 0
 const lmcppop::Descriptor usage[] = {
 		{ OPT_UNKNOWN, 0, "", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
 		                                          "Options:" },
@@ -324,6 +405,7 @@ const lmcppop::Descriptor usage[] = {
 		},
 		{ 0, 0, 0, 0, 0, 0 }
 };
+#endif
 #endif
 
 #if !NEW_OPTS
@@ -499,6 +581,15 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 ArgParse::ArgParse(TypeManager &type_manager)
 	: m_type_manager(type_manager)
 {
+#if NEW_OPTS
+	//std::for_each(std::cbegin(raw_options), std::cend(raw_options), [](PreDescriptor &p){ std::cout << p.help << "\n"; dynamic_usage.push_back(p); });
+	for(size_t i=0; raw_options[i].shortopts != 0 && raw_options[i].longopts != 0; ++i)
+	{
+		lmcppop::Descriptor d = raw_options[i];
+		dynamic_usage.push_back(d);
+	}
+	dynamic_usage.push_back(PreDescriptor::NullEntry());
+#endif
 }
 
 ArgParse::~ArgParse()
@@ -525,15 +616,15 @@ static char * cpp_strdup(const char *orig)
 
 void ArgParse::Parse(int argc, char **argv)
 {
-#ifdef NEW_OPTS
+#if NEW_OPTS
 {
 	argc = argc-1;
 	argv = argv+1;
-	lmcppop::Stats stats(usage, argc, argv);
+	lmcppop::Stats stats(dynamic_usage.data(), argc, argv);
 
 	lmcppop::Option options[stats.options_max], buffer[stats.buffer_max];
 
-	lmcppop::Parser parse(usage, argc, argv, options, buffer);
+	lmcppop::Parser parse(dynamic_usage.data(), argc, argv, options, buffer);
 
  	if (parse.error())
     	return;
@@ -541,7 +632,7 @@ void ArgParse::Parse(int argc, char **argv)
 	if (options[OPT_HELP] || argc == 0)
 	{
 		int columns = Terminal::GetColumns();
-		lmcppop::printUsage(fwrite, stdout, usage, columns);
+		lmcppop::printUsage(fwrite, stdout, dynamic_usage.data(), columns);
 		return;
 	}
 
