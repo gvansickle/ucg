@@ -382,7 +382,7 @@ const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restr
 	}
 	else if(m_end_index == 1)
 	{
-#if 1
+#if 0
 		first_possible_cu = std::find(cbegin, cbegin+len, m_compiled_cu_bitmap[0]);
 		/// @note Tried memchr() here, no real difference.
 #else

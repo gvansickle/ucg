@@ -93,7 +93,8 @@ inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed
 #if defined(__SSE4_2__)
 
 //template <typename BaseISA, BaseISA ISAExtensions>
-//inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+MULTIVERSION_DEF(ISA_x86_64::SSE4_2, const void*)
+inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 
 MULTIVERSION_DEF(ISA_x86_64::SSE4_2, const void*)
 inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept
