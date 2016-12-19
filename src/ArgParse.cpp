@@ -133,6 +133,8 @@ enum OPT
 	OPT_IGNORE_CASE = 1,
 	OPT_SMART_CASE,
 	OPT_NO_SMART_CASE,
+	OPT_LITERAL,
+	OPT_WORDREGEX,
 	OPT_COLOR,
 	OPT_NOCOLOR,
 	OPT_IGNORE_DIR,
@@ -296,7 +298,7 @@ struct Arg: public lmcppop::Arg
   }
 };
 
-enum OptionType { NONE = 0, DISABLE, ENABLE };
+enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1 };
 //enum optionIndex {UNKNOWN, SECTION, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY};
 
 static constexpr char m_opt_start_str[] {"  \t"};
@@ -364,17 +366,20 @@ constexpr PreDescriptor raw_options[] = {
 		{ OPT_UNKNOWN, 0, "", "",        Arg::UnknownArgHook, "USAGE: example_arg [options]\n\n"
 		                                          "Options:" },
 		{ "Searching:" },
-		{ OPT_IGNORE_CASE, 0, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
+		{ OPT_IGNORE_CASE, ENABLE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
 		{ OPT_SMART_CASE, ENABLE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
 		{ OPT_SMART_CASE, DISABLE, "", "nosmart-case", Arg::None, ""},
+		{ OPT_SMART_CASE, DISABLE, "", "no-smart-case", Arg::None, "" /*Hidden alias*/},
+		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
+		{ OPT_LITERAL, 0, "Q", "literal", Arg::None, "Treat all characters in PATTERN as literal."},
 		{ "Search Output:" },
 		{ OPT_COLUMN, ENABLE, "", "column", Arg::None, "Print column of first match after line number."},
-		{ OPT_NOCOLUMN, DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
+		{ OPT_COLUMN, DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
 		{ "File presentation:" },
 		{ OPT_COLOR, ENABLE, "", "color", Arg::None, "Render the output with ANSI color codes."},
 		{ OPT_COLOR, ENABLE, "", "colour", Arg::None, "" },
-		//{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
-		//{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
+		{ OPT_COLOR, DISABLE, "", "nocolor", Arg::None, "Render the output without ANSI color codes."},
+		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, "" },
 #if 0
 		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
 		                                          "  \tTakes an argument but is happy without one." },
@@ -383,30 +388,15 @@ constexpr PreDescriptor raw_options[] = {
 		{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty," \t-1 <arg>, --nonempty=<arg>"
 		                                          "  \tCan NOT take the empty string as argument." },
 #endif
+		{ "Miscellaneous:" },
+		{ OPT_NOENV,   0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
 		{ "Informational options:" },
 		{ OPT_HELP,    0, "?", "help", Arg::None, "Give this help list" },
 		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
 		{ OPT_UNKNOWN, 0, "", "", Arg::None,
 		 "\nExamples:\n"
 		 "  example_arg --unknown -o -n10 \n"
-		 "  example_arg -o -n10 file1 file2 \n"
-		 "  example_arg -nfoo file1 file2 \n"
-		 "  example_arg --optional -- file1 file2 \n"
-		 "  example_arg --optional file1 file2 \n"
-		 "  example_arg --optional=file1 file2 \n"
-		 "  example_arg --optional=  file1 file2 \n"
-		 "  example_arg -o file1 file2 \n"
-		 "  example_arg -ofile1 file2 \n"
-		 "  example_arg -unk file1 file2 \n"
-		 "  example_arg -r -- file1 \n"
-		 "  example_arg -r file1 \n"
-		 "  example_arg --required \n"
-		 "  example_arg --required=file1 \n"
-		 "  example_arg --nonempty= file1 \n"
-		 "  example_arg --nonempty=foo --numeric=999 --optional=bla file1 \n"
-		 "  example_arg -1foo \n"
-		 "  example_arg -1 -- \n"
-		 "  example_arg -1 \"\" \n"
+
 		},
 		{ 0, 0, 0, 0, 0, 0 }
 };
@@ -434,23 +424,6 @@ const lmcppop::Descriptor usage[] = {
 		 "\nExamples:\n"
 		 "  example_arg --unknown -o -n10 \n"
 		 "  example_arg -o -n10 file1 file2 \n"
-		 "  example_arg -nfoo file1 file2 \n"
-		 "  example_arg --optional -- file1 file2 \n"
-		 "  example_arg --optional file1 file2 \n"
-		 "  example_arg --optional=file1 file2 \n"
-		 "  example_arg --optional=  file1 file2 \n"
-		 "  example_arg -o file1 file2 \n"
-		 "  example_arg -ofile1 file2 \n"
-		 "  example_arg -unk file1 file2 \n"
-		 "  example_arg -r -- file1 \n"
-		 "  example_arg -r file1 \n"
-		 "  example_arg --required \n"
-		 "  example_arg --required=file1 \n"
-		 "  example_arg --nonempty= file1 \n"
-		 "  example_arg --nonempty=foo --numeric=999 --optional=bla file1 \n"
-		 "  example_arg -1foo \n"
-		 "  example_arg -1 -- \n"
-		 "  example_arg -1 \"\" \n"
 		},
 		{ 0, 0, 0, 0, 0, 0 }
 };
@@ -743,11 +716,23 @@ void ArgParse::Parse(int argc, char **argv)
 	if(parse.nonOptionsCount() > 0)
 	m_pattern = parse.nonOption(0);
 
-
 	for (int i = 1; i < parse.nonOptionsCount(); ++i)
 	{
     	m_paths.push_back(parse.nonOption(i));
 	}
+
+	/// @todo Need to work out interaction with smart case.
+	m_ignore_case = (options[OPT_IGNORE_CASE].last()->type() == ENABLE);
+	if(options[OPT_SMART_CASE])
+	{
+		m_smart_case = (options[OPT_SMART_CASE].last()->type() == ENABLE);
+	}
+
+	m_word_regexp = options[OPT_WORDREGEX];
+	m_pattern_is_literal = options[OPT_LITERAL];
+	m_column = (options[OPT_COLUMN].last()->type() == ENABLE);
+	m_color = (options[OPT_COLOR].last()->type() == ENABLE);
+	m_nocolor = !m_color;
 }
 #endif
 
