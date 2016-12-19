@@ -220,10 +220,10 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 		for(j=0; j < (m_end_index & vec_size_mask); j+=vec_size_bytes)
 		{
 			// Load our compare-to strings.
-			__m128i xmm1 = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
+			__m128i xmm1_patt = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
 			// Do the "find_first_of()".
 			int len_a = ((len-i)>vec_size_bytes) ? vec_size_bytes : (len-i);
-			int lsb_set = _mm_cmpestri(xmm0, len_a, xmm1, vec_size_bytes,
+			int lsb_set = _mm_cmpestri(xmm1_patt, vec_size_bytes, xmm0, len_a,
 					_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_LEAST_SIGNIFICANT);
 
 			if(lsb_set < 16)
@@ -232,13 +232,14 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 			}
 		}
 
-		if(j != m_end_index)
+		if(j < m_end_index)
 		{
 			// One partial xmm compare-to register to handle.
-			__m128i xmm1 = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
+			// Load the last partial compare-to string.
+			__m128i xmm1_patt = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
 			// Do the "find_first_of()".
 			int len_a = ((len-i)>vec_size_bytes) ? vec_size_bytes : (len-i);
-			int lsb_set = _mm_cmpestri(xmm0, len_a, xmm1, m_end_index & vec_size_mask,
+			int lsb_set = _mm_cmpestri(xmm1_patt, m_end_index & (vec_size_bytes-1), xmm0, len_a,
 					_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_LEAST_SIGNIFICANT);
 
 			if(lsb_set < 16)
