@@ -380,6 +380,7 @@ constexpr PreDescriptor raw_options[] = {
 		{ OPT_COLOR, ENABLE, "", "colour", Arg::None, "" },
 		{ OPT_COLOR, DISABLE, "", "nocolor", Arg::None, "Render the output without ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, "" },
+		{ OPT_TYPE, ENABLE, "", "type", Arg::Required, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 #if 0
 		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
 		                                          "  \tTakes an argument but is happy without one." },
@@ -733,6 +734,26 @@ void ArgParse::Parse(int argc, char **argv)
 	m_column = (options[OPT_COLUMN].last()->type() == ENABLE);
 	m_color = (options[OPT_COLOR].last()->type() == ENABLE);
 	m_nocolor = !m_color;
+
+	for(lmcppop::Option* opt = options[OPT_TYPE]; opt; opt=opt->next())
+	{
+		if(std::strncmp("no", opt->arg, 2) == 0)
+		{
+			// The first two chars are "no", this is a "--type=noTYPE" option.
+			if(m_type_manager.notype(opt->arg+2) == false)
+			{
+				///argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg+2);
+			}
+		}
+		else
+		{
+			// This is a "--type=TYPE" option.
+			if(m_type_manager.type(opt->arg) == false)
+			{
+				///argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
+			}
+		}
+	}
 }
 #endif
 
