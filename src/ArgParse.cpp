@@ -150,6 +150,7 @@ enum OPT
 	OPT_PERF_DIRJOBS,
 	OPT_HELP,
 	OPT_HELP_TYPES,
+	OPT_VERSION,
 	OPT_COLUMN,
 	OPT_NOCOLUMN,
 	OPT_TEST_LOG_ALL,
@@ -382,8 +383,9 @@ constexpr PreDescriptor raw_options[] = {
 		{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty," \t-1 <arg>, --nonempty=<arg>"
 		                                          "  \tCan NOT take the empty string as argument." },
 #endif
-		{ OPT_SECTION, 0, "", "", Arg::Unknown, "Informational options:"},
-		{ OPT_HELP,    0, "", "help", Arg::None, "Print usage and exit." },
+		{ "Informational options:" },
+		{ OPT_HELP,    0, "?", "help", Arg::None, "Give this help list" },
+		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
 		{ OPT_UNKNOWN, 0, "", "", Arg::None,
 		 "\nExamples:\n"
 		 "  example_arg --unknown -o -n10 \n"
@@ -720,7 +722,22 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		int columns = Terminal::GetColumns();
 		lmcppop::printUsage(fwrite, stdout, dynamic_usage.data(), columns);
+		exit(0);
 		return;
+	}
+	else if(options[OPT_VERSION])
+	{
+		PrintVersionText(stdout);
+		exit(0);
+		return;
+	}
+	else if(parse.nonOptionsCount() == 0)
+	{
+		// Need at least the PATTERN.
+		/// @todo print short usage
+		int columns = Terminal::GetColumns();
+		lmcppop::printUsage(fwrite, stdout, dynamic_usage.data(), columns);
+		exit(STATUS_EX_USAGE);
 	}
 
 	if(parse.nonOptionsCount() > 0)
