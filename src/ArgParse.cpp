@@ -254,6 +254,17 @@ struct Arg: public lmcppop::Arg
     return lmcppop::ARG_ILLEGAL;
   }
 
+  static lmcppop::ArgStatus UnknownArgHook(const lmcppop::Option& option, bool msg)
+  {
+	  if(option.name != nullptr)
+	  {
+		  std::cout << "Dynamic option: '" << option.name << "'\n";
+		  return lmcppop::ARG_NONE;
+	  }
+	  if(msg) printError("Unknown option '", option, "'\n");
+	    return lmcppop::ARG_ILLEGAL;
+  }
+
   static lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
   {
     if (option.arg != 0)
@@ -300,17 +311,45 @@ struct PreDescriptor
 	const lmcppop::CheckArg check_arg;
 	const char* help;
 
+	constexpr PreDescriptor(unsigned i, int t, const char *const so, const char *const lo,
+			const lmcppop::CheckArg c, const char *h) noexcept
+			: index(i), type(t), shortopts(so), longopts(lo), check_arg(c), help(h)
+	{
+	};
+
+	constexpr PreDescriptor(const char *section_header_name) noexcept
+		: index(255), type(0), shortopts(""), longopts(""), check_arg(Arg::None), help(section_header_name)
+	{
+	};
+
 	operator lmcppop::Descriptor() const noexcept
 	{
 		const char *fmt_help = help;
-		if((std::strlen(shortopts)!=0 || std::strlen(longopts)!=0) && (help != nullptr))
+		auto short_len = std::strlen(shortopts);
+		auto long_len = std::strlen(longopts);
+		if((short_len!=0 || long_len!=0) && (help != nullptr))
 		{
 			// Paste together the options and the help text.
-			/// @todo Need to control this lifetime better.
+			std::string shortops_s {m_opt_start_str};
+			if(short_len)
+			{
+				shortops_s += "-";
+				shortops_s += shortopts;
+			}
+			if(short_len && long_len)
+			{
+				shortops_s += ", ";
+			}
+			if(long_len)
+			{
+				shortops_s += "--";
+				shortops_s += longopts;
+			}
 			std::shared_ptr<std::string> semi_fmt_help = std::make_shared<std::string>(
-					std::string(m_opt_start_str) + std::string("-") + shortopts + ", --" + longopts +
-					m_help_space_str + help);
+					shortops_s + m_help_space_str + help);
 			fmt_help = semi_fmt_help->c_str();
+
+			/// @todo Need to control this lifetime better.
 			delete_us.push_back(semi_fmt_help);
 		}
 
@@ -321,12 +360,20 @@ struct PreDescriptor
 };
 
 constexpr PreDescriptor raw_options[] = {
-		{ OPT_UNKNOWN, 0, "", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
+		{ OPT_UNKNOWN, 0, "", "",        Arg::UnknownArgHook, "USAGE: example_arg [options]\n\n"
 		                                          "Options:" },
-		{ OPT_SECTION, 0, "", "", Arg::Unknown, "Searching:" },
+		{ "Searching:" },
 		{ OPT_IGNORE_CASE, 0, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
-		{ OPT_SMART_CASE, ENABLE, "", "smart-case", Arg::None, "  \t--[no]smart-case  \tIgnore case if PATTERN is all lowercase (default: enabled)."},
-		{ OPT_SMART_CASE, DISABLE, "", "nosmart-case", Arg::None, 0},
+		{ OPT_SMART_CASE, ENABLE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
+		{ OPT_SMART_CASE, DISABLE, "", "nosmart-case", Arg::None, ""},
+		{ "Search Output:" },
+		{ OPT_COLUMN, ENABLE, "", "column", Arg::None, "Print column of first match after line number."},
+		{ OPT_NOCOLUMN, DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
+		{ "File presentation:" },
+		{ OPT_COLOR, ENABLE, "", "color", Arg::None, "Render the output with ANSI color codes."},
+		{ OPT_COLOR, ENABLE, "", "colour", Arg::None, "" },
+		//{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
+		//{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
 #if 0
 		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
 		                                          "  \tTakes an argument but is happy without one." },
@@ -336,8 +383,8 @@ constexpr PreDescriptor raw_options[] = {
 		                                          "  \tCan NOT take the empty string as argument." },
 #endif
 		{ OPT_SECTION, 0, "", "", Arg::Unknown, "Informational options:"},
-		{ OPT_HELP,    0,"", "help",    Arg::None,    " \t--help  \tPrint usage and exit." },
-		{ OPT_UNKNOWN, 0,"", "",        Arg::None,
+		{ OPT_HELP,    0, "", "help", Arg::None, "Print usage and exit." },
+		{ OPT_UNKNOWN, 0, "", "", Arg::None,
 		 "\nExamples:\n"
 		 "  example_arg --unknown -o -n10 \n"
 		 "  example_arg -o -n10 file1 file2 \n"
@@ -616,33 +663,6 @@ static char * cpp_strdup(const char *orig)
 
 void ArgParse::Parse(int argc, char **argv)
 {
-#if NEW_OPTS
-{
-	argc = argc-1;
-	argv = argv+1;
-	lmcppop::Stats stats(dynamic_usage.data(), argc, argv);
-
-	lmcppop::Option options[stats.options_max], buffer[stats.buffer_max];
-
-	lmcppop::Parser parse(dynamic_usage.data(), argc, argv, options, buffer);
-
- 	if (parse.error())
-    	return;
-
-	if (options[OPT_HELP] || argc == 0)
-	{
-		int columns = Terminal::GetColumns();
-		lmcppop::printUsage(fwrite, stdout, dynamic_usage.data(), columns);
-		return;
-	}
-
-	//...
-
-	for (int i = 0; i < parse.nonOptionsCount(); ++i)
-    	fprintf(stdout, "Non-option argument #%d is %s\n", i, parse.nonOption(i));
-}
-#endif
-
 	std::vector<char*> user_argv, project_argv, combined_argv;
 
 	// Check the command line for the --noenv option.
@@ -683,6 +703,35 @@ void ArgParse::Parse(int argc, char **argv)
 #if !NEW_OPTS
 	// Parse the combined list of arguments.
 	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
+#else
+{
+	argc = argc-1;
+	argv = argv+1;
+	lmcppop::Stats stats(dynamic_usage.data(), argc, argv);
+
+	lmcppop::Option options[stats.options_max], buffer[stats.buffer_max];
+
+	lmcppop::Parser parse(dynamic_usage.data(), argc, argv, options, buffer);
+
+ 	if (parse.error())
+    	return;
+
+	if (options[OPT_HELP] || argc == 0)
+	{
+		int columns = Terminal::GetColumns();
+		lmcppop::printUsage(fwrite, stdout, dynamic_usage.data(), columns);
+		return;
+	}
+
+	if(parse.nonOptionsCount() > 0)
+	m_pattern = parse.nonOption(0);
+
+
+	for (int i = 1; i < parse.nonOptionsCount(); ++i)
+	{
+    	m_paths.push_back(parse.nonOption(i));
+	}
+}
 #endif
 
 	//// Now set up some defaults which we can only determine after all arg parsing is complete.
