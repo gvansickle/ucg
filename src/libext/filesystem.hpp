@@ -174,6 +174,7 @@ static_assert(std::is_literal_type<dev_ino_pair>::value, "dev_ino_pair isn't tri
  * @param de
  * @return
  */
+inline std::string dirent_get_name(const dirent* de) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 inline std::string dirent_get_name(const dirent* de) noexcept
 {
 #if defined(_DIRENT_HAVE_D_NAMLEN)
@@ -181,8 +182,7 @@ inline std::string dirent_get_name(const dirent* de) noexcept
 		std::string basename(de->d_name, de->d_namelen);
 #elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
 		// We can cheaply determine how much memory we need to allocate for the name.
-		/// @todo May not have a strnlen(). // std::string basename(_D_ALLOC_NAMLEN(de), '\0');
-		std::string basename(de->d_name, strnlen(de->d_name, _D_ALLOC_NAMLEN(de)));
+		std::string basename(de->d_name, std::strnlen(de->d_name, _D_ALLOC_NAMLEN(de)));
 #else
 		// All we have is a null-terminated d_name.
 		std::string basename(de->d_name);

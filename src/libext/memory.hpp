@@ -144,7 +144,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 				/// @todo This depends on GCC's definition of __m128i as a vector of 2 long longs.
 				uint32_t esi = xmm0[0];
 
-				auto fsb = findfirstsetbit(esi);
+				auto fsb = find_first_set_bit(esi);
 				if(fsb && ((fsb-1) + pattlen <= 16))
 				{
 					// Found a full match.
