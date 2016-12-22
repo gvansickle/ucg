@@ -27,7 +27,7 @@
 /**
  * Function template implementing a double-checked lock.
  *
- * @param wrap          An instance of ats::atomic<ReturnType>.
+ * @param wrap          An instance of std::atomic<ReturnType>.
  * @param mutex
  * @param cache_filler
  * @return
@@ -61,6 +61,40 @@ ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, MutexType &mutex, CacheFil
 	return temp_retval;
 }
 
+
+/**
+ * Function template implementing a double-checked lock protecting multiple subsets of objects.
+ *
+ * @param wrap          An instance of std::atomic<BitmaskType>.
+ * @param mutex
+ * @param cache_filler
+ * @return
+ */
+template < typename BitmaskType,
+	BitmaskType NullVal = 0,
+	typename AtomicTypeWrapper = std::atomic<BitmaskType>,
+	typename CacheFillerType = std::function<BitmaskType()>&,
+	typename MutexType = std::mutex >
+void DoubleCheckedMultiLock(AtomicTypeWrapper &wrap, const BitmaskType bits, MutexType &mutex, CacheFillerType cache_filler)
+{
+	BitmaskType temp_retval = wrap.load(std::memory_order_relaxed) & bits;
+	std::atomic_thread_fence(std::memory_order_acquire);  	// Guaranteed to observe everything done in another thread before
+			 	 	 	 	 	 	 	 	 	 	 	 	// the std::atomic_thread_fence(std::memory_order_release) below.
+	if(temp_retval == NullVal)
+	{
+		// First check says we don't have the cached value yet.
+		std::unique_lock<MutexType> lock(mutex);
+		// One more try.
+		temp_retval = wrap.load(std::memory_order_relaxed) & bits;
+		if(temp_retval == NullVal)
+		{
+			// Still no cached value.  We'll have to do the heavy lifting.
+			temp_retval = cache_filler();
+			std::atomic_thread_fence(std::memory_order_release);
+			wrap.fetch_or(temp_retval, std::memory_order_relaxed);
+		}
+	}
+}
 
 template <typename T, typename Lambda = std::function<T(T&)>&>
 void com_exch_loop(std::atomic<T> &atomic_var, Lambda val_changer)

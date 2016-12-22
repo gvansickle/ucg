@@ -91,7 +91,7 @@ enum FileCreationFlag : int
 	FCF_DIRECTORY = O_DIRECTORY,//!< FCF_DIRECTORY
 	FCF_NOCTTY = O_NOCTTY,      //!< FCF_NOCTTY
 	FCF_NOFOLLOW = O_NOFOLLOW,  //!< FCF_NOFOLLOW
-	FCF_NOATIME = O_NOATIME,		//!< FCF_NOATIME
+	FCF_NOATIME = O_NOATIME,	//!< FCF_NOATIME
 	FCF_NONBLOCK = O_NONBLOCK,
 };
 
@@ -123,10 +123,26 @@ private:
 	/// Mutex for locking in copy and move constructors, other operations.
 	mutable MutexType m_mutex;
 
-	mutable std::atomic<FileDescriptor*> m_file_descriptor_witness {nullptr};
-	mutable std::atomic<void*> m_dev_ino_witness {nullptr};
-	mutable std::atomic<void*> m_stat_info_witness {nullptr};
-	mutable std::atomic<std::string*> m_path_witness {nullptr};
+public: // To allow access from impl.
+
+	enum IsValid
+	{
+		NONE = 0,
+		FILE_DESC = 1,
+		UUID = 2, ///< i.e. dev/ino.
+		STATINFO = 4,
+		TYPE = 8,
+		PATH = 16,
+	};
+
+private:
+
+	mutable std::atomic_uint_fast8_t m_valid_bits { NONE };
+
+	//mutable std::atomic<FileDescriptor*> m_file_descriptor_witness {nullptr};
+	//mutable std::atomic<void*> m_dev_ino_witness {nullptr};
+	//mutable std::atomic<void*> m_stat_info_witness {nullptr};
+	//mutable std::atomic<std::string*> m_path_witness {nullptr};
 
 public:
 
@@ -245,6 +261,8 @@ public:
 
 std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid);
 
+inline FileID::IsValid operator|(FileID::IsValid a, FileID::IsValid b) { return (FileID::IsValid)((int)a | (int)b) ; };
+
 static_assert(std::is_assignable<FileID, FileID>::value, "FileID must be assignable to itself.");
 static_assert(std::is_copy_assignable<FileID>::value, "FileID must be copy assignable to itself.");
 static_assert(std::is_move_assignable<FileID>::value, "FileID must be move assignable to itself.");
@@ -285,7 +303,7 @@ public:
 	/// Resolve and cache this FileID's path.  Recursively visits its parent directories to do so.
 	const std::string& ResolvePath() const;
 
-	const FileDescriptor* GetFileDescriptor();
+	FileID::IsValid GetFileDescriptor();
 
 	FileType GetFileType() const noexcept
 	{
@@ -314,7 +332,7 @@ public:
 
 //private:
 
-	void* LazyLoadStatInfo() const noexcept;
+	FileID::IsValid LazyLoadStatInfo() const noexcept;
 
 	void SetStatInfo(const struct stat &stat_buf) const noexcept;
 
