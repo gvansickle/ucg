@@ -273,7 +273,7 @@ const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, s
 		if(match_bitmask > 0)
 		{
 			// Find the first bit set.
-			auto lowest_bit = findfirstsetbit(match_bitmask);
+			auto lowest_bit = find_first_set_bit(match_bitmask);
 			if(lowest_bit > 0 && (i + lowest_bit - 1 < len))
 			{
 				return std::min(cbegin + i + lowest_bit - 1, cbegin + len);

@@ -74,7 +74,7 @@ std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_reg;
 std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_dir;
 std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_other;
 
-const FileDescriptor* FileID::impl::GetFileDescriptor()
+FileID::IsValid FileID::impl::GetFileDescriptor()
 {
 	if(m_file_descriptor.empty())
 	{
@@ -120,7 +120,7 @@ const FileDescriptor* FileID::impl::GetFileDescriptor()
 		}
 	}
 
-	return &m_file_descriptor;
+	return FileID::FILE_DESC;
 }
 
 void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
@@ -140,12 +140,12 @@ int FileID::impl::TryGetFD() const noexcept
 	return -1;
 }
 
-void* FileID::impl::LazyLoadStatInfo() const noexcept
+FileID::IsValid FileID::impl::LazyLoadStatInfo() const noexcept
 {
 	if(m_stat_info_valid)
 	{
 		// Already set.
-		return (void*)1;
+		return FileID::UUID | FileID::STATINFO | FileID::TYPE;
 	}
 
 	// We don't have stat info and now we need it.
@@ -170,7 +170,7 @@ void* FileID::impl::LazyLoadStatInfo() const noexcept
 		m_file_type = FT_STAT_FAILED;
 	}
 
-	return (void*)1;
+	return FileID::UUID | FileID::STATINFO | FileID::TYPE;
 }
 
 void FileID::impl::SetStatInfo(const struct stat &stat_buf) const noexcept
@@ -283,7 +283,8 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	// basename is a file relative to at_dir_fileid, and we also have stat info for it.
 	if(stat_buf != nullptr)
 	{
-		m_stat_info_witness.store((void*)1);
+		//m_stat_info_witness.store((void*)1);
+		m_valid_bits.fetch_or(UUID | STATINFO | TYPE);
 	}
 }
 
@@ -306,7 +307,8 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 
 	if(is_pathname_absolute(pathname))
 	{
-		m_path_witness.store(&m_pimpl->m_path);
+		//m_path_witness.store(&m_pimpl->m_path);
+		m_valid_bits.fetch_or(PATH);
 	}
 }
 
@@ -326,9 +328,13 @@ FileID& FileID::operator=(const FileID& other)
 		LOG(DEBUG) << "COPY ASSIGN";
 		m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
 
+		m_valid_bits = other.m_valid_bits.load();
+		/**
+		 *
 		m_file_descriptor_witness = other.m_file_descriptor_witness.load();
 		m_stat_info_witness = other.m_stat_info_witness.load();
 		m_path_witness = other.m_path_witness.load();
+		*/
 	}
 	return *this;
 };
@@ -343,9 +349,12 @@ FileID& FileID::operator=(FileID&& other)
 		std::lock(this_lock, other_lock);
 
 		m_pimpl = std::move(other.m_pimpl);
+		m_valid_bits = other.m_valid_bits.load();
+		/**
 		m_file_descriptor_witness = other.m_file_descriptor_witness.load();
 		m_stat_info_witness = other.m_stat_info_witness.load();
 		m_path_witness = other.m_path_witness.load();
+		*/
 	}
 	return *this;
 };
@@ -365,33 +374,31 @@ std::string FileID::GetBasename() const noexcept
 
 const std::string& FileID::GetPath() const noexcept
 {
-	return *DoubleCheckedLock<std::string*>(m_path_witness, m_mutex, [this](){ return (std::string*)&(m_pimpl->ResolvePath()); });
+	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, PATH, m_mutex, [this](){ m_pimpl->ResolvePath(); return PATH; });
+	return m_pimpl->m_path;
 }
 
 FileType FileID::GetFileType() const noexcept
 {
-	/// @todo Not reliant on stat, could be optimized.
-	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, TYPE, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_file_type;
 }
 
 off_t FileID::GetFileSize() const noexcept
 {
-	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, STATINFO, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_size;
 };
 
 blksize_t FileID::GetBlockSize() const noexcept
 {
-	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, STATINFO, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_block_size;
 };
 
 const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
-	/// @todo This is not necessarily dependent on stat info, could be optimized.
-
-	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo();});
+	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, UUID, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo();});
 	return m_pimpl->m_unique_file_identifier;
 }
 
@@ -455,28 +462,29 @@ void FileID::CloseDir(DIR *d)
 
 const FileDescriptor& FileID::GetFileDescriptor()
 {
-	return *DoubleCheckedLock<FileDescriptor*>(m_file_descriptor_witness, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
+	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, FILE_DESC, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
+	return m_pimpl->m_file_descriptor;
 }
 
 dev_t FileID::GetDev() const noexcept
 {
-	//WriterLock wl(m_mutex);
-	//return m_pimpl->GetDev();
-	DoubleCheckedLock<void*>(m_stat_info_witness, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
-
+	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, UUID, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_dev;
 }
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
-	WriterLock wl(m_mutex);
-	m_pimpl->SetDevIno(d, i);
+	//WriterLock wl(m_mutex);
+	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, UUID, m_mutex,
+			[&](){ m_pimpl->SetDevIno(d, i); return UUID; });
 }
 
 void FileID::SetStatInfo(const struct stat &stat_buf) noexcept
 {
-	WriterLock wl(m_mutex);
-	m_pimpl->SetStatInfo(stat_buf);
+	//WriterLock wl(m_mutex);
+	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, STATINFO, m_mutex,
+			[&](){ m_pimpl->SetStatInfo(stat_buf); return UUID | STATINFO | TYPE; });
+	//m_pimpl->SetStatInfo(stat_buf);
 }
 
 
