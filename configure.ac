@@ -316,7 +316,7 @@ PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 
 #PKG_CHECK_MODULES([EXPLAIN], [libexplain])
 
-PKG_CHECK_MODULES([JEMALLOC], [jemalloc])
+PKG_CHECK_MODULES([JEMALLOC], [jemalloc], [AC_SUBST([HAVE_JEMALLOC], [yes])], [AC_SUBST([HAVE_JEMALLOC], [no])])
 
 AC_LANG_POP([C++])
 
@@ -683,6 +683,10 @@ $(echo | $CXXCPP -v -x c++ - 2>&1 | $SED -n '/^ *#include/,/^ *End of/ p' | $SED
   ---------
   HAVE_LIBPCRE                $HAVE_LIBPCRE
   HAVE_LIBPCRE2               $HAVE_LIBPCRE2
+
+  jemalloc info
+  -------------
+  HAVE_JEMALLOC               $HAVE_JEMALLOC
 
   libtool info
   ------------
