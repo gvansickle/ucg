@@ -45,8 +45,8 @@ DirTree::DirTree(sync_queue<file_queue_element_type>& output_queue,
 		const file_basename_filter_type &file_basename_filter,
 		const dir_basename_filter_type &dir_basename_filter,
 		bool follow_symlinks)
-	: m_out_queue(output_queue), m_file_basename_filter(file_basename_filter), m_dir_basename_filter(dir_basename_filter),
-	  m_follow_symlinks(follow_symlinks)
+	: m_follow_symlinks(follow_symlinks), m_out_queue(output_queue),
+	  m_file_basename_filter(file_basename_filter), m_dir_basename_filter(dir_basename_filter)
 {
 	m_dir_has_been_visited.reserve(M_INITIAL_NUM_DIR_ESTIMATE);
 }

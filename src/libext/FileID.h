@@ -139,11 +139,6 @@ private:
 
 	mutable std::atomic_uint_fast8_t m_valid_bits { NONE };
 
-	//mutable std::atomic<FileDescriptor*> m_file_descriptor_witness {nullptr};
-	//mutable std::atomic<void*> m_dev_ino_witness {nullptr};
-	//mutable std::atomic<void*> m_stat_info_witness {nullptr};
-	//mutable std::atomic<std::string*> m_path_witness {nullptr};
-
 public:
 
 	/// pImpl forward declaration.
@@ -261,7 +256,7 @@ public:
 
 std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid);
 
-inline FileID::IsValid operator|(FileID::IsValid a, FileID::IsValid b) { return (FileID::IsValid)((int)a | (int)b) ; };
+constexpr inline FileID::IsValid operator|(FileID::IsValid a, FileID::IsValid b) { return (FileID::IsValid)((int)a | (int)b) ; };
 
 static_assert(std::is_assignable<FileID, FileID>::value, "FileID must be assignable to itself.");
 static_assert(std::is_copy_assignable<FileID>::value, "FileID must be copy assignable to itself.");
