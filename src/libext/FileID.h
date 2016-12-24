@@ -300,17 +300,6 @@ public:
 
 	FileID::IsValid GetFileDescriptor();
 
-	FileType GetFileType() const noexcept
-	{
-		if(m_file_type == FT_UNINITIALIZED)
-		{
-			// We don't know the file type yet.  We'll have to get it from a stat() call.
-			LazyLoadStatInfo();
-		}
-
-		return m_file_type;
-	};
-
 //protected:
 	std::ostream& dump_stats(std::ostream &ostrm, const FileID::impl &impl)
 	{

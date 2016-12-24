@@ -1,5 +1,6 @@
 prog_id,exename,supports_pcre,pre_options,opt_dirjobs,opt_scanjobs,opt_exclude_dir_literal,opt_only_cpp
 built_ucg,ucg,true,--noenv,--dirjobs=,-j,--ignore-dir=,only_cpp_ack
+built_ucg,ucg,true,--noenv --dirjobs=2,--dirjobs=,-j,--ignore-dir=,only_cpp_ack
 inst_ucg,${PROG_INST_UCG},true,--noenv,--dirjobs=,-j,--ignore-dir=,only_cpp_ack
 fake_for_test,nosuchprog,true,-Abc,,,--exclude-dir=,only_cpp_ack
 inst_ag,${PROG_INST_AG},true,,,,--ignore-dir=,only_cpp_ack
