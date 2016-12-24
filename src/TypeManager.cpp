@@ -137,7 +137,7 @@ bool TypeManager::FileShouldBeScanned(const name_string_type& name) const noexce
 {
 	// Find the name's extension.
 	auto last_period_offset = name.find_last_of('.');
-	auto last_period = last_period_offset == name_string_type::npos ? name.cend() : name.cbegin() + last_period_offset;
+	auto last_period = (last_period_offset == name_string_type::npos) ? name.cend() : name.cbegin() + last_period_offset;
 	if(last_period != name.cend())
 	{
 		// There was a period, might be an extension.
@@ -150,7 +150,7 @@ bool TypeManager::FileShouldBeScanned(const name_string_type& name) const noexce
 
 			if(ext_plus_period_size <= microstring().max_size()+1)
 			{
-				// Use the 4-byte fast map.
+				// Use the 8-byte microstring fast map.
 				microstring mext(last_period+1, name.end());
 				include_it = std::binary_search(m_fast_include_extensions.cbegin(), m_fast_include_extensions.cend(), mext);
 			}
