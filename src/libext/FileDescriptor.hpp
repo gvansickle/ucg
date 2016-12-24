@@ -24,7 +24,7 @@
 
 #include <future/shared_mutex.hpp>
 
-#include "double_checked_lock.hpp"
+#include "DoubleCheckedLock.hpp"
 #include "Logger.h"
 
 /**
@@ -48,7 +48,7 @@ public:
 
 	explicit FileDescriptor(int fd) noexcept
 	{
-		/// WriterLock wl(m_mutex);  @note I don't see that we need a lock here, it'd be "other" that we would need to lock,
+		/// @note I don't see that we need a lock here, it'd be "other" that we would need to lock,
 		/// and "other" is a raw FD.
 		m_file_descriptor = fd;
 		LOG(DEBUG) << "Explicitly assigned file descriptor: " << m_file_descriptor;
@@ -59,7 +59,6 @@ public:
 	{
 		LOG(DEBUG) << "copy constructor called.";
 
-		//ReaderLock rl(other.m_mutex);
 		DoubleCheckedLock<int, cm_invalid_file_descriptor>(other.m_file_descriptor, m_mutex, [&](){
 			int temp_fd;
 			if(!other.unlocked_empty())
@@ -84,7 +83,6 @@ public:
 	{
 		LOG(DEBUG) << "move constructor called.";
 
-		//WriterLock wl(other.m_mutex);
 		DoubleCheckedLock<int, cm_invalid_file_descriptor>(other.m_file_descriptor, m_mutex, [&](){
 
 			int temp_fd = other.m_file_descriptor;
@@ -104,7 +102,6 @@ public:
 	{
 		// @note No locking here.  If anyone was trying to read or write us, they'd have
 		// to have (possibly shared) ownership (right?), and hence we wouldn't be getting destroyed.
-		//WriterLock wl(m_mutex);
 		LOG(DEBUG) << "DESTRUCTOR, have file descriptor: " << m_file_descriptor;
 		if(!unlocked_empty())
 		{
@@ -185,13 +182,11 @@ public:
 	/// Allow read access to the underlying int.
 	int GetFD() const noexcept
 	{
-		//ReaderLock rl(m_mutex);
 		return m_file_descriptor.load();
 	};
 
 	int GetDupFD() const noexcept
 	{
-		//ReaderLock rl(m_mutex);
 		int retval = dup(m_file_descriptor.load());
 		return retval;
 	}
@@ -199,8 +194,6 @@ public:
 	/// Returns true if this FileDescriptor isn't a valid file descriptor.
 	inline bool empty() const noexcept
 	{
-		//ReaderLock rl(m_mutex);
-		//return unlocked_empty();
 		return m_file_descriptor.load() < 0;
 	}
 

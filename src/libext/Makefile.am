@@ -19,7 +19,8 @@ noinst_LTLIBRARIES = libext.la
 libext_la_SOURCES = \
 	cpuidex.hpp cpuidex.cpp \
 	DirTree.h DirTree.cpp \
-	double_checked_lock.hpp \
+	DoubleCheckedLock.hpp \
+	exception.hpp \
 	FileDescriptor.hpp \
 	FileID.cpp FileID.h \
 	filesystem.hpp \

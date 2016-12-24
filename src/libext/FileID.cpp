@@ -29,11 +29,123 @@
 #include <unistd.h> // For close().
 #include <sys/stat.h>
 
-#include "double_checked_lock.hpp"
+#include "DoubleCheckedLock.hpp"
 
 
-//////////////////////////////////
-///
+/**
+ * pImpl factorization of the FileID class.  This is the unsynchronized "pImpl" part which holds all the data.
+ * It does not concern itself with concurrency issues with respect to copying, moving, or assigning.
+ * As such, its interface is not intended to be directly exposed to the world.
+ * @see FileID
+ */
+class FileID::impl
+{
+public:
+	impl() = default;
+	impl(const impl& other) = default;
+	impl(impl&& other) = default;
+
+	/// Copy assignment.
+	impl& operator=(const impl &other) = default;
+
+	/// Move assignment.
+	impl& operator=(impl&& other) = default;
+
+	/// @name Various non-default constructors.
+	/// @{
+	impl(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
+	impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
+			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
+	///@}
+
+	/// Default destructor.
+	~impl() = default;
+
+	const std::string& GetBasename() const noexcept;
+
+	/// Resolve and cache this FileID's path.  Recursively visits its parent directories to do so.
+	const std::string& ResolvePath() const;
+
+	FileID::IsValid GetFileDescriptor();
+
+//protected:
+	std::ostream& dump_stats(std::ostream &ostrm, const FileID::impl &impl)
+	{
+		return ostrm << "Max descriptors, regular: " << impl.m_atomic_fd_max_reg << "\n"
+				<< "Max descriptors, dir: " << impl.m_atomic_fd_max_dir << "\n"
+				<< "Max descriptors, other: " << impl.m_atomic_fd_max_other << "\n";
+	}
+
+	/**
+	 * If we have a file descriptor already, return it.  Else return -1.
+	 * @return
+	 */
+	int TryGetFD() const noexcept;
+
+//private:
+
+	FileID::IsValid LazyLoadStatInfo() const noexcept;
+
+	void SetStatInfo(const struct stat &stat_buf) const noexcept;
+
+	void SetDevIno(dev_t d, ino_t i) noexcept;
+
+// Data members.
+
+	/// Shared pointer to the directory this FileID is in.
+	/// The constructors ensure that this member always exists and is valid.
+	std::shared_ptr<FileID> m_at_dir;
+
+	/// The basename of this file.
+	/// We define this somewhat differently here: This is either:
+	/// - The full absolute path, or
+	/// - The path relative to m_at_dir, which may consist of more than one path element.
+	/// In any case, it is always equal to the string passed into the constructor, and this will always exist and is valid.
+	std::string m_basename;
+
+	/// The full m_at_dir-relative path to this file.
+	/// This will be lazily evaluated when needed, unless an absolute path is passed in to the constructor.
+	mutable std::string m_path;
+
+	/// Flags to use when we open the file descriptor.
+	mutable int m_open_flags { 0 };
+
+	/// The file descriptor object.
+	mutable FileDescriptor m_file_descriptor {};
+
+	/// @name Info normally gathered from a stat() call.
+	///@{
+	mutable FileType m_file_type { FT_UNINITIALIZED };
+
+	mutable dev_ino_pair m_unique_file_identifier;
+
+	mutable dev_t m_dev { static_cast<dev_t>(-1) };
+
+	/// File size in bytes.
+	mutable off_t m_size { 0 };
+
+	/// The preferred I/O block size for this file.
+	/// @note GNU libc documents the units on this as bytes.
+	mutable blksize_t m_block_size { 0 };
+
+	/// Number of blocks allocated for this file.
+	/// @note POSIX doesn't define the units for this.  Linux is documented to use 512-byte units, as is GNU libc.
+	mutable blkcnt_t m_blocks { 0 };
+	///@}
+
+	// Stats
+	static std::atomic<std::uint64_t> m_atomic_fd_max_reg;
+	static std::atomic<std::uint64_t> m_atomic_fd_max_dir;
+	static std::atomic<std::uint64_t> m_atomic_fd_max_other;
+};
+
+/// @name Compile-time invariants for the UnsynchronizedFileID class.
+/// @{
+static_assert(std::is_assignable<FileID::impl, FileID::impl>::value, "UnsynchronizedFileID must be assignable to itself.");
+static_assert(std::is_copy_assignable<FileID::impl>::value, "UnsynchronizedFileID must be copy assignable to itself.");
+static_assert(std::is_move_assignable<FileID::impl>::value, "UnsynchronizedFileID must be move assignable to itself.");
+/// @}
+
 
 
 FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
@@ -142,12 +254,6 @@ int FileID::impl::TryGetFD() const noexcept
 
 FileID::IsValid FileID::impl::LazyLoadStatInfo() const noexcept
 {
-	if(m_stat_info_valid)
-	{
-		// Already set.
-		return FileID::UUID | FileID::STATINFO | FileID::TYPE;
-	}
-
 	// We don't have stat info and now we need it.
 	// Get it from the filename.
 #pragma GCC diagnostic push
@@ -199,8 +305,6 @@ void FileID::impl::SetStatInfo(const struct stat &stat_buf) const noexcept
 	m_size = stat_buf.st_size;
 	m_block_size = stat_buf.st_blksize;
 	m_blocks = stat_buf.st_blocks;
-
-	m_stat_info_valid = true;
 }
 
 const std::string& FileID::impl::ResolvePath() const
@@ -325,7 +429,6 @@ FileID& FileID::operator=(const FileID& other)
 		WriterLock this_lock(m_mutex, std::defer_lock);
 		ReaderLock other_lock(other.m_mutex, std::defer_lock);
 		std::lock(this_lock, other_lock);
-		LOG(DEBUG) << "COPY ASSIGN";
 		m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
 
 		m_valid_bits = other.m_valid_bits.load();
@@ -345,16 +448,10 @@ FileID& FileID::operator=(FileID&& other)
 	{
 		WriterLock this_lock(m_mutex, std::defer_lock);
 		WriterLock other_lock(other.m_mutex, std::defer_lock);
-		LOG(DEBUG) << "MOVE ASSIGN";
 		std::lock(this_lock, other_lock);
 
 		m_pimpl = std::move(other.m_pimpl);
 		m_valid_bits = other.m_valid_bits.load();
-		/**
-		m_file_descriptor_witness = other.m_file_descriptor_witness.load();
-		m_stat_info_witness = other.m_stat_info_witness.load();
-		m_path_witness = other.m_path_witness.load();
-		*/
 	}
 	return *this;
 };
