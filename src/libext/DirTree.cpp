@@ -45,8 +45,8 @@ DirTree::DirTree(sync_queue<file_queue_element_type>& output_queue,
 		const file_basename_filter_type &file_basename_filter,
 		const dir_basename_filter_type &dir_basename_filter,
 		bool follow_symlinks)
-	: m_out_queue(output_queue), m_file_basename_filter(file_basename_filter), m_dir_basename_filter(dir_basename_filter),
-	  m_follow_symlinks(follow_symlinks)
+	: m_follow_symlinks(follow_symlinks), m_out_queue(output_queue),
+	  m_file_basename_filter(file_basename_filter), m_dir_basename_filter(dir_basename_filter)
 {
 	m_dir_has_been_visited.reserve(M_INITIAL_NUM_DIR_ESTIMATE);
 }
@@ -154,13 +154,13 @@ void DirTree::ReaddirLoop(int dirjob_num)
 	while(m_dir_queue.wait_pull(std::move(dse)) != queue_op_status::closed)
 	{
 		LOG(DEBUG) << "Examining files in directory '" << dse->GetPath() << "'";
-		//int open_at_fd = dse->GetFileDescriptor().GetDupFD();
-		//d = fdopendir(open_at_fd);
+
+		// Get a DIR* representing the directory specified by dse.
 		d = dse->OpenDir();
 		if(d == nullptr)
 		{
 			// At a minimum, this wasn't a directory.
-			WARN() << "fdopendir() failed on path " << dse->GetBasename() << ": " << LOG_STRERROR();
+			WARN() << "OpenDir() failed on path " << dse->GetBasename() << ": " << LOG_STRERROR();
 			continue;
 		}
 
@@ -172,6 +172,7 @@ void DirTree::ReaddirLoop(int dirjob_num)
 			}
 		} while(dp != NULL);
 
+		// Check if readdir is just done with this directory, or encountered an error.
 		if(errno != 0)
 		{
 			WARN() << "Could not read directory: " << LOG_STRERROR(errno) << ". Skipping.";
@@ -179,7 +180,6 @@ void DirTree::ReaddirLoop(int dirjob_num)
 		}
 
 		dse->CloseDir(d);
-		//closedir(d);
 	}
 
 	m_stats += stats;
@@ -210,7 +210,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 	}
 	if(!is_unknown)
 	{
-		// We know the type.
+		// We know the type from the dirent.
 		stats.m_num_filetype_without_stat++;
 	}
 #endif
@@ -252,7 +252,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 			is_unknown = false;
 		}
 
-		// Capture the stat info in the FileID object we create below.
+		// Capture the stat info we just got for the FileID object we'll create below.
 		statbuff_ptr = &statbuf;
 	}
 

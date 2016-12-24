@@ -445,11 +445,11 @@ DIR *FileID::OpenDir()
 	int dirfd {0};
 	if(fd < 0)
 	{
-		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOCTTY | O_DIRECTORY);
+		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY | O_NONBLOCK);
 	}
 	else
 	{
-		// We already had a file descriptor.  Dup it, because fdopendir() takes ownership of it.
+		// We already have a file descriptor.  Dup it, because fdopendir() takes ownership of it.
 		dirfd = dup(fd);
 	}
 	return fdopendir(dirfd);
@@ -474,17 +474,14 @@ dev_t FileID::GetDev() const noexcept
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
-	//WriterLock wl(m_mutex);
 	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, UUID, m_mutex,
 			[&](){ m_pimpl->SetDevIno(d, i); return UUID; });
 }
 
 void FileID::SetStatInfo(const struct stat &stat_buf) noexcept
 {
-	//WriterLock wl(m_mutex);
 	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, STATINFO, m_mutex,
 			[&](){ m_pimpl->SetStatInfo(stat_buf); return UUID | STATINFO | TYPE; });
-	//m_pimpl->SetStatInfo(stat_buf);
 }
 
 

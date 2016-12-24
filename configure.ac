@@ -144,6 +144,11 @@ AS_IF([test "x$HAVE_CXX1Z" = "x0"],
 	AS_IF([test "x$HAVE_CXX14" != "x1"],
 		[AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])], [])
 ], [])
+
+# @note For gcc's stdlibc++, see <https://gcc.gnu.org/onlinedocs/libstdc++/manual/using.html#manual.intro.using.flags>
+# for the full list of flags necessary for it to support the various dialects.  The '-std=' value determined above
+# covers most of it.
+
 AC_LANG_POP([C++])
 
 AC_PROG_INSTALL
@@ -316,7 +321,7 @@ PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 
 #PKG_CHECK_MODULES([EXPLAIN], [libexplain])
 
-PKG_CHECK_MODULES([JEMALLOC], [jemalloc])
+PKG_CHECK_MODULES([JEMALLOC], [jemalloc], [AC_SUBST([HAVE_JEMALLOC], [yes])], [AC_SUBST([HAVE_JEMALLOC], [no])])
 
 AC_LANG_POP([C++])
 
@@ -451,6 +456,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 	[# Not defined, define a substitute in config.h.
 	AC_MSG_RESULT([no])
 	AC_DEFINE([__has_include(h)], [0], [Defined to a dummy replacement if __has_include() doesn't exist.])
+	AC_DEFINE([HAVE_NOOP_HAS_INCLUDE], [1], [Defined to 1 if we've backfilled __has_include() to an always-0 macro.])
 	])
 
 #
@@ -683,6 +689,10 @@ $(echo | $CXXCPP -v -x c++ - 2>&1 | $SED -n '/^ *#include/,/^ *End of/ p' | $SED
   ---------
   HAVE_LIBPCRE                $HAVE_LIBPCRE
   HAVE_LIBPCRE2               $HAVE_LIBPCRE2
+
+  jemalloc info
+  -------------
+  HAVE_JEMALLOC               $HAVE_JEMALLOC
 
   libtool info
   ------------
