@@ -41,7 +41,7 @@
 /// m_dir_has_been_visited will resize/rehash if it needs more space.
 constexpr auto M_INITIAL_NUM_DIR_ESTIMATE = 10000;
 
-DirTree::DirTree(sync_queue<file_queue_element_type>& output_queue,
+DirTree::DirTree(sync_queue<std::shared_ptr<FileID>>& output_queue,
 		const file_basename_filter_type &file_basename_filter,
 		const dir_basename_filter_type &dir_basename_filter,
 		bool follow_symlinks)
@@ -259,7 +259,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 	// Is the file type still unknown?
 	if(is_unknown)
 	{
-		WARN() << "cannot determine file type: " << dname << ", " << statbuf.st_mode << '\n';
+		WARN() << "cannot determine file type: " << dname << ", " << statbuf.st_mode;
 		return;
 	}
 
@@ -285,7 +285,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 
 				LOG(INFO) << "... should be scanned.";
 
-				std::shared_ptr<FileID> file_to_scan {std::make_shared<FileID>(FileID(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG))};
+				std::shared_ptr<FileID> file_to_scan = std::make_shared<FileID>(FileID(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG));
 				if(statbuff_ptr == nullptr)
 				{
 					file_to_scan->SetDevIno(dse->GetDev(), current_dirent->d_ino);
@@ -316,26 +316,26 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				return;
 			}
 
-			FileID dir_atfd(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_DIR);
+			auto dir_atfd = std::make_shared<FileID>(FileID(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_DIR));
 			if(statbuff_ptr == nullptr)
 			{
-				dir_atfd.SetDevIno(dse->GetDev(), current_dirent->d_ino);
+				dir_atfd->SetDevIno(dse->GetDev(), current_dirent->d_ino);
 			}
-			dir_atfd.SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
+			dir_atfd->SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
 
 			if(m_follow_symlinks)
 			{
 				// We have to detect any symlink cycles ourselves.
-				if(HasDirBeenVisited(dir_atfd.GetUniqueFileIdentifier()))
+				if(HasDirBeenVisited(dir_atfd->GetUniqueFileIdentifier()))
 				{
 					// Found cycle.
-					WARN() << "'" << dir_atfd.GetPath() << "': already visited this directory, possible recursive directory loop?";
+					WARN() << "'" << dir_atfd->GetPath() << "': already visited this directory, possible recursive directory loop?";
 					stats.m_num_dirs_rejected++;
 					return;
 				}
 			}
 
-			m_dir_queue.wait_push(std::make_shared<FileID>(std::move(dir_atfd)));
+			m_dir_queue.wait_push(std::move(dir_atfd));
 		}
 		else if(is_symlink)
 		{

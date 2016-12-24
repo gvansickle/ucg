@@ -98,7 +98,6 @@ private:
 #undef M_STATLIST
 };
 
-using file_queue_element_type = std::shared_ptr<FileID>;
 
 /**
  * Directory tree traversal class.
@@ -107,16 +106,21 @@ class DirTree
 {
 public:
 	/// Type of the file and directory include/exclude predicates.
-	using filter_string_type = std::string;
-	using file_basename_filter_type = std::function<bool (const filter_string_type& name) noexcept>;
+	using file_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
 	using dir_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
 
-	DirTree(sync_queue<file_queue_element_type>& output_queue,
+	DirTree(sync_queue<std::shared_ptr<FileID>>& output_queue,
 			const file_basename_filter_type &file_basename_filter,
 			const dir_basename_filter_type &dir_basename_filter,
 			bool follow_symlinks);
 	~DirTree();
 
+	/**
+	 * Begin the directory tree traversal, starting with the given #start_paths.
+	 *
+	 * @param start_paths
+	 * @param dirjobs
+	 */
 	void Scandir(std::vector<std::string> start_paths, int dirjobs);
 
 private:
@@ -124,13 +128,13 @@ private:
 	/// Flag indicating whether we should traverse symlinks or not.
 	bool m_follow_symlinks { false };
 
-	int m_dirjobs {2};
+	int m_dirjobs {4};
 
 	/// Directory queue.  Used internally.
 	sync_queue<std::shared_ptr<FileID>> m_dir_queue;
 
 	/// File output queue.
-	sync_queue<file_queue_element_type>& m_out_queue;
+	sync_queue<std::shared_ptr<FileID>>& m_out_queue;
 
 	file_basename_filter_type m_file_basename_filter;
 	dir_basename_filter_type m_dir_basename_filter;
