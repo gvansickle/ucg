@@ -33,7 +33,14 @@ line 6
 (cd dir1/dir3 && $TEST_LN_S ../dir2 link_to_dir2)
 ])
 
-# Macro which creates a normal directory tree.
+# m4 macro which creates a normal directory tree.
+# The tree looks like this:
+# dir1
+# ├── dir2
+# │   └── file1.py
+# └── dir3
+#     └── file1.s
+#
 m4_define([UCG_CREATE_NORMAL_DIRTREE], [
 AS_MKDIR_P([dir1/dir2])
 AS_MKDIR_P([dir1/dir3])
@@ -190,3 +197,22 @@ AT_CHECK([cat expout | LCT], [0], [3], [ignore])
 AT_CHECK([cat stderr | $EGREP 'ucg:.*nosuchdir.*[[Nn]]o such file or directory'], [0], [stdout], [stderr])
 
 AT_CLEANUP
+
+
+###
+### Normal directory tree, multithreaded, --no-recurse, physical traversal.
+###
+AT_SETUP([Normal tree, mt, no recurse, physical])
+
+# Create the directory tree.
+UCG_CREATE_NORMAL_DIRTREE
+AT_CHECK([cp dir1/dir2/file1.py dir1/file1a.py], [0])
+
+# Match against egrep.
+AT_CHECK([$EGREP -n -H 'line' dir1/*.py | sort > expout], [0], [stdout], [stderr])
+AT_CAPTURE_FILE([expout])
+
+AT_CHECK([ucg --noenv --dirjobs=3 --no-recurse 'line' dir1 | sort], [0], [expout], [stderr])
+
+AT_CLEANUP
+

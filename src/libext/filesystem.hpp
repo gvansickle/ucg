@@ -338,7 +338,7 @@ inline std::string clean_up_path(const std::string &path) noexcept
 	if(dir.empty() || dir == ".")
 	{
 		// There is no "dir" component.  If dirname() finds no slashes in the path,
-		// it returns a ".".  We don't want to append a "./" to the name, so we just return the basename.
+		// it returns a ".".  We don't want to prepend a "./" to the name, so we just return the basename.
 		// Note that GNU grep does not appear to do this; all paths it prints look like they're dirname()+"/"+basename().
 		// ag and ack however do appear to be doing this "empty dirname() elision".
 		return base;

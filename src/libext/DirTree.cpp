@@ -89,6 +89,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		}
 		case FT_DIR:
 		{
+			// Explicitly not filtering nor obeying no-recurse for dirs specified on command line.
 			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
 			m_dir_queue.wait_push(file_or_dir);
 			break;
@@ -309,7 +310,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 			LOG(INFO) << "... directory.";
 			stats.m_num_directories_found++;
 
-			if(m_dir_basename_filter(basename))
+			if(!m_recurse || m_dir_basename_filter(basename))
 			{
 				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 				LOG(INFO) << "... should be ignored.";
