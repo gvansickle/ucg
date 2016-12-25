@@ -285,7 +285,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 
 				LOG(INFO) << "... should be scanned.";
 
-				std::shared_ptr<FileID> file_to_scan = std::make_shared<FileID>(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG);
+				std::shared_ptr<FileID> file_to_scan = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, basename, statbuff_ptr, FT_REG);
 				if(statbuff_ptr == nullptr)
 				{
 					file_to_scan->SetDevIno(dse->GetDev(), current_dirent->d_ino);
@@ -316,7 +316,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				return;
 			}
 
-			auto dir_atfd = std::make_shared<FileID>(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_DIR);
+			auto dir_atfd = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, basename, statbuff_ptr, FT_DIR);
 			if(statbuff_ptr == nullptr)
 			{
 				dir_atfd->SetDevIno(dse->GetDev(), current_dirent->d_ino);

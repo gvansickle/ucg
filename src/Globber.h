@@ -28,7 +28,6 @@
 #include <set>
 #include <string>
 #include <thread>
-#include <atomic>
 #include <libext/filesystem.hpp>
 #include "libext/FileID.h"
 #include "sync_queue_impl_selector.h"
@@ -123,8 +122,6 @@ private:
 	/// Vector of the paths which the user gave on the command line.
 	std::vector<std::string> m_start_paths;
 
-	std::atomic<size_t> m_num_start_paths_remaining;
-
 	/// Reference to the TypeManager which will be used to include or exclude the files we find during the traversal.
 	TypeManager &m_type_manager;
 
@@ -135,21 +132,9 @@ private:
 
 	bool m_follow_symlinks;
 
-	bool m_using_nostat {false};
-
 	int m_dirjobs;
 
 	sync_queue<std::shared_ptr<FileID>>& m_out_queue;
-
-	std::mutex m_dir_mutex;
-	std::set<dev_ino_pair> m_dir_has_been_visited;
-	bool HasDirBeenVisited(dev_ino_pair di)
-	{
-		std::unique_lock<std::mutex> lock(m_dir_mutex);
-		return !m_dir_has_been_visited.insert(di).second;
-	};
-
-	DirectoryTraversalStats m_traversal_stats;
 };
 
 

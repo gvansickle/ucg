@@ -52,7 +52,6 @@ Globber::Globber(std::vector<std::string> start_paths,
 		int dirjobs,
 		sync_queue<std::shared_ptr<FileID>>& out_queue)
 		: m_start_paths(start_paths),
-		  m_num_start_paths_remaining(start_paths.size()),
 		  m_type_manager(type_manager),
 		  m_dir_inc_manager(dir_inc_manager),
 		  m_recurse_subdirs(recurse_subdirs),
