@@ -112,6 +112,7 @@ public:
 	DirTree(sync_queue<std::shared_ptr<FileID>>& output_queue,
 			const file_basename_filter_type &file_basename_filter,
 			const dir_basename_filter_type &dir_basename_filter,
+			bool recurse,
 			bool follow_symlinks);
 	~DirTree();
 
@@ -124,6 +125,9 @@ public:
 	void Scandir(std::vector<std::string> start_paths, int dirjobs);
 
 private:
+
+	/// Flag indicating whether to recurse into subdirectories.
+	bool m_recurse {true};
 
 	/// Flag indicating whether we should traverse symlinks or not.
 	bool m_follow_symlinks { false };
