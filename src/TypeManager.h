@@ -174,6 +174,7 @@ private:
 	/// CompileTypeTables() after all config file and command-line processing is complete.
 	/// @{
 
+	/// File extensions in microstring format, which can be binary searched quickly.
 	std::vector<microstring> m_fast_include_extensions;
 
 	/// File extensions which will be examined.  Maps to file type.

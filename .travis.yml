@@ -21,7 +21,9 @@ matrix:
         - os: linux
           compiler: clang
         - os: osx
-          osx_image: xcode8
+          osx_image: xcode8.2
+        - os: osx
+          osx_image: xcode8.1
         - os: osx
           osx_image: xcode8
           env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z'
@@ -30,10 +32,6 @@ matrix:
           env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
         - os: osx
           osx_image: xcode7.3
-        - os: osx
-          osx_image: xcode7.2
-        - os: osx
-          osx_image: xcode7
         - os: osx
           osx_image: xcode6.4
           env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z'
