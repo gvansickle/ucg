@@ -25,23 +25,12 @@
 
 #include <libext/DirTree.h>
 
-
-#include <iomanip>
 #include "TypeManager.h"
 #include "DirInclusionManager.h"
 
-#include <dirent.h>
-#include <fcntl.h>
 #include <libext/Logger.h>
-#include <unistd.h>
-#include <cstring>
-#include <iostream>
-#include <utility>
-#include <system_error>
+
 #include <string>
-#include <cstring>
-#include <algorithm>
-#include <libext/string.hpp>
 
 
 Globber::Globber(std::vector<std::string> start_paths,
@@ -52,7 +41,6 @@ Globber::Globber(std::vector<std::string> start_paths,
 		int dirjobs,
 		sync_queue<std::shared_ptr<FileID>>& out_queue)
 		: m_start_paths(start_paths),
-		  m_num_start_paths_remaining(start_paths.size()),
 		  m_type_manager(type_manager),
 		  m_dir_inc_manager(dir_inc_manager),
 		  m_recurse_subdirs(recurse_subdirs),
@@ -68,7 +56,7 @@ void Globber::Run()
 	auto file_basename_filter = [this](const std::string &basename) noexcept { return m_type_manager.FileShouldBeScanned(basename); };
 	auto dir_basename_filter = [this](const std::string &basename) noexcept { return m_dir_inc_manager.DirShouldBeExcluded(basename); };
 
-	DirTree dt(m_out_queue, file_basename_filter, dir_basename_filter, m_follow_symlinks);
+	DirTree dt(m_out_queue, file_basename_filter, dir_basename_filter, m_recurse_subdirs, m_follow_symlinks);
 
 	dt.Scandir(m_start_paths, m_dirjobs);
 

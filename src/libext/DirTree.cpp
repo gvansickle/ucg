@@ -44,8 +44,9 @@ constexpr auto M_INITIAL_NUM_DIR_ESTIMATE = 10000;
 DirTree::DirTree(sync_queue<std::shared_ptr<FileID>>& output_queue,
 		const file_basename_filter_type &file_basename_filter,
 		const dir_basename_filter_type &dir_basename_filter,
+		bool recurse,
 		bool follow_symlinks)
-	: m_follow_symlinks(follow_symlinks), m_out_queue(output_queue),
+	: m_recurse(recurse), m_follow_symlinks(follow_symlinks), m_out_queue(output_queue),
 	  m_file_basename_filter(file_basename_filter), m_dir_basename_filter(dir_basename_filter)
 {
 	m_dir_has_been_visited.reserve(M_INITIAL_NUM_DIR_ESTIMATE);
@@ -88,6 +89,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		}
 		case FT_DIR:
 		{
+			// Explicitly not filtering nor obeying no-recurse for dirs specified on command line.
 			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
 			m_dir_queue.wait_push(file_or_dir);
 			break;
@@ -285,7 +287,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 
 				LOG(INFO) << "... should be scanned.";
 
-				std::shared_ptr<FileID> file_to_scan = std::make_shared<FileID>(FileID(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_REG));
+				std::shared_ptr<FileID> file_to_scan = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, basename, statbuff_ptr, FT_REG);
 				if(statbuff_ptr == nullptr)
 				{
 					file_to_scan->SetDevIno(dse->GetDev(), current_dirent->d_ino);
@@ -293,7 +295,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				file_to_scan->SetFileDescriptorMode(FAM_RDONLY, FCF_NOCTTY | FCF_NOATIME);
 
 				// Queue it up.
-				m_out_queue.wait_push(file_to_scan);
+				m_out_queue.wait_push(std::move(file_to_scan));
 
 				// Count the number of files we found that were included in the search.
 				stats.m_num_files_scanned++;
@@ -308,7 +310,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 			LOG(INFO) << "... directory.";
 			stats.m_num_directories_found++;
 
-			if(m_dir_basename_filter(basename))
+			if(!m_recurse || m_dir_basename_filter(basename))
 			{
 				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 				LOG(INFO) << "... should be ignored.";
@@ -316,7 +318,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				return;
 			}
 
-			auto dir_atfd = std::make_shared<FileID>(FileID(FileID::path_known_relative, dse, basename, statbuff_ptr, FT_DIR));
+			auto dir_atfd = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, basename, statbuff_ptr, FT_DIR);
 			if(statbuff_ptr == nullptr)
 			{
 				dir_atfd->SetDevIno(dse->GetDev(), current_dirent->d_ino);

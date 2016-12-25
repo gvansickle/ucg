@@ -22,14 +22,8 @@
 
 #include <config.h>
 
-#include <iostream>
-
 #include <vector>
-#include <set>
 #include <string>
-#include <thread>
-#include <atomic>
-#include <libext/filesystem.hpp>
 #include "libext/FileID.h"
 #include "sync_queue_impl_selector.h"
 
@@ -37,69 +31,6 @@
 // Forward decls.
 class TypeManager;
 class DirInclusionManager;
-
-
-/**
- * Helper class to collect up and communicate directory tree traversal stats.
- * The idea is that each thread will maintain its own instance of this class,
- * and only when that thread is complete will it add its statistics to a single, "global"
- * instance.  This avoids any locking concerns other than at that final, one-time sum.
- */
-class DirectoryTraversalStats
-{
-	/**
-	 * Using X-macros to make fields easier to add/rearrange/remove.
-	 */
-#define M_STATLIST \
-	X("Number of directories found", m_num_directories_found) \
-	X("Number of directories rejected", m_num_dirs_rejected) \
-	X("Number of files found", m_num_files_found) \
-	X("Number of files rejected", m_num_files_rejected) \
-	X("Number of files sent for scanning", m_num_files_scanned)
-
-public:
-#define X(d,s) size_t s {0};
-	M_STATLIST
-#undef X
-
-	/**
-	 * Atomic compound assignment by sum.
-	 * Adds the stats from #other to *this in a thread-safe manner.
-	 * @param other
-	 */
-	void operator+=(const DirectoryTraversalStats & other)
-	{
-		std::lock_guard<std::mutex> lock(m_mutex);
-
-#define X(d,s) s += other. s;
-		M_STATLIST
-#undef X
-	}
-
-	/**
-	 * Friend function stream insertion operator.
-	 *
-	 * @param os
-	 * @param dts
-	 * @return
-	 */
-	friend std::ostream& operator<<(std::ostream& os, const DirectoryTraversalStats &dts)
-	{
-		return os
-#define X(d,s) << "\n" d ": " << dts. s
-		M_STATLIST
-#undef X
-		;
-	};
-
-private:
-
-	/// Mutex for making the compound assignment by sum operator thread-safe.
-	std::mutex m_mutex;
-
-#undef M_STATLIST
-};
-
 
 /**
  * This class does the directory tree traversal.
@@ -123,8 +54,6 @@ private:
 	/// Vector of the paths which the user gave on the command line.
 	std::vector<std::string> m_start_paths;
 
-	std::atomic<size_t> m_num_start_paths_remaining;
-
 	/// Reference to the TypeManager which will be used to include or exclude the files we find during the traversal.
 	TypeManager &m_type_manager;
 
@@ -135,21 +64,9 @@ private:
 
 	bool m_follow_symlinks;
 
-	bool m_using_nostat {false};
-
 	int m_dirjobs;
 
 	sync_queue<std::shared_ptr<FileID>>& m_out_queue;
-
-	std::mutex m_dir_mutex;
-	std::set<dev_ino_pair> m_dir_has_been_visited;
-	bool HasDirBeenVisited(dev_ino_pair di)
-	{
-		std::unique_lock<std::mutex> lock(m_dir_mutex);
-		return !m_dir_has_been_visited.insert(di).second;
-	};
-
-	DirectoryTraversalStats m_traversal_stats;
 };
 
 

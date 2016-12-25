@@ -149,10 +149,9 @@ public:
 	/// @note This is not really "tag dispatching" as commonly understood, but I don't have a way yet to disambiguate
 	///       based solely on the path string.
 	/// @{
-	struct path_type_tag {};
-	struct path_known_relative_tag : path_type_tag {};
-	struct path_known_absolute_tag : path_type_tag {};
-	struct path_known_cwd_tag : path_type_tag {}; 	/// Our equivalent for AT_FDCWD, the cwd of the process.
+	struct path_known_relative_tag {};
+	struct path_known_absolute_tag {};
+	struct path_known_cwd_tag {}; 	/// Our equivalent for AT_FDCWD, the cwd of the process.
 	static constexpr path_known_relative_tag path_known_relative = path_known_relative_tag();
 	static constexpr path_known_absolute_tag path_known_absolute = path_known_absolute_tag();
 	static constexpr path_known_cwd_tag path_known_cwd = path_known_cwd_tag();
