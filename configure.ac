@@ -458,9 +458,11 @@ AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_template
 #
 # C++14 features
 #
-#AC_CHECK_DECLS([__cpp_lib_make_unique], [], [],
-#[[AC_INCLUDES_DEFAULT
-##include <memory>]])
+AC_CHECK_DECLS([__cpp_lib_make_unique], [], [], [
+#include <memory>])
+AC_CHECK_DECLS([__cpp_lib_shared_timed_mutex], [], [], [
+#include <shared_mutex>])
+
 #AC_CHECK_DECLS([__cpp_lib_transformation_trait_aliases], [], [],
 #[AC_INCLUDES_DEFAULT()
 ##include <type_traits>])
@@ -468,6 +470,8 @@ AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_template
 #
 # C++17 features
 #
+AC_CHECK_DECLS([__cpp_lib_shared_mutex], [], [], [
+#include <shared_mutex>])
 #AC_CHECK_DECLS([__cpp_lib_type_trait_variable_templates], [], [],
 #[AC_INCLUDES_DEFAULT()
 ##include <type_traits>])
