@@ -124,8 +124,8 @@ check-malloc:
 	export MALLOC_CHECK_=3 && $(MAKE) check
 
 check-comp:
-	$(MAKE) distclean && ../configure CC=clang CXX=clang++ && $(MAKE)
-	$(MAKE) distclean && ../configure
+	$(MAKE) distclean && ../configure CC=clang CXX=clang++ && $(MAKE) check
+#	$(MAKE) distclean && ../configure
 	
 check-man: $(builddir)/doc/mancheck.man
 	run meld "$<" "$(srcdir)/doc/ucg.1"
