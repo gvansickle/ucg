@@ -458,6 +458,9 @@ AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_template
 #
 # C++14 features
 #
+# We have to check for make_unique at configure-time because at least one version of GNU stdlibc++
+# (ca. the release of gcc 4.9, q.v. <http://stackoverflow.com/a/29450710/945838> has std::make_unique<>
+# but does not declare the SD-6 macro '__cpp_lib_make_unique' for it.
 AC_CHECK_DECLS([__cpp_lib_make_unique], [], [], [
 #include <memory>])
 AC_CHECK_DECLS([__cpp_lib_shared_timed_mutex], [], [], [
