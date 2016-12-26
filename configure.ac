@@ -448,6 +448,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 	[# Not defined, define a substitute in config.h.
 	AC_MSG_RESULT([no])
 	AC_DEFINE([__has_include(h)], [0], [Defined to a dummy replacement if __has_include() doesn't exist.])
+	AC_DEFINE([HAVE_NOOP_HAS_INCLUDE], [1], [Defined to 1 if we've backfilled __has_include() to an always-0 macro.])
 	])
 
 #
