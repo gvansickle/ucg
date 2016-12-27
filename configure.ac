@@ -550,14 +550,12 @@ AS_IF([test "x$ac_cv_func_strnlen_working" = "xyes"],
 # (see e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580 (fixed on gcc trunk 2015-11-13),
 # https://sourceware.org/ml/cygwin/2015-01/msg00251.html).  Check for existence here and we'll roll our own
 # if necessary.
-AXUCG_COMPILE_IFELSE([std::to_string(1);], [std::to_string], [#include <string>],
-				[AC_DEFINE([HAVE_FUNC_STD__TO_STRING], [1], [If defined, the std::to_string() function exists.])
-				], [])
+AXUCG_CHECK_FUNC([#include <string>], [std::to_string(1);], [std::to_string])
 
-# See if we have a std::make_unique<>().  Note that checking for __cpp_lib_make_unique does not seem to
-# work properly under clang++; i.e., it won't be defined even though a std::make_unique() exists.
-AXUCG_COMPILE_IFELSE([std::make_unique<int>(1);], [std::make_unique], [#include <memory>],
-	[AC_DEFINE([HAVE_FUNC_STD__MAKE_UNIQUE], [1], [If defined, std::make_unique<> exists in <memory>.])], [])
+# See if we have a std::make_unique<>().  Note that checking for __cpp_lib_make_unique is not sufficient
+# for certain old versions of GNU stdlibc++; i.e., it won't be defined even though a std::make_unique() exists and works.
+# This issue appears on at least Travis-CI's OSX build servers (all versions) as of 2016-12-17.
+AXUCG_CHECK_FUNC([#include <memory>], [std::make_unique<int>(1);], [std::make_unique])
 
 # We need the argp library.
 AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
