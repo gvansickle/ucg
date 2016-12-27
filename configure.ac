@@ -467,9 +467,14 @@ AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_template
 #
 # C++14 features
 #
-#AC_CHECK_DECLS([__cpp_lib_make_unique], [], [],
-#[[AC_INCLUDES_DEFAULT
-##include <memory>]])
+# We have to check for make_unique at configure-time because at least one version of GNU stdlibc++
+# (ca. the release of gcc 4.9, q.v. <http://stackoverflow.com/a/29450710/945838> has std::make_unique<>
+# but does not declare the SD-6 macro '__cpp_lib_make_unique' for it.
+AC_CHECK_DECLS([__cpp_lib_make_unique], [], [], [
+#include <memory>])
+AC_CHECK_DECLS([__cpp_lib_shared_timed_mutex], [], [], [
+#include <shared_mutex>])
+
 #AC_CHECK_DECLS([__cpp_lib_transformation_trait_aliases], [], [],
 #[AC_INCLUDES_DEFAULT()
 ##include <type_traits>])
@@ -477,6 +482,8 @@ AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_template
 #
 # C++17 features
 #
+AC_CHECK_DECLS([__cpp_lib_shared_mutex], [], [], [
+#include <shared_mutex>])
 #AC_CHECK_DECLS([__cpp_lib_type_trait_variable_templates], [], [],
 #[AC_INCLUDES_DEFAULT()
 ##include <type_traits>])

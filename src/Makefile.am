@@ -55,10 +55,10 @@ libsrc_la_LIBADD =
 ### Libs and Automake mechanisms to handle multiversioned functions in a portable manner.
 ###
 
-# When compiling translation units for function multiversioning, we need to
+# When compiling translation units separately for function multiversioning, we need to
 # make sure there are no "-march=" flags on the compiler's command line.  Since the
 # GNU Build System is set up to always let the user have the last word via $CFLAGS/$CXXFLAGS,
-# we need to go to some extra effort here to ensure that the user's flags don't break the compilation
+# we need to go to some extra effort here to ensure that the user's flags don't break the separate compilation
 # of these files.
 # We essentially do two things:
 #
@@ -77,6 +77,9 @@ STRIP_ARCH_FLAGS = ${ESED} 's/-m((arch=)|(sse)|(avx))[^[:space:]]*//g'
 CPPFLAGS_MULTIVERSION = $$(echo $(CPPFLAGS) | $(STRIP_ARCH_FLAGS))
 CFLAGS_MULTIVERSION = $$(echo $(CFLAGS) | $(STRIP_ARCH_FLAGS))
 CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | $(STRIP_ARCH_FLAGS))
+# Homebrew is known to pass in '-march=native' as part of CC and CXX themselves, so filter those at well.
+CXX_MULTIVERSION = $$(echo $(CXX) | $(STRIP_ARCH_FLAGS))
+CC_MULTIVERSION = $$(echo $(CC)) | $(STRIP_ARCH_FLAGS))
 
 # The make rule and actions for building .fmv.la libraries from .la libraries,
 # and the .la libraries from their normal dependencies.
@@ -91,7 +94,8 @@ CXXFLAGS_MULTIVERSION = $$(echo $(CXXFLAGS) | $(STRIP_ARCH_FLAGS))
 FORCE:
 $(libsrc_la_LIBADD): FORCE
 	@echo "MULTIVERSIONING BUILD START: Building $@"
-	$(AM_V_at) $(MAKE) "CPPFLAGS=$(CPPFLAGS_MULTIVERSION)" "CFLAGS=$(CFLAGS_MULTIVERSION)" "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
+	$(AM_V_at) $(MAKE) "CXX=$(CXX_MULTIVERSION)" "CC=$(CC_MULTIVERSION)" "CPPFLAGS=$(CPPFLAGS_MULTIVERSION)" \
+		"CFLAGS=$(CFLAGS_MULTIVERSION)" "CXXFLAGS=$(CXXFLAGS_MULTIVERSION)" $(@:.fmv.la=.la)
 	$(AM_V_CXXLD) $(CXXLINK) $(@:.fmv.la=.la)
 	@echo "MULTIVERSIONING BUILD END: Built $@"
 
