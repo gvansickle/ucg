@@ -18,13 +18,15 @@
 /** @file Dummy cpp file to get this otherwise header-only lib to build portably. */
 
 #include <config.h>
-#include "../libext/static_diagnostics.hpp"
+#include <static_diagnostics.hpp>
 
 #include "memory.hpp"
 
+/// Something to force this file to get linked into the convenience library.
 const char *link_me = "dummy";
 
 // Use this file for printing out some info at compile time regarding our compile-time environment.
+
 #ifdef __SSE2__
 STATIC_MSG("Have SSE2")
 #endif
@@ -47,7 +49,12 @@ STATIC_MSG("__cpp_lib_make_unique is defined.")
 STATIC_MSG_WARN("__cpp_lib_make_unique is not defined.")
 #endif
 
-///
+#if 0 /// @todo Don't have a future option here yet.
+#if __has_include(<shared_mutex>)
+STATIC_MSG("Have __has_include(<shared_mutex>)")
+#else
+STATIC_MSG("No __has_include(<shared_mutex>)")
+#endif
 #if __cpp_lib_shared_timed_mutex
 STATIC_MSG("__cpp_lib_shared_timed_mutex is defined")
 #else
@@ -58,12 +65,10 @@ STATIC_MSG("__cpp_lib_shared_mutex is defined")
 #else
 STATIC_MSG_WARN("__cpp_lib_shared_mutex not defined")
 #endif
-
-#if __has_include(<shared_mutex>)
-STATIC_MSG("Have __has_include(<shared_mutex>)")
-#else
-STATIC_MSG("No __has_include(<shared_mutex>)")
 #endif
+
+// Some checks specific to GNU stdlibc++
+#if __GLIBCXX__
 
 #ifndef _GLIBCXX_USE_C99_STDINT_TR1
 STATIC_MSG_WARN("No _GLIBCXX_USE_C99_STDINT_TR1")
@@ -73,6 +78,7 @@ STATIC_MSG_WARN("No _GLIBCXX_USE_C99_STDINT_TR1")
 STATIC_MSG_WARN("No _GLIBCXX_HAS_GTHREADS")
 #endif
 
+#endif // __GLIBCXX__
 
 #if 0 /// @note Put this in to see at compile time what types are really being used for the shared locks.
 std::shared_mutex i;

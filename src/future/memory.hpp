@@ -26,10 +26,12 @@
 
 namespace std
 {
-#if !defined(__clang__) ///@todo For some reason I can't seem to figure out, The #if logic below
+//#if !defined(__clang__) ///@todo For some reason I can't seem to figure out, The #if logic below
                         /// does not exclude this definition on clang.  Clang doesn't define __cpp_lib_make_unique,
                         /// and even though configure correctly detects HAVE_DECL_STD__MAKE_UNIQUE_INT_ == 1, my definition
                         /// still gets included, then conflicts with the definition clang does in fact have.
+                        /// 2016-12-25 GRVS: Ok, I think I have this figured out.  It's not Clang, it's the GNU libstdc++
+                        /// that Travis-CI uses in its OS X configurations.  It defines the template, but not the SD-6 macro.
 #if !defined(__cpp_lib_make_unique) && (HAVE_DECL_STD__MAKE_UNIQUE_INT_ == 0)  // C++14 feature.
 /// Define our own make_unique<>() substitute.
 /// @note SFINAE here to fail this for array types.
@@ -41,7 +43,7 @@ std::unique_ptr<T> make_unique(Args&&... args)
 	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 #endif
-#endif
+//#endif
 }
 
 #endif /* SRC_FUTURE_MEMORY_HPP_ */

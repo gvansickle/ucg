@@ -448,6 +448,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 	[# Not defined, define a substitute in config.h.
 	AC_MSG_RESULT([no])
 	AC_DEFINE([__has_include(h)], [0], [Defined to a dummy replacement if __has_include() doesn't exist.])
+	AC_DEFINE([HAVE_NOOP_HAS_INCLUDE], [1], [Defined to 1 if we've backfilled __has_include() to an always-0 macro.])
 	])
 
 #
@@ -458,9 +459,14 @@ AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_template
 #
 # C++14 features
 #
-#AC_CHECK_DECLS([__cpp_lib_make_unique], [], [],
-#[[AC_INCLUDES_DEFAULT
-##include <memory>]])
+# We have to check for make_unique at configure-time because at least one version of GNU stdlibc++
+# (ca. the release of gcc 4.9, q.v. <http://stackoverflow.com/a/29450710/945838> has std::make_unique<>
+# but does not declare the SD-6 macro '__cpp_lib_make_unique' for it.
+AC_CHECK_DECLS([__cpp_lib_make_unique], [], [], [
+#include <memory>])
+AC_CHECK_DECLS([__cpp_lib_shared_timed_mutex], [], [], [
+#include <shared_mutex>])
+
 #AC_CHECK_DECLS([__cpp_lib_transformation_trait_aliases], [], [],
 #[AC_INCLUDES_DEFAULT()
 ##include <type_traits>])
@@ -468,6 +474,8 @@ AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_template
 #
 # C++17 features
 #
+AC_CHECK_DECLS([__cpp_lib_shared_mutex], [], [], [
+#include <shared_mutex>])
 #AC_CHECK_DECLS([__cpp_lib_type_trait_variable_templates], [], [],
 #[AC_INCLUDES_DEFAULT()
 ##include <type_traits>])
