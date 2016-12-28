@@ -319,7 +319,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 
 			auto dir_atfd = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, basename, statbuff_ptr, FT_DIR,
 					dse->GetDev(), current_dirent->d_ino,
-					FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
+					FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY /*| FCF_NONBLOCK*/);
 /// @todo ^^^
 			if(m_follow_symlinks)
 			{
