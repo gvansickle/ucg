@@ -15,7 +15,10 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file Dummy cpp file to get this otherwise header-only lib to build portably. */
+/** @file
+ * Dummy cpp file to get this otherwise header-only lib to build portably.  While we're here,
+ * we dump out some compile-time diagnostic info.
+ */
 
 #include <config.h>
 #include "shared_mutex.hpp"
