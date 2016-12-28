@@ -53,7 +53,7 @@ public:
 
 	/// @name Various non-default constructors.
 	/// @{
-	impl(std::shared_ptr<FileID> at_dir_fileid, std::string pathname);
+	impl(std::shared_ptr<FileID> at_dir_fileid, std::string base_or_pathname);
 	impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
 			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 	///@}
@@ -330,15 +330,17 @@ const std::string& FileID::impl::ResolvePath() const
 	return m_path;
 }
 
-/// //////////////////////////////
-
+/////////////////////////////////
+/// END OF FILEID::IMPL.
+/////////////////////////////////
+/// BEGINNING OF FILEID.
+/////////////////////////////////
 
 
 // Default constructor.
-// Note that it's defined here in the cpp vs. in the header because it needs to be able to see the full definition of UnsynchronizedFileID.
-FileID::FileID() //: FileID(path_known_cwd)
+// Note that it's defined here in the cpp vs. in the header because it needs to be able to see the full definition of FileID::impl.
+FileID::FileID()
 {
-	LOG(DEBUG) << "Default constructor called";
 }
 
 // Copy constructor.
@@ -379,17 +381,42 @@ FileID::FileID(path_known_cwd_tag)
 
 	LOG(DEBUG) << "FDCWD constructor, file descriptor: " << m_pimpl->m_file_descriptor.GetFD();
 
+	m_valid_bits.fetch_or(FILE_DESC | TYPE | PATH);
+
 }
 
-FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, const struct stat *stat_buf, FileType type)
+FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename,
+		const struct stat *stat_buf,
+		FileType type,
+		dev_t d, ino_t i,
+		FileAccessMode fam, FileCreationFlag fcf)
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", stat_buf, type))
 {
-	// basename is a file relative to at_dir_fileid, and we also have stat info for it.
+	uint_fast8_t orbits = NONE;
+
+	// basename is a file relative to at_dir_fileid.
 	if(stat_buf != nullptr)
 	{
-		//m_stat_info_witness.store((void*)1);
-		m_valid_bits.fetch_or(UUID | STATINFO | TYPE);
+		// Bonus: we already have stat info for this file.
+		orbits |= UUID | STATINFO | TYPE;
 	}
+	else if(type != FT_UNINITIALIZED)
+	{
+		orbits |= TYPE;
+	}
+
+	if(d != static_cast<dev_t>(-1) && i != 0)
+	{
+		m_pimpl->SetDevIno(d, i);
+		orbits |= UUID;
+	}
+
+	if(fam != FAM_UNINITIALIZED && fcf != FCF_UNINITIALIZED)
+	{
+		m_pimpl->m_open_flags = fam | fcf;
+	}
+
+	m_valid_bits.fetch_or(orbits);
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
@@ -399,6 +426,15 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	/// Full openat() semantics:
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
+
+	uint_fast8_t orbits = NONE;
+
+	if(type != FT_UNINITIALIZED)
+	{
+		orbits |= TYPE;
+	}
+
+	m_valid_bits.fetch_or(orbits);
 }
 
 FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type)
@@ -409,17 +445,33 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	/// - If pathname is absolute, at_dir_fd is ignored.
 	/// - If pathname is relative, it's relative to at_dir_fd.
 
+	uint_fast8_t orbits = NONE;
+
 	if(is_pathname_absolute(pathname))
 	{
-		//m_path_witness.store(&m_pimpl->m_path);
-		m_valid_bits.fetch_or(PATH);
+		orbits |= PATH;
 	}
+	if(type != FT_UNINITIALIZED)
+	{
+		orbits |= TYPE;
+	}
+	m_valid_bits.fetch_or(orbits);
 }
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileAccessMode fam, FileCreationFlag fcf)
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname))
 {
 	SetFileDescriptorMode(fam, fcf);
+
+	uint_fast8_t orbits = NONE;
+
+	/// @todo This check is kind of out of place.  It ends up being done twice, here and in the impl constructor.
+	if(is_pathname_absolute(pathname))
+	{
+		orbits |= PATH;
+	}
+
+	m_valid_bits.fetch_or(orbits);
 }
 
 FileID& FileID::operator=(const FileID& other)
@@ -432,12 +484,6 @@ FileID& FileID::operator=(const FileID& other)
 		m_pimpl = std::make_unique<FileID::impl>(*other.m_pimpl);
 
 		m_valid_bits = other.m_valid_bits.load();
-		/**
-		 *
-		m_file_descriptor_witness = other.m_file_descriptor_witness.load();
-		m_stat_info_witness = other.m_stat_info_witness.load();
-		m_path_witness = other.m_path_witness.load();
-		*/
 	}
 	return *this;
 };

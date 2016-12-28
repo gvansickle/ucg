@@ -31,7 +31,7 @@
 
 #include <string>
 #include <atomic>
-
+#include <climits>
 
 #include "integer.hpp"
 #include "filesystem.hpp"
@@ -74,10 +74,10 @@ inline std::ostream& operator<<(std::ostream& out, const FileType value){
  */
 enum FileAccessMode : int
 {
-	FAM_UNINITIALIZED = 0,
-	FAM_RDONLY = O_RDONLY,//!< FAM_RDONLY
-	FAM_RDWR = O_RDWR,    //!< FAM_RDWR
-	FAM_SEARCH = O_SEARCH //!< FAM_SEARCH
+	FAM_UNINITIALIZED = INT_MAX,	//!< Because O_RDONLY and O_SEARCH == 0.
+	FAM_RDONLY = O_RDONLY,			//!< FAM_RDONLY
+	FAM_RDWR = O_RDWR,				//!< FAM_RDWR
+	FAM_SEARCH = O_SEARCH			//!< FAM_SEARCH
 };
 
 /**
@@ -167,7 +167,10 @@ public:
 	/// Different in that each FileID created with this constructor holds a real file handle to the "." directory.
 	FileID(path_known_cwd_tag tag);
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename,
-			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
+			const struct stat *stat_buf = nullptr,
+			FileType type = FT_UNINITIALIZED,
+			dev_t d = static_cast<dev_t>(-1), ino_t i = 0,
+			FileAccessMode fam = FAM_UNINITIALIZED, FileCreationFlag fcf = FCF_UNINITIALIZED);
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname,
