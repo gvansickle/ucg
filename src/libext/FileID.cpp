@@ -559,7 +559,15 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
+#ifdef DEBUG_USE_FSTATAT
 	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
+#else
+	/// @todo stat() doesn't take flags to e.g. prevent automounting like fstatat() does.
+	/// We'll need to address this.
+	DIR* temp_atdir = OpenDir();
+	int retval = fstatat(dirfd(temp_atdir), name.c_str(), statbuf, flags);
+	CloseDir(temp_atdir);
+#endif
 
 	if(retval == -1)
 	{

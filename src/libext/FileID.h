@@ -221,6 +221,12 @@ public:
 
 	FileID OpenAt(const std::string &name, FileType type, int flags);
 
+	/**
+	 * Open the directory referenced by this FileID.
+	 * Consumes one file descriptor until CloseDir() is called.
+	 *
+	 * @return
+	 */
 	DIR *OpenDir();
 	void CloseDir(DIR*d);
 

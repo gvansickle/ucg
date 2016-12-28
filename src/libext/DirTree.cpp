@@ -319,8 +319,8 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 
 			auto dir_atfd = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, basename, statbuff_ptr, FT_DIR,
 					dse->GetDev(), current_dirent->d_ino,
-					FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY /*| FCF_NONBLOCK*/);
-/// @todo ^^^
+					FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
+
 			if(m_follow_symlinks)
 			{
 				// We have to detect any symlink cycles ourselves.
