@@ -28,6 +28,16 @@ const char *link_me = "dummy";
 
 // Use this file for printing out some info at compile time regarding our compile-time environment.
 
+// Which std lib do we have?
+#ifdef __GLIBCXX__
+#define CXXLIB_VERSION_STR "GNU libstdc++, version " EXPAND_MACRO(__GLIBCXX__)
+STATIC_MSG(CXXLIB_VERSION_STR)
+#endif
+#ifdef _LIBCPP_VERSION
+#define CXXLIB_VERSION_STR "Clang libc++, version " EXPAND_MACRO(_LIBCPP_VERSION)
+STATIC_MSG(CXXLIB_VERSION_STR)
+#endif
+
 #ifdef __SSE2__
 STATIC_MSG("Have SSE2")
 #endif
