@@ -79,39 +79,42 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 ## Checks for the programs needed to do a build.
 AS_BOX([Checking for programs needed to do the build...])
 
-# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
-# This will do that for us.
-# @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
-#       calling LT_INIT, or it will complain.
-#AC_USE_SYSTEM_EXTENSIONS
+# C compiler and preprocessor.
 AC_PROG_CC([gcc clang])
-# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
-# This will do that for us.
-# @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
-#       calling LT_INIT, or it will complain.
-AC_USE_SYSTEM_EXTENSIONS
+AC_PROG_CPP([gcc clang])
+
 # Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
 #AM_PROG_CC_C_O
-AC_PROG_CXX([g++ clang++])
-AC_PROG_CXXCPP([g++ clang++]) # Needed for any C++ AC_PREPROC_IFELSE() checks below.
-AC_USE_SYSTEM_EXTENSIONS
-# @temp? Tell clang to use its own library.
-#AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
-#[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
-#CXXCPPFLAGS="$CXXCPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
-#LDFLAGS="$LDFLAGS -stdlib=libc++ --rtlib=compiler-rt"])
 
+# C++ compiler and preprocessor.
+AC_PROG_CXX([g++ clang++])
+AC_PROG_CXXCPP([g++ clang++])
+
+# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
+# This will do that for us, plus we want access to any extensions anyway.
+# @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
+#       calling LT_INIT, or it will complain.
+AC_USE_SYSTEM_EXTENSIONS
+
+# Get C11 support.
 AS_BOX([Checking C compiler language standard support])
 
 AC_LANG_PUSH([C])
-AX_CHECK_COMPILE_FLAG([-std=gnu11], [AX_APPEND_FLAG([-std=gnu11], [CC])],
-	[AX_CHECK_COMPILE_FLAG([-std=c11], [AX_APPEND_FLAG([-std=c11], [CC])],
+AX_CHECK_COMPILE_FLAG([-std=gnu11],
+	[AX_APPEND_FLAG([-std=gnu11], [CC])
+	AX_APPEND_FLAG([-std=gnu11], [CPP])
+	],
+	[AX_CHECK_COMPILE_FLAG([-std=c11],
+	[AX_APPEND_FLAG([-std=c11], [CC])
+	AX_APPEND_FLAG([-std=c11], [CPP])
+	],
 		[AC_MSG_ERROR([no C11 support])], [], [])
 	], [], [])
 AC_LANG_POP([C])
 
+# Get the highest C++ standard support we can.
 AS_BOX([Checking C++ compiler language standard support])
 ## Make sure we get a C++ compiler which supports the highest level of C++17/C++14/C++11 available.
 # Determine what switches we need to get the highest level of C++17/C++14/C++11 available.
