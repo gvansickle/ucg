@@ -32,7 +32,7 @@ namespace std
                         /// still gets included, then conflicts with the definition clang does in fact have.
                         /// 2016-12-25 GRVS: Ok, I think I have this figured out.  It's not Clang, it's the GNU libstdc++
                         /// that Travis-CI uses in its OS X configurations.  It defines the template, but not the SD-6 macro.
-#if !defined(__cpp_lib_make_unique) && (HAVE_DECL_STD__MAKE_UNIQUE_INT_ == 0)  // C++14 feature.
+#if !defined(__cpp_lib_make_unique) && !defined(HAVE_FUNC_STD__MAKE_UNIQUE)  // C++14 feature.
 /// Define our own make_unique<>() substitute.
 /// @note SFINAE here to fail this for array types.
 /// @note No need to check for __cpp_variadic_templates, it's C++11 and introduced in gcc 4.3.

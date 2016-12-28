@@ -90,6 +90,8 @@ void DoubleCheckedMultiLock(AtomicTypeWrapper &wrap, const BitmaskType bits, Mut
 		{
 			// Still no cached value.  We'll have to do the heavy lifting.
 			temp_retval = cache_filler();
+
+			// or-in the new cache status.
 			std::atomic_thread_fence(std::memory_order_release);
 			wrap.fetch_or(temp_retval, std::memory_order_relaxed);
 		}

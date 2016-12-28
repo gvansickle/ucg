@@ -50,7 +50,6 @@ STATIC_MSG("__cpp_lib_make_unique is defined.")
 STATIC_MSG_WARN("__cpp_lib_make_unique is not defined.")
 #endif
 
-#if 0 /// @todo Don't have a future option here yet.
 #if __has_include(<shared_mutex>)
 STATIC_MSG("Have __has_include(<shared_mutex>)")
 #else
@@ -65,7 +64,6 @@ STATIC_MSG_WARN("__cpp_lib_shared_timed_mutex not defined")
 STATIC_MSG("__cpp_lib_shared_mutex is defined")
 #else
 STATIC_MSG_WARN("__cpp_lib_shared_mutex not defined")
-#endif
 #endif
 
 // Some checks specific to GNU stdlibc++
