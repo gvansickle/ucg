@@ -31,6 +31,7 @@
 
 #include "DoubleCheckedLock.hpp"
 
+#define M_ENABLE_FD_STATS 1
 
 /**
  * pImpl factorization of the FileID class.  This is the unsynchronized "pImpl" part which holds all the data.
@@ -197,7 +198,7 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 			throw std::runtime_error("m_open_flags is not set");
 		}
 
-#if 0
+#if M_ENABLE_FD_STATS
 		// Maintain stats on the number of openat()s we do for each of FT_REG/FT_DIR.
 		switch(m_file_type)
 		{
@@ -221,8 +222,13 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 
 		if(m_at_dir)
 		{
+#if DEBUG
 			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
+#endif
+			DIR* temp_atdir = m_at_dir->OpenDir();
+			int atdirfd = dirfd(temp_atdir);
 			int tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
+			m_at_dir->CloseDir(temp_atdir);
 			if(tempfd == -1)
 			{
 				//LOG(DEBUG) << "OPENAT FAIL: " << explain_openat(atdirfd, GetBasename().c_str(), m_open_flags, 0666);
@@ -559,11 +565,9 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-#ifdef DEBUG_USE_FSTATAT
+#ifdef DEBUG_USE_FSTATAT  /// @todo
 	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
 #else
-	/// @todo stat() doesn't take flags to e.g. prevent automounting like fstatat() does.
-	/// We'll need to address this.
 	DIR* temp_atdir = OpenDir();
 	int retval = fstatat(dirfd(temp_atdir), name.c_str(), statbuf, flags);
 	CloseDir(temp_atdir);
@@ -596,7 +600,7 @@ DIR *FileID::OpenDir()
 	int dirfd {0};
 	if(fd < 0)
 	{
-		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY | O_NONBLOCK);
+		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY);
 	}
 	else
 	{
