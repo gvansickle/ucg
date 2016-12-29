@@ -31,6 +31,7 @@
 
 #include "DoubleCheckedLock.hpp"
 
+#define M_ENABLE_FD_STATS 1
 
 /**
  * pImpl factorization of the FileID class.  This is the unsynchronized "pImpl" part which holds all the data.
@@ -197,7 +198,7 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 			throw std::runtime_error("m_open_flags is not set");
 		}
 
-#if 0
+#if M_ENABLE_FD_STATS
 		// Maintain stats on the number of openat()s we do for each of FT_REG/FT_DIR.
 		switch(m_file_type)
 		{
@@ -221,7 +222,11 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 
 		if(m_at_dir)
 		{
+#if DEBUG
 			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
+#endif
+			FileDescriptor temp_atdir{m_at_dir->GetTempAtDir()};
+			int atdirfd = temp_atdir.GetFD();
 			int tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
 			if(tempfd == -1)
 			{
@@ -559,7 +564,8 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
+	FileDescriptor temp_atdir {GetTempAtDir()};
+	int retval = fstatat(temp_atdir.GetFD(), name.c_str(), statbuf, flags);
 
 	if(retval == -1)
 	{
@@ -588,7 +594,7 @@ DIR *FileID::OpenDir()
 	int dirfd {0};
 	if(fd < 0)
 	{
-		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY | O_NONBLOCK);
+		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY);
 	}
 	else
 	{
@@ -601,6 +607,23 @@ DIR *FileID::OpenDir()
 void FileID::CloseDir(DIR *d)
 {
 	closedir(d);
+}
+
+FileDescriptor FileID::GetTempAtDir()
+{
+	int fd = m_pimpl->TryGetFD();
+	int dirfd {0};
+	if(fd < 0)
+	{
+		// We don't have a file descriptor.  Open a temporary one.
+		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY | O_PATH);
+	}
+	else
+	{
+		// We already have a file descriptor.  Dup it.
+		dirfd = dup(fd);
+	}
+	return FileDescriptor(dirfd);
 }
 
 const FileDescriptor& FileID::GetFileDescriptor()

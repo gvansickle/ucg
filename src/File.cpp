@@ -90,7 +90,7 @@ File::File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>
 	// http://unix.stackexchange.com/questions/245499/how-does-cat-know-the-optimum-block-size-to-use
 	// ...it seems that as of ~2014, experiments show the minimum I/O size should be >=128KB.
 	// *stat() seems to return 4096 in all my experiments so far, so we'll clamp it to a min of 128KB and a max of
-	// something not unreasonable, e.g. 1M.
+	// something not unreasonable, e.g. 1MB.
 	auto io_size = clamp(m_fileid->GetBlockSize(), static_cast<blksize_t>(0x20000), static_cast<blksize_t>(0x100000));
 	m_file_data = GetFileData(file_descriptor, file_size, io_size);
 

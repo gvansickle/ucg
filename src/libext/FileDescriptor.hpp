@@ -24,8 +24,11 @@
 
 #include <future/shared_mutex.hpp>
 
+#include <unistd.h>  // For dup().
+
 #include "DoubleCheckedLock.hpp"
 #include "Logger.h"
+
 
 /**
  * Wrapper for C's 'int' file descriptor.

@@ -22,6 +22,7 @@ libext_la_SOURCES = \
 	DoubleCheckedLock.hpp \
 	exception.hpp \
 	FileDescriptor.hpp \
+	FileDescriptorCache.cpp FileDescriptorCache.hpp \
 	FileID.cpp FileID.h \
 	filesystem.hpp \
 	hints.hpp \

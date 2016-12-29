@@ -100,7 +100,7 @@ private:
 
 
 /**
- * Directory tree traversal class.
+ * Multithreaded directory tree traversal class.
  */
 class DirTree
 {

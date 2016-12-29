@@ -133,10 +133,14 @@ void FileScanner::Run(int thread_index)
 		{
 			// Try to open and read the file.  This could throw.
 			LOG(INFO) << "Attempting to scan file \'" << next_file->GetPath() << "\', fd=" << next_file->GetFileDescriptor().GetFD();
-			//steady_clock::time_point start = steady_clock::now();
+
+			steady_clock::time_point start = steady_clock::now();
+
 			File f(next_file, file_data_storage);
-			//steady_clock::time_point end = steady_clock::now();
-			//accum_elapsed_time += (end - start);
+
+			steady_clock::time_point end = steady_clock::now();
+			accum_elapsed_time += (end - start);
+
 			auto bytes_read = f.size();
 			total_bytes_read += bytes_read;
 			LOG(INFO) << "Num/total bytes read: " << bytes_read << " / " << total_bytes_read;
@@ -180,10 +184,8 @@ void FileScanner::Run(int thread_index)
 		}
 	}
 
-#if 0
 	duration<double> elapsed = duration_cast<duration<double>>(accum_elapsed_time);
 	LOG(INFO) << "Total bytes read = " << total_bytes_read << ", elapsed time = " << elapsed.count() << ", Bytes/Sec=" << total_bytes_read/elapsed.count() << std::endl;
-#endif
 }
 
 void FileScanner::AssignToNextCore()
