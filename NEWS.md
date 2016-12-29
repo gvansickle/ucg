@@ -3,13 +3,13 @@
 ## [UNRELEASED]
 
 ### New Features
+- Major overhaul of directory tree traversal.
 - Added '--[no]follow' option.  Default is now to not follow symlinks.
 
 ### Changed
 - Performance: Literal string search now bypasses libpcre2 in certain cases and uses vectorized search instead.
 
 ### Fixed
-
 
 ## [0.3.1] - 2016-11-28
 

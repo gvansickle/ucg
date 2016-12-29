@@ -15,9 +15,13 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file Dummy cpp file to get this otherwise header-only lib to build portably. */
+/** @file
+ * Dummy cpp file to get this otherwise header-only lib to build portably.  While we're here,
+ * we dump out some compile-time diagnostic info.
+ */
 
 #include <config.h>
+#include "shared_mutex.hpp"
 #include <static_diagnostics.hpp>
 
 #include "memory.hpp"
@@ -26,6 +30,16 @@
 const char *link_me = "dummy";
 
 // Use this file for printing out some info at compile time regarding our compile-time environment.
+
+// Which std lib do we have?
+#ifdef __GLIBCXX__
+#define CXXLIB_VERSION_STR "GNU libstdc++, version " EXPAND_MACRO(__GLIBCXX__)
+STATIC_MSG(CXXLIB_VERSION_STR)
+#endif
+#ifdef _LIBCPP_VERSION
+#define CXXLIB_VERSION_STR "Clang libc++, version " EXPAND_MACRO(_LIBCPP_VERSION)
+STATIC_MSG(CXXLIB_VERSION_STR)
+#endif
 
 #ifdef __SSE2__
 STATIC_MSG("Have SSE2")
@@ -49,7 +63,6 @@ STATIC_MSG("__cpp_lib_make_unique is defined.")
 STATIC_MSG_WARN("__cpp_lib_make_unique is not defined.")
 #endif
 
-#if 0 /// @todo Don't have a future option here yet.
 #if __has_include(<shared_mutex>)
 STATIC_MSG("Have __has_include(<shared_mutex>)")
 #else
@@ -64,7 +77,6 @@ STATIC_MSG_WARN("__cpp_lib_shared_timed_mutex not defined")
 STATIC_MSG("__cpp_lib_shared_mutex is defined")
 #else
 STATIC_MSG_WARN("__cpp_lib_shared_mutex not defined")
-#endif
 #endif
 
 // Some checks specific to GNU stdlibc++

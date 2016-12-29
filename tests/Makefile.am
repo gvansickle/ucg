@@ -24,6 +24,7 @@ EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in \
 CLEANFILES = perf_test_results.txt
 DISTCLEANFILES = atconfig
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE) $(BENCHMARKSCRIPTS)
+CHECKLOCALDEPS =
 
 ###
 ### Dummy file generator exe.
@@ -32,6 +33,7 @@ MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE) $(BENCHMARKSCRIPTS)
 check_PROGRAMS = dummy-file-gen portable_time
 if HAVE_GOOGLETEST
 check_PROGRAMS += unittests
+CHECKLOCALDEPS += unittests$(EXEEXT)
 endif
 dummy_file_gen_SOURCES = dummy-file-gen.cpp lorem_ipsum.hpp
 dummy_file_gen_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
@@ -80,7 +82,7 @@ BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
 
 # The `:;' works around a Bash 3.2 bug when the output is not writeable.
 $(srcdir)/package.m4: $(top_srcdir)/configure.ac
-	@ :;{ \
+	@:;{ \
 	echo '# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).' && \
 	echo '#' && \
 	echo '# This file is part of UniversalCodeGrep.' && \
@@ -152,7 +154,7 @@ atconfig: $(top_builddir)/config.status
 clean-local:
 	$(AM_V_GEN) test ! -f '$(TESTSUITE)' ||	$(SHELL) '$(TESTSUITE)' --clean
 	
-check-local: atconfig atlocal $(TESTSUITE)
+check-local: atconfig atlocal $(TESTSUITE) $(CHECKLOCALDEPS)
 	$(AM_V_GEN) $(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) ; RETVAL=$$? ; \
 	if test $$RETVAL != 0; then \
 		LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \

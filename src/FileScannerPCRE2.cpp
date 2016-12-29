@@ -93,7 +93,7 @@ static size_t pattern_num_callouts(const pcre2_code *code)
 
 #endif
 
-FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
+FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::shared_ptr<FileID>> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case,
@@ -108,7 +108,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<FileID> &in_queue,
 	std::string original_pattern = regex;
 
 	// For now, we won't support capturing.  () will be treated as (?:).
-	regex_compile_options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE | PCRE2_NEVER_BACKSLASH_C | PCRE2_NEVER_UTF | PCRE2_NEVER_UCP
+	regex_compile_options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE | PCRE2_NEVER_BACKSLASH_C |  PCRE2_NEVER_UTF | PCRE2_NEVER_UCP
 			| PCRE2_JIT_COMPLETE;
 
 	if(ignore_case)
@@ -393,7 +393,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 				 *       possibly multi-byte character.
 				 *       Again, UTF-8 is not something we support at the moment.
 				 */
-				else if(false /** @todo utf8 */)
+				else if(true /** @todo utf8 */)
 				{
 					// Increment a whole UTF8 character.
 					while(ovector[1] < file_size)

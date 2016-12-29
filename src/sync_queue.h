@@ -53,9 +53,26 @@ enum class queue_op_status
 template <typename ValueType>
 class sync_queue
 {
+#ifdef TODO
+	using mt_deque = std::deque<ValueType, std::scoped_allocator_adaptor<__gnu_cxx::__mt_alloc<ValueType>>>;
+#else
+	using mt_deque = std::deque<ValueType>;
+#endif
+
+	std::queue<ValueType, mt_deque> m_underlying_queue;
+
 public:
+
+	using size_type = typename mt_deque::size_type;
+
 	sync_queue() {};
 	~sync_queue() {};
+
+	size_type size() const noexcept
+	{
+		std::unique_lock<std::mutex> lock(m_mutex);
+		return m_underlying_queue.size();
+	}
 
 	void close()
 	{
@@ -208,10 +225,17 @@ public:
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 
-		m_num_waiting_threads_notification_level = num_workers;
+		// If creating thread already says he set the m_num_waiting_threads_notification_level, skip this.
+		if(num_workers > 0)
+		{
+			m_num_waiting_threads_notification_level = num_workers;
+		}
 
-		m_cv_complete.wait(lock, [this, num_workers](){
-			return ((m_num_waiting_threads == num_workers) && m_underlying_queue.empty()) || m_closed;
+		// Wake up any waiting threads, so they can check the new notification level.
+		m_cv_complete.notify_all();
+
+		m_cv_complete.wait(lock, [this](){
+			return ((m_num_waiting_threads == m_num_waiting_threads_notification_level) && m_underlying_queue.empty()) || m_closed;
 		});
 
 		if(m_closed)
@@ -237,15 +261,6 @@ private:
 	size_t m_num_waiting_threads { 0 };
 
 	bool m_closed { false };
-
-#ifdef TODO
-	using mt_deque = std::deque<ValueType, std::scoped_allocator_adaptor<__gnu_cxx::__mt_alloc<ValueType>>>;
-#else
-	using mt_deque = std::deque<ValueType>;
-#endif
-
-	std::queue<ValueType, mt_deque> m_underlying_queue;
-
 };
 
 #endif /* SYNC_QUEUE_H_ */

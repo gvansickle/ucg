@@ -133,11 +133,11 @@ TypeManager::TypeManager()
 	}
 }
 
-bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
+bool TypeManager::FileShouldBeScanned(const name_string_type& name) const noexcept
 {
 	// Find the name's extension.
 	auto last_period_offset = name.find_last_of('.');
-	auto last_period = last_period_offset == std::string::npos ? name.cend() : name.cbegin() + last_period_offset;
+	auto last_period = (last_period_offset == name_string_type::npos) ? name.cend() : name.cbegin() + last_period_offset;
 	if(last_period != name.cend())
 	{
 		// There was a period, might be an extension.
@@ -146,12 +146,12 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 			bool include_it = false;
 
 			// Name doesn't start with a period, it still could be an extension.
-			auto ext_plus_period_size = name.cend() - last_period;
+			size_t ext_plus_period_size = name.cend() - last_period;
 
-			if(ext_plus_period_size <= 5)
+			if(ext_plus_period_size <= microstring().max_size()+1)
 			{
-				// Use the 4-byte fast map.
-				microstring mext(last_period+1, name.cend());
+				// Use the 8-byte microstring fast map.
+				microstring mext(last_period+1, name.end());
 				include_it = std::binary_search(m_fast_include_extensions.cbegin(), m_fast_include_extensions.cend(), mext);
 			}
 			else if(m_include_extensions.find(std::string(last_period, name.cend())) != m_include_extensions.end())
@@ -195,7 +195,8 @@ bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 	enum { nomatch, include, exclude } glob_verdict = nomatch;
 	for(auto glob : m_include_exclude_globs)
 	{
-		int result = fnmatch(glob.first.c_str(), name.c_str(), 0);
+		std::string name_str = std::string(name);
+		int result = fnmatch(glob.first.c_str(), name_str.c_str(), 0);
 		if(result == 0)
 		{
 			// Glob matched, return whether we should include this file or not.
@@ -454,7 +455,7 @@ bool TypeManager::IsExcludedByAnyGlob(const std::string &name) const noexcept
 
 void TypeManager::CompileTypeTables()
 {
-	std::set<microstring> unique_4char_extensions;
+	std::set<microstring> unique_microstring_extensions;
 
 	for(auto i : m_active_type_map)
 	{
@@ -472,12 +473,12 @@ void TypeManager::CompileTypeTables()
 			if(j[0] == '.')
 			{
 				// First char is a '.', this is an extension specification.
-				if(j.length() <= 5)
+				if(j.length() <= microstring::max_size()+1)
 				{
 					// It's 4 chars or less, minus the '.'.
 					LOG(INFO) << "Compiling ext spec \'" << j << "\' as microstring";
-					microstring m(j.begin()+1, j.end());
-					unique_4char_extensions.insert(m);
+					microstring m(j.cbegin()+1, j.cend());
+					unique_microstring_extensions.insert(m);
 				}
 				else
 				{
@@ -506,15 +507,15 @@ void TypeManager::CompileTypeTables()
 		}
 	}
 
-	m_fast_include_extensions.resize(unique_4char_extensions.size());
-	LOG(INFO) << "Found " << unique_4char_extensions.size() << " unique 4-char or less extensions.";
+	m_fast_include_extensions.resize(unique_microstring_extensions.size());
+	LOG(INFO) << "Found " << unique_microstring_extensions.size() << " unique " << microstring::max_size() << "-char or less extensions.";
 	decltype(m_fast_include_extensions)::size_type j = 0;
-	for(auto i : unique_4char_extensions)
+	for(auto i : unique_microstring_extensions)
 	{
 		m_fast_include_extensions[j] = i;
 		++j;
 
-		LOG(INFO) << "Added " << static_cast<std::string>(i) << "(" << std::hex << i.urep() << ") to m_fast_include_extensions";
+		LOG(INFO) << "Added " << static_cast<std::string>(i) << " (" << to_string(i.urep(), std::hex) << ") to m_fast_include_extensions";
 	}
 
 	// Sort the fast_include_extensions list so we can binary search it.

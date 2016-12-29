@@ -19,6 +19,7 @@
 
 #include <config.h>
 
+#include <src/libext/FileID.h>
 #include <src/libext/Logger.h>
 #include <iostream>
 #include <string>
@@ -29,7 +30,6 @@
 
 #include "sync_queue_impl_selector.h"
 #include "ArgParse.h"
-#include "FileID.h"
 #include "Globber.h"
 #include "TypeManager.h"
 #include "DirInclusionManager.h"
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 		LOG(INFO) << "Num scanner jobs: " << arg_parser.m_jobs;
 
 		// Create the Globber->FileScanner queue.
-		sync_queue<FileID> files_to_scan_queue;
+		sync_queue<std::shared_ptr<FileID>> files_to_scan_queue;
 
 		// Create the FileScanner->OutputTask queue.
 		sync_queue<MatchList> match_queue;

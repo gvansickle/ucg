@@ -21,7 +21,7 @@
 
 #include "FileScannerCpp11.h"
 
-FileScannerCpp11::FileScannerCpp11(sync_queue<FileID> &in_queue,
+FileScannerCpp11::FileScannerCpp11(sync_queue<std::shared_ptr<FileID>> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case,
@@ -47,7 +47,7 @@ FileScannerCpp11::~FileScannerCpp11()
 {
 }
 
-void FileScannerCpp11::ScanFile( const char * __restrict__ file_data [[gnu::unused]], size_t file_size [[gnu::unused]], MatchList &ml [[gnu::unused]])
+void FileScannerCpp11::ScanFile( const char * __restrict__ file_data [[maybe_unused]], size_t file_size [[gnu::unused]], MatchList &ml [[gnu::unused]])
 {
 #ifdef USE_CXX11_REGEX
 	// Scan the mmapped file for the regex.
