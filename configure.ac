@@ -52,8 +52,8 @@ AM_INIT_AUTOMAKE([1.14
 	color-tests
 	std-options
 	-Wall
+	-Werror
 ])
-dnl -Werror
 
 AM_SILENT_RULES([yes])
 
@@ -272,7 +272,9 @@ AM_MISSING_PROG([MAINTPYTHON], [$PYTHON])
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 # Google Test
+AC_MSG_CHECKING([for googletest library])
 AM_CONDITIONAL([HAVE_GOOGLETEST], [test -d ${top_srcdir}/third_party/googletest])
+AM_COND_IF([HAVE_GOOGLETEST], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
 
 # Add Valgrind support.
 # @todo Note that this expands to GNU-make-only constructs, which fails on the BSDs.
