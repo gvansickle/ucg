@@ -23,6 +23,7 @@
 #include <config.h>
 
 #include <atomic>
+#include <functional>
 
 /**
  * Function template implementing a double-checked lock.

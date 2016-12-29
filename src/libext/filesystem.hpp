@@ -106,6 +106,14 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 #if !defined(O_NOCTTY)
 #define O_NOCTTY 0
 #endif
+
+// Non-POSIX Linux extension:
+// "Obtain a file descriptor that can be used for two purposes: to indicate a location in the filesystem tree and to perform
+// operations that act purely at the file descriptor level. [...]  [T]he file descriptor [can be passed] as the dirfd argument of
+// openat(2) and the other "*at()" system calls."
+#if !defined(O_PATH)
+#define O_PATH 0
+#endif
 /// @}
 
 
@@ -143,7 +151,6 @@ struct dev_ino_pair
 private:
 	friend struct std::hash<dev_ino_pair>;
 
-	//dev_ino_pair_type m_val { 0 };
 	dev_t m_dev {0};
 	ino_t m_ino {0};
 };
@@ -238,7 +245,7 @@ namespace portable
  */
 inline std::string dirname(const std::string &path) noexcept
 {
-	// Get a copy of the path string which dirname() can modify all it wants.
+	// Get a copy of the path string which ::dirname() can modify all it wants.
 	char * modifiable_path = strdup(path.c_str());
 
 	// Copy the output of dirname into a std:string.  We don't ever free the string dirname() returns
@@ -259,7 +266,7 @@ inline std::string dirname(const std::string &path) noexcept
  */
 inline std::string basename(const std::string &path) noexcept
 {
-	// Get a copy of the path string which dirname() can modify all it wants.
+	// Get a copy of the path string which ::basename() can modify all it wants.
 	char * modifiable_path = strdup(path.c_str());
 
 	// Copy the output of dirname into a std:string.  We don't ever free the string basename() returns

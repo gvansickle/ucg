@@ -225,10 +225,9 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 #if DEBUG
 			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
 #endif
-			DIR* temp_atdir = m_at_dir->OpenDir();
-			int atdirfd = dirfd(temp_atdir);
+			FileDescriptor temp_atdir{m_at_dir->GetTempAtDir()};
+			int atdirfd = temp_atdir.GetFD();
 			int tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
-			m_at_dir->CloseDir(temp_atdir);
 			if(tempfd == -1)
 			{
 				//LOG(DEBUG) << "OPENAT FAIL: " << explain_openat(atdirfd, GetBasename().c_str(), m_open_flags, 0666);
@@ -565,13 +564,8 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-#ifdef DEBUG_USE_FSTATAT  /// @todo
-	int retval = fstatat(GetFileDescriptor().GetFD(), name.c_str(), statbuf, flags);
-#else
-	DIR* temp_atdir = OpenDir();
-	int retval = fstatat(dirfd(temp_atdir), name.c_str(), statbuf, flags);
-	CloseDir(temp_atdir);
-#endif
+	FileDescriptor temp_atdir {GetTempAtDir()};
+	int retval = fstatat(temp_atdir.GetFD(), name.c_str(), statbuf, flags);
 
 	if(retval == -1)
 	{
@@ -613,6 +607,23 @@ DIR *FileID::OpenDir()
 void FileID::CloseDir(DIR *d)
 {
 	closedir(d);
+}
+
+FileDescriptor FileID::GetTempAtDir()
+{
+	int fd = m_pimpl->TryGetFD();
+	int dirfd {0};
+	if(fd < 0)
+	{
+		// We don't have a file descriptor.  Open a temporary one.
+		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY | O_PATH);
+	}
+	else
+	{
+		// We already have a file descriptor.  Dup it.
+		dirfd = dup(fd);
+	}
+	return FileDescriptor(dirfd);
 }
 
 const FileDescriptor& FileID::GetFileDescriptor()

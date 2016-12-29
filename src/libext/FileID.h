@@ -231,6 +231,14 @@ public:
 	void CloseDir(DIR*d);
 
 	/**
+	 * Returns a FileDescriptor containing a file descriptor usable as the at-directory in openat() etc.
+	 * Descriptor may be opened O_PATH, so should not be used for any other purpose.
+	 * Operation only valid if this is a directory.
+	 * @return
+	 */
+	FileDescriptor GetTempAtDir();
+
+	/**
 	 *
 	 * @return
 	 */
