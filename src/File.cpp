@@ -106,64 +106,6 @@ File::File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>
 File::File(const std::string &filename, FileAccessMode fam, FileCreationFlag fcf, std::shared_ptr<ResizableArray<char>> storage)
 	: File(std::make_shared<FileID>(std::make_shared<FileID>(FileID(FileID::path_known_cwd_tag())), filename, fam, fcf), storage)
 {
-#if 0 /// @todo DELETE
-	// Save the filename.
-	m_filename = filename;
-
-	// open() the file.  We have to do this regardless of whether we'll subsequently mmap() or read().
-	m_file_descriptor = open(filename.c_str(), O_RDONLY);
-
-	if(m_file_descriptor == -1)
-	{
-		// Couldn't open the file, throw exception.
-		int temp_errno = errno;
-		errno = 0;
-		throw std::system_error(temp_errno, std::generic_category());
-	}
-
-	// Check the file size.
-	struct stat st;
-	int retval = fstat(m_file_descriptor, &st);
-	if(retval != 0)
-	{
-		// fstat() failed, throw an exception.
-		close(m_file_descriptor);
-		m_file_descriptor = -1;
-		int temp_errno = errno;
-		errno = 0;
-		throw std::system_error(temp_errno, std::generic_category());
-	}
-
-	// Make sure this is a regular file.
-	if(!S_ISREG(st.st_mode))
-	{
-		// Not a regular file, we shouldn't have been called.
-		close(m_file_descriptor);
-		m_file_descriptor = -1;
-		throw FileException("File is not regular file: \"" + filename + "\"");
-	}
-
-	m_file_size = st.st_size;
-	// If filesize is 0, skip.
-	if(m_file_size == 0)
-	{
-		close(m_file_descriptor);
-		m_file_descriptor = -1;
-		return;
-	}
-
-	// Read or mmap the file into memory.
-	// Note that this closes the file descriptor.
-	m_file_data = GetFileData(m_file_descriptor, m_file_size, 4096);
-	m_file_descriptor = -1;
-
-	if(m_file_data == MAP_FAILED)
-	{
-		// Mapping failed.
-		ERROR() << "Couldn't map file \"" << filename << "\"";
-		throw std::system_error(errno, std::system_category());
-	}
-#endif
 }
 
 File::~File()

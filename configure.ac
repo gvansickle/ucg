@@ -556,7 +556,7 @@ AS_IF([test "x$ac_cv_func_strnlen_working" = "xyes"],
 AXUCG_CHECK_FUNC([#include <string>], [std::to_string(1);], [std::to_string])
 
 # See if we have a std::make_unique<>().  Note that checking for __cpp_lib_make_unique is not sufficient
-# for certain old versions of GNU stdlibc++; i.e., it won't be defined even though a std::make_unique() exists and works.
+# for certain versions of Clang's libc++; i.e., it won't be defined even though a std::make_unique() exists and works.
 # This issue appears on at least Travis-CI's OSX build servers (all versions) as of 2016-12-17.
 AXUCG_CHECK_FUNC([#include <memory>], [std::make_unique<int>(1);], [std::make_unique])
 
