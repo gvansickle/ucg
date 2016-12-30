@@ -49,7 +49,7 @@
 ## We generate this file.
 m4_define([UCG_TEST_FILE_NAME_LARGE_FILE_1], ["${builddir}/500MBLoremIpsum.cpp"])
 ## The Boost library, version 1.58.0, as unpacked from the tarball.
-m4_define([UCG_CORPUS_BOOST_PATH], ["${top_srcdir}/../boost_1_58_0"])
+m4_define([UCG_CORPUS_BOOST_PATH], ["${top_srcdir}/../TestCorpus/boost_1_58_0"])
 ## A built linux source tree.
 m4_define([UCG_CORPUS_LINUX_PATH], ["${top_srcdir}/../TestCorpus/linux"])
 
