@@ -32,7 +32,7 @@
 class FileScannerCpp11: public FileScanner
 {
 public:
-	FileScannerCpp11(sync_queue<FileID> &in_queue,
+	FileScannerCpp11(sync_queue<std::shared_ptr<FileID>> &in_queue,
 			sync_queue<MatchList> &output_queue,
 			std::string regex,
 			bool ignore_case,

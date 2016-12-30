@@ -133,8 +133,8 @@ check-vg-drd: ./ucg$(EXEEXT)
 	valgrind --tool=drd --read-var-info=yes --trace-hb==yes --trace-mutex=yes --trace-rwlock=yes  ./ucg --cpp  'BOOST.*HPP' ~/src/boost_1_58_0
 
 check-comp:
-	$(MAKE) distclean && ../configure CC=clang CXX=clang++ && $(MAKE)
-	$(MAKE) distclean && ../configure
+	$(MAKE) distclean && ../configure CC=clang CXX=clang++ && $(MAKE) check
+#	$(MAKE) distclean && ../configure
 	
 check-man: $(builddir)/doc/mancheck.man
 	run meld "$<" "$(srcdir)/doc/ucg.1"

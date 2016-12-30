@@ -17,34 +17,21 @@
 
 /** @file */
 
-#ifndef SRC_FUTURE_STRING_HPP_
-#define SRC_FUTURE_STRING_HPP_
-
 #include <config.h>
-#include <string>
-#include <sstream>
 
-#include "type_traits.hpp"
+#include "FileDescriptorCache.h"
 
-#if !defined(HAVE_FUNC_STD__TO_STRING) || (HAVE_FUNC_STD__TO_STRING == 0)
+#include "filesystem.hpp"
 
-// We have to backfill std::to_string() for broken C++11 std libs.  See e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580
-// (fixed on gcc trunk 2015-11-13), https://sourceware.org/ml/cygwin/2015-01/msg00251.html.
 
-namespace std
+FileDescriptorCache::FileDescriptorCache()
 {
+	// TODO Auto-generated constructor stub
 
-template <typename T>
-string to_string(T value)
-{
-	static_assert(is_integral<T>::value, "Parameter passed to std::to_string() must be integral type.");
-	stringstream temp_ss;
-	temp_ss << value;
-	return temp_ss.str();
 }
 
-} // namespace std
+FileDescriptorCache::~FileDescriptorCache()
+{
+	// TODO Auto-generated destructor stub
+}
 
-#endif
-
-#endif /* SRC_FUTURE_STRING_HPP_ */

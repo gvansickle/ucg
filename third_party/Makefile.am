@@ -47,11 +47,13 @@ CLEANFILES =
 ### Google Test
 ###
 
+check_LTLIBRARIES =
 if HAVE_GOOGLETEST
-check_LTLIBRARIES = libgtest_all.la
-libgtest_all_la_SOURCES = googletest/src/gtest-all.cc
-libgtest_all_la_CPPFLAGS= -I$(srcdir)/googletest/include -I$(srcdir)/googletest
-libgtest_all_la_CXXFLAGS = -pthread
+# @todo Fix this, "make distcheck" wants to distribute gtest-all.cc.
+#check_LTLIBRARIES += libgtest_all.la
+#libgtest_all_la_SOURCES = googletest/src/gtest-all.cc
+#libgtest_all_la_CPPFLAGS= -I$(srcdir)/googletest/include -I$(srcdir)/googletest
+#libgtest_all_la_CXXFLAGS = -pthread
 endif
 
 ###

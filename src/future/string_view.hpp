@@ -15,36 +15,33 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file */
+/** @file string_view.hpp
+ * Portability header which includes a std::string_view class from the future.
+ */
 
-#ifndef SRC_FUTURE_STRING_HPP_
-#define SRC_FUTURE_STRING_HPP_
+#ifndef SRC_FUTURE_STRING_VIEW_HPP_
+#define SRC_FUTURE_STRING_VIEW_HPP_
 
 #include <config.h>
-#include <string>
-#include <sstream>
 
-#include "type_traits.hpp"
-
-#if !defined(HAVE_FUNC_STD__TO_STRING) || (HAVE_FUNC_STD__TO_STRING == 0)
-
-// We have to backfill std::to_string() for broken C++11 std libs.  See e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580
-// (fixed on gcc trunk 2015-11-13), https://sourceware.org/ml/cygwin/2015-01/msg00251.html.
-
+#if	__has_include(<string_view>)
+// We have the real "Library Fundamentals V1 TS Components" std::string_view slated for C++17 (plus __has_include() works).
+#include <string_view>
+#elif defined(HAVE_STD__EXPERIMENTAL__STRING_VIEW)
+// We have a pre-standard experimental version, use that.
+#include <experimental/string_view>
 namespace std
 {
-
-template <typename T>
-string to_string(T value)
-{
-	static_assert(is_integral<T>::value, "Parameter passed to std::to_string() must be integral type.");
-	stringstream temp_ss;
-	temp_ss << value;
-	return temp_ss.str();
+	using string_view = std::experimental::string_view;
 }
-
-} // namespace std
-
+#else
+// Can't find anything.  Fake what we use with std::string.
+#include <string>
+namespace std
+{
+	using string_view = std::string;
+}
 #endif
 
-#endif /* SRC_FUTURE_STRING_HPP_ */
+
+#endif /* SRC_FUTURE_STRING_VIEW_HPP_ */

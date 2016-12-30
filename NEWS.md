@@ -1,15 +1,18 @@
 # NEWS file for the UniversalCodeGrep project.
 
-## [UNRELEASED]
+## [0.3.2] - 2016-12-29
+
+UniversalCodeGrep (ucg) 0.3.2 is a minor bugfix release with some major under-the-hood changes.
 
 ### New Features
 - Added '--[no]follow' option.  Default is now to not follow symlinks.
 
 ### Changed
-- Performance: Literal string search now bypasses libpcre2 in certain cases and uses vectorized search instead.
+- Major overhaul of directory tree traversal code to allow more opportunities for increasing performance.
+- Performance: Literal string search now bypasses `libpcre2` in certain cases and uses vectorized search instead.
 
 ### Fixed
-
+- Fix to multiversioning to allow building under Homebrew without `env :std`.
 
 ## [0.3.1] - 2016-11-28
 

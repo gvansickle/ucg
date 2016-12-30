@@ -24,6 +24,7 @@
 
 #include <config.h>
 
+#include <cassert>
 #include <cstdio>  // For perror() on FreeBSD.
 #include <fcntl.h> // For openat() and other *at() functions, AT_* defines.
 #include <unistd.h> // For close().
@@ -42,7 +43,10 @@
 #include <string.h>
 #include <cstdlib>   // For free().
 #include <string>
+#include <iterator>   // For std::distance().
 #include <future/type_traits.hpp>
+#include <future/memory.hpp>
+#include <future/shared_mutex.hpp>
 
 #include "integer.hpp"
 #include "Logger.h"
@@ -102,7 +106,30 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
 #if !defined(O_NOCTTY)
 #define O_NOCTTY 0
 #endif
+
+// Non-POSIX Linux extension:
+// "Obtain a file descriptor that can be used for two purposes: to indicate a location in the filesystem tree and to perform
+// operations that act purely at the file descriptor level. [...]  [T]he file descriptor [can be passed] as the dirfd argument of
+// openat(2) and the other "*at()" system calls."
+#if !defined(O_PATH)
+#define O_PATH 0
+#endif
 /// @}
+
+
+
+/**
+ * Class to throw for failures of file-related fuctions such as open()/fstat()/etc.
+ */
+struct FileException : public std::system_error
+{
+	FileException(const std::string &message, int errval = errno) : std::system_error(errval, std::generic_category(), message) {};
+};
+inline std::ostream& operator<<(std::ostream &out, const FileException &fe) noexcept
+{
+	return out << fe.what() << ": " << fe.code() << " - " << fe.code().message();
+}
+
 
 
 /**
@@ -124,7 +151,6 @@ struct dev_ino_pair
 private:
 	friend struct std::hash<dev_ino_pair>;
 
-	//dev_ino_pair_type m_val { 0 };
 	dev_t m_dev {0};
 	ino_t m_ino {0};
 };
@@ -163,13 +189,7 @@ inline std::string dirent_get_name(const dirent* de) noexcept
 		std::string basename(de->d_name, de->d_namelen);
 #elif defined(_DIRENT_HAVE_D_RECLEN) && defined(_D_ALLOC_NAMLEN)
 		// We can cheaply determine how much memory we need to allocate for the name.
-#if defined(HAVE_STRNLEN)
-		// If we have strnlen(), it should be faster than strlen().
 		std::string basename(de->d_name, strnlen(de->d_name, _D_ALLOC_NAMLEN(de)));
-#else
-		// No strnlen.  Even if we have a _D_ALLOC_NAMLEN, there isn't much we can do with it here.
-		std::string basename(de->d_name);
-#endif
 #else
 		// All we have is a null-terminated d_name.
 		std::string basename(de->d_name);
@@ -225,7 +245,7 @@ namespace portable
  */
 inline std::string dirname(const std::string &path) noexcept
 {
-	// Get a copy of the path string which dirname() can modify all it wants.
+	// Get a copy of the path string which ::dirname() can modify all it wants.
 	char * modifiable_path = strdup(path.c_str());
 
 	// Copy the output of dirname into a std:string.  We don't ever free the string dirname() returns
@@ -246,7 +266,7 @@ inline std::string dirname(const std::string &path) noexcept
  */
 inline std::string basename(const std::string &path) noexcept
 {
-	// Get a copy of the path string which dirname() can modify all it wants.
+	// Get a copy of the path string which ::basename() can modify all it wants.
 	char * modifiable_path = strdup(path.c_str());
 
 	// Copy the output of dirname into a std:string.  We don't ever free the string basename() returns
@@ -255,6 +275,29 @@ inline std::string basename(const std::string &path) noexcept
 
 	free(modifiable_path);
 
+	return retval;
+}
+
+
+/**
+ * Convert #path into an absolute file path.
+ *
+ * @todo Suspect this is broken on... wait for it... OSX.
+ *
+ * @param path
+ * @return
+ */
+inline std::string canonicalize_file_name(const std::string &path)
+{
+	std::string retval;
+	/// @todo Maybe prefer glibc extension canonicalize_file_name() here?
+	char * fn = ::realpath(path.c_str(), nullptr);
+	if(fn == nullptr)
+	{
+		throw FileException("realpath failed");
+	}
+	retval.assign(fn);
+	::free(fn);
 	return retval;
 }
 
@@ -302,7 +345,7 @@ inline std::string clean_up_path(const std::string &path) noexcept
 	if(dir.empty() || dir == ".")
 	{
 		// There is no "dir" component.  If dirname() finds no slashes in the path,
-		// it returns a ".".  We don't want to append a "./" to the name, so we just return the basename.
+		// it returns a ".".  We don't want to prepend a "./" to the name, so we just return the basename.
 		// Note that GNU grep does not appear to do this; all paths it prints look like they're dirname()+"/"+basename().
 		// ag and ack however do appear to be doing this "empty dirname() elision".
 		return base;
@@ -316,15 +359,22 @@ inline std::string clean_up_path(const std::string &path) noexcept
 
 inline DIR* opendirat(int at_dir, const char *name)
 {
-	LOG(INFO) << "Attempting to open directory \'" << name << "\' at file descriptor " << at_dir;
-	constexpr int openat_dir_search_flags = O_SEARCH ? O_SEARCH : O_RDONLY;
+	LOG(INFO) << "Attempting to open directory '" << name << "' at file descriptor " << at_dir;
 
-	int file_fd = openat(at_dir, name, openat_dir_search_flags | O_DIRECTORY | O_NOCTTY);
+	int file_fd = openat(at_dir, name, O_SEARCH | O_DIRECTORY | O_NOCTTY);
 	if(file_fd < 0)
 	{
-		perror("openat() failed");
+		ERROR() << "openat() failed: " << LOG_STRERROR();
+		//errno = 0;
+		return nullptr;
 	}
 	DIR* d = fdopendir(file_fd);
+	if(d == nullptr)
+	{
+		ERROR() << "fdopendir failed: " << LOG_STRERROR();
+		//errno = 0;
+		close(file_fd);
+	}
 
 	return d;
 }
