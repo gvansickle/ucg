@@ -167,7 +167,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 
 	if(p1 < (const char*)mem_to_search+memlen)
 	{
-		size_t remaining_len = p1-(memlen+(const char *)mem_to_search);
+		size_t remaining_len = (memlen+(const char *)mem_to_search) - p1;
 
 		if(remaining_len)
 		{
@@ -183,7 +183,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 				uint32_t last_match = _mm_cmpestri(xmm_patt, pattlen, frag1, remaining_len,
 						_SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
 
-				if(last_match == pattlen)
+				if(last_match != vec_size_bytes)
 				{
 					// Found a match in there.
 					return p1 + last_match;
