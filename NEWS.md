@@ -1,5 +1,13 @@
 # NEWS file for the UniversalCodeGrep project.
 
+## [0.3.3] - 2016-12-30
+
+UniversalCodeGrep (ucg) 0.3.3 is a minor bugfix release.
+
+## Fixed
+- Resolved issue with SSE4.2 literal string matching not working correctly.
+- Resolved legitimate Coverity issue in atomic compare/exchange template.
+
 ## [0.3.2] - 2016-12-29
 
 UniversalCodeGrep (ucg) 0.3.2 is a minor bugfix release with some major under-the-hood changes.
