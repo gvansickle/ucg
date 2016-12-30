@@ -80,13 +80,14 @@ script:
  - echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"
  - ../configure CC="$CFG_CC" CXX="$CFG_CXX"
  - make
- - make check 'TESTSUITEFLAGS=--keywords=!benchmark,!characterize'
+ - make check 'TESTSUITEFLAGS=--keywords=!benchmark'
  - find . -iname '*.log' -exec cat "{}" \;
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
  - #make distcheck 'TESTSUITEFLAGS=--keywords=!benchmark,!characterize'
 
 after_success:
- - mkdir TestCorpus && cd ../../TestCorpus && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 && tar xjf boost_1_58_0.tar.bz2
+ - pwd && ls -l 
+ - mkdir TestCorpus && cd TestCorpus && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 && tar xjf boost_1_58_0.tar.bz2 && cd ..
  - cd ucg/build
  - make check #TESTSUITEFLAGS='-v -d -x'
  - cat tests/testsuite.log
