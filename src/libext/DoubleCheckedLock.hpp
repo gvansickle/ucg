@@ -102,7 +102,7 @@ void DoubleCheckedMultiLock(AtomicTypeWrapper &wrap, const BitmaskType bits, Mut
 template <typename T, typename Lambda = std::function<T(T&)>&>
 void com_exch_loop(std::atomic<T> &atomic_var, Lambda val_changer)
 {
-	T old_val;
+	T old_val = atomic_var.load();
 	while(!atomic_var.compare_exchange_weak(old_val, val_changer(old_val))) {};
 }
 

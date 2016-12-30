@@ -142,6 +142,11 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 			if(unlikely(cf))
 			{
 				// Some bits in xmm0 are set.  Found at least the start of a match, maybe a full match, maybe more than one match.
+				// Note that while Intel's documentation doesn't make this very clear, pcmpestrm's Equal Ordered mode does in fact
+				// flag a partial match at the end of a 16-byte search string chunk.  I.e.:
+				//   frag1    : "0123456789abcdef"
+				//   xmm_patt : "efghijk"
+				//   xmm0     : "0000000000000010"
 
 				// Get the bitmask into a non-SSE register.
 				/// @todo This depends on GCC's definition of __m128i as a vector of 2 long longs.
@@ -170,7 +175,7 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 
 	if(p1 < (const char*)mem_to_search+memlen)
 	{
-		size_t remaining_len = p1-(memlen+(const char *)mem_to_search);
+		size_t remaining_len = (memlen+(const char *)mem_to_search) - p1;
 
 		if(remaining_len)
 		{
@@ -186,7 +191,7 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 				uint32_t last_match = _mm_cmpestri(xmm_patt, pattlen, frag1, remaining_len,
 						_SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
 
-				if(last_match == pattlen)
+				if(last_match != vec_size_bytes)
 				{
 					// Found a match in there.
 					return p1 + last_match;
