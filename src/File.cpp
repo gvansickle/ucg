@@ -36,30 +36,49 @@
 #define MAP_NORESERVE 0
 #endif
 
-File::File(FileID file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
+File::File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
 {
-	m_filename = file_id.GetPath();
-	m_file_descriptor = open(m_filename.c_str(), O_RDONLY);
-	if(m_file_descriptor == -1)
+	m_fileid = file_id;
+
+	int file_descriptor { -1 };
+
+	try
 	{
-		// Couldn't open the file, throw exception.
-		throw std::system_error(errno, std::generic_category());
+		file_descriptor = m_fileid->GetFileDescriptor().GetFD();
+
+		/// @todo Does the above ever not throw on error?
+		if(file_descriptor == -1)
+		{
+			// Couldn't open the file, throw exception.
+			LOG(DEBUG) << "bad file descriptor: fd=" << file_descriptor;
+			throw FileException("File constructor: bad file descriptor");
+		}
+	}
+	catch(const FileException &e)
+	{
+		LOG(DEBUG) << e;
+		throw;
+	}
+	catch(const std::system_error &e)
+	{
+		// Rethrow.
+		throw;
+	}
+	catch(...)
+	{
+		// Rethrow anything else.
+		throw;
 	}
 
-#if 0 /// @todo
-	if(!file_id.IsStatInfoValid())
-	{
-		throw FileException("FileID stat info should have been valid");
-	}
-#endif
-
-	m_file_size = file_id.GetFileSize();
+	ssize_t file_size = m_fileid->GetFileSize();
+	LOG(INFO) << "... file size is: " << file_size;
+	LOG(INFO) << "... file type is: " << m_fileid->GetFileType();
 
 	// If filesize is 0, skip.
-	if(m_file_size == 0)
+	if(file_size == 0)
 	{
-		close(m_file_descriptor);
-		m_file_descriptor = -1;
+		//close(m_file_descriptor);
+		//m_file_descriptor = -1;
 		return;
 	}
 
@@ -71,89 +90,37 @@ File::File(FileID file_id, std::shared_ptr<ResizableArray<char>> storage) : m_st
 	// http://unix.stackexchange.com/questions/245499/how-does-cat-know-the-optimum-block-size-to-use
 	// ...it seems that as of ~2014, experiments show the minimum I/O size should be >=128KB.
 	// *stat() seems to return 4096 in all my experiments so far, so we'll clamp it to a min of 128KB and a max of
-	// something not unreasonable, e.g. 1M.
-	auto io_size = clamp(file_id.GetBlockSize(), static_cast<blksize_t>(0x20000), static_cast<blksize_t>(0x100000));
-	m_file_data = GetFileData(m_file_descriptor, m_file_size, io_size);
-	m_file_descriptor = -1;
+	// something not unreasonable, e.g. 1MB.
+	auto io_size = clamp(m_fileid->GetBlockSize(), static_cast<blksize_t>(0x20000), static_cast<blksize_t>(0x100000));
+	m_file_data = GetFileData(file_descriptor, file_size, io_size);
 
 	if(m_file_data == MAP_FAILED)
 	{
 		// Mapping failed.
-		ERROR() << "Couldn't map file \"" << m_filename << "\"";
-		throw std::system_error(errno, std::system_category());
+		ERROR() << "Couldn't map file '" << m_fileid->GetPath() << "'";
+		throw FileException("mmapping file failed", errno);
 	}
 }
 
 
-File::File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
+File::File(const std::string &filename, FileAccessMode fam, FileCreationFlag fcf, std::shared_ptr<ResizableArray<char>> storage)
+	: File(std::make_shared<FileID>(std::make_shared<FileID>(FileID(FileID::path_known_cwd_tag())), filename, fam, fcf), storage)
 {
-	// Save the filename.
-	m_filename = filename;
-
-	// open() the file.  We have to do this regardless of whether we'll subsequently mmap() or read().
-	m_file_descriptor = open(filename.c_str(), O_RDONLY);
-
-	if(m_file_descriptor == -1)
-	{
-		// Couldn't open the file, throw exception.
-		throw std::system_error(errno, std::generic_category());
-	}
-
-	// Check the file size.
-	struct stat st;
-	int retval = fstat(m_file_descriptor, &st);
-	if(retval != 0)
-	{
-		// fstat() failed, throw an exception.
-		close(m_file_descriptor);
-		m_file_descriptor = -1;
-		throw std::system_error(errno, std::generic_category());
-	}
-
-	// Make sure this is a regular file.
-	if(!S_ISREG(st.st_mode))
-	{
-		// Not a regular file, we shouldn't have been called.
-		close(m_file_descriptor);
-		m_file_descriptor = -1;
-		throw FileException("File is not regular file: \"" + filename + "\"");
-	}
-
-	m_file_size = st.st_size;
-	// If filesize is 0, skip.
-	if(m_file_size == 0)
-	{
-		close(m_file_descriptor);
-		m_file_descriptor = -1;
-		return;
-	}
-
-	// Read or mmap the file into memory.
-	// Note that this closes the file descriptor.
-	m_file_data = GetFileData(m_file_descriptor, m_file_size, 4096);
-	m_file_descriptor = -1;
-
-	if(m_file_data == MAP_FAILED)
-	{
-		// Mapping failed.
-		ERROR() << "Couldn't map file \"" << filename << "\"";
-		throw std::system_error(errno, std::system_category());
-	}
 }
 
 File::~File()
 {
 	// Clean up.
-	FreeFileData(m_file_data, m_file_size);
+	FreeFileData(m_file_data, m_fileid->GetFileSize());
 }
 
 const char* File::GetFileData(int file_descriptor, size_t file_size, size_t preferred_block_size)
 {
 	const char *file_data = static_cast<const char *>(MAP_FAILED);
 
-	if(m_use_mmap)
+	if(false) /// @todo This is very broken right now.  (m_use_mmap)
 	{
-		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_NORESERVE /*| MAP_POPULATE*/, file_descriptor, 0));
+		file_data = static_cast<const char *>(mmap(NULL, file_size, PROT_READ, MAP_PRIVATE /*| MAP_NORESERVE | MAP_POPULATE*/, file_descriptor, 0));
 
 		if(file_data == MAP_FAILED)
 		{
@@ -182,12 +149,18 @@ const char* File::GetFileData(int file_descriptor, size_t file_size, size_t pref
 		file_data = m_storage->data();
 
 		// Read in the whole file.
-		/// @todo Handle read() errors better.
-		while(read(file_descriptor, const_cast<char*>(file_data), file_size) > 0);
+		ssize_t retval = 0;
+		while((retval = read(file_descriptor, const_cast<char*>(file_data), file_size)) > 0);
+		if(retval < 0)
+		{
+			// read error.
+			ERROR() << "read() error on file '" << "<<TODO>>" << "', descriptor " << file_descriptor << ": " << LOG_STRERROR();
+			errno = 0;
+		}
 	}
 
 	// We don't need the file descriptor anymore.
-	close(file_descriptor);
+	///@todo close(file_descriptor);
 
 	return file_data;
 }

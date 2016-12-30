@@ -60,7 +60,7 @@ size_t (*FileScanner::CountLinesSinceLastMatch)(const char * __restrict__ prev_l
 		= reinterpret_cast<decltype(FileScanner::CountLinesSinceLastMatch)>(::resolve_CountLinesSinceLastMatch());
 
 
-std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<FileID> &in_queue,
+std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<std::shared_ptr<FileID>> &in_queue,
 			sync_queue<MatchList> &output_queue,
 			std::string regex,
 			bool ignore_case,
@@ -90,7 +90,7 @@ std::unique_ptr<FileScanner> FileScanner::Create(sync_queue<FileID> &in_queue,
 	return retval;
 }
 
-FileScanner::FileScanner(sync_queue<FileID> &in_queue,
+FileScanner::FileScanner(sync_queue<std::shared_ptr<FileID>> &in_queue,
 		sync_queue<MatchList> &output_queue,
 		std::string regex,
 		bool ignore_case,
@@ -125,26 +125,29 @@ void FileScanner::Run(int thread_index)
 	long long total_bytes_read {0};
 
 	// Pull new filenames off the input queue until it's closed.
-	FileID next_file;
-	while(m_in_queue.wait_pull(std::move(next_file)) != queue_op_status::closed)
+	std::shared_ptr<FileID> next_file;
+	MatchList ml;
+	while(m_in_queue.wait_pull(next_file) != queue_op_status::closed)
 	{
 		try
 		{
 			// Try to open and read the file.  This could throw.
-			LOG(INFO) << "Attempting to scan file \'" << next_file.GetPath() << "\'";
-			//steady_clock::time_point start = steady_clock::now();
+			LOG(INFO) << "Attempting to scan file \'" << next_file->GetPath() << "\', fd=" << next_file->GetFileDescriptor().GetFD();
+
+			steady_clock::time_point start = steady_clock::now();
+
 			File f(next_file, file_data_storage);
-			//steady_clock::time_point end = steady_clock::now();
-			//accum_elapsed_time += (end - start);
-			total_bytes_read += f.size();
 
+			steady_clock::time_point end = steady_clock::now();
+			accum_elapsed_time += (end - start);
 
-			MatchList ml(next_file.GetPath());
-
+			auto bytes_read = f.size();
+			total_bytes_read += bytes_read;
+			LOG(INFO) << "Num/total bytes read: " << bytes_read << " / " << total_bytes_read;
 
 			if(f.size() == 0)
 			{
-				LOG(INFO) << "WARNING: Filesize of \'" << next_file.GetPath() << "\' is 0, skipping.";
+				LOG(INFO) << "WARNING: Filesize of \'" << f.name() << "\' is 0, skipping.";
 				continue;
 			}
 
@@ -156,19 +159,23 @@ void FileScanner::Run(int thread_index)
 
 			if(!ml.empty())
 			{
+				ml.SetFilename(next_file->GetPath());
 				// Force move semantics here.
 				m_output_queue.wait_push(std::move(ml));
+				ml.clear();
 			}
 		}
 		catch(const FileException &error)
 		{
 			// The File constructor threw an exception.
 			ERROR() << error.what();
+			LOG(DEBUG) << "Caught FileException: " << error.what();
 		}
 		catch(const std::system_error& error)
 		{
 			// A system error.  Currently should only be errors from File.
 			ERROR() << error.code() << " - " << error.code().message();
+			LOG(DEBUG) << "Caught std::system_error: " << error.code() << " - " << error.code().message();
 		}
 		catch(...)
 		{
@@ -177,10 +184,8 @@ void FileScanner::Run(int thread_index)
 		}
 	}
 
-#if 0
 	duration<double> elapsed = duration_cast<duration<double>>(accum_elapsed_time);
 	LOG(INFO) << "Total bytes read = " << total_bytes_read << ", elapsed time = " << elapsed.count() << ", Bytes/Sec=" << total_bytes_read/elapsed.count() << std::endl;
-#endif
 }
 
 void FileScanner::AssignToNextCore()

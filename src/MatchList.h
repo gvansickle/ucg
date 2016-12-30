@@ -38,7 +38,6 @@
 class MatchList
 {
 public:
-	MatchList(const std::string &filename);
 	MatchList() = default;
 
 	/// Delete the copy constructor and the move assignment operator.  With the std::vector<Match> in here, this is an expensive
@@ -53,6 +52,10 @@ public:
 	/// Also use the default destructor.
 	~MatchList() noexcept = default;
 
+	/// When any matches are found, give the MatchList the given #filename before sending it to the next stage.
+	/// Passing #filename by value because we're storing it.
+	void SetFilename(std::string filename);
+
 	/// Add a match to this MatchList.  Note that this is done by moving, not copying, the given %match.
 	void AddMatch(Match &&match);
 
@@ -63,6 +66,8 @@ public:
 	/// That's not the case.  A moved-from object only has to be destructible, and the move and copy operations
 	/// have to still work the same as they did before the move operation.
 	bool empty() const noexcept { return m_match_list.empty(); };
+
+	void clear() noexcept;
 
 	std::vector<Match>::size_type GetNumberOfMatchedLines() const noexcept;
 

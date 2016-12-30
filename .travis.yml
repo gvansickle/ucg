@@ -9,9 +9,9 @@ sudo: required
 #  - clang
 
 #env:
-#  - CFG_CC= CFG_CXX=
-#  - CFG_CC=clang CFG_CXX=clang++
-#  - CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
+#  - CFG_CC= CFG_CXX=                                                         # default (gcc clang wrapper on OSX)
+#  - CFG_CC=clang CFG_CXX=clang++                                             # clang with GNU std libs.
+#  - CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'  # clang with native std libs.
 
 # Build matrix:
 matrix:
@@ -21,7 +21,12 @@ matrix:
         - os: linux
           compiler: clang
         - os: osx
-          osx_image: xcode8
+          osx_image: xcode8.2
+        - os: osx
+          osx_image: xcode8.2
+          env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
+        - os: osx
+          osx_image: xcode8.1
         - os: osx
           osx_image: xcode8
           env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z'
@@ -30,10 +35,6 @@ matrix:
           env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z -stdlib=libc++'
         - os: osx
           osx_image: xcode7.3
-        - os: osx
-          osx_image: xcode7.2
-        - os: osx
-          osx_image: xcode7
         - os: osx
           osx_image: xcode6.4
           env: CFG_CC='clang -std=gnu11' CFG_CXX='clang++ -std=gnu++1z'
@@ -55,7 +56,7 @@ before_install:
 before_script:
  - echo "g++ --version:" && g++ --version && autoreconf --version && automake --version && echo "===="
  - # pwd ==> /home/travis/build/gvansickle/ucg
- - #sysctl -a
+ - getconf OPEN_MAX
  - #if [ $TRAVIS_OS_NAME == osx ]; then sysctl -a hw; fi
  - #if [ $TRAVIS_OS_NAME == linux ]; then cat /proc/cpuinfo | grep flags; fi
  - # lscpu = Doesn't exist on OSX or Cygwin
@@ -82,10 +83,10 @@ script:
  - make check 'TESTSUITEFLAGS=--keywords=!benchmark,!characterize'
  - find . -iname '*.log' -exec cat "{}" \;
  - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
+ - #make distcheck 'TESTSUITEFLAGS=--keywords=!benchmark,!characterize'
 
 after_success:
- - cd ../../ && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
- - tar xjf boost_1_58_0.tar.bz2
+ - mkdir TestCorpus && cd ../../TestCorpus && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 && tar xjf boost_1_58_0.tar.bz2
  - cd ucg/build
  - make check #TESTSUITEFLAGS='-v -d -x'
  - cat tests/testsuite.log

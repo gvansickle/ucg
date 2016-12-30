@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -22,20 +22,12 @@
 
 #include <config.h>
 
-#include <string>
+#include <future/memory.hpp>
+#include <future/string.hpp>
 #include <stdexcept>
-#include <memory>
 
+#include "libext/FileID.h"
 #include "ResizableArray.h"
-#include "FileID.h"
-
-/**
- * File() may throw this if it runs into trouble opening the given filename.
- */
-struct FileException : public std::runtime_error
-{
-	FileException(const std::string &message) : std::runtime_error(message) {};
-};
 
 
 /**
@@ -45,11 +37,12 @@ struct FileException : public std::runtime_error
 class File
 {
 public:
-	File(FileID file_id, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
-	File(const std::string &filename, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
+	File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
+	File(const std::string &filename, FileAccessMode fam, FileCreationFlag fcf,
+			std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
 	~File();
 
-	size_t size() const noexcept { return m_file_size; };
+	size_t size() const noexcept { return m_fileid->GetFileSize(); };
 
 	const char * data() const noexcept { return m_file_data; };
 
@@ -57,7 +50,7 @@ public:
 	 * Returns the name of this File as passed to the constructor.
 	 * @return  The name of this File as passed to the constructor.
 	 */
-	std::string name() const noexcept { return m_filename; };
+	std::string name() const noexcept { return m_fileid->GetPath(); };
 
 private:
 
@@ -81,11 +74,7 @@ private:
 	 */
 	void FreeFileData(const char * file_data, size_t file_size) noexcept;
 
-	std::string m_filename;
-
-	int m_file_descriptor { -1 };
-
-	size_t m_file_size { 0 };
+	std::shared_ptr<FileID> m_fileid;
 
 	/// The ResizableArray that we'll get file data storage from.
 	std::shared_ptr<ResizableArray<char>> m_storage;

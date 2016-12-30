@@ -78,10 +78,8 @@ namespace lmcppop = lmcppop_int::option;
 #include <libext/Logger.h>
 #include <libext/Terminal.h>
 
-// The sweet spot for the number of directory tree traversal threads seems to be 2 on Linux, independent of the
-// number of scanner threads.  Cygwin does better with 3 or 4 here (and more dirjobs with more scanner threads) since it
-// spends so much more time in the Windows<->POSIX path resolution logic.
-static constexpr size_t f_default_dirjobs = 2;
+// The sweet spot for the number of directory tree traversal threads seems to be 4 on Linux with the new DirTree implementation.
+static constexpr size_t f_default_dirjobs = 4;
 
 
 #if !NEW_OPTS
@@ -950,14 +948,14 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 		if(!homedir.empty())
 		{
 			// See if we can open the user's .ucgrc file.
-			homedir += "/.ucgrc";
+			std::string homefilepath = homedir + "/.ucgrc";
 			try
 			{
-				File home_file(homedir);
+				File home_file(homefilepath, FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
 
 				if(home_file.size() == 0)
 				{
-					LOG(INFO) << "Config file \"" << homedir << "\" is zero-length.";
+					LOG(INFO) << "Config file \"" << homefilepath << "\" is zero-length.";
 				}
 				else
 				{
@@ -968,15 +966,28 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 			}
 			catch(const FileException &e)
 			{
-				WARN() << "During search for ~/.ucgrc: " << e.what();
+				if(e.code() != std::errc::no_such_file_or_directory)
+				{
+					WARN() << "Couldn't open config file \"" << homefilepath << "\", error " << e.code() << " - " << e.code().message();
+				}
+				else
+				{
+					// .ucgrc file doesn't exist.
+					LOG(INFO) << "During search for ~/.ucgrc: " << e;
+				}
 			}
 			catch(const std::system_error &e)
 			{
+				/// @todo Do we need this anymore?  It should be dealt with above in the FileException catch.
 				if(e.code() != std::errc::no_such_file_or_directory)
 				{
-					WARN() << "Couldn't open config file \"" << homedir << "\", error " << e.code() << " - " << e.code().message();
+					WARN() << "Couldn't open config file \"" << homefilepath << "\", error " << e.code() << " - " << e.code().message();
 				}
 				// Otherwise, the file just doesn't exist.
+				else
+				{
+					LOG(DEBUG) << "file doesn't exist";
+				}
 			}
 		}
 	}
@@ -988,7 +999,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 		// We found it, see if we can open it.
 		try
 		{
-			File proj_rc_file(proj_rc_filename);
+			File proj_rc_file(proj_rc_filename, FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
 
 			if(proj_rc_file.size() == 0)
 			{

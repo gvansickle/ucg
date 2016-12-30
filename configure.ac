@@ -19,7 +19,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
 LT_PREREQ([2.4.2])
-AC_INIT([UniversalCodeGrep], [0.3.1], [https://github.com/gvansickle/ucg/issues], [], [https://gvansickle.github.io/ucg/])
+AC_INIT([UniversalCodeGrep], [0.3.3], [https://github.com/gvansickle/ucg/issues], [], [https://gvansickle.github.io/ucg/])
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -79,39 +79,42 @@ AC_SUBST([AM_CXXFLAGS], ["-ggdb3 -O3"])
 ## Checks for the programs needed to do a build.
 AS_BOX([Checking for programs needed to do the build...])
 
-# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
-# This will do that for us.
-# @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
-#       calling LT_INIT, or it will complain.
-#AC_USE_SYSTEM_EXTENSIONS
+# C compiler and preprocessor.
 AC_PROG_CC([gcc clang])
-# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
-# This will do that for us.
-# @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
-#       calling LT_INIT, or it will complain.
-AC_USE_SYSTEM_EXTENSIONS
+AC_PROG_CPP([gcc clang])
+
 # Per Automake 1.15 docs: "This is an obsolescent macro that checks that the C compiler supports the -c and -o options
 #   together. Note that, since Automake 1.14, the AC_PROG_CC is rewritten to implement such checks itself, and thus the
 #   explicit use of AM_PROG_CC_C_O should no longer be required."
 #AM_PROG_CC_C_O
-AC_PROG_CXX([g++ clang++])
-AC_PROG_CXXCPP([g++ clang++]) # Needed for any C++ AC_PREPROC_IFELSE() checks below.
-AC_USE_SYSTEM_EXTENSIONS
-# @temp? Tell clang to use its own library.
-#AS_IF([test "x$TRAVIS_OS_NAME" = "xosx"],
-#[CPPFLAGS="$CPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
-#CXXCPPFLAGS="$CXXCPPFLAGS -stdlib=libc++ -DLIBCXX_USE_COMPILER_RT=YES"
-#LDFLAGS="$LDFLAGS -stdlib=libc++ --rtlib=compiler-rt"])
 
+# C++ compiler and preprocessor.
+AC_PROG_CXX([g++ clang++])
+AC_PROG_CXXCPP([g++ clang++])
+
+# To get access to get_current_dir_name() on Cygwin, we now need to specify _GNU_SOURCE.
+# This will do that for us, plus we want access to any extensions anyway.
+# @note Per the docs, "This should be called before any macros that run the C compiler.".  This also must be done before
+#       calling LT_INIT, or it will complain.
+AC_USE_SYSTEM_EXTENSIONS
+
+# Get C11 support.
 AS_BOX([Checking C compiler language standard support])
 
 AC_LANG_PUSH([C])
-AX_CHECK_COMPILE_FLAG([-std=gnu11], [AX_APPEND_FLAG([-std=gnu11], [CC])],
-	[AX_CHECK_COMPILE_FLAG([-std=c11], [AX_APPEND_FLAG([-std=c11], [CC])],
+AX_CHECK_COMPILE_FLAG([-std=gnu11],
+	[AX_APPEND_FLAG([-std=gnu11], [CC])
+	AX_APPEND_FLAG([-std=gnu11], [CPP])
+	],
+	[AX_CHECK_COMPILE_FLAG([-std=c11],
+	[AX_APPEND_FLAG([-std=c11], [CC])
+	AX_APPEND_FLAG([-std=c11], [CPP])
+	],
 		[AC_MSG_ERROR([no C11 support])], [], [])
 	], [], [])
 AC_LANG_POP([C])
 
+# Get the highest C++ standard support we can.
 AS_BOX([Checking C++ compiler language standard support])
 ## Make sure we get a C++ compiler which supports the highest level of C++17/C++14/C++11 available.
 # Determine what switches we need to get the highest level of C++17/C++14/C++11 available.
@@ -144,6 +147,11 @@ AS_IF([test "x$HAVE_CXX1Z" = "x0"],
 	AS_IF([test "x$HAVE_CXX14" != "x1"],
 		[AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])], [])
 ], [])
+
+# @note For gcc's stdlibc++, see <https://gcc.gnu.org/onlinedocs/libstdc++/manual/using.html#manual.intro.using.flags>
+# for the full list of flags necessary for it to support the various dialects.  The '-std=' value determined above
+# covers most of it.
+
 AC_LANG_POP([C++])
 
 AC_PROG_INSTALL
@@ -264,7 +272,9 @@ AM_MISSING_PROG([MAINTPYTHON], [$PYTHON])
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 # Google Test
+AC_MSG_CHECKING([for googletest library])
 AM_CONDITIONAL([HAVE_GOOGLETEST], [test -d ${top_srcdir}/third_party/googletest])
+AM_COND_IF([HAVE_GOOGLETEST], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
 
 # Add Valgrind support.
 # @todo Note that this expands to GNU-make-only constructs, which fails on the BSDs.
@@ -314,6 +324,9 @@ PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 	[AC_SUBST([HAVE_LIBPCRE], [no])])
 ])
 
+#PKG_CHECK_MODULES([EXPLAIN], [libexplain])
+
+#PKG_CHECK_MODULES([JEMALLOC], [jemalloc], [AC_SUBST([HAVE_JEMALLOC], [yes])], [AC_SUBST([HAVE_JEMALLOC], [no])])
 
 AC_LANG_POP([C++])
 
@@ -403,7 +416,7 @@ AX_APPEND_COMPILE_FLAGS([-fno-omit-frame-pointer], [AM_CXXFLAGS])
 #AX_APPEND_COMPILE_FLAGS([-save-temps], [AM_CXXFLAGS]) # -fverbose-asm
 AX_APPEND_COMPILE_FLAGS([-fdiagnostics-color=auto], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-ftree-vectorize], [AM_CXXFLAGS]) # -fopt-info-optimized -fopt-info-vec-all
-#AX_APPEND_COMPILE_FLAGS([-flto -ffat-lto-objects], [AM_CXXFLAGS])
+#AX_APPEND_COMPILE_FLAGS([-minline-stringops-dynamically], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-Wformat -Wformat-security], [AM_CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS(['-Werror=format-security'], [AM_CXXFLAGS], [-Wformat -Wformat-security])
@@ -448,6 +461,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 	[# Not defined, define a substitute in config.h.
 	AC_MSG_RESULT([no])
 	AC_DEFINE([__has_include(h)], [0], [Defined to a dummy replacement if __has_include() doesn't exist.])
+	AC_DEFINE([HAVE_NOOP_HAS_INCLUDE], [1], [Defined to 1 if we've backfilled __has_include() to an always-0 macro.])
 	])
 
 #
@@ -458,9 +472,14 @@ AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_template
 #
 # C++14 features
 #
-#AC_CHECK_DECLS([__cpp_lib_make_unique], [], [],
-#[[AC_INCLUDES_DEFAULT
-##include <memory>]])
+# We have to check for make_unique at configure-time because at least one version of GNU stdlibc++
+# (ca. the release of gcc 4.9, q.v. <http://stackoverflow.com/a/29450710/945838> has std::make_unique<>
+# but does not declare the SD-6 macro '__cpp_lib_make_unique' for it.
+AC_CHECK_DECLS([__cpp_lib_make_unique], [], [], [
+#include <memory>])
+AC_CHECK_DECLS([__cpp_lib_shared_timed_mutex], [], [], [
+#include <shared_mutex>])
+
 #AC_CHECK_DECLS([__cpp_lib_transformation_trait_aliases], [], [],
 #[AC_INCLUDES_DEFAULT()
 ##include <type_traits>])
@@ -468,6 +487,8 @@ AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_template
 #
 # C++17 features
 #
+AC_CHECK_DECLS([__cpp_lib_shared_mutex], [], [], [
+#include <shared_mutex>])
 #AC_CHECK_DECLS([__cpp_lib_type_trait_variable_templates], [], [],
 #[AC_INCLUDES_DEFAULT()
 ##include <type_traits>])
@@ -534,14 +555,12 @@ AS_IF([test "x$ac_cv_func_strnlen_working" = "xyes"],
 # (see e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61580 (fixed on gcc trunk 2015-11-13),
 # https://sourceware.org/ml/cygwin/2015-01/msg00251.html).  Check for existence here and we'll roll our own
 # if necessary.
-AC_CHECK_DECLS([std::to_string(int)],
-				[AC_DEFINE([HAVE_TO_STRING], [1], [If defined, the std::to_string() function exists.])
-				],
-				[], [#include <string>])
+AXUCG_CHECK_FUNC([#include <string>], [std::to_string(1);], [std::to_string])
 
-# See if we have a std::make_unique<>().  Note that checking for __cpp_lib_make_unique does not seem to
-# work properly under clang++; i.e., it won't be defined even though a std::make_unique() exists.
-AC_CHECK_DECLS([std::make_unique<int>(int)], [], [], [#include <memory>])
+# See if we have a std::make_unique<>().  Note that checking for __cpp_lib_make_unique is not sufficient
+# for certain versions of Clang's libc++; i.e., it won't be defined even though a std::make_unique() exists and works.
+# This issue appears on at least Travis-CI's OSX build servers (all versions) as of 2016-12-17.
+AXUCG_CHECK_FUNC([#include <memory>], [std::make_unique<int>(1);], [std::make_unique])
 
 # We need the argp library.
 #AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
@@ -680,6 +699,10 @@ $(echo | $CXXCPP -v -x c++ - 2>&1 | $SED -n '/^ *#include/,/^ *End of/ p' | $SED
   ---------
   HAVE_LIBPCRE                $HAVE_LIBPCRE
   HAVE_LIBPCRE2               $HAVE_LIBPCRE2
+
+  jemalloc info
+  -------------
+  HAVE_JEMALLOC               $HAVE_JEMALLOC
 
   libtool info
   ------------

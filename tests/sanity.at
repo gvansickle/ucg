@@ -11,10 +11,20 @@
 # UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
+
+###
+### Check that we can match a simple literal in a file in a subdirectory.
+###
+AT_SETUP([Match 'Hello World!' in text file in subdir])
+AT_CHECK([mkdir newdir && printf 'Hello World!\n' > newdir/test.txt], [0], [ignore], [ignore])
+AT_CAPTURE_FILE([newdir/test.txt])
+AT_CHECK([ucg --noenv 'Hello World' newdir], [0], [newdir/test.txt:1:Hello World!
+], [stderr])
+AT_CLEANUP
 
 ###
 ### Check if we properly detect a bad starting search path and return an error.
@@ -68,7 +78,7 @@ AT_CLEANUP
 
 
 ###
-### Hidden file checks 
+### Hidden file checks
 ###
 AT_SETUP([Hidden file handling, search])
 

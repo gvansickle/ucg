@@ -22,13 +22,15 @@
 
 #include <config.h>
 
+#include <future/string_view.hpp>
+#include <libext/string.hpp>
+
 #include <iosfwd>
 #include <tuple>
 #include <string>
 #include <vector>
 #include <map>
 #include <unordered_map>
-#include <libext/string.hpp>
 
 
 /**
@@ -48,6 +50,8 @@ public:
 	TypeManager();
 	~TypeManager() = default;
 
+	using name_string_type = std::string;
+
 	/**
 	 * Determine if the file with the given @p name should be scanned based on the
 	 * enabled file types.
@@ -55,7 +59,7 @@ public:
 	 * @param name
 	 * @return true if file should be scanned, false otherwise.
 	 */
-	bool FileShouldBeScanned(const std::string &name) const noexcept;
+	bool FileShouldBeScanned(const name_string_type &name) const noexcept;
 
 	/**
 	 * Add the given file type to the types which will be scanned.  For handling the
@@ -170,6 +174,7 @@ private:
 	/// CompileTypeTables() after all config file and command-line processing is complete.
 	/// @{
 
+	/// File extensions in microstring format, which can be binary searched quickly.
 	std::vector<microstring> m_fast_include_extensions;
 
 	/// File extensions which will be examined.  Maps to file type.

@@ -15,16 +15,32 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file Dummy cpp file to get this otherwise header-only lib to build portably. */
+/** @file
+ * Dummy cpp file to get this otherwise header-only lib to build portably.  While we're here,
+ * we dump out some compile-time diagnostic info.
+ */
 
 #include <config.h>
-#include "../libext/static_diagnostics.hpp"
+#include "shared_mutex.hpp"
+#include <static_diagnostics.hpp>
 
 #include "memory.hpp"
 
+/// Something to force this file to get linked into the convenience library.
 const char *link_me = "dummy";
 
 // Use this file for printing out some info at compile time regarding our compile-time environment.
+
+// Which std lib do we have?
+#ifdef __GLIBCXX__
+#define CXXLIB_VERSION_STR "GNU libstdc++, version " EXPAND_MACRO(__GLIBCXX__)
+STATIC_MSG(CXXLIB_VERSION_STR)
+#endif
+#ifdef _LIBCPP_VERSION
+#define CXXLIB_VERSION_STR "Clang libc++, version " EXPAND_MACRO(_LIBCPP_VERSION)
+STATIC_MSG(CXXLIB_VERSION_STR)
+#endif
+
 #ifdef __SSE2__
 STATIC_MSG("Have SSE2")
 #endif
@@ -47,7 +63,11 @@ STATIC_MSG("__cpp_lib_make_unique is defined.")
 STATIC_MSG_WARN("__cpp_lib_make_unique is not defined.")
 #endif
 
-///
+#if __has_include(<shared_mutex>)
+STATIC_MSG("Have __has_include(<shared_mutex>)")
+#else
+STATIC_MSG("No __has_include(<shared_mutex>)")
+#endif
 #if __cpp_lib_shared_timed_mutex
 STATIC_MSG("__cpp_lib_shared_timed_mutex is defined")
 #else
@@ -59,11 +79,8 @@ STATIC_MSG("__cpp_lib_shared_mutex is defined")
 STATIC_MSG_WARN("__cpp_lib_shared_mutex not defined")
 #endif
 
-#if __has_include(<shared_mutex>)
-STATIC_MSG("Have __has_include(<shared_mutex>)")
-#else
-STATIC_MSG("No __has_include(<shared_mutex>)")
-#endif
+// Some checks specific to GNU stdlibc++
+#if __GLIBCXX__
 
 #ifndef _GLIBCXX_USE_C99_STDINT_TR1
 STATIC_MSG_WARN("No _GLIBCXX_USE_C99_STDINT_TR1")
@@ -73,6 +90,7 @@ STATIC_MSG_WARN("No _GLIBCXX_USE_C99_STDINT_TR1")
 STATIC_MSG_WARN("No _GLIBCXX_HAS_GTHREADS")
 #endif
 
+#endif // __GLIBCXX__
 
 #if 0 /// @note Put this in to see at compile time what types are really being used for the shared locks.
 std::shared_mutex i;

@@ -26,13 +26,17 @@ DISTCLEANFILES = atconfig
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE) $(BENCHMARKSCRIPTS)
 
 ###
-### Dummy file generator exe.
-### Only built during a "make check", and not installed.
+### Test utilities.
 ###
 check_PROGRAMS = dummy-file-gen portable_time
 if HAVE_GOOGLETEST
 check_PROGRAMS += unittests
 endif
+
+###
+### Dummy file generator exe.
+### Only built during a "make check", and not installed.
+###
 dummy_file_gen_SOURCES = dummy-file-gen.cpp lorem_ipsum.hpp
 dummy_file_gen_CPPFLAGS = -I $(top_srcdir)/src $(AM_CPPFLAGS) 
 dummy_file_gen_CFLAGS = $(AM_CFLAGS)
@@ -51,12 +55,13 @@ portable_time_LDFLAGS = $(AM_LDFLAGS)
 ###
 ### Unit test main program.
 ###
+if HAVE_GOOGLETEST
 unittests_SOURCES = unittests.cpp
 unittests_CPPFLAGS = -I $(top_srcdir)/third_party/googletest/include $(AM_CPPFLAGS)
 unittests_CXXFLAGS = -msse4.2 $(AM_CXXFLAGS)
 unittests_LDFLAGS = $(AM_LDFLAGS)
 unittests_LDADD = ../third_party/libgtest_all.la
-
+endif
 
 ###
 ### Benchmark scripts.  These are maintainer-built source.
@@ -80,7 +85,7 @@ BENCHMARKSCRIPTS = $(srcdir)/TC1.sh \
 
 # The `:;' works around a Bash 3.2 bug when the output is not writeable.
 $(srcdir)/package.m4: $(top_srcdir)/configure.ac
-	@ :;{ \
+	@:;{ \
 	echo '# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).' && \
 	echo '#' && \
 	echo '# This file is part of UniversalCodeGrep.' && \
@@ -152,7 +157,7 @@ atconfig: $(top_builddir)/config.status
 clean-local:
 	$(AM_V_GEN) test ! -f '$(TESTSUITE)' ||	$(SHELL) '$(TESTSUITE)' --clean
 	
-check-local: atconfig atlocal $(TESTSUITE)
+check-local: atconfig atlocal $(TESTSUITE) $(check_PROGRAMS)
 	$(AM_V_GEN) $(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS) ; RETVAL=$$? ; \
 	if test $$RETVAL != 0; then \
 		LOGS=$$(find $(builddir)/testsuite.dir -iname 'testsuite.log'); \

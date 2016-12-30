@@ -98,7 +98,8 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 {
 	static_assert(VecSizeBytes == 16, "Only 128-bit vectorization supported");
 
-	constexpr auto vec_size_mask = ~static_cast<decltype(memlen)>(VecSizeBytes-1);
+	constexpr auto vec_size_bytes = 16;
+	constexpr auto vec_size_mask = ~static_cast<decltype(memlen)>(vec_size_bytes-1);
 
 	const char* p1 = (const char *) mem_to_search;
 	__m128i frag1;
@@ -113,15 +114,15 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 	assume(pattlen <= 16);
 
 	// Load the pattern.
-	const __m128i xmm_patt = _mm_loadu_si128((const __m128i *)pattern);
+	const __m128i xmm_patt = _mm_lddqu_si128((const __m128i *)pattern);
 
 	while(p1 < (char*)mem_to_search+(memlen&vec_size_mask))
 	{
 		// Find the start of a match.
-		for(; p1 < (char*)mem_to_search+(memlen&vec_size_mask); p1+=VecSizeBytes)
+		for(; p1 < (char*)mem_to_search+(memlen&vec_size_mask); p1+=vec_size_bytes)
 		{
 			// Load 16 bytes from mem_to_search.
-			frag1 = _mm_loadu_si128((const __m128i*)p1);
+			frag1 = _mm_lddqu_si128((const __m128i*)p1);
 
 			// Do the search.
 
@@ -132,18 +133,23 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 			/// @note The multiple _mm_cmpestr?()'s here compile down into a single pcmpestrm insruction,
 			/// and serve only to expose the processor flags to the C++ code.  This would probably be easier in
 			/// the end if I did it in actual assembly.
-			auto cf = _mm_cmpestrc(xmm_patt, pattlen, frag1, 16, imm8);
-			xmm0 = _mm_cmpestrm(xmm_patt, pattlen, frag1, 16, imm8);
+			auto cf = _mm_cmpestrc(xmm_patt, pattlen, frag1, vec_size_bytes, imm8);
+			xmm0 = _mm_cmpestrm(xmm_patt, pattlen, frag1, vec_size_bytes, imm8);
 
 			if(unlikely(cf))
 			{
 				// Some bits in xmm0 are set.  Found at least the start of a match, maybe a full match, maybe more than one match.
+				// Note that while Intel's documentation doesn't make this very clear, pcmpestrm's Equal Ordered mode does in fact
+				// flag a partial match at the end of a 16-byte search string chunk.  I.e.:
+				//   frag1    : "0123456789abcdef"
+				//   xmm_patt : "efghijk"
+				//   xmm0     : "0000000000000010"
 
 				// Get the bitmask into a non-SSE register.
 				/// @todo This depends on GCC's definition of __m128i as a vector of 2 long longs.
 				uint32_t esi = xmm0[0];
 
-				auto fsb = findfirstsetbit(esi);
+				auto fsb = find_first_set_bit(esi);
 				if(fsb && ((fsb-1) + pattlen <= 16))
 				{
 					// Found a full match.
@@ -166,7 +172,7 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 
 	if(p1 < (const char*)mem_to_search+memlen)
 	{
-		auto remaining_len = memlen & 0x0F;
+		size_t remaining_len = (memlen+(const char *)mem_to_search) - p1;
 
 		if(remaining_len)
 		{
@@ -178,11 +184,11 @@ inline const void* memmem_short_pattern(const void *mem_to_search, size_t memlen
 			}
 			else
 			{
-				frag1 = _mm_loadu_si128((const __m128i*)p1);
+				frag1 = _mm_lddqu_si128((const __m128i*)p1);
 				uint32_t last_match = _mm_cmpestri(xmm_patt, pattlen, frag1, remaining_len,
 						_SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS);
 
-				if(last_match == pattlen)
+				if(last_match != vec_size_bytes)
 				{
 					// Found a match in there.
 					return p1 + last_match;
