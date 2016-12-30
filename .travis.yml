@@ -86,7 +86,8 @@ script:
  - #make distcheck 'TESTSUITEFLAGS=--keywords=!benchmark,!characterize'
 
 after_success:
- - pwd && ls -l 
+ - # We're still in '/home/travis/build/gvansickle/ucg/build' at this point.
+ - cd ../../   # Back to our home dir.
  - mkdir TestCorpus && cd TestCorpus && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 && tar xjf boost_1_58_0.tar.bz2 && cd ..
  - cd ucg/build
  - make check #TESTSUITEFLAGS='-v -d -x'
