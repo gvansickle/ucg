@@ -260,7 +260,7 @@ struct Arg: public lmcppop::Arg
   {
 	  if(option.name != nullptr)
 	  {
-		  std::cout << "Dynamic option: '" << option.name << "'\n";
+		  /// @todo std::cout << "Dynamic option: '" << option.name << "'\n";
 		  return lmcppop::ARG_NONE;
 	  }
 	  if(msg) printError("Unknown option '", option, "'\n");
@@ -684,13 +684,11 @@ void ArgParse::Parse(int argc, char **argv)
 	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
 #else
 {
-	argc = argc-1;
-	argv = argv+1;
-	lmcppop::Stats stats(dynamic_usage.data(), argc, argv);
+	lmcppop::Stats stats(dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1);
 
 	lmcppop::Option options[stats.options_max], buffer[stats.buffer_max];
 
-	lmcppop::Parser parse(dynamic_usage.data(), argc, argv, options, buffer);
+	lmcppop::Parser parse(dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1, options, buffer);
 
  	if (parse.error())
     	return;
@@ -746,8 +744,11 @@ void ArgParse::Parse(int argc, char **argv)
 	m_word_regexp = options[OPT_WORDREGEX];
 	m_pattern_is_literal = options[OPT_LITERAL];
 	m_column = (options[OPT_COLUMN].last()->type() == ENABLE);
-	m_color = (options[OPT_COLOR].last()->type() == ENABLE);
-	m_nocolor = !m_color;
+	if(options[OPT_COLOR]) // If not specified on command line, defaults to both == false.
+	{
+		m_color = (options[OPT_COLOR].last()->type() == ENABLE);
+		m_nocolor = !m_color;
+	}
 
 	m_follow_symlinks = (options[OPT_FOLLOW].last()->type() == ENABLE);
 
@@ -884,7 +885,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 		std::fprintf(stream, " JIT target architecture: %s\n", jittarget);
 		int nl;
 		s = "unknown";
-		std::map<int, std::string> newline_desc { {10, "LF"}, {13, "CR"}, {3338, "CRLF"}, {-2, "ANYCRLF"}, {-1, "ANY"},
+		const std::map<const int, const std::string> newline_desc { {10, "LF"}, {13, "CR"}, {3338, "CRLF"}, {-2, "ANYCRLF"}, {-1, "ANY"},
 												{21, "LF(EBCDIC)"}, {37, "LF(37)(EBCDIC)"}, {3349, "CRLF(EBCDIC)"}, {3365, "CRLF(37)(EBCDIC)"}};
 		if(pcre_config(PCRE_CONFIG_NEWLINE, &nl) == 0)
 		{
@@ -924,7 +925,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 		std::fprintf(stream, " JIT target architecture: %s\n", jittarget);
 		uint32_t nl;
 		s = "unknown";
-		std::map<uint32_t, std::string> newline_desc {
+		const std::map<const uint32_t, const std::string> newline_desc {
 			{PCRE2_NEWLINE_LF, "LF"},
 			{PCRE2_NEWLINE_CR, "CR"},
 			{PCRE2_NEWLINE_CRLF, "CRLF"},
