@@ -131,6 +131,7 @@ enum OPT
 	OPT_IGNORE_CASE = 1,
 	OPT_SMART_CASE,
 	OPT_NO_SMART_CASE,
+	OPT_HANDLE_CASE,
 	OPT_LITERAL,
 	OPT_WORDREGEX,
 	OPT_COLOR,
@@ -296,7 +297,8 @@ struct Arg: public lmcppop::Arg
   }
 };
 
-enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1 };
+enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1,
+					IGNORE = 1, SMART_CASE = 2, NO_SMART_CASE = 3 };
 //enum optionIndex {UNKNOWN, SECTION, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY};
 
 static constexpr char m_opt_start_str[] {"  \t"};
@@ -364,10 +366,10 @@ constexpr PreDescriptor raw_options[] = {
 		{ OPT_UNKNOWN, 0, "", "",        Arg::UnknownArgHook, "USAGE: example_arg [options]\n\n"
 		                                          "Options:" },
 		{ "Searching:" },
-		{ OPT_IGNORE_CASE, ENABLE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
-		{ OPT_SMART_CASE, ENABLE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
-		{ OPT_SMART_CASE, DISABLE, "", "nosmart-case", Arg::None, ""},
-		{ OPT_SMART_CASE, DISABLE, "", "no-smart-case", Arg::None, "" /*Hidden alias*/},
+		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
+		{ OPT_HANDLE_CASE, SMART_CASE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
+		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "nosmart-case", Arg::None, ""},
+		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "no-smart-case", Arg::None, "" /*Hidden alias*/},
 		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
 		{ OPT_LITERAL, 0, "Q", "literal", Arg::None, "Treat all characters in PATTERN as literal."},
 		{ "Search Output:" },
@@ -378,6 +380,9 @@ constexpr PreDescriptor raw_options[] = {
 		{ OPT_COLOR, ENABLE, "", "colour", Arg::None, "" },
 		{ OPT_COLOR, DISABLE, "", "nocolor", Arg::None, "Render the output without ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, "" },
+		{ "File/directory inclusion/exclusion:" },
+		{ OPT_FOLLOW, ENABLE, "", "follow", Arg::None, "XXXX" },
+		{ OPT_FOLLOW, DISABLE, "", "nofollow", Arg::None, "XXXX" },
 		{ OPT_TYPE, ENABLE, "", "type", Arg::Required, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 #if 0
 		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
@@ -720,11 +725,22 @@ void ArgParse::Parse(int argc, char **argv)
     	m_paths.push_back(parse.nonOption(i));
 	}
 
-	/// @todo Need to work out interaction with smart case.
-	m_ignore_case = (options[OPT_IGNORE_CASE].last()->type() == ENABLE);
-	if(options[OPT_SMART_CASE])
+	// Work out the interaction between ignore-case and smart-case.
+	for(lmcppop::Option* opt = options[OPT_HANDLE_CASE]; opt; opt = opt->next())
 	{
-		m_smart_case = (options[OPT_SMART_CASE].last()->type() == ENABLE);
+		switch(opt->type())
+		{
+		case IGNORE:
+			m_ignore_case = true;
+			m_smart_case = false;
+			break;
+		case SMART_CASE:
+			m_smart_case = true;
+			m_ignore_case = false;
+			break;
+		case NO_SMART_CASE:
+			m_smart_case = false;
+		}
 	}
 
 	m_word_regexp = options[OPT_WORDREGEX];
@@ -732,6 +748,8 @@ void ArgParse::Parse(int argc, char **argv)
 	m_column = (options[OPT_COLUMN].last()->type() == ENABLE);
 	m_color = (options[OPT_COLOR].last()->type() == ENABLE);
 	m_nocolor = !m_color;
+
+	m_follow_symlinks = (options[OPT_FOLLOW].last()->type() == ENABLE);
 
 	for(lmcppop::Option* opt = options[OPT_TYPE]; opt; opt=opt->next())
 	{
