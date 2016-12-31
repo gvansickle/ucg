@@ -143,6 +143,7 @@ enum OPT
 	OPT_EXCLUDE,
 	OPT_FOLLOW,
 	OPT_NOFOLLOW,
+	OPT_RECURSE_SUBDIRS,
 	OPT_TYPE,
 	OPT_NOENV,
 	OPT_TYPE_SET,
@@ -337,7 +338,7 @@ struct PreDescriptor
 			if(short_len)
 			{
 				shortops_s += "-";
-				shortops_s += shortopts;
+				shortops_s += join(split(shortopts, ','), ", -");
 			}
 			if(short_len && long_len)
 			{
@@ -365,25 +366,29 @@ struct PreDescriptor
 constexpr PreDescriptor raw_options[] = {
 		{ OPT_UNKNOWN, 0, "", "",        Arg::UnknownArgHook, "USAGE: example_arg [options]\n\n"
 		                                          "Options:" },
-		{ "Searching:" },
+	{ "Searching:" },
 		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
 		{ OPT_HANDLE_CASE, SMART_CASE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
 		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "nosmart-case", Arg::None, ""},
 		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "no-smart-case", Arg::None, "" /*Hidden alias*/},
 		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
 		{ OPT_LITERAL, 0, "Q", "literal", Arg::None, "Treat all characters in PATTERN as literal."},
-		{ "Search Output:" },
+	{ "Search Output:" },
 		{ OPT_COLUMN, ENABLE, "", "column", Arg::None, "Print column of first match after line number."},
 		{ OPT_COLUMN, DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
-		{ "File presentation:" },
+	{ "File presentation:" },
 		{ OPT_COLOR, ENABLE, "", "color", Arg::None, "Render the output with ANSI color codes."},
 		{ OPT_COLOR, ENABLE, "", "colour", Arg::None, "" },
 		{ OPT_COLOR, DISABLE, "", "nocolor", Arg::None, "Render the output without ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, "" },
-		{ "File/directory inclusion/exclusion:" },
+	{ "File/directory inclusion/exclusion:" },
+		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
+		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
 		{ OPT_FOLLOW, ENABLE, "", "follow", Arg::None, "XXXX" },
 		{ OPT_FOLLOW, DISABLE, "", "nofollow", Arg::None, "XXXX" },
 		{ OPT_TYPE, ENABLE, "", "type", Arg::Required, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
+	{ "File type specification:" },
+	{ "Performance tuning:" },
 #if 0
 		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
 		                                          "  \tTakes an argument but is happy without one." },
@@ -392,15 +397,14 @@ constexpr PreDescriptor raw_options[] = {
 		{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty," \t-1 <arg>, --nonempty=<arg>"
 		                                          "  \tCan NOT take the empty string as argument." },
 #endif
-		{ "Miscellaneous:" },
+	{ "Miscellaneous:" },
 		{ OPT_NOENV,   0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
-		{ "Informational options:" },
+	{ "Informational options:" },
 		{ OPT_HELP,    0, "?", "help", Arg::None, "Give this help list" },
 		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
 		{ OPT_UNKNOWN, 0, "", "", Arg::None,
 		 "\nExamples:\n"
 		 "  example_arg --unknown -o -n10 \n"
-
 		},
 		{ 0, 0, 0, 0, 0, 0 }
 };
@@ -750,6 +754,10 @@ void ArgParse::Parse(int argc, char **argv)
 		m_nocolor = !m_color;
 	}
 
+	if(options[OPT_RECURSE_SUBDIRS]) // m_recurse defaults to true, so only assign if option was really given.
+	{
+		m_recurse = (options[OPT_RECURSE_SUBDIRS].last()->type() == ENABLE);
+	}
 	m_follow_symlinks = (options[OPT_FOLLOW].last()->type() == ENABLE);
 
 	for(lmcppop::Option* opt = options[OPT_TYPE]; opt; opt=opt->next())
