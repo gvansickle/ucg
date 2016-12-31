@@ -1094,16 +1094,8 @@ std::string ArgParse::GetProjectRCFilename() const
 	/// @note GRVS - get_current_dir_name() under Cygwin will currently return a DOS path if this is started
 	///              under the Eclipse gdb.  This mostly doesn't cause problems, except for terminating the loop
 	///              (see below).
-#ifdef HAVE_GET_CURRENT_DIR_NAME
-	char *original_cwd = get_current_dir_name();
-#else
-	char *original_cwd = getcwd(NULL, 0);
-#endif
+	std::string current_cwd = portable::get_current_dir_name();
 
-
-	LOG(INFO) << "cwd = \'" << original_cwd << "\'";
-
-	std::string current_cwd(original_cwd == nullptr ? "" : original_cwd);
 	while(!current_cwd.empty() && current_cwd[0] != '.')
 	{
 		// If we were able to get a file descriptor to $HOME above...
@@ -1155,9 +1147,6 @@ std::string ArgParse::GetProjectRCFilename() const
 		// Go up one directory.
 		current_cwd = portable::dirname(current_cwd);
 	}
-
-	// Free the cwd string.
-	free(original_cwd);
 
 	if(home_fd != -1)
 	{
