@@ -98,8 +98,6 @@ sudo dnf copr enable grvs/UniversalCodeGrep
 sudo dnf install universalcodegrep
 ```
 
-<!-- COMING SOON
-
 ### Arch Linux User Repository
 
 If you are a Arch Linux user, the easiest way to install UniversalCodeGrep is from the Arch Linux User Repository (AUR) [here](https://aur.archlinux.org/packages/ucg/).  Installation is as simple as:
@@ -114,6 +112,7 @@ tar -xvf ucg.tar.gz
 cd ycg
 makepkg -sri
 ```
+<!-- COMING SOON
 
 ### openSUSE Binary RPMs
 
@@ -154,31 +153,30 @@ Versions of `gcc` prior to 4.8 do not have sufficiently complete C++11 support t
 
 ##### PCRE: `libpcre2-8` version 10.20 or greater, or `libpcre` version 8.21 or greater.
 
-One or both of these should be available from your Linux/OS X/*BSD distro's package manager. You'll need the `-devel` versions if they're separate.  Prefer `libpcre2-8`; while `ucg` will currently work with either PCRE2 or PCRE, you'll get better performance with PCRE2.
+One or both of these should be available from your Linux/OS X/*BSD distro's package manager. You'll need the `-devel` versions if they're packaged separately.  Prefer `libpcre2-8`; while `ucg` will currently work with either PCRE2 or PCRE, you'll get better performance with PCRE2, and further 
 
 > #### OS X Prerequisites
 >
 > OS X additionally requires the installation of `argp-standalone`, which is normally part of the `glibc` library on Linux systems.  This can
-> be installed along with a pcre library from Homebrew:
+> be installed along with a pcre2 library from Homebrew:
 > ```sh
 > $ brew update
-> $ brew install pcre argp-standalone
+> $ brew install pcre2 argp-standalone
 > ```
 
 ### Supported OSes and Distributions
 
-UniversalCodeGrep 0.3.1 should build and run anywhere the prerequisites are available.  It has been built and tested on the following OSes/distros:
+UniversalCodeGrep 0.3.3 should build and run on any reasonably POSIX-compliant platform where the prerequisites are available.  It has been built and tested on the following OSes/distros:
 
-- Linux
-  - Fedora 22, 23, 24, 25, rawhide
-  - CentOS 7
-  - Ubuntu 16.04 (Xenial), 15.04, 14.04 (Trusty Tahr)
-- Windows 7 + Cygwin 64-bit
-- OS X
-  - Xcode 8gm/OS X 10.11
-  - Xcode 7.1.1 GM/OSX 10.10
-  - Xcode 6.1/OS X 10.9
-- PC-BSD 10.3
+- Linux:
+  - Fedora 23, 24, 25, 26
+  - Ubuntu 16.04 (Xenial), 14.04 (Trusty Tahr)
+- OS X:
+  - OS X 10.10, 10.11, 10.12, with Xcode 6.4, 7.3.1, 8gm, 8.1, and 8.2 resp.
+- *BSDs:
+  - TrueOS (nee PC-BSD) 12.0 (FreeBSD 12.0)
+- Windows:
+  - Windows 7 + Cygwin 64-bit
 
 Note that at this time, only x86-64/amd64 architectures are supported.
 
