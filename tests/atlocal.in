@@ -49,11 +49,11 @@ then
 	PROGLIST=$PROGLIST,inst_ucg:$PROG_INST_UCG
 	export PROG_INST_UCG;
 fi
-#if PROG_INST_AG="$(which ag 2>/dev/null)";
-#then
-#	PROGLIST=$PROGLIST,inst_ag:$PROG_INST_AG
-#	export PROG_INST_AG
-#fi
+if PROG_INST_AG="$(which ag 2>/dev/null)";
+then
+	PROGLIST=$PROGLIST,inst_ag:$PROG_INST_AG
+	export PROG_INST_AG
+fi
 #if PROG_ACK="$(which ack)";
 #then
 #fi
