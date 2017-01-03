@@ -181,6 +181,7 @@ UniversalCodeGrep 0.3.3 should build and run on any reasonably POSIX-compliant p
 
 - Linux:
   - Fedora 23, 24, 25, 26
+  - Arch Linux
   - Ubuntu 16.04 (Xenial), 14.04 (Trusty Tahr)
 - OS X:
   - OS X 10.10, 10.11, 10.12, with Xcode 6.4, 7.3.1, 8gm, 8.1, and 8.2 resp.
