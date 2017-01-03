@@ -382,11 +382,12 @@ constexpr PreDescriptor raw_options[] = {
 		{ OPT_COLOR, DISABLE, "", "nocolor", Arg::None, "Render the output without ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, "" },
 	{ "File/directory inclusion/exclusion:" },
+		{ OPT_IGNORE_DIR, OPT_BRACKET_NO_STANDIN, "", "[no]ignore-dir", Arg::NonEmpty, "=NAME  [Do not] exclude directories with NAME."},
 		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
 		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
 		{ OPT_FOLLOW, ENABLE, "", "follow", Arg::None, "XXXX" },
 		{ OPT_FOLLOW, DISABLE, "", "nofollow", Arg::None, "XXXX" },
-		{ OPT_TYPE, ENABLE, "", "type", Arg::Required, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
+		{ OPT_TYPE, ENABLE, "", "type", Arg::NonEmpty, "=[no]TYPE  Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 	{ "File type specification:" },
 	{ "Performance tuning:" },
 #if 0
