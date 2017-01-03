@@ -70,7 +70,7 @@ Note that UniversalCodeGrep is in fact somewhat faster than `grep` itself, even 
 
 ## Installation
 
-UniversalCodeGrep binaries are currently available for Fedora 23/24/25/rawhide and Centos 7.  Binaries for other platforms (Ubuntu, Arch, openSUSE) are coming soon.
+UniversalCodeGrep packages are currently available for Fedora 23/24/25/26, Arch, and OS X.
 
 <!-- COMING SOON
 ### Ubuntu PPA
@@ -87,9 +87,9 @@ sudo apt-get install universalcodegrep
 ```
 -->
 
-### Fedora/CentOS Copr Repository
+### Fedora Copr Repository
 
-If you are a Fedora or CentOS user, the easiest way to install UniversalCodeGrep is from the Fedora Copr-hosted dnf/yum repository [here](https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep).  Installation is as simple as:
+If you are a Fedora user, the easiest way to install UniversalCodeGrep is from the Fedora Copr-hosted dnf/yum repository [here](https://copr.fedoraproject.org/coprs/grvs/UniversalCodeGrep).  Installation is as simple as:
 
 ```sh
 # Add the Copr repo to your system:
@@ -105,6 +105,9 @@ If you are a Arch Linux user, the easiest way to install UniversalCodeGrep is fr
 ```sh
 # Install using yaourt:
 yaourt -S ucg
+```
+Or you can install manually:
+```sh
 # Install manually:
 cd /tmp/
 curl -L -O https://aur.archlinux.org/cgit/aur.git/snapshot/ucg.tar.gz
@@ -116,17 +119,25 @@ makepkg -sri
 
 ### openSUSE Binary RPMs
 
-Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/tag/0.3.1).
+Binary RPMs for openSUSE are available [here](https://github.com/gvansickle/ucg/releases/tag/0.3.3).
 
 -->
 
-### Building the Source Tarball
+### OS X
 
-UniversalCodeGrep can be built and installed from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.3.1/universalcodegrep-0.3.1.tar.gz)) in the standard autotools manner:
+`ucg` has been accepted into `homebrew-core`, so installing it is as easy as:
 
 ```sh
-tar -xaf universalcodegrep-0.3.1.tar.gz
-cd universalcodegrep-0.3.1.tar.gz
+brew install ucg
+```
+
+### Building the Source Tarball
+
+If a `ucg` package is not available for your platform, UniversalCodeGrep can be built and installed from the distribution tarball (available [here](https://github.com/gvansickle/ucg/releases/download/0.3.3/universalcodegrep-0.3.3.tar.gz)) in the standard autotools manner:
+
+```sh
+tar -xaf universalcodegrep-0.3.3.tar.gz
+cd universalcodegrep-0.3.3.tar.gz
 ./configure
 make
 make install
@@ -153,7 +164,7 @@ Versions of `gcc` prior to 4.8 do not have sufficiently complete C++11 support t
 
 ##### PCRE: `libpcre2-8` version 10.20 or greater, or `libpcre` version 8.21 or greater.
 
-One or both of these should be available from your Linux/OS X/*BSD distro's package manager. You'll need the `-devel` versions if they're packaged separately.  Prefer `libpcre2-8`; while `ucg` will currently work with either PCRE2 or PCRE, you'll get better performance with PCRE2, and further 
+One or both of these should be available from your Linux/OS X/*BSD distro's package manager. You'll need the `-devel` versions if they're packaged separately.  Prefer `libpcre2-8`; while `ucg` will currently work with either PCRE2 or PCRE, you'll get better performance with PCRE2, and further development will be concentrated on PCRE2.
 
 > #### OS X Prerequisites
 >
@@ -194,7 +205,7 @@ If no `FILES OR DIRECTORIES` are specified, searching starts in the current dire
 
 ### Command Line Options
 
-Version 0.3.1 of `ucg` supports a significant subset of the options supported by `ack`.  In general, options specified later
+Version 0.3.3 of `ucg` supports a significant subset of the options supported by `ack`.  In general, options specified later
 on the command line override options specified earlier on the command line.
 
 #### Searching
