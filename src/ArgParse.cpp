@@ -312,17 +312,24 @@ struct PreDescriptor
 	const int type;
 	const char* const shortopts;
 	const char* const longopts;
+	const char *const m_argname;
 	const lmcppop::CheckArg check_arg;
 	const char* help;
 
 	constexpr PreDescriptor(unsigned i, int t, const char *const so, const char *const lo,
 			const lmcppop::CheckArg c, const char *h) noexcept
-			: index(i), type(t), shortopts(so), longopts(lo), check_arg(c), help(h)
+			: index(i), type(t), shortopts(so), longopts(lo), m_argname(""), check_arg(c), help(h)
+	{
+	};
+
+	constexpr PreDescriptor(unsigned i, int t, const char *const so, const char *const lo, const char *const argname,
+			const lmcppop::CheckArg c, const char *h) noexcept
+			: index(i), type(t), shortopts(so), longopts(lo), m_argname(argname), check_arg(c), help(h)
 	{
 	};
 
 	constexpr PreDescriptor(const char *section_header_name) noexcept
-		: index(255), type(0), shortopts(""), longopts(""), check_arg(Arg::None), help(section_header_name)
+		: index(255), type(0), shortopts(""), longopts(""), m_argname(""), check_arg(Arg::None), help(section_header_name)
 	{
 	};
 
@@ -348,6 +355,11 @@ struct PreDescriptor
 			{
 				shortops_s += "--";
 				shortops_s += longopts;
+				if(std::strlen(m_argname) > 0)
+				{
+					shortops_s += "=";
+					shortops_s += m_argname;
+				}
 			}
 			std::shared_ptr<std::string> semi_fmt_help = std::make_shared<std::string>(
 					shortops_s + m_help_space_str + help);
@@ -363,9 +375,8 @@ struct PreDescriptor
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
-constexpr PreDescriptor raw_options[] = {
-		{ OPT_UNKNOWN, 0, "", "",        Arg::UnknownArgHook, "USAGE: example_arg [options]\n\n"
-		                                          "Options:" },
+const PreDescriptor raw_options[] = {
+		{ (std::string("Usage: ucg ") + args_doc + "\n\n").c_str() },
 	{ "Searching:" },
 		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
 		{ OPT_HANDLE_CASE, SMART_CASE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
@@ -382,12 +393,12 @@ constexpr PreDescriptor raw_options[] = {
 		{ OPT_COLOR, DISABLE, "", "nocolor", Arg::None, "Render the output without ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, "" },
 	{ "File/directory inclusion/exclusion:" },
-		{ OPT_IGNORE_DIR, OPT_BRACKET_NO_STANDIN, "", "[no]ignore-dir", Arg::NonEmpty, "=NAME  [Do not] exclude directories with NAME."},
+		{ OPT_IGNORE_DIR, OPT_BRACKET_NO_STANDIN, "", "[no]ignore-dir", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
 		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
 		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
 		{ OPT_FOLLOW, ENABLE, "", "follow", Arg::None, "XXXX" },
 		{ OPT_FOLLOW, DISABLE, "", "nofollow", Arg::None, "XXXX" },
-		{ OPT_TYPE, ENABLE, "", "type", Arg::NonEmpty, "=[no]TYPE  Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
+		{ OPT_TYPE, ENABLE, "", "type", "[no]TYPE", Arg::NonEmpty, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 	{ "File type specification:" },
 	{ "Performance tuning:" },
 #if 0
@@ -395,8 +406,6 @@ constexpr PreDescriptor raw_options[] = {
 		                                          "  \tTakes an argument but is happy without one." },
 		{ REQUIRED,0,"r","required",Arg::Required," \t-r <arg>, --required=<arg>  \tMust have an argument." },
 		{ NUMERIC, 0,"n","numeric", Arg::Numeric, " \t-n <num>, --numeric=<num>  \tRequires a number as argument." },
-		{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty," \t-1 <arg>, --nonempty=<arg>"
-		                                          "  \tCan NOT take the empty string as argument." },
 #endif
 	{ "Miscellaneous:" },
 		{ OPT_NOENV,   0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
