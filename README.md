@@ -16,7 +16,9 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
     * [Benchmark: '\#include\\s\+"\.\*"' on Boost source](#benchmark-includes-on-boost-source)
 * [License](#license)
 * [Installation](#installation)
-  * [Fedora/CentOS Copr Repository](#fedoracentos-copr-repository)
+  * [Fedora Copr Repository](#fedora-copr-repository)
+  * [Arch Linux User Repository](#arch-linux-user-repository)
+  * [OS X](#os-x)
   * [Building the Source Tarball](#building-the-source-tarball)
     * [\*BSD Note](#bsd-note)
     * [Build Prerequisites](#build-prerequisites)
@@ -42,6 +44,8 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
   * [Literal Filename Filter](#literal-filename-filter)
   * [Glob filter](#glob-filter)
 * [Author](#author)
+
+<!-- TOC Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go) -->
 
 
 ## Introduction
