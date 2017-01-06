@@ -260,7 +260,7 @@ uint8_t FileScanner::GetLiteralPrefixLen(const std::string &regex) noexcept
 	auto first_metachar_pos = regex.find_first_of("\\^$.[]()?*+{}");
 	if(first_metachar_pos == std::string::npos)
 	{
-		// The whole char was literal, we shouldn't have gotten here.
+		// The whole regex was literal, we shouldn't have gotten here.
 		LOG(INFO) << "No non-literal chars in regex.";
 		return 1;
 	}

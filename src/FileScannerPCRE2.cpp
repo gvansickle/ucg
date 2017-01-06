@@ -345,9 +345,13 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		{
 			if(m_use_lit_prefix)
 			{
-				PCRE2_SIZE old_ovector[2] = { ovector[0], ovector[1]};
+				PCRE2_SIZE old_ovector[2] = { ovector[0], ovector[1] };
 				// Find the literal prefix.
 				rc = LiteralMatch(this, file_data, file_size, start_offset, ovector);
+				if(ovector[0] > file_size)
+				{
+					break;
+				}
 				if(rc <= 0)
 				{
 					// Couldn't find the literal prefix, regex can't match.
@@ -356,7 +360,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 				else
 				{
 					// Rewind a bit and let libpcre2 do its thing.
-					start_offset = ovector[0] - m_literal_search_string_len;
+					start_offset = ovector[0];
 					ovector[0] = old_ovector[0];
 					ovector[1] = old_ovector[1];
 				}
