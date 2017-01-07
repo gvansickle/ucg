@@ -285,8 +285,7 @@ class TestGenDatabase(object):
         rows = self.dbconnection.execute('SELECT * FROM benchmark1 WHERE test_case_id == "{}"'.format(test_case_id))
         for row in rows:
             if desc_long == "":
-                # The desc_long text is shell quoted in the csv, but the outer quotes get stripped
-                # by the Python csv import.  Add them back. ##Escape any embedded double quotes.
+                # Escape any embedded double quotes.
                 desc_long = row['desc_long'].replace('"', '\\"')
                 corpus = row['corpus']
             test_inst_num += 1
