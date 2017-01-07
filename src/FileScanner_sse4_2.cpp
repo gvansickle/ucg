@@ -303,7 +303,7 @@ int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, si
 	const char* str_match;
 	const size_t bytes_to_search = file_size - start_offset;
 
-	if(0)//m_literal_search_string_len <= 16)
+	if(m_literal_search_string_len <= 16)
 	{
 		str_match = (const char*)MV_USE(memmem_short_pattern, ISA_x86_64::SSE4_2)((const void*)(file_data+start_offset), bytes_to_search,
 				(const void *)m_literal_search_string.get(), m_literal_search_string_len);
