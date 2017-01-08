@@ -131,6 +131,7 @@ enum OPT
 	OPT_IGNORE_CASE = 1,
 	OPT_SMART_CASE,
 	OPT_NO_SMART_CASE,
+	OPT_HANDLE_CASE,
 	OPT_LITERAL,
 	OPT_WORDREGEX,
 	OPT_COLOR,
@@ -142,6 +143,7 @@ enum OPT
 	OPT_EXCLUDE,
 	OPT_FOLLOW,
 	OPT_NOFOLLOW,
+	OPT_RECURSE_SUBDIRS,
 	OPT_TYPE,
 	OPT_NOENV,
 	OPT_TYPE_SET,
@@ -259,7 +261,7 @@ struct Arg: public lmcppop::Arg
   {
 	  if(option.name != nullptr)
 	  {
-		  std::cout << "Dynamic option: '" << option.name << "'\n";
+		  /// @todo std::cout << "Dynamic option: '" << option.name << "'\n";
 		  return lmcppop::ARG_NONE;
 	  }
 	  if(msg) printError("Unknown option '", option, "'\n");
@@ -296,7 +298,8 @@ struct Arg: public lmcppop::Arg
   }
 };
 
-enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1 };
+enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1,
+					IGNORE = 1, SMART_CASE = 2, NO_SMART_CASE = 3 };
 //enum optionIndex {UNKNOWN, SECTION, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY};
 
 static constexpr char m_opt_start_str[] {"  \t"};
@@ -309,17 +312,24 @@ struct PreDescriptor
 	const int type;
 	const char* const shortopts;
 	const char* const longopts;
+	const char *const m_argname;
 	const lmcppop::CheckArg check_arg;
 	const char* help;
 
 	constexpr PreDescriptor(unsigned i, int t, const char *const so, const char *const lo,
 			const lmcppop::CheckArg c, const char *h) noexcept
-			: index(i), type(t), shortopts(so), longopts(lo), check_arg(c), help(h)
+			: index(i), type(t), shortopts(so), longopts(lo), m_argname(""), check_arg(c), help(h)
+	{
+	};
+
+	constexpr PreDescriptor(unsigned i, int t, const char *const so, const char *const lo, const char *const argname,
+			const lmcppop::CheckArg c, const char *h) noexcept
+			: index(i), type(t), shortopts(so), longopts(lo), m_argname(argname), check_arg(c), help(h)
 	{
 	};
 
 	constexpr PreDescriptor(const char *section_header_name) noexcept
-		: index(255), type(0), shortopts(""), longopts(""), check_arg(Arg::None), help(section_header_name)
+		: index(255), type(0), shortopts(""), longopts(""), m_argname(""), check_arg(Arg::None), help(section_header_name)
 	{
 	};
 
@@ -335,7 +345,7 @@ struct PreDescriptor
 			if(short_len)
 			{
 				shortops_s += "-";
-				shortops_s += shortopts;
+				shortops_s += join(split(shortopts, ','), ", -");
 			}
 			if(short_len && long_len)
 			{
@@ -345,6 +355,11 @@ struct PreDescriptor
 			{
 				shortops_s += "--";
 				shortops_s += longopts;
+				if(std::strlen(m_argname) > 0)
+				{
+					shortops_s += "=";
+					shortops_s += m_argname;
+				}
 			}
 			std::shared_ptr<std::string> semi_fmt_help = std::make_shared<std::string>(
 					shortops_s + m_help_space_str + help);
@@ -360,42 +375,46 @@ struct PreDescriptor
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
-constexpr PreDescriptor raw_options[] = {
-		{ OPT_UNKNOWN, 0, "", "",        Arg::UnknownArgHook, "USAGE: example_arg [options]\n\n"
-		                                          "Options:" },
-		{ "Searching:" },
-		{ OPT_IGNORE_CASE, ENABLE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
-		{ OPT_SMART_CASE, ENABLE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
-		{ OPT_SMART_CASE, DISABLE, "", "nosmart-case", Arg::None, ""},
-		{ OPT_SMART_CASE, DISABLE, "", "no-smart-case", Arg::None, "" /*Hidden alias*/},
+const PreDescriptor raw_options[] = {
+		{ (std::string("Usage: ucg ") + args_doc + "\n\n").c_str() },
+	{ "Searching:" },
+		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
+		{ OPT_HANDLE_CASE, SMART_CASE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
+		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "nosmart-case", Arg::None, ""},
+		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "no-smart-case", Arg::None, "" /*Hidden alias*/},
 		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
 		{ OPT_LITERAL, 0, "Q", "literal", Arg::None, "Treat all characters in PATTERN as literal."},
-		{ "Search Output:" },
+	{ "Search Output:" },
 		{ OPT_COLUMN, ENABLE, "", "column", Arg::None, "Print column of first match after line number."},
 		{ OPT_COLUMN, DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
-		{ "File presentation:" },
+	{ "File presentation:" },
 		{ OPT_COLOR, ENABLE, "", "color", Arg::None, "Render the output with ANSI color codes."},
 		{ OPT_COLOR, ENABLE, "", "colour", Arg::None, "" },
 		{ OPT_COLOR, DISABLE, "", "nocolor", Arg::None, "Render the output without ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, "" },
-		{ OPT_TYPE, ENABLE, "", "type", Arg::Required, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
+	{ "File/directory inclusion/exclusion:" },
+		{ OPT_IGNORE_DIR, OPT_BRACKET_NO_STANDIN, "", "[no]ignore-dir", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
+		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
+		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
+		{ OPT_FOLLOW, ENABLE, "", "follow", Arg::None, "XXXX" },
+		{ OPT_FOLLOW, DISABLE, "", "nofollow", Arg::None, "XXXX" },
+		{ OPT_TYPE, ENABLE, "", "type", "[no]TYPE", Arg::NonEmpty, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
+	{ "File type specification:" },
+	{ "Performance tuning:" },
 #if 0
 		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
 		                                          "  \tTakes an argument but is happy without one." },
 		{ REQUIRED,0,"r","required",Arg::Required," \t-r <arg>, --required=<arg>  \tMust have an argument." },
 		{ NUMERIC, 0,"n","numeric", Arg::Numeric, " \t-n <num>, --numeric=<num>  \tRequires a number as argument." },
-		{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty," \t-1 <arg>, --nonempty=<arg>"
-		                                          "  \tCan NOT take the empty string as argument." },
 #endif
-		{ "Miscellaneous:" },
+	{ "Miscellaneous:" },
 		{ OPT_NOENV,   0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
-		{ "Informational options:" },
+	{ "Informational options:" },
 		{ OPT_HELP,    0, "?", "help", Arg::None, "Give this help list" },
 		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
 		{ OPT_UNKNOWN, 0, "", "", Arg::None,
 		 "\nExamples:\n"
 		 "  example_arg --unknown -o -n10 \n"
-
 		},
 		{ 0, 0, 0, 0, 0, 0 }
 };
@@ -679,13 +698,11 @@ void ArgParse::Parse(int argc, char **argv)
 	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
 #else
 {
-	argc = argc-1;
-	argv = argv+1;
-	lmcppop::Stats stats(dynamic_usage.data(), argc, argv);
+	lmcppop::Stats stats(dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1);
 
 	lmcppop::Option options[stats.options_max], buffer[stats.buffer_max];
 
-	lmcppop::Parser parse(dynamic_usage.data(), argc, argv, options, buffer);
+	lmcppop::Parser parse(dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1, options, buffer);
 
  	if (parse.error())
     	return;
@@ -720,18 +737,38 @@ void ArgParse::Parse(int argc, char **argv)
     	m_paths.push_back(parse.nonOption(i));
 	}
 
-	/// @todo Need to work out interaction with smart case.
-	m_ignore_case = (options[OPT_IGNORE_CASE].last()->type() == ENABLE);
-	if(options[OPT_SMART_CASE])
+	// Work out the interaction between ignore-case and smart-case.
+	for(lmcppop::Option* opt = options[OPT_HANDLE_CASE]; opt; opt = opt->next())
 	{
-		m_smart_case = (options[OPT_SMART_CASE].last()->type() == ENABLE);
+		switch(opt->type())
+		{
+		case IGNORE:
+			m_ignore_case = true;
+			m_smart_case = false;
+			break;
+		case SMART_CASE:
+			m_smart_case = true;
+			m_ignore_case = false;
+			break;
+		case NO_SMART_CASE:
+			m_smart_case = false;
+		}
 	}
 
 	m_word_regexp = options[OPT_WORDREGEX];
 	m_pattern_is_literal = options[OPT_LITERAL];
 	m_column = (options[OPT_COLUMN].last()->type() == ENABLE);
-	m_color = (options[OPT_COLOR].last()->type() == ENABLE);
-	m_nocolor = !m_color;
+	if(options[OPT_COLOR]) // If not specified on command line, defaults to both == false.
+	{
+		m_color = (options[OPT_COLOR].last()->type() == ENABLE);
+		m_nocolor = !m_color;
+	}
+
+	if(options[OPT_RECURSE_SUBDIRS]) // m_recurse defaults to true, so only assign if option was really given.
+	{
+		m_recurse = (options[OPT_RECURSE_SUBDIRS].last()->type() == ENABLE);
+	}
+	m_follow_symlinks = (options[OPT_FOLLOW].last()->type() == ENABLE);
 
 	for(lmcppop::Option* opt = options[OPT_TYPE]; opt; opt=opt->next())
 	{
@@ -866,7 +903,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 		std::fprintf(stream, " JIT target architecture: %s\n", jittarget);
 		int nl;
 		s = "unknown";
-		std::map<int, std::string> newline_desc { {10, "LF"}, {13, "CR"}, {3338, "CRLF"}, {-2, "ANYCRLF"}, {-1, "ANY"},
+		const std::map<const int, const std::string> newline_desc { {10, "LF"}, {13, "CR"}, {3338, "CRLF"}, {-2, "ANYCRLF"}, {-1, "ANY"},
 												{21, "LF(EBCDIC)"}, {37, "LF(37)(EBCDIC)"}, {3349, "CRLF(EBCDIC)"}, {3365, "CRLF(37)(EBCDIC)"}};
 		if(pcre_config(PCRE_CONFIG_NEWLINE, &nl) == 0)
 		{
@@ -906,7 +943,7 @@ void ArgParse::PrintVersionText(FILE* stream)
 		std::fprintf(stream, " JIT target architecture: %s\n", jittarget);
 		uint32_t nl;
 		s = "unknown";
-		std::map<uint32_t, std::string> newline_desc {
+		const std::map<const uint32_t, const std::string> newline_desc {
 			{PCRE2_NEWLINE_LF, "LF"},
 			{PCRE2_NEWLINE_CR, "CR"},
 			{PCRE2_NEWLINE_CRLF, "CRLF"},
@@ -1076,16 +1113,8 @@ std::string ArgParse::GetProjectRCFilename() const
 	/// @note GRVS - get_current_dir_name() under Cygwin will currently return a DOS path if this is started
 	///              under the Eclipse gdb.  This mostly doesn't cause problems, except for terminating the loop
 	///              (see below).
-#ifdef HAVE_GET_CURRENT_DIR_NAME
-	char *original_cwd = get_current_dir_name();
-#else
-	char *original_cwd = getcwd(NULL, 0);
-#endif
+	std::string current_cwd = portable::get_current_dir_name();
 
-
-	LOG(INFO) << "cwd = \'" << original_cwd << "\'";
-
-	std::string current_cwd(original_cwd == nullptr ? "" : original_cwd);
 	while(!current_cwd.empty() && current_cwd[0] != '.')
 	{
 		// If we were able to get a file descriptor to $HOME above...
@@ -1137,9 +1166,6 @@ std::string ArgParse::GetProjectRCFilename() const
 		// Go up one directory.
 		current_cwd = portable::dirname(current_cwd);
 	}
-
-	// Free the cwd string.
-	free(original_cwd);
 
 	if(home_fd != -1)
 	{

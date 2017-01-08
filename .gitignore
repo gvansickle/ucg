@@ -10,6 +10,7 @@
 Makefile.in
 /tests/testsuite
 /tests/package.m4
+/tests/TC*.sh
 /aclocal.m4
 /config.h.in
 /config.h.in~
