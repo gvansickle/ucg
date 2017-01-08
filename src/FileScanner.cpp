@@ -351,11 +351,6 @@ bool FileScanner::ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept
 {
 	uint16_t out_index = 0;
 
-	// Vars for pair finding.
-	uint16_t out_pair_index = 0;
-	uint16_t in_pair_first_index = 0;
-	uint8_t first_range_char = 0, last_range_char = 0;
-
 	for(uint16_t i=0; i<256; ++i)
 	{
 		if((pcre2_bitmap[i/8] & (0x01 << (i%8))) == 0)
@@ -372,6 +367,40 @@ bool FileScanner::ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept
 	}
 	m_end_index = out_index;
 	return true;
+}
+
+void FileScanner::ConstructRangePairTable() noexcept
+{
+	// Vars for pair finding.
+	uint16_t out_pair_index = 0;
+	uint16_t in_pair_first_index = 0;
+	uint8_t first_range_char = 0, last_range_char = 0;
+
+	first_range_char = m_compiled_cu_bitmap[0];
+	last_range_char = first_range_char;
+
+	for(uint16_t i=1; i<m_end_index; ++i)
+	{
+		// We're looking for the end of this range.
+		if(m_compiled_cu_bitmap[i] == last_range_char + 1)
+		{
+			// We're still in the range.
+			++last_range_char;
+		}
+		else
+		{
+			// Range has ended.
+			m_compiled_range_bitmap[out_pair_index] = first_range_char;
+			++out_pair_index;
+			m_compiled_range_bitmap[out_pair_index] = last_range_char;
+			++out_pair_index;
+
+			// Set up for the next range.
+			first_range_char = m_compiled_cu_bitmap[i];
+		}
+	}
+
+	m_end_ranges = out_pair_index;
 }
 
 

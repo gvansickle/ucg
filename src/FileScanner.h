@@ -133,6 +133,8 @@ protected:
 
 
 	bool ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept;
+	void ConstructRangePairTable() noexcept;
+
 	const char * FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) const noexcept;
 
 	//friend void* ::resolve_find_first_of(void);
@@ -183,15 +185,22 @@ protected:
 	/// 256-byte array used to match the first possible code unit.
 	alignas(16) uint8_t m_compiled_cu_bitmap[256];
 
-	/// Array used to match character ranges.
-	alignas(16) uint8_t m_compiled_range_bitmap[256];
-
 	/// 1+index of last valid value in m_compiled_cu_bitmap.
 	uint16_t m_end_index {0};
 
+	/// Array used to match character ranges.
+	alignas(16) uint8_t m_compiled_range_bitmap[256];
+
+	/// One past the end of the last valid value in m_compiled_range_bitmap.
+	uint16_t m_end_ranges {0};
+
 	std::unique_ptr<uint8_t,void(*)(void*)> m_literal_search_string { nullptr, std::free };
 	size_t m_literal_search_string_len {0};
+
+	/// Flag set by regex analysis if matching should use m_literal_search_string as the full literal string to match.
 	bool m_use_literal {false};
+
+	/// Flag set by regex analysis if matching should use m_literal_search_string as the literal prefix of a larger regular expression.
 	bool m_use_lit_prefix {false};
 
 private:
