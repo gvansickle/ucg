@@ -16,7 +16,9 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
     * [Benchmark: '\#include\\s\+"\.\*"' on Boost source](#benchmark-includes-on-boost-source)
 * [License](#license)
 * [Installation](#installation)
-  * [Fedora/CentOS Copr Repository](#fedoracentos-copr-repository)
+  * [Fedora Copr Repository](#fedora-copr-repository)
+  * [Arch Linux User Repository](#arch-linux-user-repository)
+  * [OS X](#os-x)
   * [Building the Source Tarball](#building-the-source-tarball)
     * [\*BSD Note](#bsd-note)
     * [Build Prerequisites](#build-prerequisites)
@@ -42,6 +44,8 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
   * [Literal Filename Filter](#literal-filename-filter)
   * [Glob filter](#glob-filter)
 * [Author](#author)
+
+<!-- TOC Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go) -->
 
 
 ## Introduction
@@ -70,7 +74,7 @@ Note that UniversalCodeGrep is in fact somewhat faster than `grep` itself, even 
 
 ## Installation
 
-UniversalCodeGrep packages are currently available for Fedora 23/24/25/26, Arch, and OS X.
+UniversalCodeGrep packages are currently available for Fedora 23/24/25/26, Arch Linux, and OS X.
 
 <!-- COMING SOON
 ### Ubuntu PPA
@@ -137,7 +141,7 @@ If a `ucg` package is not available for your platform, UniversalCodeGrep can be 
 
 ```sh
 tar -xaf universalcodegrep-0.3.3.tar.gz
-cd universalcodegrep-0.3.3.tar.gz
+cd universalcodegrep-0.3.3
 ./configure
 make
 make install
@@ -200,7 +204,7 @@ Invoking `ucg` is the same as with `ack` or `ag`:
 ucg [OPTION...] PATTERN [FILES OR DIRECTORIES]
 ```
 
-...where `PATTERN` is an PCRE-compatible regular expression.
+...where `PATTERN` is a PCRE-compatible regular expression.
 
 If no `FILES OR DIRECTORIES` are specified, searching starts in the current directory.
 
