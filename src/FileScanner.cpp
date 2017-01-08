@@ -365,7 +365,7 @@ bool FileScanner::ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept
 			out_index++;
 		}
 	}
-	m_end_index = out_index;
+	m_end_fpcu = out_index;
 	return true;
 }
 
@@ -379,7 +379,7 @@ void FileScanner::ConstructRangePairTable() noexcept
 	first_range_char = m_compiled_cu_bitmap[0];
 	last_range_char = first_range_char;
 
-	for(uint16_t i=1; i<m_end_index; ++i)
+	for(uint16_t i=1; i<m_end_fpcu; ++i)
 	{
 		// We're looking for the end of this range.
 		if(m_compiled_cu_bitmap[i] == last_range_char + 1)
@@ -407,15 +407,15 @@ void FileScanner::ConstructRangePairTable() noexcept
 const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) const noexcept
 {
 	const char *first_possible_cu = nullptr;
-	if(m_end_index > 1)
+	if(m_end_fpcu > 1)
 	{
 #if 0
-		first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_end_index);
+		first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_end_fpcu);
 #else
 		first_possible_cu = find_first_of_sse4_2_popcnt(cbegin, len);
 #endif
 	}
-	else if(m_end_index == 1)
+	else if(m_end_fpcu == 1)
 	{
 #if 0
 		first_possible_cu = std::find(cbegin, cbegin+len, m_compiled_cu_bitmap[0]);
