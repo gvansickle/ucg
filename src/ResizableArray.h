@@ -23,6 +23,7 @@
 #include <config.h>
 
 #include <cstdlib>
+#include <cstring> // For std::memset().
 
 #include <libext/hints.hpp>
 #include <libext/memory.hpp>
@@ -79,6 +80,9 @@ public:
 			LOG(INFO) << "reserve_no_copy() realloc: needed_size=" << needed_size << ", needed_alignment=" << needed_alignment
 					<< ", returned size=" << m_current_buffer_alignment << ", returned alignment =" << m_current_buffer_alignment;
 		}
+
+		// Zero-out the trailing vector's worth of extra space.
+		std::memset(m_current_buffer+needed_size, 0, 1024/8);
 	}
 
 private:

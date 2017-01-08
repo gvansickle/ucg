@@ -208,7 +208,7 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 	{
 		ConstructCodeUnitTable(first_bitmap);
 		m_use_find_first_of = true;
-		LOG(INFO) << "First code unit of pattern is one of '" << std::string((const char*)m_compiled_cu_bitmap, m_end_index) << "'.";
+		LOG(INFO) << "First code unit of pattern is one of '" << std::string((const char*)m_compiled_cu_bitmap, m_end_fpcu) << "'.";
 	}
 	else
 	{
@@ -222,7 +222,7 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 			uint32_t first_code_unit {0};
 			pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTCODEUNIT, &first_code_unit);
 			m_compiled_cu_bitmap[0] = first_code_unit;
-			m_end_index = 1;
+			m_end_fpcu = 1;
 			m_use_find_first_of = true;
 			LOG(INFO) << "First code unit of pattern is '" << m_compiled_cu_bitmap[0] << "'.";
 		}
@@ -250,7 +250,7 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 			std::memcpy(static_cast<void*>(m_literal_search_string.get()), static_cast<const void*>(regex_passed_in.c_str()), size_to_alloc);
 			m_use_literal = true;
 		}
-		else if(m_use_find_first_of && (m_end_index==1) && !(m_pattern_is_literal || pat_is_lit))
+		else if(m_use_find_first_of && (m_end_fpcu==1) && !(m_pattern_is_literal || pat_is_lit))
 		{
 			// Analyze the regex and see if we can't extend this single code unit into a longer literal prefix.
 			auto lit_prefix_len = GetLiteralPrefixLen(regex_passed_in);
@@ -345,9 +345,13 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		{
 			if(m_use_lit_prefix)
 			{
-				PCRE2_SIZE old_ovector[2] = { ovector[0], ovector[1]};
+				PCRE2_SIZE old_ovector[2] = { ovector[0], ovector[1] };
 				// Find the literal prefix.
 				rc = LiteralMatch(this, file_data, file_size, start_offset, ovector);
+				if(ovector[0] > file_size)
+				{
+					break;
+				}
 				if(rc <= 0)
 				{
 					// Couldn't find the literal prefix, regex can't match.
@@ -356,7 +360,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 				else
 				{
 					// Rewind a bit and let libpcre2 do its thing.
-					start_offset = ovector[0] - m_literal_search_string_len;
+					start_offset = ovector[0];
 					ovector[0] = old_ovector[0];
 					ovector[1] = old_ovector[1];
 				}

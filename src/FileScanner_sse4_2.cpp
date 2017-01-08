@@ -31,6 +31,12 @@
 #ifdef __SSE2__
 STATIC_MSG("Have SSE2")
 #endif
+#ifdef __SSE3__
+STATIC_MSG("Have SSE3")
+#endif
+#ifdef __SSSE3__
+STATIC_MSG("Have SSSE3")
+#endif
 #ifdef __SSE4_2__
 STATIC_MSG("Have SSE4_2")
 #endif
@@ -215,9 +221,9 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 		// "This intrinsic may perform better than _mm_loadu_si128 when the data crosses a cache line boundary."
 		__m128i xmm0 = _mm_lddqu_si128((const __m128i *)(cbegin+i));
 
-		assume(m_end_index <= 256);
+		assume(m_end_fpcu <= 256);
 
-		for(j=0; j < (m_end_index & vec_size_mask); j+=vec_size_bytes)
+		for(j=0; j < (m_end_fpcu & vec_size_mask); j+=vec_size_bytes)
 		{
 			// Load our compare-to strings.
 			__m128i xmm1_patt = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
@@ -232,14 +238,14 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 			}
 		}
 
-		if(j < m_end_index)
+		if(j < m_end_fpcu)
 		{
 			// One partial xmm compare-to register to handle.
 			// Load the last partial compare-to string.
 			__m128i xmm1_patt = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
 			// Do the "find_first_of()".
 			int len_a = ((len-i)>vec_size_bytes) ? vec_size_bytes : (len-i);
-			int lsb_set = _mm_cmpestri(xmm1_patt, m_end_index & (vec_size_bytes-1), xmm0, len_a,
+			int lsb_set = _mm_cmpestri(xmm1_patt, m_end_fpcu & (vec_size_bytes-1), xmm0, len_a,
 					_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_LEAST_SIGNIFICANT);
 
 			if(lsb_set < 16)
@@ -295,7 +301,7 @@ const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, s
 	return cbegin+len;
 }
 
-#ifndef __POPCNT__ // To eliminate multiple defs.
+#ifdef __POPCNT__ // To eliminate multiple defs.
 
 int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept
 {

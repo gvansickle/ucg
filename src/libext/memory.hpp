@@ -119,10 +119,10 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 	// Load the pattern.
 	const __m128i xmm_patt = _mm_lddqu_si128((const __m128i *)pattern);
 
-	while(p1 < (char*)mem_to_search+(memlen&vec_size_mask))
+	while(p1 < (const char*)mem_to_search+(memlen&vec_size_mask))
 	{
 		// Find the start of a match.
-		for(; p1 < (char*)mem_to_search+(memlen&vec_size_mask); p1+=vec_size_bytes)
+		for(; p1 < (const char*)mem_to_search+(memlen&vec_size_mask); p1+=vec_size_bytes)
 		{
 			// Load 16 bytes from mem_to_search.
 			frag1 = _mm_lddqu_si128((const __m128i*)p1);
@@ -153,19 +153,22 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 				uint32_t esi = xmm0[0];
 
 				auto fsb = find_first_set_bit(esi);
-				if(fsb && ((fsb-1) + pattlen <= 16))
+				if(fsb)
 				{
-					// Found a full match.
-					return reinterpret_cast<const void*>(p1 + (fsb-1));
-				}
-				else if(fsb)
-				{
-					// Only found a partial match.
-					// Adjust the pointer into the mem_to_search to point at the first matching char,
-					// then 'goto' (via break+while) the next for-loop iteration without adding 16.  This will then
-					// result in either a full match (since p1 and xmm_pat are now aligned), or no match.
-					p1 += fsb-1;
-					break;
+					if(((fsb-1) + pattlen <= 16))
+					{
+						// Found a full match.
+						return reinterpret_cast<const void*>(p1 + (fsb-1));
+					}
+					else
+					{
+						// Only found a partial match.
+						// Adjust the pointer into the mem_to_search to point at the first matching char,
+						// then 'goto' (via break+while) the next for-loop iteration without adding 16.  This will then
+						// result in either a full match (since p1 and xmm_pat are now aligned), or no match.
+						p1 += fsb-1;
+						break;
+					}
 				}
 				// Should never get here.
 			}
