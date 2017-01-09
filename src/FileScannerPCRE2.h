@@ -72,7 +72,9 @@ private:
 	pcre2_code *m_pcre2_regex;
 #endif
 
-	bool m_use_find_first_of {false};
+	bool m_use_first_code_unit_table { false };
+
+	bool m_use_range_pair_table { false };
 };
 
 #endif /* SRC_FILESCANNERPCRE2_H_ */

@@ -204,6 +204,7 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 
 #if defined(__SSE4_2__)
 
+
 const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ cbegin, size_t len) const noexcept
 {
 	constexpr auto vec_size_bytes = sizeof(__m128i);
@@ -213,7 +214,7 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 	size_t i=0;
 
 	// @note The last vector may spill over the end of the input.  That's ok here, we catch any false
-	// hits in the return statements, and our input should have been allocated with at least a page worth of
+	// hits in the return statements, and our input should have been allocated with at least a vector's worth of
 	// padding so we don't hit problems there.
 	for(i=0; i < len ; i+=vec_size_bytes)
 	{
@@ -221,9 +222,9 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 		// "This intrinsic may perform better than _mm_loadu_si128 when the data crosses a cache line boundary."
 		__m128i xmm0 = _mm_lddqu_si128((const __m128i *)(cbegin+i));
 
-		assume(m_end_fpcu <= 256);
+		assume(m_end_fpcu_table <= 256);
 
-		for(j=0; j < (m_end_fpcu & vec_size_mask); j+=vec_size_bytes)
+		for(j=0; j < (m_end_fpcu_table & vec_size_mask); j+=vec_size_bytes)
 		{
 			// Load our compare-to strings.
 			__m128i xmm1_patt = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
@@ -238,14 +239,14 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 			}
 		}
 
-		if(j < m_end_fpcu)
+		if(j < m_end_fpcu_table)
 		{
 			// One partial xmm compare-to register to handle.
 			// Load the last partial compare-to string.
 			__m128i xmm1_patt = _mm_load_si128((__m128i*)(m_compiled_cu_bitmap+j));
 			// Do the "find_first_of()".
 			int len_a = ((len-i)>vec_size_bytes) ? vec_size_bytes : (len-i);
-			int lsb_set = _mm_cmpestri(xmm1_patt, m_end_fpcu & (vec_size_bytes-1), xmm0, len_a,
+			int lsb_set = _mm_cmpestri(xmm1_patt, m_end_fpcu_table & (vec_size_bytes-1), xmm0, len_a,
 					_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY | _SIDD_LEAST_SIGNIFICANT);
 
 			if(lsb_set < 16)
@@ -284,7 +285,7 @@ const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, s
 			// Convert the bytemask into a bitmask in the lower 16 bits of match_bitmask.  SSE2, L/Th: 3-1/1
 			uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
 
-			assume(match_bitmask <= 0xFFFF);
+			assume(match_bitmask <= 0xFFFFU);
 
 			// Did we find any chars?
 			if(match_bitmask > 0)
@@ -302,6 +303,61 @@ const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, s
 }
 
 #ifdef __POPCNT__ // To eliminate multiple defs.
+
+const char * MULTIVERSION(FileScanner::find_first_in_ranges)(const char * __restrict__ cbegin, size_t len) const noexcept
+{
+	constexpr auto vec_size_bytes = sizeof(__m128i);
+	constexpr auto vec_size_mask = ~static_cast<decltype(len)>(vec_size_bytes-1);
+
+	uint16_t j=0;
+	size_t i=0;
+
+	// @note The last vector may spill over the end of the input.  That's ok here, we catch any false
+	// hits in the return statements, and our input should have been allocated with at least a vector's worth of
+	// padding so we don't hit problems there.
+	for(i=0; i < len ; i+=vec_size_bytes)
+	{
+		// Load an xmm register with 16 unaligned bytes.  SSE3, L/Th: 1/0.25-0.5, plus cache effects.
+		// "This intrinsic may perform better than _mm_loadu_si128 when the data crosses a cache line boundary."
+		__m128i xmm0 = _mm_lddqu_si128((const __m128i *)(cbegin+i));
+
+		assume(m_end_ranges_table <= 256);
+
+		for(j=0; j < (m_end_ranges_table & vec_size_mask); j+=vec_size_bytes)
+		{
+			// Load our range strings, which are 16-byte aligned.
+			__m128i xmm1_ranges = _mm_load_si128((__m128i*)(m_compiled_range_bitmap+j));
+			// Do the search for values in the specified ranges.
+			int len_a = ((len-i)>vec_size_bytes) ? vec_size_bytes : (len-i);
+			int lsb_set = _mm_cmpestri(xmm1_ranges, vec_size_bytes, xmm0, len_a,
+					_SIDD_UBYTE_OPS | _SIDD_CMP_RANGES | _SIDD_LEAST_SIGNIFICANT);
+
+			if(lsb_set < 16)
+			{
+				return std::min(cbegin + i + lsb_set, cbegin + len);
+			}
+		}
+
+		if(j < m_end_ranges_table)
+		{
+			// One partial xmm compare-to register to handle.
+			// Load the last partial compare-to string.
+			__m128i xmm1_ranges = _mm_load_si128((__m128i*)(m_compiled_range_bitmap+j));
+			// Do the search for values in the specified ranges.
+			int len_a = ((len-i)>vec_size_bytes) ? vec_size_bytes : (len-i);
+			int lsb_set = _mm_cmpestri(xmm1_ranges, m_end_ranges_table & (vec_size_bytes-1), xmm0, len_a,
+					_SIDD_UBYTE_OPS | _SIDD_CMP_RANGES | _SIDD_LEAST_SIGNIFICANT);
+
+			if(lsb_set < 16)
+			{
+				return std::min(cbegin + i + lsb_set, cbegin + len);
+			}
+
+		}
+	}
+	return cbegin+len;
+}
+
 
 int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept
 {

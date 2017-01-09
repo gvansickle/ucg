@@ -365,7 +365,7 @@ bool FileScanner::ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept
 			out_index++;
 		}
 	}
-	m_end_fpcu = out_index;
+	m_end_fpcu_table = out_index;
 	return true;
 }
 
@@ -373,13 +373,20 @@ void FileScanner::ConstructRangePairTable() noexcept
 {
 	// Vars for pair finding.
 	uint16_t out_pair_index = 0;
-	uint16_t in_pair_first_index = 0;
 	uint8_t first_range_char = 0, last_range_char = 0;
+
+	if(m_end_fpcu_table == 0)
+	{
+		// No code unit table, can't be a ranges table.
+		LOG(DEBUG) << "No first-possible code unit table, skipping creation of range table.";
+		m_end_ranges_table = 0;
+		return;
+	}
 
 	first_range_char = m_compiled_cu_bitmap[0];
 	last_range_char = first_range_char;
 
-	for(uint16_t i=1; i<m_end_fpcu; ++i)
+	for(uint16_t i=1; i<m_end_fpcu_table; ++i)
 	{
 		// We're looking for the end of this range.
 		if(m_compiled_cu_bitmap[i] == last_range_char + 1)
@@ -395,27 +402,37 @@ void FileScanner::ConstructRangePairTable() noexcept
 			m_compiled_range_bitmap[out_pair_index] = last_range_char;
 			++out_pair_index;
 
+			LOG(DEBUG) << "Found range pair: [" << first_range_char << ", " << last_range_char << "]";
+
 			// Set up for the next range.
 			first_range_char = m_compiled_cu_bitmap[i];
+			last_range_char = first_range_char;
 		}
 	}
 
-	m_end_ranges = out_pair_index;
+	// Terminate the last pair.
+	m_compiled_range_bitmap[out_pair_index] = first_range_char;
+	++out_pair_index;
+	m_compiled_range_bitmap[out_pair_index] = last_range_char;
+	++out_pair_index;
+	LOG(DEBUG) << "Found range pair: [" << first_range_char << ", " << last_range_char << "]";
+
+	m_end_ranges_table = out_pair_index;
 }
 
 
 const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) const noexcept
 {
 	const char *first_possible_cu = nullptr;
-	if(m_end_fpcu > 1)
+	if(m_end_fpcu_table > 1)
 	{
 #if 0
-		first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_end_fpcu);
+		first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_end_fpcu_table);
 #else
 		first_possible_cu = find_first_of_sse4_2_popcnt(cbegin, len);
 #endif
 	}
-	else if(m_end_fpcu == 1)
+	else if(m_end_fpcu_table == 1)
 	{
 #if 0
 		first_possible_cu = std::find(cbegin, cbegin+len, m_compiled_cu_bitmap[0]);

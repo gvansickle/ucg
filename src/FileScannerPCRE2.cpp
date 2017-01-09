@@ -207,8 +207,20 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 	if(first_bitmap != nullptr)
 	{
 		ConstructCodeUnitTable(first_bitmap);
-		m_use_find_first_of = true;
-		LOG(INFO) << "First code unit of pattern is one of '" << std::string((const char*)m_compiled_cu_bitmap, m_end_fpcu) << "'.";
+		LOG(INFO) << "First code unit of pattern is one of '" << std::string((const char*)m_compiled_cu_bitmap, m_end_fpcu_table) << "'.";
+		ConstructRangePairTable();
+
+		// Decide whether to use the code unit table or the pair table.
+		if((m_end_fpcu_table > 0) && (m_end_fpcu_table < m_end_ranges_table))
+		{
+			// Individual code unit table is shorter, which means fewer compares.  Use it.
+			m_use_first_code_unit_table = true;
+		}
+		else if(m_end_ranges_table > 0)
+		{
+			// Pair table is shorter, use it.
+			m_use_range_pair_table = true;
+		}
 	}
 	else
 	{
@@ -222,8 +234,8 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 			uint32_t first_code_unit {0};
 			pcre2_pattern_info(m_pcre2_regex, PCRE2_INFO_FIRSTCODEUNIT, &first_code_unit);
 			m_compiled_cu_bitmap[0] = first_code_unit;
-			m_end_fpcu = 1;
-			m_use_find_first_of = true;
+			m_end_fpcu_table = 1;
+			m_use_first_code_unit_table = true;
 			LOG(INFO) << "First code unit of pattern is '" << m_compiled_cu_bitmap[0] << "'.";
 		}
 		else if(first_code_type == 2)
@@ -250,8 +262,9 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 			std::memcpy(static_cast<void*>(m_literal_search_string.get()), static_cast<const void*>(regex_passed_in.c_str()), size_to_alloc);
 			m_use_literal = true;
 		}
-		else if(m_use_find_first_of && (m_end_fpcu==1) && !(m_pattern_is_literal || pat_is_lit))
+		else if(m_use_first_code_unit_table)
 		{
+			// It's not a literal, but it does have at least one literal at the beginning.  Maybe there are more literals.
 			// Analyze the regex and see if we can't extend this single code unit into a longer literal prefix.
 			auto lit_prefix_len = GetLiteralPrefixLen(regex_passed_in);
 
@@ -365,10 +378,24 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 					ovector[1] = old_ovector[1];
 				}
 			}
-			else if(m_use_find_first_of)
+			else if(m_use_first_code_unit_table)
 			{
 				// Burn through chars we know aren't at the start of the match.
 				auto first_possible_char = FindFirstPossibleCodeUnit_default(file_data+start_offset, file_size-start_offset);
+				if(first_possible_char != file_data+file_size)
+				{
+					// Found one.
+					start_offset = first_possible_char - file_data;
+				}
+				else
+				{
+					// Found nothing, the regex can't match.
+					break;
+				}
+			}
+			else if(m_use_range_pair_table)
+			{
+				auto first_possible_char = find_first_in_ranges_sse4_2_popcnt(file_data+start_offset, file_size-start_offset);
 				if(first_possible_char != file_data+file_size)
 				{
 					// Found one.
