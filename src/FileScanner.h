@@ -135,7 +135,15 @@ protected:
 	bool ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept;
 	void ConstructRangePairTable() noexcept;
 
+	using FindFirstPossibleCodeUnit_type = std::function<const char *(const FileScanner&, const char * __restrict__ cbegin, size_t len) noexcept>;
+
+	static FindFirstPossibleCodeUnit_type resolve_FindFirstPossibleCodeUnit();
+
+	FindFirstPossibleCodeUnit_type FindFirstPossibleCodeUnit;
+
 	const char * FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) const noexcept;
+
+	const char * FindFirstPossibleCodeUnit_sse4_2(const char * __restrict__ cbegin, size_t len) const noexcept;
 
 	//friend void* ::resolve_find_first_of(void);
 	//__attribute__((target("default")))
@@ -149,7 +157,7 @@ protected:
 	const char * find_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
 
 
-	using LiteralMatch_type = std::function<int (FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept>;
+	using LiteralMatch_type = std::function<int (const FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept>;
 
 	static LiteralMatch_type resolve_LiteralMatch(FileScanner *obj) noexcept;
 
@@ -157,9 +165,9 @@ protected:
 
 	//int (*FileScanner::LiteralMatch)(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept;
 
-	int LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept;
+	int LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept;
 
-	int LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept;
+	int LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept;
 
 	///@}
 

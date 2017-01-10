@@ -359,7 +359,7 @@ const char * MULTIVERSION(FileScanner::find_first_in_ranges)(const char * __rest
 }
 
 
-int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept
+int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept
 {
 	int rc = 0;
 	const char* str_match;

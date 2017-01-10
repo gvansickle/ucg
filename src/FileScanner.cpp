@@ -282,7 +282,7 @@ uint8_t FileScanner::GetLiteralPrefixLen(const std::string &regex) noexcept
 }
 
 
-int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept
+int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept
 {
 	int rc = 0;
 
