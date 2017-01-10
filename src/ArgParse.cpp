@@ -335,7 +335,7 @@ struct PreDescriptor
 	 */
 	PreDescriptor(const char *section_header_name) noexcept
 		: index(255), type(0), shortopts(""), longopts(""), m_argname(""), check_arg(Arg::None),
-		  help(section_header_name)
+		  help(std::string("\n") + section_header_name)
 	{
 	};
 
@@ -374,7 +374,14 @@ struct PreDescriptor
 					shortops_s + m_help_space_str + help);
 			fmt_help = semi_fmt_help->c_str();
 
-			/// @todo Need to control this lifetime better.
+			/// @todo We should control this lifetime in a lighter-weight way.
+			delete_us.push_back(semi_fmt_help);
+		}
+		else if(!help.empty())
+		{
+			// It's a section header.
+			auto semi_fmt_help = std::make_shared<std::string>(help);
+			fmt_help = semi_fmt_help->c_str();
 			delete_us.push_back(semi_fmt_help);
 		}
 		else if(help.empty())
@@ -641,7 +648,7 @@ ArgParse::ArgParse(TypeManager &type_manager)
 			[](decltype(std::begin(raw_options)) p){ dynamic_usage.push_back(lmcppop::Descriptor(p)); });
 	*/
 
-	for(size_t i=0; raw_options[i].shortopts != 0 && raw_options[i].longopts != 0; ++i)
+	for(size_t i=0; i < raw_options.size(); ++i)
 	{
 		lmcppop::Descriptor d = raw_options[i];
 		dynamic_usage.push_back(d);
@@ -721,7 +728,9 @@ void ArgParse::Parse(int argc, char **argv)
 
 	lmcppop::Option options[stats.options_max], buffer[stats.buffer_max];
 
-	lmcppop::Parser parse(dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1, options, buffer);
+	lmcppop::Parser parse(true /* GNU == parse all non-options after options. */,
+			dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1, options, buffer,
+			2 /* Enable unambiguous prefix option parsing, 2 or more chars. */);
 
  	if (parse.error())
  	{
