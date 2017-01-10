@@ -314,31 +314,40 @@ struct PreDescriptor
 	const char* const longopts;
 	const char *const m_argname;
 	const lmcppop::CheckArg check_arg;
-	const char* help;
+	const std::string help;
 
-	constexpr PreDescriptor(unsigned i, int t, const char *const so, const char *const lo,
+	PreDescriptor(unsigned i, int t, const char *const so, const char *const lo,
 			const lmcppop::CheckArg c, const char *h) noexcept
 			: index(i), type(t), shortopts(so), longopts(lo), m_argname(""), check_arg(c), help(h)
 	{
 	};
 
-	constexpr PreDescriptor(unsigned i, int t, const char *const so, const char *const lo, const char *const argname,
+	PreDescriptor(unsigned i, int t, const char *const so, const char *const lo, const char *const argname,
 			const lmcppop::CheckArg c, const char *h) noexcept
 			: index(i), type(t), shortopts(so), longopts(lo), m_argname(argname), check_arg(c), help(h)
 	{
 	};
 
-	constexpr PreDescriptor(const char *section_header_name) noexcept
-		: index(255), type(0), shortopts(""), longopts(""), m_argname(""), check_arg(Arg::None), help(section_header_name)
+	/**
+	 * Constructor overload for section headers.
+	 *
+	 * @param section_header_name  Text of the section header.
+	 */
+	PreDescriptor(const char *section_header_name) noexcept
+		: index(255), type(0), shortopts(""), longopts(""), m_argname(""), check_arg(Arg::None),
+		  help(section_header_name)
 	{
 	};
 
+	/**
+	 * Conversion operator for converting between PreDescriptors and "The Lean Mean C++ Option Parser"'s option Descriptors.
+	 */
 	operator lmcppop::Descriptor() const noexcept
 	{
-		const char *fmt_help = help;
+		const char *fmt_help = "";
 		auto short_len = std::strlen(shortopts);
 		auto long_len = std::strlen(longopts);
-		if((short_len!=0 || long_len!=0) && (help != nullptr))
+		if((short_len!=0 || long_len!=0) && (!help.empty()))
 		{
 			// Paste together the options and the help text.
 			std::string shortops_s {m_opt_start_str};
@@ -368,6 +377,12 @@ struct PreDescriptor
 			/// @todo Need to control this lifetime better.
 			delete_us.push_back(semi_fmt_help);
 		}
+		else if(help.empty())
+		{
+			auto semi_fmt_help = std::make_shared<std::string>("");
+			fmt_help = semi_fmt_help->c_str();
+			delete_us.push_back(semi_fmt_help);
+		}
 
 		return lmcppop::Descriptor {index, type, shortopts, longopts, check_arg, fmt_help};
 	}
@@ -375,8 +390,8 @@ struct PreDescriptor
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
-const PreDescriptor raw_options[] = {
-		{ (std::string("Usage: ucg ") + args_doc + "\n\n").c_str() },
+std::vector<PreDescriptor> raw_options = {
+		//{ (std::string("Usage: ucg ") + args_doc + "\n\n").c_str() },
 	{ "Searching:" },
 		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
 		{ OPT_HANDLE_CASE, SMART_CASE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
@@ -415,8 +430,7 @@ const PreDescriptor raw_options[] = {
 		{ OPT_UNKNOWN, 0, "", "", Arg::None,
 		 "\nExamples:\n"
 		 "  example_arg --unknown -o -n10 \n"
-		},
-		{ 0, 0, 0, 0, 0, 0 }
+		}
 };
 
 static std::vector<lmcppop::Descriptor> dynamic_usage;
@@ -622,12 +636,17 @@ ArgParse::ArgParse(TypeManager &type_manager)
 	: m_type_manager(type_manager)
 {
 #if NEW_OPTS
-	//std::for_each(std::cbegin(raw_options), std::cend(raw_options), [](PreDescriptor &p){ std::cout << p.help << "\n"; dynamic_usage.push_back(p); });
+	/*
+	std::for_each(std::begin(raw_options), std::end(raw_options),
+			[](decltype(std::begin(raw_options)) p){ dynamic_usage.push_back(lmcppop::Descriptor(p)); });
+	*/
+
 	for(size_t i=0; raw_options[i].shortopts != 0 && raw_options[i].longopts != 0; ++i)
 	{
 		lmcppop::Descriptor d = raw_options[i];
 		dynamic_usage.push_back(d);
 	}
+
 	dynamic_usage.push_back(PreDescriptor::NullEntry());
 #endif
 }
@@ -705,7 +724,10 @@ void ArgParse::Parse(int argc, char **argv)
 	lmcppop::Parser parse(dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1, options, buffer);
 
  	if (parse.error())
+ 	{
+ 		/// @todo ???
     	return;
+ 	}
 
 	if (options[OPT_HELP] || argc == 0)
 	{
