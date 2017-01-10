@@ -166,7 +166,7 @@ enum OPT
 #define STATUS_EX_USAGE 255
 
 // Not static, argp.h externs this.
-error_t argp_err_exit_status = STATUS_EX_USAGE;
+int argp_err_exit_status = STATUS_EX_USAGE;
 
 #if !NEW_OPTS
 /// Argp Option Definitions
