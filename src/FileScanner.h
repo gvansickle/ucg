@@ -135,10 +135,20 @@ protected:
 	bool ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept;
 	void ConstructRangePairTable() noexcept;
 
+	using FindFirstPossibleCodeUnit_type = std::function<const char *(const FileScanner&, const char * __restrict__ cbegin, size_t len) noexcept>;
+
+	static FindFirstPossibleCodeUnit_type resolve_FindFirstPossibleCodeUnit();
+
+	FindFirstPossibleCodeUnit_type FindFirstPossibleCodeUnit;
+
 	const char * FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) const noexcept;
+
+	const char * FindFirstPossibleCodeUnit_sse4_2(const char * __restrict__ cbegin, size_t len) const noexcept;
 
 	//friend void* ::resolve_find_first_of(void);
 	//__attribute__((target("default")))
+	const char * find_first_in_ranges_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
+
 	const char * find_first_of_default(const char * __restrict__ cbegin, size_t len) const noexcept;
 	const char * find_first_of_sse4_2_no_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
 	const char * find_first_of_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
@@ -147,7 +157,7 @@ protected:
 	const char * find_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
 
 
-	using LiteralMatch_type = std::function<int (FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept>;
+	using LiteralMatch_type = std::function<int (const FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept>;
 
 	static LiteralMatch_type resolve_LiteralMatch(FileScanner *obj) noexcept;
 
@@ -155,9 +165,9 @@ protected:
 
 	//int (*FileScanner::LiteralMatch)(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept;
 
-	int LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept;
+	int LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept;
 
-	int LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept;
+	int LiteralMatch_sse4_2(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept;
 
 	///@}
 
@@ -186,13 +196,13 @@ protected:
 	alignas(16) uint8_t m_compiled_cu_bitmap[256];
 
 	/// 1+index of last valid value in m_compiled_cu_bitmap.
-	uint16_t m_end_fpcu {0};
+	uint16_t m_end_fpcu_table {0};
 
 	/// Array used to match character ranges.
 	alignas(16) uint8_t m_compiled_range_bitmap[256];
 
 	/// One past the end of the last valid value in m_compiled_range_bitmap.
-	uint16_t m_end_ranges {0};
+	uint16_t m_end_ranges_table {0};
 
 	std::unique_ptr<uint8_t,void(*)(void*)> m_literal_search_string { nullptr, std::free };
 	size_t m_literal_search_string_len {0};
