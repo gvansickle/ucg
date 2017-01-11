@@ -150,6 +150,7 @@ enum OPT
 	OPT_TYPE_ADD,
 	OPT_TYPE_DEL,
 	OPT_PERF_DIRJOBS,
+	OPT_PERF_SCANJOBS,
 	OPT_HELP,
 	OPT_HELP_TYPES,
 	OPT_VERSION,
@@ -303,7 +304,7 @@ enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1,
 //enum optionIndex {UNKNOWN, SECTION, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY};
 
 static constexpr char m_opt_start_str[] {"  \t"};
-static constexpr char m_help_space_str[] {"  \t"};
+static constexpr char m_help_space_str[] {"      \t"};
 static std::vector<std::shared_ptr<std::string>> delete_us;
 
 struct PreDescriptor
@@ -335,7 +336,7 @@ struct PreDescriptor
 	 */
 	PreDescriptor(const char *section_header_name) noexcept
 		: index(255), type(0), shortopts(""), longopts(""), m_argname(""), check_arg(Arg::None),
-		  help(std::string("\n") + section_header_name)
+		  help(std::string("\n ") + section_header_name)
 	{
 	};
 
@@ -416,13 +417,21 @@ std::vector<PreDescriptor> raw_options = {
 		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, "" },
 	{ "File/directory inclusion/exclusion:" },
 		{ OPT_IGNORE_DIR, OPT_BRACKET_NO_STANDIN, "", "[no]ignore-dir", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
+		// grep-style --include=glob and --exclude=glob
+		{ OPT_INCLUDE, 0, "", "include", "GLOB", Arg::NonEmpty, "Only files matching GLOB will be searched."},
+		{ OPT_EXCLUDE, 0, "", "exclude", "GLOB", Arg::NonEmpty, "Files matching GLOB will be ignored."},
 		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
 		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
 		{ OPT_FOLLOW, ENABLE, "", "follow", Arg::None, "XXXX" },
 		{ OPT_FOLLOW, DISABLE, "", "nofollow", Arg::None, "XXXX" },
 		{ OPT_TYPE, ENABLE, "", "type", "[no]TYPE", Arg::NonEmpty, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 	{ "File type specification:" },
+		{OPT_TYPE_SET, 0, "", "type-set", "TYPE:FILTER:FILTERARGS", Arg::NonEmpty, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
+		{OPT_TYPE_ADD, 0, "", "type-add", "TYPE:FILTER:FILTERARGS", Arg::NonEmpty, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is appended to."},
+		{OPT_TYPE_DEL, 0, "", "type-del", "TYPE", Arg::NonEmpty, "Remove any existing definition of type TYPE."},
 	{ "Performance tuning:" },
+		{ OPT_PERF_DIRJOBS, 0, "", "dirjobs", "NUM_JOBS", Arg::Numeric, "Number of directory traversal jobs (std::thread<>s) to use." },
+		{ OPT_PERF_SCANJOBS, 0, "j", "jobs", "NUM_JOBS", Arg::Numeric, "Number of scanner jobs (std::thread<>s) to use."},
 #if 0
 		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
 		                                          "  \tTakes an argument but is happy without one." },
@@ -434,6 +443,7 @@ std::vector<PreDescriptor> raw_options = {
 	{ "Informational options:" },
 		{ OPT_HELP,    0, "?", "help", Arg::None, "Give this help list" },
 		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
+		{ "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." },
 		{ OPT_UNKNOWN, 0, "", "", Arg::None,
 		 "\nExamples:\n"
 		 "  example_arg --unknown -o -n10 \n"
@@ -680,6 +690,17 @@ static char * cpp_strdup(const char *orig)
 	return retval;
 }
 
+template <typename T>
+class scoped_array
+{
+public:
+	explicit scoped_array(T* ptr = nullptr) noexcept { m_ptr_to_destroy = ptr; };
+	~scoped_array() noexcept { delete [] m_ptr_to_destroy; };
+
+private:
+	T* m_ptr_to_destroy = nullptr;
+};
+
 void ArgParse::Parse(int argc, char **argv)
 {
 	std::vector<char*> user_argv, project_argv, combined_argv;
@@ -726,7 +747,12 @@ void ArgParse::Parse(int argc, char **argv)
 {
 	lmcppop::Stats stats(dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1);
 
-	lmcppop::Option options[stats.options_max], buffer[stats.buffer_max];
+	lmcppop::Option* options = nullptr, *buffer = nullptr;
+	scoped_array<lmcppop::Option> destroyer(options);
+	scoped_array<lmcppop::Option> destroyer2(buffer);
+	options = new lmcppop::Option[stats.options_max];
+	buffer = new lmcppop::Option[stats.buffer_max];
+	//auto options = std::make_shared<lmcppop::Option[]>(stats.options_max);  // This would be better than the scoped_array<>s, but the lib isn't set up for it.
 
 	lmcppop::Parser parse(true /* GNU == parse all non-options after options. */,
 			dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1, options, buffer,
@@ -741,7 +767,10 @@ void ArgParse::Parse(int argc, char **argv)
 	if (options[OPT_HELP] || argc == 0)
 	{
 		int columns = Terminal::GetColumns();
+/// @delete FOR TESTING ONLY
+columns = 80;
 		lmcppop::printUsage(fwrite, stdout, dynamic_usage.data(), columns);
+		std::cout << "Report bugs to "  << argp_program_bug_address << ".\n";
 		exit(0);
 		return;
 	}
