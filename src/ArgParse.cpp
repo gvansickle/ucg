@@ -767,7 +767,10 @@ void ArgParse::Parse(int argc, char **argv)
 	if (options[OPT_HELP] || argc == 0)
 	{
 		int columns = Terminal::GetColumns();
+/// @delete FOR TESTING ONLY
+columns = 80;
 		lmcppop::printUsage(fwrite, stdout, dynamic_usage.data(), columns);
+		std::cout << "Report bugs to "  << argp_program_bug_address << ".\n";
 		exit(0);
 		return;
 	}
