@@ -458,7 +458,8 @@ std::vector<PreDescriptor> raw_options = {
 		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
 		{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
 		// Again, this folderol is to keep the doc[] string in the same format as used by argp.
-		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) + "\n").c_str(), PreDescriptor::arbtext_tag() }
+		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) + "\n").c_str(), PreDescriptor::arbtext_tag() },
+		{ (std::string("Report bugs to ") + argp_program_bug_address + ".").c_str(), PreDescriptor::arbtext_tag() }
 };
 
 static std::vector<lmcppop::Descriptor> dynamic_usage;
@@ -779,9 +780,8 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		int columns = Terminal::GetColumns();
 /// @delete FOR TESTING ONLY
-//columns = 80;
+columns = 80;
 		lmcppop::printUsage(fwrite, stdout, dynamic_usage.data(), columns);
-		std::cout << "Report bugs to "  << argp_program_bug_address << ".\n";
 		exit(0);
 		return;
 	}
