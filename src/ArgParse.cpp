@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2017 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -317,6 +317,9 @@ struct PreDescriptor
 	const lmcppop::CheckArg check_arg;
 	const std::string help;
 
+	struct section_header_tag {};
+	struct arbtext_tag {};
+
 	PreDescriptor(unsigned i, int t, const char *const so, const char *const lo,
 			const lmcppop::CheckArg c, const char *h) noexcept
 			: index(i), type(t), shortopts(so), longopts(lo), m_argname(""), check_arg(c), help(h)
@@ -334,9 +337,15 @@ struct PreDescriptor
 	 *
 	 * @param section_header_name  Text of the section header.
 	 */
-	PreDescriptor(const char *section_header_name) noexcept
+	PreDescriptor(const char *section_header_name, section_header_tag = section_header_tag()) noexcept
 		: index(255), type(0), shortopts(""), longopts(""), m_argname(""), check_arg(Arg::None),
 		  help(std::string("\n ") + section_header_name)
+	{
+	};
+
+	PreDescriptor(const char *arbitrary_text, arbtext_tag) noexcept
+		: index(255), type(0), shortopts(""), longopts(""), m_argname(""), check_arg(Arg::None),
+		  help(arbitrary_text)
 	{
 	};
 
@@ -399,7 +408,9 @@ struct PreDescriptor
 };
 
 std::vector<PreDescriptor> raw_options = {
-		//{ (std::string("Usage: ucg ") + args_doc + "\n\n").c_str() },
+	{ (std::string("Usage: ucg [OPTION...] ") + args_doc).c_str(), PreDescriptor::arbtext_tag() },
+	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
+	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
 	{ "Searching:" },
 		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
 		{ OPT_HANDLE_CASE, SMART_CASE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
@@ -443,11 +454,9 @@ std::vector<PreDescriptor> raw_options = {
 	{ "Informational options:" },
 		{ OPT_HELP,    0, "?", "help", Arg::None, "Give this help list" },
 		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
-		{ "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." },
-		{ OPT_UNKNOWN, 0, "", "", Arg::None,
-		 "\nExamples:\n"
-		 "  example_arg --unknown -o -n10 \n"
-		}
+		{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
+		// Again, this folderol is to keep the doc[] string in the same format as used by argp.
+		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) + "\n").c_str(), PreDescriptor::arbtext_tag() }
 };
 
 static std::vector<lmcppop::Descriptor> dynamic_usage;
