@@ -309,26 +309,27 @@ static std::vector<std::shared_ptr<std::string>> delete_us;
 
 struct PreDescriptor
 {
-	const unsigned index;
-	const int type;
-	const char* const shortopts;
-	const char* const longopts;
+	const unsigned m_index;
+	const int m_type;
+	const char* const m_shortopts;
+	const char* const m_longopts;
 	const char *const m_argname;
-	const lmcppop::CheckArg check_arg;
-	const std::string help;
+	const lmcppop::CheckArg m_check_arg;
+	const std::string m_help;
 
 	struct section_header_tag {};
 	struct arbtext_tag {};
+	struct hidden {};
 
 	PreDescriptor(unsigned i, int t, const char *const so, const char *const lo,
 			const lmcppop::CheckArg c, const char *h) noexcept
-			: index(i), type(t), shortopts(so), longopts(lo), m_argname(""), check_arg(c), help(h)
+			: m_index(i), m_type(t), m_shortopts(so), m_longopts(lo), m_argname(""), m_check_arg(c), m_help(h)
 	{
 	};
 
 	PreDescriptor(unsigned i, int t, const char *const so, const char *const lo, const char *const argname,
 			const lmcppop::CheckArg c, const char *h) noexcept
-			: index(i), type(t), shortopts(so), longopts(lo), m_argname(argname), check_arg(c), help(h)
+			: m_index(i), m_type(t), m_shortopts(so), m_longopts(lo), m_argname(argname), m_check_arg(c), m_help(h)
 	{
 	};
 
@@ -338,14 +339,14 @@ struct PreDescriptor
 	 * @param section_header_name  Text of the section header.
 	 */
 	PreDescriptor(const char *section_header_name, section_header_tag = section_header_tag()) noexcept
-		: index(255), type(0), shortopts(""), longopts(""), m_argname(""), check_arg(Arg::None),
-		  help(std::string("\n ") + section_header_name)
+		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
+		  m_help(std::string("\n ") + section_header_name)
 	{
 	};
 
 	PreDescriptor(const char *arbitrary_text, arbtext_tag) noexcept
-		: index(255), type(0), shortopts(""), longopts(""), m_argname(""), check_arg(Arg::None),
-		  help(arbitrary_text)
+		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
+		  m_help(arbitrary_text)
 	{
 	};
 
@@ -355,16 +356,16 @@ struct PreDescriptor
 	operator lmcppop::Descriptor() const noexcept
 	{
 		const char *fmt_help = "";
-		auto short_len = std::strlen(shortopts);
-		auto long_len = std::strlen(longopts);
-		if((short_len!=0 || long_len!=0) && (!help.empty()))
+		auto short_len = std::strlen(m_shortopts);
+		auto long_len = std::strlen(m_longopts);
+		if((short_len!=0 || long_len!=0) && (!m_help.empty()))
 		{
 			// Paste together the options and the help text.
 			std::string shortops_s {m_opt_start_str};
 			if(short_len)
 			{
 				shortops_s += "-";
-				shortops_s += join(split(shortopts, ','), ", -");
+				shortops_s += join(split(m_shortopts, ','), ", -");
 			}
 			if(short_len && long_len)
 			{
@@ -373,7 +374,7 @@ struct PreDescriptor
 			if(long_len)
 			{
 				shortops_s += "--";
-				shortops_s += longopts;
+				shortops_s += m_longopts;
 				if(std::strlen(m_argname) > 0)
 				{
 					shortops_s += "=";
@@ -381,27 +382,27 @@ struct PreDescriptor
 				}
 			}
 			std::shared_ptr<std::string> semi_fmt_help = std::make_shared<std::string>(
-					shortops_s + m_help_space_str + help);
+					shortops_s + m_help_space_str + m_help);
 			fmt_help = semi_fmt_help->c_str();
 
 			/// @todo We should control this lifetime in a lighter-weight way.
 			delete_us.push_back(semi_fmt_help);
 		}
-		else if(!help.empty())
+		else if(!m_help.empty())
 		{
 			// It's a section header.
-			auto semi_fmt_help = std::make_shared<std::string>(help);
+			auto semi_fmt_help = std::make_shared<std::string>(m_help);
 			fmt_help = semi_fmt_help->c_str();
 			delete_us.push_back(semi_fmt_help);
 		}
-		else if(help.empty())
+		else if(m_help.empty())
 		{
 			auto semi_fmt_help = std::make_shared<std::string>("");
 			fmt_help = semi_fmt_help->c_str();
 			delete_us.push_back(semi_fmt_help);
 		}
 
-		return lmcppop::Descriptor {index, type, shortopts, longopts, check_arg, fmt_help};
+		return lmcppop::Descriptor {m_index, m_type, m_shortopts, m_longopts, m_check_arg, fmt_help};
 	}
 
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
@@ -414,8 +415,8 @@ std::vector<PreDescriptor> raw_options = {
 	{ "Searching:" },
 		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
 		{ OPT_HANDLE_CASE, SMART_CASE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
-		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "nosmart-case", Arg::None, ""},
-		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "no-smart-case", Arg::None, "" /*Hidden alias*/},
+		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "nosmart-case", Arg::None, " "},
+		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "no-smart-case", Arg::None, " " /*Hidden alias*/},
 		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
 		{ OPT_LITERAL, 0, "Q", "literal", Arg::None, "Treat all characters in PATTERN as literal."},
 	{ "Search Output:" },
@@ -431,6 +432,7 @@ std::vector<PreDescriptor> raw_options = {
 		// grep-style --include=glob and --exclude=glob
 		{ OPT_INCLUDE, 0, "", "include", "GLOB", Arg::NonEmpty, "Only files matching GLOB will be searched."},
 		{ OPT_EXCLUDE, 0, "", "exclude", "GLOB", Arg::NonEmpty, "Files matching GLOB will be ignored."},
+		{ OPT_IGNORE_FILE, 0, "", "ignore-file", "FILTER:FILTERARGS", Arg::NonEmpty, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored." },
 		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
 		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
 		{ OPT_FOLLOW, ENABLE, "", "follow", Arg::None, "XXXX" },
@@ -568,7 +570,7 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		else
 		{
 			// This is a "--type=TYPE" option.
-			if(arguments->m_type_manager.type(arg) == false)
+			if(arguments->m_type_manager.m_type(arg) == false)
 			{
 				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
 			}
@@ -777,7 +779,7 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		int columns = Terminal::GetColumns();
 /// @delete FOR TESTING ONLY
-columns = 80;
+//columns = 80;
 		lmcppop::printUsage(fwrite, stdout, dynamic_usage.data(), columns);
 		std::cout << "Report bugs to "  << argp_program_bug_address << ".\n";
 		exit(0);
