@@ -188,7 +188,7 @@ void DirTree::ReaddirLoop(int dirjob_num)
 }
 
 
-void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_dirent, DirTraversalStats &stats)
+void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* current_dirent, DirTraversalStats &stats)
 {
 	struct stat statbuf;
 
