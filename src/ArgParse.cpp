@@ -153,6 +153,7 @@ enum OPT
 	OPT_PERF_SCANJOBS,
 	OPT_HELP,
 	OPT_HELP_TYPES,
+	OPT_USAGE,
 	OPT_VERSION,
 	OPT_COLUMN,
 	OPT_NOCOLUMN,
@@ -245,12 +246,23 @@ struct argp ArgParse::argp = { options, ArgParse::parse_opt, args_doc, doc };
 
 struct Arg: public lmcppop::Arg
 {
-  static void printError(const char* msg1, const lmcppop::Option& opt, const char* msg2)
-  {
-    fprintf(stderr, "%s", msg1);
-    fwrite(opt.name, opt.namelen, 1, stderr);
-    fprintf(stderr, "%s", msg2);
-  }
+	static void PrintHelp(const char *str, int size)
+	{
+		if(strstr(str, "@hidden") != nullptr)
+		{
+			// Hidden option, skip printing help.
+			//return;
+			std::fwrite("!!", 2, 1, stdout);
+		}
+		std::fwrite(str, size, 1, stdout);
+	}
+
+	static void printError(const char* msg1, const lmcppop::Option& opt, const char* msg2)
+	{
+		fprintf(stderr, "%s", msg1);
+		fwrite(opt.name, opt.namelen, 1, stderr);
+		fprintf(stderr, "%s", msg2);
+	}
 
   static lmcppop::ArgStatus Unknown(const lmcppop::Option& option, bool msg)
   {
@@ -319,7 +331,7 @@ struct PreDescriptor
 
 	struct section_header_tag {};
 	struct arbtext_tag {};
-	struct hidden {};
+	struct hidden_tag {};
 
 	PreDescriptor(unsigned i, int t, const char *const so, const char *const lo,
 			const lmcppop::CheckArg c, const char *h) noexcept
@@ -347,6 +359,12 @@ struct PreDescriptor
 	PreDescriptor(const char *arbitrary_text, arbtext_tag) noexcept
 		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
 		  m_help(arbitrary_text)
+	{
+	};
+
+	PreDescriptor(const char *arbitrary_text, hidden_tag) noexcept
+			: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
+			  m_help(std::string("@hidden ") + arbitrary_text)
 	{
 	};
 
@@ -424,19 +442,20 @@ std::vector<PreDescriptor> raw_options = {
 		{ OPT_COLUMN, DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
 	{ "File presentation:" },
 		{ OPT_COLOR, ENABLE, "", "color", Arg::None, "Render the output with ANSI color codes."},
-		{ OPT_COLOR, ENABLE, "", "colour", Arg::None, "" },
+		{ OPT_COLOR, ENABLE, "", "colour", Arg::None, " " },
 		{ OPT_COLOR, DISABLE, "", "nocolor", Arg::None, "Render the output without ANSI color codes."},
-		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, "" },
+		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, " " },
 	{ "File/directory inclusion/exclusion:" },
 		{ OPT_IGNORE_DIR, OPT_BRACKET_NO_STANDIN, "", "[no]ignore-dir", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
 		// grep-style --include=glob and --exclude=glob
 		{ OPT_INCLUDE, 0, "", "include", "GLOB", Arg::NonEmpty, "Only files matching GLOB will be searched."},
 		{ OPT_EXCLUDE, 0, "", "exclude", "GLOB", Arg::NonEmpty, "Files matching GLOB will be ignored."},
+		// ack-style --ignore-file=FILTER:FILTERARGS
 		{ OPT_IGNORE_FILE, 0, "", "ignore-file", "FILTER:FILTERARGS", Arg::NonEmpty, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored." },
 		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
 		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
-		{ OPT_FOLLOW, ENABLE, "", "follow", Arg::None, "XXXX" },
-		{ OPT_FOLLOW, DISABLE, "", "nofollow", Arg::None, "XXXX" },
+		{ OPT_FOLLOW, ENABLE, "", "follow", Arg::None, "[Do not] follow symlinks (default: nofollow)." },
+		{ OPT_FOLLOW, DISABLE, "", "nofollow", Arg::None, "@todo ^^^" },
 		{ OPT_TYPE, ENABLE, "", "type", "[no]TYPE", Arg::NonEmpty, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 	{ "File type specification:" },
 		{OPT_TYPE_SET, 0, "", "type-set", "TYPE:FILTER:FILTERARGS", Arg::NonEmpty, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
@@ -452,11 +471,19 @@ std::vector<PreDescriptor> raw_options = {
 		{ NUMERIC, 0,"n","numeric", Arg::Numeric, " \t-n <num>, --numeric=<num>  \tRequires a number as argument." },
 #endif
 	{ "Miscellaneous:" },
-		{ OPT_NOENV,   0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
+		{ OPT_NOENV, 0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
 	{ "Informational options:" },
-		{ OPT_HELP,    0, "?", "help", Arg::None, "Give this help list" },
+		{ OPT_HELP,  0, "?", "help", Arg::None, "Give this help list" },
+		{ OPT_HELP_TYPES, 0, "", "help-types", Arg::NonEmpty, "@todo --list-file-types Print list of supported file types." },
+		{ OPT_USAGE, 0, "", "usage", Arg::None, "Give a short usage message"},
 		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
-		{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
+	{ "Hidden Options:", PreDescriptor::hidden_tag() },
+	// Hidden options for debug, test, etc.
+	// DO NOT USE THESE.  They're going to change and go away without notice.
+		{OPT_TEST_LOG_ALL, 0, "", "test-log-all", Arg::None, "@hidden Enable all logging output."},
+		//{"test-noenv-user", OPT_TEST_NOENV_USER, 0, OPTION_HIDDEN, "Don't search for or use $HOME/.ucgrc."},
+		//{"test-use-mmap", OPT_TEST_USE_MMAP, 0, OPTION_HIDDEN, "Use mmap() to access files being searched."},
+		//{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
 		// Again, this folderol is to keep the doc[] string in the same format as used by argp.
 		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) + "\n").c_str(), PreDescriptor::arbtext_tag() },
 		{ (std::string("Report bugs to ") + argp_program_bug_address + ".").c_str(), PreDescriptor::arbtext_tag() }
@@ -665,10 +692,6 @@ ArgParse::ArgParse(TypeManager &type_manager)
 	: m_type_manager(type_manager)
 {
 #if NEW_OPTS
-	/*
-	std::for_each(std::begin(raw_options), std::end(raw_options),
-			[](decltype(std::begin(raw_options)) p){ dynamic_usage.push_back(lmcppop::Descriptor(p)); });
-	*/
 
 	for(size_t i=0; i < raw_options.size(); ++i)
 	{
@@ -781,7 +804,7 @@ void ArgParse::Parse(int argc, char **argv)
 		int columns = Terminal::GetColumns();
 /// @delete FOR TESTING ONLY
 columns = 80;
-		lmcppop::printUsage(fwrite, stdout, dynamic_usage.data(), columns);
+		lmcppop::printUsage(Arg::PrintHelp, dynamic_usage.data(), columns);
 		exit(0);
 		return;
 	}
