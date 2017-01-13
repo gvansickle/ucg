@@ -329,7 +329,7 @@ struct PreDescriptor
 	const char *const m_argname;
 	const lmcppop::CheckArg m_check_arg;
 	const std::string m_help;
-	bool m_is_hidden = false;
+	const bool m_is_hidden { false };
 
 	struct section_header_tag {};
 	struct normal_option_tag {};
@@ -472,7 +472,18 @@ struct PreDescriptor
 			}
 		}
 
-		return lmcppop::Descriptor {m_index, m_type, m_shortopts, m_longopts /* @todo remove aliases. */, m_check_arg, fmt_help};
+		// We may have to change the long option string we pass to LMC++OP.  It only handles
+		// a single long option, while our layer here adds the capabilities of option aliases and --[no]opt style options.
+		std::shared_ptr<std::string> desc_longopt;
+
+		if(HasLongAliases())
+		{
+			// Only register the first long option here.
+			desc_longopt = std::make_shared<std::string>(m_longopts, std::strchr(m_longopts, ',')-m_longopts);
+			delete_us.push_back(desc_longopt);
+		}
+
+		return lmcppop::Descriptor {m_index, m_type, m_shortopts, desc_longopt ? desc_longopt->c_str() : m_longopts, m_check_arg, fmt_help};
 	}
 
 	template <typename T>

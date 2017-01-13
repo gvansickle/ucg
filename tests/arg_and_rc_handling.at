@@ -30,10 +30,10 @@ AT_CHECK([$EGREP 'cpp.*\.cpp' stdout], [0], [ignore], [ignore])
 AT_CLEANUP
 
 #
-# check that --help-types, does not work - the comma should have been stripped in ArgParse.
+# Check that --help-types, does *not* work - the comma should have been stripped in ArgParse.
 #
 AT_SETUP([Long alias init parsing])
-AT_CHECK([ucg --help-types,], [0], [stdout], [stderr])
+AT_CHECK([ucg --help-types,], [255], [stdout], [stderr])
 AT_CHECK([$EGREP 'cpp.*\.cpp' stdout], [1], [ignore], [ignore])
 AT_CLEANUP
 
