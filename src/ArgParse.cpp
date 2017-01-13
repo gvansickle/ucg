@@ -472,7 +472,20 @@ struct PreDescriptor
 			}
 		}
 
-		return lmcppop::Descriptor {m_index, m_type, m_shortopts, m_longopts, m_check_arg, fmt_help};
+		return lmcppop::Descriptor {m_index, m_type, m_shortopts, m_longopts /* @todo remove aliases. */, m_check_arg, fmt_help};
+	}
+
+	template <typename T>
+	void PushAliasDescriptors(T* usage_container)
+	{
+		auto long_aliases = split(m_longopts, ',');
+
+		for(auto it = long_aliases.begin()+1; it != long_aliases.end(); ++it)
+		{
+			auto long_alias = std::make_shared<std::string>(*it);
+			delete_us.push_back(long_alias);
+			usage_container->push_back(lmcppop::Descriptor{m_index, m_type, "", long_alias->c_str(), m_check_arg, 0});
+		}
 	}
 
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
@@ -744,6 +757,13 @@ ArgParse::ArgParse(TypeManager &type_manager)
 		{
 			lmcppop::Descriptor d = ro;
 			dynamic_usage.push_back(d);
+		}
+	}
+	for(auto ro : raw_options)
+	{
+		if(ro.HasLongAliases())
+		{
+			ro.PushAliasDescriptors<std::vector<lmcppop::Descriptor>>(&dynamic_usage);
 		}
 	}
 	for(auto ro : raw_options)
