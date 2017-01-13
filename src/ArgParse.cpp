@@ -248,7 +248,8 @@ struct Arg: public lmcppop::Arg
 {
 	static void PrintHelp(const char *str, int size)
 	{
-		if(strstr(str, "@hidden") != nullptr)
+		std::string helpstr(str/*, size*/);
+		if(helpstr.find("@hidden") != std::string::npos)
 		{
 			// Hidden option, skip printing help.
 			//return;
@@ -264,51 +265,51 @@ struct Arg: public lmcppop::Arg
 		fprintf(stderr, "%s", msg2);
 	}
 
-  static lmcppop::ArgStatus Unknown(const lmcppop::Option& option, bool msg)
-  {
-    if (msg) printError("Unknown option '", option, "'\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
+	static lmcppop::ArgStatus Unknown(const lmcppop::Option& option, bool msg)
+	{
+		if (msg) printError("Unknown option '", option, "'\n");
+		return lmcppop::ARG_ILLEGAL;
+	}
 
-  static lmcppop::ArgStatus UnknownArgHook(const lmcppop::Option& option, bool msg)
-  {
-	  if(option.name != nullptr)
-	  {
-		  /// @todo std::cout << "Dynamic option: '" << option.name << "'\n";
-		  return lmcppop::ARG_NONE;
-	  }
-	  if(msg) printError("Unknown option '", option, "'\n");
-	    return lmcppop::ARG_ILLEGAL;
-  }
+	static lmcppop::ArgStatus UnknownArgHook(const lmcppop::Option& option, bool msg)
+	{
+		if(option.name != nullptr)
+		{
+			/// @todo std::cout << "Dynamic option: '" << option.name << "'\n";
+			return lmcppop::ARG_NONE;
+		}
+		if(msg) printError("Unknown option '", option, "'\n");
+		return lmcppop::ARG_ILLEGAL;
+	}
 
-  static lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
-  {
-    if (option.arg != 0)
-      return lmcppop::ARG_OK;
+	static lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
+	{
+		if (option.arg != 0)
+			return lmcppop::ARG_OK;
 
-    if (msg) printError("Option '", option, "' requires an argument\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
+		if (msg) printError("Option '", option, "' requires an argument\n");
+		return lmcppop::ARG_ILLEGAL;
+	}
 
-  static lmcppop::ArgStatus NonEmpty(const lmcppop::Option& option, bool msg)
-  {
-    if (option.arg != 0 && option.arg[0] != 0)
-      return lmcppop::ARG_OK;
+	static lmcppop::ArgStatus NonEmpty(const lmcppop::Option& option, bool msg)
+	{
+		if (option.arg != 0 && option.arg[0] != 0)
+		  return lmcppop::ARG_OK;
 
-    if (msg) printError("Option '", option, "' requires a non-empty argument\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
+		if (msg) printError("Option '", option, "' requires a non-empty argument\n");
+		return lmcppop::ARG_ILLEGAL;
+	}
 
-  static lmcppop::ArgStatus Numeric(const lmcppop::Option& option, bool msg)
-  {
-    char* endptr = 0;
-    if (option.arg != 0 && strtol(option.arg, &endptr, 10)){};
-    if (endptr != option.arg && *endptr == 0)
-      return lmcppop::ARG_OK;
+	static lmcppop::ArgStatus Numeric(const lmcppop::Option& option, bool msg)
+	{
+		char* endptr = 0;
+		if (option.arg != 0 && strtol(option.arg, &endptr, 10)){};
+		if (endptr != option.arg && *endptr == 0)
+		  return lmcppop::ARG_OK;
 
-    if (msg) printError("Option '", option, "' requires a numeric argument\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
+		if (msg) printError("Option '", option, "' requires a numeric argument\n");
+		return lmcppop::ARG_ILLEGAL;
+	}
 };
 
 enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1,
@@ -328,8 +329,10 @@ struct PreDescriptor
 	const char *const m_argname;
 	const lmcppop::CheckArg m_check_arg;
 	const std::string m_help;
+	bool m_is_hidden = false;
 
 	struct section_header_tag {};
+	struct normal_option_tag {};
 	struct arbtext_tag {};
 	struct hidden_tag {};
 
@@ -339,9 +342,39 @@ struct PreDescriptor
 	{
 	};
 
-	PreDescriptor(unsigned i, int t, const char *const so, const char *const lo, const char *const argname,
-			const lmcppop::CheckArg c, const char *h) noexcept
-			: m_index(i), m_type(t), m_shortopts(so), m_longopts(lo), m_argname(argname), m_check_arg(c), m_help(h)
+	/**
+	 * The generic option constructor.
+	 *
+	 * @param index
+	 * @param type
+	 * @param shortopts
+	 * @param longopts
+	 * @param argname
+	 * @param check_arg
+	 * @param help
+	 */
+	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
+			const lmcppop::CheckArg check_arg, const char *help) noexcept
+			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname), m_check_arg(check_arg), m_help(help)
+	{
+	};
+
+	/**
+	 * The generic hidden option constructor.
+	 *
+	 * @param index
+	 * @param type
+	 * @param shortopts
+	 * @param longopts
+	 * @param argname
+	 * @param check_arg
+	 * @param help
+	 * @param
+	 */
+	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
+			const lmcppop::CheckArg check_arg, const char *help, hidden_tag) noexcept
+			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname), m_check_arg(check_arg), m_help(help),
+			  m_is_hidden(true)
 	{
 	};
 
@@ -362,11 +395,13 @@ struct PreDescriptor
 	{
 	};
 
-	PreDescriptor(const char *arbitrary_text, hidden_tag) noexcept
+	PreDescriptor(const char *arbitrary_text [[maybe_unused]], hidden_tag) noexcept
 			: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
-			  m_help(std::string("@hidden ") + arbitrary_text)
+			  m_help(), m_is_hidden(true)
 	{
 	};
+
+	bool IsHidden() const noexcept { return m_is_hidden; };
 
 	/**
 	 * Conversion operator for converting between PreDescriptors and "The Lean Mean C++ Option Parser"'s option Descriptors.
@@ -374,50 +409,59 @@ struct PreDescriptor
 	operator lmcppop::Descriptor() const noexcept
 	{
 		const char *fmt_help = "";
-		auto short_len = std::strlen(m_shortopts);
-		auto long_len = std::strlen(m_longopts);
-		if((short_len!=0 || long_len!=0) && (!m_help.empty()))
-		{
-			// Paste together the options and the help text.
-			std::string shortops_s {m_opt_start_str};
-			if(short_len)
-			{
-				shortops_s += "-";
-				shortops_s += join(split(m_shortopts, ','), ", -");
-			}
-			if(short_len && long_len)
-			{
-				shortops_s += ", ";
-			}
-			if(long_len)
-			{
-				shortops_s += "--";
-				shortops_s += m_longopts;
-				if(std::strlen(m_argname) > 0)
-				{
-					shortops_s += "=";
-					shortops_s += m_argname;
-				}
-			}
-			std::shared_ptr<std::string> semi_fmt_help = std::make_shared<std::string>(
-					shortops_s + m_help_space_str + m_help);
-			fmt_help = semi_fmt_help->c_str();
 
-			/// @todo We should control this lifetime in a lighter-weight way.
-			delete_us.push_back(semi_fmt_help);
-		}
-		else if(!m_help.empty())
+		if(IsHidden())
 		{
-			// It's a section header.
-			auto semi_fmt_help = std::make_shared<std::string>(m_help);
-			fmt_help = semi_fmt_help->c_str();
-			delete_us.push_back(semi_fmt_help);
+			fmt_help = 0;
 		}
-		else if(m_help.empty())
+		else
 		{
-			auto semi_fmt_help = std::make_shared<std::string>("");
-			fmt_help = semi_fmt_help->c_str();
-			delete_us.push_back(semi_fmt_help);
+			auto short_len = std::strlen(m_shortopts);
+			auto long_len = std::strlen(m_longopts);
+
+			if((short_len!=0 || long_len!=0) && (!m_help.empty()))
+			{
+				// Paste together the options and the help text.
+				std::string shortops_s {m_opt_start_str};
+				if(short_len)
+				{
+					shortops_s += "-";
+					shortops_s += join(split(m_shortopts, ','), ", -");
+				}
+				if(short_len && long_len)
+				{
+					shortops_s += ", ";
+				}
+				if(long_len)
+				{
+					shortops_s += "--";
+					shortops_s += m_longopts;
+					if(std::strlen(m_argname) > 0)
+					{
+						shortops_s += "=";
+						shortops_s += m_argname;
+					}
+				}
+				std::shared_ptr<std::string> semi_fmt_help = std::make_shared<std::string>(
+						shortops_s + m_help_space_str + m_help);
+				fmt_help = semi_fmt_help->c_str();
+
+				/// @todo We should control this lifetime in a lighter-weight way.
+				delete_us.push_back(semi_fmt_help);
+			}
+			else if(!m_help.empty())
+			{
+				// It's a section header.
+				auto semi_fmt_help = std::make_shared<std::string>(m_help);
+				fmt_help = semi_fmt_help->c_str();
+				delete_us.push_back(semi_fmt_help);
+			}
+			else if(m_help.empty())
+			{
+				auto semi_fmt_help = std::make_shared<std::string>("");
+				fmt_help = semi_fmt_help->c_str();
+				delete_us.push_back(semi_fmt_help);
+			}
 		}
 
 		return lmcppop::Descriptor {m_index, m_type, m_shortopts, m_longopts, m_check_arg, fmt_help};
@@ -426,7 +470,7 @@ struct PreDescriptor
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
-std::vector<PreDescriptor> raw_options = {
+static std::vector<PreDescriptor> raw_options = {
 	{ (std::string("Usage: ucg [OPTION...] ") + args_doc).c_str(), PreDescriptor::arbtext_tag() },
 	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
 	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
@@ -480,10 +524,10 @@ std::vector<PreDescriptor> raw_options = {
 	{ "Hidden Options:", PreDescriptor::hidden_tag() },
 	// Hidden options for debug, test, etc.
 	// DO NOT USE THESE.  They're going to change and go away without notice.
-		{OPT_TEST_LOG_ALL, 0, "", "test-log-all", Arg::None, "@hidden Enable all logging output."},
+		{OPT_TEST_LOG_ALL, 0, "", "test-log-all", "", Arg::None, "@hidden Enable all logging output.", PreDescriptor::hidden_tag()},
 		//{"test-noenv-user", OPT_TEST_NOENV_USER, 0, OPTION_HIDDEN, "Don't search for or use $HOME/.ucgrc."},
 		//{"test-use-mmap", OPT_TEST_USE_MMAP, 0, OPTION_HIDDEN, "Use mmap() to access files being searched."},
-		//{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
+		{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
 		// Again, this folderol is to keep the doc[] string in the same format as used by argp.
 		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) + "\n").c_str(), PreDescriptor::arbtext_tag() },
 		{ (std::string("Report bugs to ") + argp_program_bug_address + ".").c_str(), PreDescriptor::arbtext_tag() }
@@ -693,12 +737,22 @@ ArgParse::ArgParse(TypeManager &type_manager)
 {
 #if NEW_OPTS
 
-	for(size_t i=0; i < raw_options.size(); ++i)
+	for(auto ro : raw_options)
 	{
-		lmcppop::Descriptor d = raw_options[i];
-		dynamic_usage.push_back(d);
+		if(!ro.IsHidden())
+		{
+			lmcppop::Descriptor d = ro;
+			dynamic_usage.push_back(d);
+		}
 	}
-
+	for(auto ro : raw_options)
+	{
+		if(ro.IsHidden())
+		{
+			lmcppop::Descriptor d = ro;
+			dynamic_usage.push_back(d);
+		}
+	}
 	dynamic_usage.push_back(PreDescriptor::NullEntry());
 #endif
 }
