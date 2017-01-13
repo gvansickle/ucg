@@ -30,6 +30,14 @@ AT_CHECK([$EGREP 'cpp.*\.cpp' stdout], [0], [ignore], [ignore])
 AT_CLEANUP
 
 #
+# check that --help-types, does not work - the comma should have been stripped in ArgParse.
+#
+AT_SETUP([Long alias init parsing])
+AT_CHECK([ucg --help-types,], [0], [stdout], [stderr])
+AT_CHECK([$EGREP 'cpp.*\.cpp' stdout], [1], [ignore], [ignore])
+AT_CLEANUP
+
+#
 # Check that "-- --noenv" does not treat --noenv as an option, but as a non-option argument.
 #
 AT_SETUP(['--' vs. '--noenv'])
