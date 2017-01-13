@@ -11,12 +11,23 @@
 # UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
 AT_BANNER([UniversalCodeGrep CLI arg and .ucgrc file checks])
 
+#
+# Check that both --help-types and --list-file-types (an alias) work.
+#
+AT_SETUP([--help-types])
+AT_CHECK([ucg --help-types], [0], [stdout], [stderr])
+AT_CHECK([$EGREP 'cpp.*\.cpp' stdout])
+AT_CLEANUP
+AT_SETUP([Alias: --list-file-types])
+AT_CHECK([ucg --help-types], [0], [stdout], [stderr])
+AT_CHECK([$EGREP 'cpp.*\.cpp' stdout])
+AT_CLEANUP
 #
 # Check that "-- --noenv" does not treat --noenv as an option, but as a non-option argument.
 #
@@ -30,7 +41,7 @@ AT_DATA([file_to_search.cpp],
 [--NOENV
 ])
 
-AT_CHECK([ucg --test-noenv-user -- --noenv], [0], 
+AT_CHECK([ucg --test-noenv-user -- --noenv], [0],
 [file_to_search.cpp:1:--NOENV
 ], [stderr])
 

@@ -531,7 +531,7 @@ static std::vector<PreDescriptor> raw_options = {
 		{ OPT_NOENV, 0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
 	{ "Informational options:" },
 		{ OPT_HELP,  0, "?", "help", Arg::None, "Give this help list" },
-		{ OPT_HELP_TYPES, 0, "", "help-types,list-file-types", Arg::NonEmpty, "@todo Print list of supported file types." },
+		{ OPT_HELP_TYPES, 0, "", "help-types,list-file-types", Arg::None, "Print list of supported file types." },
 		{ OPT_USAGE, 0, "", "usage", Arg::None, "Give a short usage message"},
 		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
 	{ "Hidden Options:", PreDescriptor::hidden_tag() },
