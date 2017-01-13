@@ -511,6 +511,7 @@ struct PreDescriptor
 };
 
 static std::vector<PreDescriptor> raw_options = {
+		/// @todo Put in an explicit OPT_UNKNOWN entry to pick up all unrecognized options.
 	{ (std::string("Usage: ucg [OPTION...] ") + args_doc).c_str(), PreDescriptor::arbtext_tag() },
 	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
 	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
@@ -555,7 +556,7 @@ static std::vector<PreDescriptor> raw_options = {
 	{ "Hidden Options:", PreDescriptor::hidden_tag() },
 	// Hidden options for debug, test, etc.
 	// DO NOT USE THESE.  They're going to change and go away without notice.
-		{ OPT_TEST_LOG_ALL, 0, "", "test-log-all", "", Arg::None, "@hidden Enable all logging output.", PreDescriptor::hidden_tag() },
+		{ OPT_TEST_LOG_ALL, 0, "", "test-log-all", "", Arg::None, "Enable all logging output.", PreDescriptor::hidden_tag() },
 		{ OPT_TEST_NOENV_USER, 0, "", "test-noenv-user", "", Arg::None, "Don't search for or use $HOME/.ucgrc.", PreDescriptor::hidden_tag() },
 		{ OPT_TEST_USE_MMAP, 0, "", "test-use-mmap", "", Arg::None, "Use mmap() to access files being searched.", PreDescriptor::hidden_tag() },
 	// Epilogue Text.
@@ -567,31 +568,6 @@ static std::vector<PreDescriptor> raw_options = {
 
 static std::vector<lmcppop::Descriptor> dynamic_usage;
 
-#if 0
-const lmcppop::Descriptor usage[] = {
-		{ OPT_UNKNOWN, 0, "", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
-		                                          "Options:" },
-		{ OPT_SECTION, 0, "", "", Arg::Unknown, "Searching:" },
-		{ OPT_SMART_CASE, ENABLE, "", "smart-case", Arg::None, "  \t--[no]smart-case  \tIgnore case if PATTERN is all lowercase (default: enabled)."},
-		{ OPT_SMART_CASE, DISABLE, "", "nosmart-case", Arg::None, 0},
-#if 0
-		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
-		                                          "  \tTakes an argument but is happy without one." },
-		{ REQUIRED,0,"r","required",Arg::Required," \t-r <arg>, --required=<arg>  \tMust have an argument." },
-		{ NUMERIC, 0,"n","numeric", Arg::Numeric, " \t-n <num>, --numeric=<num>  \tRequires a number as argument." },
-		{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty," \t-1 <arg>, --nonempty=<arg>"
-		                                          "  \tCan NOT take the empty string as argument." },
-#endif
-		{ OPT_SECTION, 0, "", "", Arg::Unknown, "Informational options:"},
-		{ OPT_HELP,    0,"", "help",    Arg::None,    " \t--help  \tPrint usage and exit." },
-		{ OPT_UNKNOWN, 0,"", "",        Arg::None,
-		 "\nExamples:\n"
-		 "  example_arg --unknown -o -n10 \n"
-		 "  example_arg -o -n10 file1 file2 \n"
-		},
-		{ 0, 0, 0, 0, 0, 0 }
-};
-#endif
 #endif
 
 #if !NEW_OPTS
