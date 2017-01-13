@@ -22,12 +22,13 @@ AT_BANNER([UniversalCodeGrep CLI arg and .ucgrc file checks])
 #
 AT_SETUP([--help-types])
 AT_CHECK([ucg --help-types], [0], [stdout], [stderr])
-AT_CHECK([$EGREP 'cpp.*\.cpp' stdout])
+AT_CHECK([$EGREP 'cpp.*\.cpp' stdout], [0], [ignore], [ignore])
 AT_CLEANUP
 AT_SETUP([Alias: --list-file-types])
-AT_CHECK([ucg --help-types], [0], [stdout], [stderr])
-AT_CHECK([$EGREP 'cpp.*\.cpp' stdout])
+AT_CHECK([ucg --list-file-types], [0], [stdout], [stderr])
+AT_CHECK([$EGREP 'cpp.*\.cpp' stdout], [0], [ignore], [ignore])
 AT_CLEANUP
+
 #
 # Check that "-- --noenv" does not treat --noenv as an option, but as a non-option argument.
 #

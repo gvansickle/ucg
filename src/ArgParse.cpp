@@ -889,6 +889,12 @@ columns = 80;
 		exit(0);
 		return;
 	}
+	else if(options[OPT_HELP_TYPES])
+	{
+		PrintHelpTypes();
+		exit(0);
+		return;
+	}
 	else if(parse.nonOptionsCount() == 0)
 	{
 		// Need at least the PATTERN.
