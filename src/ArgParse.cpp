@@ -421,29 +421,35 @@ struct PreDescriptor
 
 			if((short_len!=0 || long_len!=0) && (!m_help.empty()))
 			{
+				// This is a non-hidden option.
 				// Paste together the options and the help text.
-				std::string shortops_s {m_opt_start_str};
+				std::string opts_help_str {m_opt_start_str};
 				if(short_len)
 				{
-					shortops_s += "-";
-					shortops_s += join(split(m_shortopts, ','), ", -");
+					opts_help_str += "-";
+					opts_help_str += join(split(m_shortopts, ','), ", -");
 				}
 				if(short_len && long_len)
 				{
-					shortops_s += ", ";
+					opts_help_str += ", ";
 				}
 				if(long_len)
 				{
-					shortops_s += "--";
-					shortops_s += m_longopts;
+					auto longopt_list = split(m_longopts, ',');
+					// Check if we need to append an arg expression.
 					if(std::strlen(m_argname) > 0)
 					{
-						shortops_s += "=";
-						shortops_s += m_argname;
+						for(auto& opt : longopt_list)
+						{
+							opt += "=";
+							opt += m_argname;
+						}
 					}
+					opts_help_str += "--";
+					opts_help_str += join(longopt_list, ", --");
 				}
 				std::shared_ptr<std::string> semi_fmt_help = std::make_shared<std::string>(
-						shortops_s + m_help_space_str + m_help);
+						opts_help_str + m_help_space_str + m_help);
 				fmt_help = semi_fmt_help->c_str();
 
 				/// @todo We should control this lifetime in a lighter-weight way.
@@ -485,10 +491,8 @@ static std::vector<PreDescriptor> raw_options = {
 		{ OPT_COLUMN, ENABLE, "", "column", Arg::None, "Print column of first match after line number."},
 		{ OPT_COLUMN, DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
 	{ "File presentation:" },
-		{ OPT_COLOR, ENABLE, "", "color", Arg::None, "Render the output with ANSI color codes."},
-		{ OPT_COLOR, ENABLE, "", "colour", Arg::None, " " },
-		{ OPT_COLOR, DISABLE, "", "nocolor", Arg::None, "Render the output without ANSI color codes."},
-		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, " " },
+		{ OPT_COLOR, ENABLE, "", "color,colour", Arg::None, "Render the output with ANSI color codes."},
+		{ OPT_COLOR, DISABLE, "", "nocolor,nocolour", Arg::None, "Render the output without ANSI color codes."},
 	{ "File/directory inclusion/exclusion:" },
 		{ OPT_IGNORE_DIR, OPT_BRACKET_NO_STANDIN, "", "[no]ignore-dir", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
 		// grep-style --include=glob and --exclude=glob
@@ -508,25 +512,20 @@ static std::vector<PreDescriptor> raw_options = {
 	{ "Performance tuning:" },
 		{ OPT_PERF_DIRJOBS, 0, "", "dirjobs", "NUM_JOBS", Arg::Numeric, "Number of directory traversal jobs (std::thread<>s) to use." },
 		{ OPT_PERF_SCANJOBS, 0, "j", "jobs", "NUM_JOBS", Arg::Numeric, "Number of scanner jobs (std::thread<>s) to use."},
-#if 0
-		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
-		                                          "  \tTakes an argument but is happy without one." },
-		{ REQUIRED,0,"r","required",Arg::Required," \t-r <arg>, --required=<arg>  \tMust have an argument." },
-		{ NUMERIC, 0,"n","numeric", Arg::Numeric, " \t-n <num>, --numeric=<num>  \tRequires a number as argument." },
-#endif
 	{ "Miscellaneous:" },
 		{ OPT_NOENV, 0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
 	{ "Informational options:" },
 		{ OPT_HELP,  0, "?", "help", Arg::None, "Give this help list" },
-		{ OPT_HELP_TYPES, 0, "", "help-types", Arg::NonEmpty, "@todo --list-file-types Print list of supported file types." },
+		{ OPT_HELP_TYPES, 0, "", "help-types,list-file-types", Arg::NonEmpty, "@todo Print list of supported file types." },
 		{ OPT_USAGE, 0, "", "usage", Arg::None, "Give a short usage message"},
 		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
 	{ "Hidden Options:", PreDescriptor::hidden_tag() },
 	// Hidden options for debug, test, etc.
 	// DO NOT USE THESE.  They're going to change and go away without notice.
-		{OPT_TEST_LOG_ALL, 0, "", "test-log-all", "", Arg::None, "@hidden Enable all logging output.", PreDescriptor::hidden_tag()},
-		//{"test-noenv-user", OPT_TEST_NOENV_USER, 0, OPTION_HIDDEN, "Don't search for or use $HOME/.ucgrc."},
-		//{"test-use-mmap", OPT_TEST_USE_MMAP, 0, OPTION_HIDDEN, "Use mmap() to access files being searched."},
+		{ OPT_TEST_LOG_ALL, 0, "", "test-log-all", "", Arg::None, "@hidden Enable all logging output.", PreDescriptor::hidden_tag() },
+		{ OPT_TEST_NOENV_USER, 0, "", "test-noenv-user", "", Arg::None, "Don't search for or use $HOME/.ucgrc.", PreDescriptor::hidden_tag() },
+		{ OPT_TEST_USE_MMAP, 0, "", "test-use-mmap", "", Arg::None, "Use mmap() to access files being searched.", PreDescriptor::hidden_tag() },
+	// Epilogue Text.
 		{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
 		// Again, this folderol is to keep the doc[] string in the same format as used by argp.
 		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) + "\n").c_str(), PreDescriptor::arbtext_tag() },
