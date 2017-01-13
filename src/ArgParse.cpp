@@ -483,7 +483,15 @@ struct PreDescriptor
 			delete_us.push_back(desc_longopt);
 		}
 
-		return lmcppop::Descriptor {m_index, m_type, m_shortopts, desc_longopt ? desc_longopt->c_str() : m_longopts, m_check_arg, fmt_help};
+		size_t bracket_no_offset {0};
+		if(IsBracketNo())
+		{
+			// Make this the "yes" case.  The hidden ones will be --noopt and --no-opt.
+			bracket_no_offset = 4;
+		}
+
+		return lmcppop::Descriptor {m_index, m_type, m_shortopts, desc_longopt ? desc_longopt->c_str() : (m_longopts + bracket_no_offset),
+				m_check_arg, fmt_help};
 	}
 
 	template <typename T>
@@ -508,7 +516,7 @@ static std::vector<PreDescriptor> raw_options = {
 	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
 	{ "Searching:" },
 		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
-		{ OPT_HANDLE_CASE, SMART_CASE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
+		{ OPT_HANDLE_CASE, SMART_CASE, "", "[no]smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
 		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "nosmart-case", Arg::None, " "},
 		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "no-smart-case", Arg::None, " " /*Hidden alias*/},
 		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
@@ -528,8 +536,7 @@ static std::vector<PreDescriptor> raw_options = {
 		{ OPT_IGNORE_FILE, 0, "", "ignore-file", "FILTER:FILTERARGS", Arg::NonEmpty, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored." },
 		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
 		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
-		{ OPT_FOLLOW, ENABLE, "", "follow", Arg::None, "[Do not] follow symlinks (default: nofollow)." },
-		{ OPT_FOLLOW, DISABLE, "", "nofollow", Arg::None, "@todo ^^^" },
+		{ OPT_FOLLOW, ENABLE, "", "[no]follow", Arg::None, "[Do not] follow symlinks (default: nofollow)." },
 		{ OPT_TYPE, ENABLE, "", "type", "[no]TYPE", Arg::NonEmpty, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 	{ "File type specification:" },
 		{OPT_TYPE_SET, 0, "", "type-set", "TYPE:FILTER:FILTERARGS", Arg::NonEmpty, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
