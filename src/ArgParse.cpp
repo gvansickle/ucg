@@ -402,6 +402,8 @@ struct PreDescriptor
 	};
 
 	bool IsHidden() const noexcept { return m_is_hidden; };
+	bool IsBracketNo() const noexcept { return std::strchr(m_longopts, '[') != nullptr; };
+	bool HasLongAliases() const noexcept { return std::strchr(m_longopts, ',') != nullptr; };
 
 	/**
 	 * Conversion operator for converting between PreDescriptors and "The Lean Mean C++ Option Parser"'s option Descriptors.
