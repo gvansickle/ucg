@@ -148,7 +148,7 @@ public:
 	 * @param ContainerOfValues
 	 * @return
 	 */
-	template <typename T, typename = typename T::value_type>
+	template <typename T, typename Unused = typename T::value_type>
 	queue_op_status push_back(T& ContainerOfValues)
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
