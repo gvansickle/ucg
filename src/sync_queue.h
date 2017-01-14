@@ -161,7 +161,7 @@ public:
 		}
 
 		// Push via move.
-		m_underlying_queue.insert(m_underlying_queue.cend(),
+		m_underlying_queue.insert(m_underlying_queue.end(),
 				std::make_move_iterator(ContainerOfValues.begin()),
 				std::make_move_iterator(ContainerOfValues.end()));
 
