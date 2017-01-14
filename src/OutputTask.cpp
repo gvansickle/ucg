@@ -63,7 +63,7 @@ void OutputTask::Run()
 	bool first_matchlist_printed = false;
 	std::stringstream sstrm;
 
-	while(m_input_queue.wait_pull(std::move(ml)) != queue_op_status::closed)
+	while(m_input_queue.pull_front(std::move(ml)) != queue_op_status::closed)
 	{
 		if(first_matchlist_printed && m_output_is_tty)
 		{

@@ -46,9 +46,10 @@ enum class queue_op_status
 /**
  * Simple unbounded synchronized queue class.
  *
- * The interface implemented here is compatible with Boost's sync_queue<> implementation
- * documented here: http://www.boost.org/doc/libs/1_59_0/doc/html/thread/sds.html#thread.sds.synchronized_queues,
- * with the exception of the wait_for_worker_completion() interface, which is my own addition.
+ * The interface implemented here is loosely based on ISO/IEC JTC1 SC22 WG21 N3533
+ * <http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3533.html> and subsequent work noted here:
+ * <http://www.boost.org/doc/libs/1_63_0/doc/html/thread/compliance.html#thread.compliance.cxx1y.queue>.
+ * The wait_for_worker_completion() interface is my own addition.
  */
 template <typename ValueType>
 class sync_queue
@@ -59,7 +60,8 @@ class sync_queue
 	using mt_deque = std::deque<ValueType>;
 #endif
 
-	std::queue<ValueType, mt_deque> m_underlying_queue;
+	//std::queue<ValueType, mt_deque> m_underlying_queue;
+	mt_deque m_underlying_queue;
 
 public:
 
@@ -88,7 +90,7 @@ public:
 		m_cv.notify_all();
 	}
 
-	queue_op_status wait_push(const ValueType& x)
+	queue_op_status push_back(const ValueType& x)
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 
@@ -100,7 +102,7 @@ public:
 		}
 
 		// Push via copy.
-		m_underlying_queue.push(x);
+		m_underlying_queue.push_back(x);
 
 		// Unlock the mutex immediately prior to notify.  This prevents a waiting thread from being immediately woken up
 		// by the notify, and then blocking because we still hold the mutex.
@@ -114,7 +116,7 @@ public:
 		return queue_op_status::success;
 	}
 
-	queue_op_status wait_push(ValueType&& x)
+	queue_op_status push_back(ValueType&& x)
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 
@@ -126,7 +128,7 @@ public:
 		}
 
 		// Push via move.
-		m_underlying_queue.push(std::move(x));
+		m_underlying_queue.push_back(std::move(x));
 
 		// Unlock the mutex immediately prior to notify.  This prevents a waiting thread from being immediately woken up
 		// by the notify, and then blocking because we still hold the mutex.
@@ -140,7 +142,42 @@ public:
 		return queue_op_status::success;
 	}
 
-	queue_op_status wait_pull(ValueType& x)
+	/**
+	 * Push multiple values from a container onto the queue in one operation.
+	 *
+	 * @param ContainerOfValues
+	 * @return
+	 */
+	template <typename T, typename = typename T::value_type>
+	queue_op_status push_back(T& ContainerOfValues)
+	{
+		std::unique_lock<std::mutex> lock(m_mutex);
+
+		// Is the queue closed?
+		if(m_closed)
+		{
+			// Yes, fail the push.
+			return queue_op_status::closed;
+		}
+
+		// Push via move.
+		m_underlying_queue.insert(m_underlying_queue.cend(),
+				std::make_move_iterator(ContainerOfValues.begin()),
+				std::make_move_iterator(ContainerOfValues.end()));
+
+		// Unlock the mutex immediately prior to notify.  This prevents a waiting thread from being immediately woken up
+		// by the notify, and then blocking because we still hold the mutex.
+		lock.unlock();
+
+		// Notify one thread waiting on the queue's condition variable that it now has something to pull.
+		// Note that since we only pushed one item, we only need to notify one waiting thread.  This prevents waking up
+		// all waiting threads, all but one of which will end up immediately blocking again.
+		m_cv.notify_one();
+
+		return queue_op_status::success;
+	}
+
+	queue_op_status pull_front(ValueType& x)
 	{
 		// Using a unique_lock<> here vs. a lock_guard<> because we'll be using a condition variable, which needs
 		// to unlock the mutex.
@@ -167,12 +204,12 @@ public:
 
 		// Otherwise, we have something in the queue to pull off.
 		x = m_underlying_queue.front();
-		m_underlying_queue.pop();
+		m_underlying_queue.pop_front();
 
 		return queue_op_status::success;
 	}
 
-	queue_op_status wait_pull(ValueType&& x)
+	queue_op_status pull_front(ValueType&& x)
 	{
 		// Using a unique_lock<> here vs. a lock_guard<> because we'll be using a condition variable, which needs
 		// to unlock the mutex.
@@ -202,7 +239,7 @@ public:
 		// Note that C++11 std::queue<>::front() returns a non-const reference as well as a const one, so
 		// std::move() will work here.
 		x = std::move(m_underlying_queue.front());
-		m_underlying_queue.pop();
+		m_underlying_queue.pop_front();
 
 		return queue_op_status::success;
 	}
