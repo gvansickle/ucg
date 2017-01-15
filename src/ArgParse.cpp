@@ -489,6 +489,11 @@ struct PreDescriptor
 		{
 			// Only register the first long option here.
 			desc_longopt = std::make_shared<std::string>(m_longopts, std::strchr(m_longopts, ',')-m_longopts);
+			if(IsBracketNo())
+			{
+				// Strip out the '[no]', this will be the 'yes' option.
+				desc_longopt->erase(0,4);
+			}
 			delete_us.push_back(desc_longopt);
 		}
 
@@ -511,9 +516,38 @@ struct PreDescriptor
 		for(auto it = long_aliases.begin()+1; it != long_aliases.end(); ++it)
 		{
 			auto long_alias = std::make_shared<std::string>(*it);
+			if(IsBracketNo())
+			{
+				// For bracket-no aliases, we have to add the --opt, --no-opt, and --noopt hidden entries.
+				long_alias->erase(0, 4);
+				auto no_opt_str = std::make_shared<std::string>("no-" + *long_alias);
+				auto noopt_str = std::make_shared<std::string>("no" + *long_alias);
+				delete_us.push_back(no_opt_str);
+				delete_us.push_back(noopt_str);
+//std::cout << "Adding " << *no_opt_str << "\n";
+//std::cout << "Adding " << *noopt_str << "\n";
+				usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", no_opt_str->c_str(), m_check_arg, 0});
+				usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
+			}
 			delete_us.push_back(long_alias);
 			usage_container->push_back(lmcppop::Descriptor{m_index, m_type, "", long_alias->c_str(), m_check_arg, 0});
 		}
+	}
+
+	template <typename T>
+	void PushBracketNoDescriptors(T* usage_container)
+	{
+		auto long_alias = split(m_longopts, ',')[0];
+		long_alias.erase(0, 4);
+//std::cout << "Long alias: " << long_alias << "\n";
+		auto no_opt_str = std::make_shared<std::string>("no-" + long_alias);
+		auto noopt_str = std::make_shared<std::string>("no" + long_alias);
+		delete_us.push_back(no_opt_str);
+//std::cout << "Adding " << *no_opt_str << "\n";
+//std::cout << "Adding " << *noopt_str << "\n";
+		delete_us.push_back(noopt_str);
+		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", no_opt_str->c_str(), m_check_arg, 0});
+		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
 	}
 
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
@@ -525,10 +559,10 @@ static std::vector<PreDescriptor> raw_options {
 	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
 	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
 	{ "Searching:" },
-		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
+		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN." },
 		{ OPT_HANDLE_CASE, SMART_CASE, NO_SMART_CASE, "", "[no]smart-case", "", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)." },
-		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "nosmart-case", Arg::None, " "},
-		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "no-smart-case", Arg::None, " " /*Hidden alias*/},
+		//{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "nosmart-case", Arg::None, " "},
+		//{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "no-smart-case", Arg::None, " " /*Hidden alias*/},
 		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
 		{ OPT_LITERAL, 0, "Q", "literal", Arg::None, "Treat all characters in PATTERN as literal."},
 	{ "Search Output:" },
@@ -538,7 +572,7 @@ static std::vector<PreDescriptor> raw_options {
 		{ OPT_COLOR, ENABLE, "", "color,colour", Arg::None, "Render the output with ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolor,nocolour", Arg::None, "Render the output without ANSI color codes."},
 	{ "File/directory inclusion/exclusion:" },
-		{ OPT_IGNORE_DIR, OPT_BRACKET_NO_STANDIN, "", "[no]ignore-dir", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
+		{ OPT_IGNORE_DIR, ENABLE, DISABLE, "", "[no]ignore-dir", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
 		// grep-style --include=glob and --exclude=glob
 		{ OPT_INCLUDE, 0, "", "include", "GLOB", Arg::NonEmpty, "Only files matching GLOB will be searched."},
 		{ OPT_EXCLUDE, 0, "", "exclude", "GLOB", Arg::NonEmpty, "Files matching GLOB will be ignored."},
@@ -546,7 +580,7 @@ static std::vector<PreDescriptor> raw_options {
 		{ OPT_IGNORE_FILE, 0, "", "ignore-file", "FILTER:FILTERARGS", Arg::NonEmpty, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored." },
 		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
 		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
-		{ OPT_FOLLOW, ENABLE, "", "[no]follow", Arg::None, "[Do not] follow symlinks (default: nofollow)." },
+		{ OPT_FOLLOW, ENABLE, DISABLE, "", "[no]follow", "", Arg::None, "[Do not] follow symlinks (default: nofollow)." },
 		{ OPT_TYPE, ENABLE, "", "type", "[no]TYPE", Arg::NonEmpty, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 	{ "File type specification:" },
 		{OPT_TYPE_SET, 0, "", "type-set", "TYPE:FILTER:FILTERARGS", Arg::NonEmpty, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
@@ -767,6 +801,14 @@ ArgParse::ArgParse(TypeManager &type_manager)
 		if(ro.HasLongAliases())
 		{
 			ro.PushAliasDescriptors<std::vector<lmcppop::Descriptor>>(&dynamic_usage);
+		}
+	}
+	for(auto& ro : raw_options)
+	{
+		if(ro.IsBracketNo())
+		{
+			// Bracket-No option, need to add the hidden --noopt and --no-opt options.
+			ro.PushBracketNoDescriptors(&dynamic_usage);
 		}
 	}
 	for(auto& ro : raw_options)
