@@ -127,7 +127,7 @@ void FileScanner::Run(int thread_index)
 	// Pull new filenames off the input queue until it's closed.
 	std::shared_ptr<FileID> next_file;
 	MatchList ml;
-	while(m_in_queue.wait_pull(next_file) != queue_op_status::closed)
+	while(m_in_queue.pull_front(next_file) != queue_op_status::closed)
 	{
 		try
 		{
@@ -161,7 +161,7 @@ void FileScanner::Run(int thread_index)
 			{
 				ml.SetFilename(next_file->GetPath());
 				// Force move semantics here.
-				m_output_queue.wait_push(std::move(ml));
+				m_output_queue.push_back(std::move(ml));
 				ml.clear();
 			}
 		}
