@@ -161,7 +161,7 @@ public:
 		}
 
 		// Push via move.
-		m_underlying_queue.insert(m_underlying_queue.end(),
+		m_underlying_queue.insert(m_underlying_queue.end(), /// @note This should be cend() AFAICT, but that won't compile on old clang.
 				std::make_move_iterator(ContainerOfValues.begin()),
 				std::make_move_iterator(ContainerOfValues.end()));
 
