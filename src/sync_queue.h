@@ -143,7 +143,7 @@ public:
 	}
 
 	/**
-	 * Push multiple values from a container onto the queue in one operation.
+	 * Push multiple values from a container onto the queue in one operation.  Moves the elements.
 	 *
 	 * @param ContainerOfValues
 	 * @return
