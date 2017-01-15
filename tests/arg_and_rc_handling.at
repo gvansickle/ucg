@@ -18,6 +18,15 @@
 AT_BANNER([UniversalCodeGrep CLI arg and .ucgrc file checks])
 
 #
+# Check that nonexistant options are rejected.
+#
+AT_SETUP([Nonexistant options are rejected])
+AT_CHECK([ucg --thisoptiondoesntexist --help], [255], [stdout], [ucg: unrecognized option '--thisoptiondoesntexist'
+Try `ucg --help' or `ucg --usage' for more information.
+])
+AT_CLEANUP
+
+#
 # Check that both --help-types and --list-file-types (an alias) work.
 #
 AT_SETUP([--help-types])

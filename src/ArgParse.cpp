@@ -144,6 +144,7 @@ enum OPT
 	OPT_FOLLOW,
 	OPT_NOFOLLOW,
 	OPT_RECURSE_SUBDIRS,
+	OPT_ONLY_KNOWN_TYPES,
 	OPT_TYPE,
 	OPT_NOENV,
 	OPT_TYPE_SET,
@@ -255,7 +256,7 @@ struct Arg: public lmcppop::Arg
 
 	static lmcppop::ArgStatus Unknown(const lmcppop::Option& option, bool msg)
 	{
-		if (msg) printError("Unknown option '", option, "'\n");
+		if (msg) printError("ucg: unrecognized option '", option, "'\nTry `ucg --help\' or `ucg --usage\' for more information.\n");
 		return lmcppop::ARG_ILLEGAL;
 	}
 
@@ -302,7 +303,6 @@ struct Arg: public lmcppop::Arg
 
 enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1,
 					IGNORE = 1, SMART_CASE = 2, NO_SMART_CASE = 3 };
-//enum optionIndex {UNKNOWN, SECTION, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY};
 
 static constexpr char m_opt_start_str[] {"  \t"};
 static constexpr char m_help_space_str[] {"      \t"};
@@ -325,6 +325,7 @@ struct PreDescriptor
 	struct normal_option_tag {};
 	struct arbtext_tag {};
 	struct hidden_tag {};
+
 
 	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts,
 			const lmcppop::CheckArg c, const char *h) noexcept
@@ -555,14 +556,13 @@ struct PreDescriptor
 
 static std::vector<PreDescriptor> raw_options {
 		/// @todo Put in an explicit OPT_UNKNOWN entry to pick up all unrecognized options.
+	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
 	{ (std::string("Usage: ucg [OPTION...] ") + args_doc).c_str(), PreDescriptor::arbtext_tag() },
 	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
 	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
 	{ "Searching:" },
-		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN." },
 		{ OPT_HANDLE_CASE, SMART_CASE, NO_SMART_CASE, "", "[no]smart-case", "", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)." },
-		//{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "nosmart-case", Arg::None, " "},
-		//{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "no-smart-case", Arg::None, " " /*Hidden alias*/},
+		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN." },
 		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
 		{ OPT_LITERAL, 0, "Q", "literal", Arg::None, "Treat all characters in PATTERN as literal."},
 	{ "Search Output:" },
@@ -575,12 +575,13 @@ static std::vector<PreDescriptor> raw_options {
 		{ OPT_IGNORE_DIR, ENABLE, DISABLE, "", "[no]ignore-dir", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
 		// grep-style --include=glob and --exclude=glob
 		{ OPT_INCLUDE, 0, "", "include", "GLOB", Arg::NonEmpty, "Only files matching GLOB will be searched."},
-		{ OPT_EXCLUDE, 0, "", "exclude", "GLOB", Arg::NonEmpty, "Files matching GLOB will be ignored."},
+		{ OPT_EXCLUDE, 0, "", "exclude,ignore", "GLOB", Arg::NonEmpty, "Files matching GLOB will be ignored."},
 		// ack-style --ignore-file=FILTER:FILTERARGS
 		{ OPT_IGNORE_FILE, 0, "", "ignore-file", "FILTER:FILTERARGS", Arg::NonEmpty, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored." },
 		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
 		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
 		{ OPT_FOLLOW, ENABLE, DISABLE, "", "[no]follow", "", Arg::None, "[Do not] follow symlinks (default: nofollow)." },
+		{ OPT_ONLY_KNOWN_TYPES, ENABLE, "k", "known-types", Arg::None, "Only search in files of recognized types (default: on)."},
 		{ OPT_TYPE, ENABLE, "", "type", "[no]TYPE", Arg::NonEmpty, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 	{ "File type specification:" },
 		{OPT_TYPE_SET, 0, "", "type-set", "TYPE:FILTER:FILTERARGS", Arg::NonEmpty, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
@@ -790,7 +791,7 @@ ArgParse::ArgParse(TypeManager &type_manager)
 
 	for(auto& ro : raw_options)
 	{
-		if(!ro.IsHidden())
+		if(true)//!ro.IsHidden())
 		{
 			lmcppop::Descriptor d = ro;
 			dynamic_usage.push_back(d);
@@ -916,6 +917,7 @@ void ArgParse::Parse(int argc, char **argv)
  	if (parse.error())
  	{
  		/// @todo ???
+ 		exit(STATUS_EX_USAGE);
     	return;
  	}
 
