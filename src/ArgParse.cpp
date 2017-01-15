@@ -246,18 +246,6 @@ struct argp ArgParse::argp = { options, ArgParse::parse_opt, args_doc, doc };
 
 struct Arg: public lmcppop::Arg
 {
-	static void PrintHelp(const char *str, int size)
-	{
-		std::string helpstr(str/*, size*/);
-		if(helpstr.find("@hidden") != std::string::npos)
-		{
-			// Hidden option, skip printing help.
-			//return;
-			std::fwrite("!!", 2, 1, stdout);
-		}
-		std::fwrite(str, size, 1, stdout);
-	}
-
 	static void printError(const char* msg1, const lmcppop::Option& opt, const char* msg2)
 	{
 		fprintf(stderr, "%s", msg1);
@@ -324,21 +312,23 @@ struct PreDescriptor
 {
 	const unsigned m_index;
 	const int m_type;
+	const int m_notype {0};
 	const char* const m_shortopts;
 	const char* const m_longopts;
 	const char *const m_argname;
 	const lmcppop::CheckArg m_check_arg;
 	const std::string m_help;
 	const bool m_is_hidden { false };
+	const bool m_is_bracket_no { false };
 
 	struct section_header_tag {};
 	struct normal_option_tag {};
 	struct arbtext_tag {};
 	struct hidden_tag {};
 
-	PreDescriptor(unsigned i, int t, const char *const so, const char *const lo,
+	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts,
 			const lmcppop::CheckArg c, const char *h) noexcept
-			: m_index(i), m_type(t), m_shortopts(so), m_longopts(lo), m_argname(""), m_check_arg(c), m_help(h)
+			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(""), m_check_arg(c), m_help(h)
 	{
 	};
 
@@ -356,6 +346,25 @@ struct PreDescriptor
 	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
 			const lmcppop::CheckArg check_arg, const char *help) noexcept
 			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname), m_check_arg(check_arg), m_help(help)
+	{
+	};
+
+	/**
+	 * The "bracketed-no" constructor.  This is for options which look like this: "--[no]option=ARG".
+	 *
+	 * @param index
+	 * @param type
+	 * @param shortopts
+	 * @param longopts
+	 * @param argname
+	 * @param check_arg
+	 * @param help
+	 * @param
+	 */
+	PreDescriptor(unsigned index, OptionType yestype, OptionType notype, const char *const shortopts, const char *const longopts, const char *const argname,
+			const lmcppop::CheckArg check_arg, const char *help) noexcept
+			: m_index(index), m_type(yestype), m_notype(notype), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname),
+			  m_check_arg(check_arg), m_help(help), m_is_bracket_no(true)
 	{
 	};
 
@@ -402,7 +411,7 @@ struct PreDescriptor
 	};
 
 	bool IsHidden() const noexcept { return m_is_hidden; };
-	bool IsBracketNo() const noexcept { return std::strchr(m_longopts, '[') != nullptr; };
+	bool IsBracketNo() const noexcept { return m_is_bracket_no; };
 	bool HasLongAliases() const noexcept { return std::strchr(m_longopts, ',') != nullptr; };
 
 	/**
@@ -510,14 +519,14 @@ struct PreDescriptor
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
-static std::vector<PreDescriptor> raw_options = {
+static std::vector<PreDescriptor> raw_options {
 		/// @todo Put in an explicit OPT_UNKNOWN entry to pick up all unrecognized options.
 	{ (std::string("Usage: ucg [OPTION...] ") + args_doc).c_str(), PreDescriptor::arbtext_tag() },
 	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
 	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
 	{ "Searching:" },
 		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
-		{ OPT_HANDLE_CASE, SMART_CASE, "", "[no]smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
+		{ OPT_HANDLE_CASE, SMART_CASE, NO_SMART_CASE, "", "[no]smart-case", "", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)." },
 		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "nosmart-case", Arg::None, " "},
 		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "no-smart-case", Arg::None, " " /*Hidden alias*/},
 		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
@@ -745,7 +754,7 @@ ArgParse::ArgParse(TypeManager &type_manager)
 {
 #if NEW_OPTS
 
-	for(auto ro : raw_options)
+	for(auto& ro : raw_options)
 	{
 		if(!ro.IsHidden())
 		{
@@ -753,14 +762,14 @@ ArgParse::ArgParse(TypeManager &type_manager)
 			dynamic_usage.push_back(d);
 		}
 	}
-	for(auto ro : raw_options)
+	for(auto& ro : raw_options)
 	{
 		if(ro.HasLongAliases())
 		{
 			ro.PushAliasDescriptors<std::vector<lmcppop::Descriptor>>(&dynamic_usage);
 		}
 	}
-	for(auto ro : raw_options)
+	for(auto& ro : raw_options)
 	{
 		if(ro.IsHidden())
 		{
@@ -872,8 +881,8 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		int columns = Terminal::GetColumns();
 /// @delete FOR TESTING ONLY
-columns = 80;
-		lmcppop::printUsage(Arg::PrintHelp, dynamic_usage.data(), columns);
+///columns = 80;
+		lmcppop::printUsage(std::cout, dynamic_usage.data(), columns);
 		exit(0);
 		return;
 	}
