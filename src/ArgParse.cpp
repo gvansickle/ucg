@@ -178,22 +178,22 @@ int argp_err_exit_status = STATUS_EX_USAGE;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 static struct argp_option options[] = {
-		{0,0,0,0, "Searching:" },
-		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
-		{"[no]smart-case", OPT_BRACKET_NO_STANDIN, 0, 0, "Ignore case if PATTERN is all lowercase (default: enabled)."},
-		{"smart-case", OPT_SMART_CASE, 0, OPTION_HIDDEN, ""},
-		{"nosmart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN, ""},
-		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS },
-		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
-		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
-		{0,0,0,0, "Search Output:"},
-		{"column", OPT_COLUMN, 0, 0, "Print column of first match after line number."},
-		{"nocolumn", OPT_NOCOLUMN, 0, 0, "Don't print column of first match (default)."},
-		{0,0,0,0, "File presentation:" },
-		{"color", OPT_COLOR, 0, 0, "Render the output with ANSI color codes."},
-		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
-		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
-		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
+///		{0,0,0,0, "Searching:" },
+///		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
+///		{"[no]smart-case", OPT_BRACKET_NO_STANDIN, 0, 0, "Ignore case if PATTERN is all lowercase (default: enabled)."},
+///		{"smart-case", OPT_SMART_CASE, 0, OPTION_HIDDEN, ""},
+///		{"nosmart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN, ""},
+///		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS },
+///		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
+///		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
+///		{0,0,0,0, "Search Output:"},
+///		{"column", OPT_COLUMN, 0, 0, "Print column of first match after line number."},
+///		{"nocolumn", OPT_NOCOLUMN, 0, 0, "Don't print column of first match (default)."},
+///		{0,0,0,0, "File presentation:" },
+///		{"color", OPT_COLOR, 0, 0, "Render the output with ANSI color codes."},
+///		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
+///		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
+///		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
 		{0,0,0,0, "File/directory inclusion/exclusion:"},
 		{"[no]ignore-dir", OPT_BRACKET_NO_STANDIN, "NAME", 0, "[Do not] exclude directories with NAME."},
 		{"[no]ignore-directory", OPT_BRACKET_NO_STANDIN, "NAME", OPTION_ALIAS },
@@ -572,7 +572,7 @@ static std::vector<PreDescriptor> raw_options {
 		{ OPT_COLOR, ENABLE, "", "color,colour", Arg::None, "Render the output with ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolor,nocolour", Arg::None, "Render the output without ANSI color codes."},
 	{ "File/directory inclusion/exclusion:" },
-		{ OPT_IGNORE_DIR, ENABLE, DISABLE, "", "[no]ignore-dir", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
+		{ OPT_IGNORE_DIR, ENABLE, DISABLE, "", "[no]ignore-dir,[no]ignore-directory", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
 		// grep-style --include=glob and --exclude=glob
 		{ OPT_INCLUDE, 0, "", "include", "GLOB", Arg::NonEmpty, "Only files matching GLOB will be searched."},
 		{ OPT_EXCLUDE, 0, "", "exclude,ignore", "GLOB", Arg::NonEmpty, "Files matching GLOB will be ignored."},
@@ -621,32 +621,32 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 
 	switch (key)
 	{
-	case 'i':
-		arguments->m_ignore_case = true;
-		// Shut off smart-case.
-		arguments->m_smart_case = false;
-		break;
-	case OPT_SMART_CASE:
-		arguments->m_smart_case = true;
-		// Shut off ignore-case.
-		arguments->m_ignore_case = false;
-		break;
-	case OPT_NO_SMART_CASE:
-		arguments->m_smart_case = false;
-		// Don't change ignore-case, regardless of whether it's on or off.
-		break;
-	case 'w':
-		arguments->m_word_regexp = true;
-		break;
-	case 'Q':
-		arguments->m_pattern_is_literal = true;
-		break;
-	case OPT_COLUMN:
-		arguments->m_column = true;
-		break;
-	case OPT_NOCOLUMN:
-		arguments->m_column = false;
-		break;
+///	case 'i':
+///		arguments->m_ignore_case = true;
+///		// Shut off smart-case.
+///		arguments->m_smart_case = false;
+///		break;
+///	case OPT_SMART_CASE:
+///		arguments->m_smart_case = true;
+///		// Shut off ignore-case.
+///		arguments->m_ignore_case = false;
+///		break;
+///	case OPT_NO_SMART_CASE:
+///		arguments->m_smart_case = false;
+///		// Don't change ignore-case, regardless of whether it's on or off.
+///		break;
+///	case 'w':
+///		arguments->m_word_regexp = true;
+///		break;
+///	case 'Q':
+///		arguments->m_pattern_is_literal = true;
+///		break;
+///	case OPT_COLUMN:
+///		arguments->m_column = true;
+///		break;
+///	case OPT_NOCOLUMN:
+///		arguments->m_column = false;
+///		break;
 	case OPT_IGNORE_DIR:
 		arguments->m_excludes.insert(arg);
 		break;
@@ -708,11 +708,11 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	case OPT_NOENV:
 		// The --noenv option is handled specially outside of the argp parser.
 		break;
-	case OPT_HELP_TYPES:
-		// Consume the rest of the options/args.
-		state->next = state->argc;
-		arguments->PrintHelpTypes();
-		break;
+///	case OPT_HELP_TYPES:
+///		// Consume the rest of the options/args.
+///		state->next = state->argc;
+///		arguments->PrintHelpTypes();
+///		break;
 	case 'j':
 		if(atoi(arg) < 1)
 		{
@@ -724,29 +724,29 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 			arguments->m_jobs = atoi(arg);
 		}
 		break;
-	case OPT_PERF_DIRJOBS:
-		if(atoi(arg) < 1)
-		{
-			// Specified 0 or negative jobs.
-			argp_failure(state, STATUS_EX_USAGE, 0, "jobs must be >= 1");
-		}
-		else
-		{
-			arguments->m_dirjobs = atoi(arg);
-		}
-		break;
-	case OPT_COLOR:
-		arguments->m_color = true;
-		arguments->m_nocolor = false;
-		break;
-	case OPT_NOCOLOR:
-		arguments->m_color = false;
-		arguments->m_nocolor = true;
-		break;
-	case OPT_TEST_LOG_ALL:
-		INFO::Enable(true);
-		DEBUG::Enable(true);
-		break;
+///	case OPT_PERF_DIRJOBS:
+///		if(atoi(arg) < 1)
+///		{
+///			// Specified 0 or negative jobs.
+///			argp_failure(state, STATUS_EX_USAGE, 0, "jobs must be >= 1");
+///		}
+///		else
+///		{
+///			arguments->m_dirjobs = atoi(arg);
+///		}
+///		break;
+///	case OPT_COLOR:
+///		arguments->m_color = true;
+///		arguments->m_nocolor = false;
+///		break;
+///	case OPT_NOCOLOR:
+///		arguments->m_color = false;
+///		arguments->m_nocolor = true;
+///		break;
+///	case OPT_TEST_LOG_ALL:
+///		INFO::Enable(true);
+///		DEBUG::Enable(true);
+///		break;
 	case OPT_TEST_NOENV_USER:
 		// The --test-noenv-user option is handled specially outside of the argp parser.
 		break;
@@ -791,11 +791,10 @@ ArgParse::ArgParse(TypeManager &type_manager)
 
 	for(auto& ro : raw_options)
 	{
-		if(true)//!ro.IsHidden())
-		{
-			lmcppop::Descriptor d = ro;
-			dynamic_usage.push_back(d);
-		}
+		/// @note We may want to only push hidden options below, since they break the help formatting into sections.
+		/// If we do, we need to make sure the OPT_UNKNOWN handler is the first one.
+		lmcppop::Descriptor d = ro;
+		dynamic_usage.push_back(d);
 	}
 	for(auto& ro : raw_options)
 	{
@@ -808,10 +807,11 @@ ArgParse::ArgParse(TypeManager &type_manager)
 	{
 		if(ro.IsBracketNo())
 		{
-			// Bracket-No option, need to add the hidden --noopt and --no-opt options.
+			// Bracket-No option, add the hidden --noopt and --no-opt options.
 			ro.PushBracketNoDescriptors(&dynamic_usage);
 		}
 	}
+/** see above
 	for(auto& ro : raw_options)
 	{
 		if(ro.IsHidden())
@@ -820,6 +820,7 @@ ArgParse::ArgParse(TypeManager &type_manager)
 			dynamic_usage.push_back(d);
 		}
 	}
+*/
 	dynamic_usage.push_back(PreDescriptor::NullEntry());
 #endif
 }
@@ -916,7 +917,7 @@ void ArgParse::Parse(int argc, char **argv)
 
  	if (parse.error())
  	{
- 		/// @todo ???
+ 		// Command line parsing error.  Possibly an unrecognized option, or not enough non-option params.
  		exit(STATUS_EX_USAGE);
     	return;
  	}
@@ -924,8 +925,6 @@ void ArgParse::Parse(int argc, char **argv)
 	if (options[OPT_HELP] || argc == 0)
 	{
 		int columns = Terminal::GetColumns();
-/// @delete FOR TESTING ONLY
-///columns = 80;
 		lmcppop::printUsage(std::cout, dynamic_usage.data(), columns);
 		exit(0);
 		return;
@@ -957,6 +956,12 @@ void ArgParse::Parse(int argc, char **argv)
 	for (int i = 1; i < parse.nonOptionsCount(); ++i)
 	{
     	m_paths.push_back(parse.nonOption(i));
+	}
+
+	if(options[OPT_TEST_LOG_ALL])
+	{
+		INFO::Enable(true);
+		DEBUG::Enable(true);
 	}
 
 	// Work out the interaction between ignore-case and smart-case.
@@ -1009,6 +1014,20 @@ void ArgParse::Parse(int argc, char **argv)
 			{
 				///argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
 			}
+		}
+	}
+
+	if(lmcppop::Option* opt = options[OPT_PERF_DIRJOBS])
+	{
+		if(atoi(opt->arg) < 1)
+		{
+			// Specified 0 or negative jobs.
+			std::cerr << "ucg: error: dirjobs must be >= 1\n";
+			exit(STATUS_EX_USAGE);
+		}
+		else
+		{
+			m_dirjobs = atoi(opt->arg);
 		}
 	}
 }
