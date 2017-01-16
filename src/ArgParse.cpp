@@ -211,11 +211,11 @@ static struct argp_option options[] = {
 		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
 		{0, 'R', 0, OPTION_ALIAS },
 		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
-		{"[no]follow", OPT_BRACKET_NO_STANDIN, 0, 0, "[Do not] follow symlinks (default: nofollow)."},
-		{"follow", OPT_FOLLOW, 0, OPTION_HIDDEN, ""},
-		{"nofollow", OPT_NOFOLLOW, 0, OPTION_HIDDEN, ""},
+//		{"[no]follow", OPT_BRACKET_NO_STANDIN, 0, 0, "[Do not] follow symlinks (default: nofollow)."},
+//		{"follow", OPT_FOLLOW, 0, OPTION_HIDDEN, ""},
+//		{"nofollow", OPT_NOFOLLOW, 0, OPTION_HIDDEN, ""},
 		{"known-types", 'k', 0, 0, "Only search in files of recognized types (default: on)."},
-		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
+///		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 		{0,0,0,0, "File type specification:"},
 		{"type-set", OPT_TYPE_SET, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
 		{"type-add", OPT_TYPE_ADD, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is appended to."},
@@ -223,8 +223,8 @@ static struct argp_option options[] = {
 ///		{0,0,0,0, "Performance tuning:"},
 ///		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
 ///		{"dirjobs",  OPT_PERF_DIRJOBS, "NUM_JOBS",      0,  "Number of directory traversal jobs (std::thread<>s) to use." },
-		{0,0,0,0, "Miscellaneous:" },
-		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc configuration files."},
+///		{0,0,0,0, "Miscellaneous:" },
+///		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc configuration files."},
 		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
 		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
 		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
@@ -699,41 +699,41 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	case 'n':
 		arguments->m_recurse = false;
 		break;
-	case OPT_FOLLOW:
-		arguments->m_follow_symlinks = true;
-		break;
-	case OPT_NOFOLLOW:
-		arguments->m_follow_symlinks = false;
-		break;
+//	case OPT_FOLLOW:
+//		arguments->m_follow_symlinks = true;
+//		break;
+//	case OPT_NOFOLLOW:
+//		arguments->m_follow_symlinks = false;
+//		break;
 	case 'k':
 		// No argument variable because currently we only support searching known types.
 		break;
-	case OPT_TYPE:
-		if(std::strncmp("no", arg, 2) == 0)
-		{
-			// The first two chars are "no", this is a "--type=noTYPE" option.
-			if(arguments->m_type_manager.notype(arg+2) == false)
-			{
-				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg+2);
-			}
-		}
-		else
-		{
-			// This is a "--type=TYPE" option.
-			if(arguments->m_type_manager.m_type(arg) == false)
-			{
-				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
-			}
-		}
-		break;
+//	case OPT_TYPE:
+//		if(std::strncmp("no", arg, 2) == 0)
+//		{
+//			// The first two chars are "no", this is a "--type=noTYPE" option.
+//			if(arguments->m_type_manager.notype(arg+2) == false)
+//			{
+//				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg+2);
+//			}
+//		}
+//		else
+//		{
+//			// This is a "--type=TYPE" option.
+//			if(arguments->m_type_manager.m_type(arg) == false)
+//			{
+//				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
+//			}
+//		}
+//		break;
 	case OPT_TYPE_SET:
 	case OPT_TYPE_ADD:
 	case OPT_TYPE_DEL:
 		// These options are all handled specially outside of the argp parser.
 		break;
-	case OPT_NOENV:
-		// The --noenv option is handled specially outside of the argp parser.
-		break;
+///	case OPT_NOENV:
+///		// The --noenv option is handled specially outside of the argp parser.
+///		break;
 ///	case OPT_HELP_TYPES:
 ///		// Consume the rest of the options/args.
 ///		state->next = state->argc;
