@@ -208,9 +208,9 @@ static struct argp_option options[] = {
 		// ag-style --ignore=GLOB
 		// In ag, this option applies to both files and directories.  For the present, ucg will only apply this to files.
 		{"ignore", OPT_EXCLUDE, "GLOB", OPTION_ALIAS },
-		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
-		{0, 'R', 0, OPTION_ALIAS },
-		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
+///		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
+///		{0, 'R', 0, OPTION_ALIAS },
+///		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
 //		{"[no]follow", OPT_BRACKET_NO_STANDIN, 0, 0, "[Do not] follow symlinks (default: nofollow)."},
 //		{"follow", OPT_FOLLOW, 0, OPTION_HIDDEN, ""},
 //		{"nofollow", OPT_NOFOLLOW, 0, OPTION_HIDDEN, ""},
@@ -692,13 +692,13 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		// grep-style --include/exclude=GLOB.
 		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
 		break;
-	case 'r':
-	case 'R':
-		arguments->m_recurse = true;
-		break;
-	case 'n':
-		arguments->m_recurse = false;
-		break;
+//	case 'r':
+//	case 'R':
+//		arguments->m_recurse = true;
+//		break;
+//	case 'n':
+//		arguments->m_recurse = false;
+//		break;
 //	case OPT_FOLLOW:
 //		arguments->m_follow_symlinks = true;
 //		break;
