@@ -16,8 +16,7 @@
  */
 
 /** @file ArgParse.cpp
- * This is the implementation of the ArgParse class.  Because of the use of GNU argp (a C library) for arg parsing,
- * there's a healthy mix of C in here as well as C++; a tribute to the interoperability of the two languages.
+ * This is the implementation of the ArgParse class.
  */
 
 #include <config.h>
@@ -221,9 +220,9 @@ static struct argp_option options[] = {
 		{"type-set", OPT_TYPE_SET, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
 		{"type-add", OPT_TYPE_ADD, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is appended to."},
 		{"type-del", OPT_TYPE_DEL, "TYPE", 0, "Remove any existing definition of type TYPE."},
-		{0,0,0,0, "Performance tuning:"},
-		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
-		{"dirjobs",  OPT_PERF_DIRJOBS, "NUM_JOBS",      0,  "Number of directory traversal jobs (std::thread<>s) to use." },
+///		{0,0,0,0, "Performance tuning:"},
+///		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
+///		{"dirjobs",  OPT_PERF_DIRJOBS, "NUM_JOBS",      0,  "Number of directory traversal jobs (std::thread<>s) to use." },
 		{0,0,0,0, "Miscellaneous:" },
 		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc configuration files."},
 		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
@@ -615,7 +614,7 @@ static std::vector<PreDescriptor> raw_options {
 		{OPT_TYPE_ADD, 0, "", "type-add", "TYPE:FILTER:FILTERARGS", Arg::NonEmpty, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is appended to."},
 		{OPT_TYPE_DEL, 0, "", "type-del", "TYPE", Arg::NonEmpty, "Remove any existing definition of type TYPE."},
 	{ "Performance tuning:" },
-		{ OPT_PERF_DIRJOBS, 0, "", "dirjobs", "NUM_JOBS", Arg::Numeric, "Number of directory traversal jobs (std::thread<>s) to use." },
+		{ OPT_PERF_DIRJOBS, 0, "", "dirjobs", "NUM_JOBS", Arg::IntegerGreater<0>, "Number of directory traversal jobs (std::thread<>s) to use." },
 		{ OPT_PERF_SCANJOBS, 0, "j", "jobs", "NUM_JOBS", Arg::IntegerGreater<0>, "Number of scanner jobs (std::thread<>s) to use."},
 	{ "Miscellaneous:" },
 		{ OPT_NOENV, 0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
@@ -1046,16 +1045,7 @@ void ArgParse::Parse(int argc, char **argv)
 
 	if(lmcppop::Option* opt = options[OPT_PERF_DIRJOBS])
 	{
-		if(atoi(opt->arg) < 1)
-		{
-			// Specified 0 or negative jobs.
-			std::cerr << "ucg: error: dirjobs must be >= 1\n";
-			exit(STATUS_EX_USAGE);
-		}
-		else
-		{
-			m_dirjobs = atoi(opt->arg);
-		}
+		m_dirjobs = std::stoi(opt->arg);
 	}
 	if(lmcppop::Option* opt = options[OPT_PERF_SCANJOBS])
 	{
