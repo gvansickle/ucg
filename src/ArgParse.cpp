@@ -1030,7 +1030,8 @@ void ArgParse::Parse(int argc, char **argv)
 			// The first two chars are "no", this is a "--type=noTYPE" option.
 			if(m_type_manager.notype(opt->arg+2) == false)
 			{
-				///argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg+2);
+				std::cerr << "ucg: Unknown type '" << opt->arg+2 << "'.\n";
+				exit(STATUS_EX_USAGE);
 			}
 		}
 		else
@@ -1038,7 +1039,8 @@ void ArgParse::Parse(int argc, char **argv)
 			// This is a "--type=TYPE" option.
 			if(m_type_manager.type(opt->arg) == false)
 			{
-				///argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
+				std::cerr << "ucg: Unknown type '" << opt->arg << "'.\n";
+				exit(STATUS_EX_USAGE);
 			}
 		}
 	}
