@@ -299,6 +299,33 @@ struct Arg: public lmcppop::Arg
 		if (msg) printError("Option '", option, "' requires a numeric argument\n");
 		return lmcppop::ARG_ILLEGAL;
 	}
+
+	template <long limit>
+	static lmcppop::ArgStatus IntegerGreater(const lmcppop::Option& option, bool msg)
+	{
+		if (option.arg != nullptr)
+		{
+			try
+			{
+				long val = std::stol(option.arg);
+				if(val > limit)
+				{
+					return lmcppop::ARG_OK;
+				}
+				else
+				{
+					throw std::runtime_error("");
+				}
+			}
+			catch(...) { } // Don't do anything in the catch, if we haven't returned above we error out below.
+		}
+
+		if (msg)
+		{
+			std::cerr << "Option '" << std::string(option.name, option.namelen) << "' requires an integer argument greater than " << limit << "\n";
+		}
+		return lmcppop::ARG_ILLEGAL;
+	}
 };
 
 enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1,
@@ -589,7 +616,7 @@ static std::vector<PreDescriptor> raw_options {
 		{OPT_TYPE_DEL, 0, "", "type-del", "TYPE", Arg::NonEmpty, "Remove any existing definition of type TYPE."},
 	{ "Performance tuning:" },
 		{ OPT_PERF_DIRJOBS, 0, "", "dirjobs", "NUM_JOBS", Arg::Numeric, "Number of directory traversal jobs (std::thread<>s) to use." },
-		{ OPT_PERF_SCANJOBS, 0, "j", "jobs", "NUM_JOBS", Arg::Numeric, "Number of scanner jobs (std::thread<>s) to use."},
+		{ OPT_PERF_SCANJOBS, 0, "j", "jobs", "NUM_JOBS", Arg::IntegerGreater<0>, "Number of scanner jobs (std::thread<>s) to use."},
 	{ "Miscellaneous:" },
 		{ OPT_NOENV, 0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
 	{ "Informational options:" },
@@ -713,17 +740,17 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 ///		state->next = state->argc;
 ///		arguments->PrintHelpTypes();
 ///		break;
-	case 'j':
-		if(atoi(arg) < 1)
-		{
-			// Specified 0 or negative jobs.
-			argp_failure(state, STATUS_EX_USAGE, 0, "jobs must be >= 1");
-		}
-		else
-		{
-			arguments->m_jobs = atoi(arg);
-		}
-		break;
+//	case 'j':
+//		if(atoi(arg) < 1)
+//		{
+//			// Specified 0 or negative jobs.
+//			argp_failure(state, STATUS_EX_USAGE, 0, "jobs must be >= 1");
+//		}
+//		else
+//		{
+//			arguments->m_jobs = atoi(arg);
+//		}
+//		break;
 ///	case OPT_PERF_DIRJOBS:
 ///		if(atoi(arg) < 1)
 ///		{
@@ -1029,6 +1056,10 @@ void ArgParse::Parse(int argc, char **argv)
 		{
 			m_dirjobs = atoi(opt->arg);
 		}
+	}
+	if(lmcppop::Option* opt = options[OPT_PERF_SCANJOBS])
+	{
+		m_jobs = std::stoi(opt->arg);
 	}
 }
 #endif
