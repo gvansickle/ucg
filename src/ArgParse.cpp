@@ -194,12 +194,12 @@ static struct argp_option options[] = {
 ///		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
 ///		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
 		{0,0,0,0, "File/directory inclusion/exclusion:"},
-		{"[no]ignore-dir", OPT_BRACKET_NO_STANDIN, "NAME", 0, "[Do not] exclude directories with NAME."},
-		{"[no]ignore-directory", OPT_BRACKET_NO_STANDIN, "NAME", OPTION_ALIAS },
-		{"ignore-dir",  OPT_IGNORE_DIR, "NAME", OPTION_HIDDEN,  ""},
-		{"ignore-directory", OPT_IGNORE_DIR, "NAME", OPTION_HIDDEN | OPTION_ALIAS },
-		{"noignore-dir",  OPT_NOIGNORE_DIR, "NAME", OPTION_HIDDEN,  ""},
-		{"noignore-directory", OPT_NOIGNORE_DIR, "NAME", OPTION_HIDDEN | OPTION_ALIAS },
+//		{"[no]ignore-dir", OPT_BRACKET_NO_STANDIN, "NAME", 0, "[Do not] exclude directories with NAME."},
+//		{"[no]ignore-directory", OPT_BRACKET_NO_STANDIN, "NAME", OPTION_ALIAS },
+//		{"ignore-dir",  OPT_IGNORE_DIR, "NAME", OPTION_HIDDEN,  ""},
+//		{"ignore-directory", OPT_IGNORE_DIR, "NAME", OPTION_HIDDEN | OPTION_ALIAS },
+//		{"noignore-dir",  OPT_NOIGNORE_DIR, "NAME", OPTION_HIDDEN,  ""},
+//		{"noignore-directory", OPT_NOIGNORE_DIR, "NAME", OPTION_HIDDEN | OPTION_ALIAS },
 		// ack-style --ignore-file=FILTER:FILTERARGS
 		{"ignore-file", OPT_IGNORE_FILE, "FILTER:FILTERARGS", 0, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored."},
 		// grep-style --include=glob and --exclude=glob
@@ -673,16 +673,16 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 ///	case OPT_NOCOLUMN:
 ///		arguments->m_column = false;
 ///		break;
-	case OPT_IGNORE_DIR:
-		arguments->m_excludes.insert(arg);
-		break;
-	case OPT_NOIGNORE_DIR:
-		/**
-		 * @todo Ack is fancier in its noignore handling.  If you noignore a directory under an ignored
-		 * directory, it gets put back into the set of paths that will be searched.  Feature for another day.
-		 */
-		arguments->m_excludes.erase(arg);
-		break;
+//	case OPT_IGNORE_DIR:
+//		arguments->m_excludes.insert(arg);
+//		break;
+//	case OPT_NOIGNORE_DIR:
+//		/**
+//		 * @todo Ack is fancier in its noignore handling.  If you noignore a directory under an ignored
+//		 * directory, it gets put back into the set of paths that will be searched.  Feature for another day.
+//		 */
+//		arguments->m_excludes.erase(arg);
+//		break;
 	case OPT_IGNORE_FILE:
 		// ack-style --ignore-file=FILTER:FILTERARGS option.
 		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
@@ -1022,6 +1022,22 @@ void ArgParse::Parse(int argc, char **argv)
 		m_recurse = (options[OPT_RECURSE_SUBDIRS].last()->type() == ENABLE);
 	}
 	m_follow_symlinks = (options[OPT_FOLLOW].last()->type() == ENABLE);
+
+	for(lmcppop::Option* opt = options[OPT_IGNORE_DIR]; opt; opt=opt->next())
+	{
+		if(opt->type() == ENABLE)
+		{
+			m_excludes.insert(opt->arg);
+		}
+		else
+		{
+			/**
+			 * @todo Ack is fancier in its noignore handling.  If you noignore a directory under an ignored
+			 * directory, it gets put back into the set of paths that will be searched.  Feature for another day.
+			 */
+			m_excludes.erase(opt->arg);
+		}
+	}
 
 	for(lmcppop::Option* opt = options[OPT_TYPE]; opt; opt=opt->next())
 	{
