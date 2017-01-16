@@ -225,9 +225,9 @@ static struct argp_option options[] = {
 ///		{"dirjobs",  OPT_PERF_DIRJOBS, "NUM_JOBS",      0,  "Number of directory traversal jobs (std::thread<>s) to use." },
 ///		{0,0,0,0, "Miscellaneous:" },
 ///		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc configuration files."},
-		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
-		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
-		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
+//		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
+//		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
+//		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
 		// Hidden options for debug, test, etc.
 		// DO NOT USE THESE.  They're going to change and go away without notice.
 		{"test-log-all", OPT_TEST_LOG_ALL, 0, OPTION_HIDDEN, "Enable all logging output."},
@@ -620,7 +620,7 @@ static std::vector<PreDescriptor> raw_options {
 		{ OPT_NOENV, 0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
 	{ "Informational options:" },
 		{ OPT_HELP,  0, "?", "help", Arg::None, "Give this help list" },
-		{ OPT_HELP_TYPES, 0, "", "help-types,list-file-types", Arg::None, "Print list of supported file types." },
+		{ OPT_HELP_TYPES, 0, "", "help-types,list-file-types", Arg::None, "Print list of supported file types." },  // --list-file-types for ag compatibility.
 		{ OPT_USAGE, 0, "", "usage", Arg::None, "Give a short usage message"},
 		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
 	{ "Hidden Options:", PreDescriptor::hidden_tag() },
