@@ -200,14 +200,14 @@ static struct argp_option options[] = {
 //		{"ignore-directory", OPT_IGNORE_DIR, "NAME", OPTION_HIDDEN | OPTION_ALIAS },
 //		{"noignore-dir",  OPT_NOIGNORE_DIR, "NAME", OPTION_HIDDEN,  ""},
 //		{"noignore-directory", OPT_NOIGNORE_DIR, "NAME", OPTION_HIDDEN | OPTION_ALIAS },
-		// ack-style --ignore-file=FILTER:FILTERARGS
-		{"ignore-file", OPT_IGNORE_FILE, "FILTER:FILTERARGS", 0, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored."},
-		// grep-style --include=glob and --exclude=glob
-		{"include", OPT_INCLUDE, "GLOB", 0, "Only files matching GLOB will be searched."},
-		{"exclude", OPT_EXCLUDE, "GLOB", 0, "Files matching GLOB will be ignored."},
-		// ag-style --ignore=GLOB
-		// In ag, this option applies to both files and directories.  For the present, ucg will only apply this to files.
-		{"ignore", OPT_EXCLUDE, "GLOB", OPTION_ALIAS },
+///		// ack-style --ignore-file=FILTER:FILTERARGS
+///		{"ignore-file", OPT_IGNORE_FILE, "FILTER:FILTERARGS", 0, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored."},
+///		// grep-style --include=glob and --exclude=glob
+///		{"include", OPT_INCLUDE, "GLOB", 0, "Only files matching GLOB will be searched."},
+///		{"exclude", OPT_EXCLUDE, "GLOB", 0, "Files matching GLOB will be ignored."},
+///		// ag-style --ignore=GLOB
+///		// In ag, this option applies to both files and directories.  For the present, ucg will only apply this to files.
+///		{"ignore", OPT_EXCLUDE, "GLOB", OPTION_ALIAS },
 ///		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
 ///		{0, 'R', 0, OPTION_ALIAS },
 ///		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
@@ -601,7 +601,8 @@ static std::vector<PreDescriptor> raw_options {
 		{ OPT_IGNORE_DIR, ENABLE, DISABLE, "", "[no]ignore-dir,[no]ignore-directory", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
 		// grep-style --include=glob and --exclude=glob
 		{ OPT_INCLUDE, 0, "", "include", "GLOB", Arg::NonEmpty, "Only files matching GLOB will be searched."},
-		{ OPT_EXCLUDE, 0, "", "exclude,ignore", "GLOB", Arg::NonEmpty, "Files matching GLOB will be ignored."},
+		{ OPT_EXCLUDE, 0, "", "exclude,ignore", "GLOB", Arg::NonEmpty, "Files matching GLOB will be ignored."},  	// ag-style --ignore=GLOB
+																													// In ag, this option applies to both files and directories.  For the present, ucg will only apply this to files.
 		// ack-style --ignore-file=FILTER:FILTERARGS
 		{ OPT_IGNORE_FILE, 0, "", "ignore-file", "FILTER:FILTERARGS", Arg::NonEmpty, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored." },
 		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
@@ -683,15 +684,15 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 //		 */
 //		arguments->m_excludes.erase(arg);
 //		break;
-	case OPT_IGNORE_FILE:
-		// ack-style --ignore-file=FILTER:FILTERARGS option.
-		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
-		break;
-	case OPT_INCLUDE:
-	case OPT_EXCLUDE:
-		// grep-style --include/exclude=GLOB.
-		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
-		break;
+//	case OPT_IGNORE_FILE:
+//		// ack-style --ignore-file=FILTER:FILTERARGS option.
+//		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
+//		break;
+//	case OPT_INCLUDE:
+//	case OPT_EXCLUDE:
+//		// grep-style --include/exclude=GLOB.
+//		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
+//		break;
 //	case 'r':
 //	case 'R':
 //		arguments->m_recurse = true;
