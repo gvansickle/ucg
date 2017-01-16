@@ -58,7 +58,7 @@ AT_DATA([test_file.cpp.expected],[test_file.cpp
 ])
 AT_CHECK([cat test_file.cpp.expected | $PROG_TOHEX > test_file.cpp.expected.hex], [0])
 
-AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something'], [0], [stdout], [stderr])
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolour --column 'do_something'], [0], [stdout], [stderr])
 AT_CHECK([cat stdout | $PROG_TOHEX > stdout_tty.txt.hex], [0])
 AT_CAPTURE_FILE([test_file.cpp.expected.hex])
 AT_CAPTURE_FILE([stdout_tty.txt.hex])

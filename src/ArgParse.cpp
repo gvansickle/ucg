@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2017 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -144,6 +144,7 @@ enum OPT
 	OPT_FOLLOW,
 	OPT_NOFOLLOW,
 	OPT_RECURSE_SUBDIRS,
+	OPT_ONLY_KNOWN_TYPES,
 	OPT_TYPE,
 	OPT_NOENV,
 	OPT_TYPE_SET,
@@ -153,6 +154,7 @@ enum OPT
 	OPT_PERF_SCANJOBS,
 	OPT_HELP,
 	OPT_HELP_TYPES,
+	OPT_USAGE,
 	OPT_VERSION,
 	OPT_COLUMN,
 	OPT_NOCOLUMN,
@@ -176,22 +178,22 @@ int argp_err_exit_status = STATUS_EX_USAGE;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 static struct argp_option options[] = {
-		{0,0,0,0, "Searching:" },
-		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
-		{"[no]smart-case", OPT_BRACKET_NO_STANDIN, 0, 0, "Ignore case if PATTERN is all lowercase (default: enabled)."},
-		{"smart-case", OPT_SMART_CASE, 0, OPTION_HIDDEN, ""},
-		{"nosmart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN, ""},
-		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS },
-		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
-		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
-		{0,0,0,0, "Search Output:"},
-		{"column", OPT_COLUMN, 0, 0, "Print column of first match after line number."},
-		{"nocolumn", OPT_NOCOLUMN, 0, 0, "Don't print column of first match (default)."},
-		{0,0,0,0, "File presentation:" },
-		{"color", OPT_COLOR, 0, 0, "Render the output with ANSI color codes."},
-		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
-		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
-		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
+///		{0,0,0,0, "Searching:" },
+///		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
+///		{"[no]smart-case", OPT_BRACKET_NO_STANDIN, 0, 0, "Ignore case if PATTERN is all lowercase (default: enabled)."},
+///		{"smart-case", OPT_SMART_CASE, 0, OPTION_HIDDEN, ""},
+///		{"nosmart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN, ""},
+///		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS },
+///		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
+///		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
+///		{0,0,0,0, "Search Output:"},
+///		{"column", OPT_COLUMN, 0, 0, "Print column of first match after line number."},
+///		{"nocolumn", OPT_NOCOLUMN, 0, 0, "Don't print column of first match (default)."},
+///		{0,0,0,0, "File presentation:" },
+///		{"color", OPT_COLOR, 0, 0, "Render the output with ANSI color codes."},
+///		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
+///		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
+///		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
 		{0,0,0,0, "File/directory inclusion/exclusion:"},
 		{"[no]ignore-dir", OPT_BRACKET_NO_STANDIN, "NAME", 0, "[Do not] exclude directories with NAME."},
 		{"[no]ignore-directory", OPT_BRACKET_NO_STANDIN, "NAME", OPTION_ALIAS },
@@ -245,63 +247,62 @@ struct argp ArgParse::argp = { options, ArgParse::parse_opt, args_doc, doc };
 
 struct Arg: public lmcppop::Arg
 {
-  static void printError(const char* msg1, const lmcppop::Option& opt, const char* msg2)
-  {
-    fprintf(stderr, "%s", msg1);
-    fwrite(opt.name, opt.namelen, 1, stderr);
-    fprintf(stderr, "%s", msg2);
-  }
+	static void printError(const char* msg1, const lmcppop::Option& opt, const char* msg2)
+	{
+		fprintf(stderr, "%s", msg1);
+		fwrite(opt.name, opt.namelen, 1, stderr);
+		fprintf(stderr, "%s", msg2);
+	}
 
-  static lmcppop::ArgStatus Unknown(const lmcppop::Option& option, bool msg)
-  {
-    if (msg) printError("Unknown option '", option, "'\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
+	static lmcppop::ArgStatus Unknown(const lmcppop::Option& option, bool msg)
+	{
+		if (msg) printError("ucg: unrecognized option '", option, "'\nTry `ucg --help\' or `ucg --usage\' for more information.\n");
+		return lmcppop::ARG_ILLEGAL;
+	}
 
-  static lmcppop::ArgStatus UnknownArgHook(const lmcppop::Option& option, bool msg)
-  {
-	  if(option.name != nullptr)
-	  {
-		  /// @todo std::cout << "Dynamic option: '" << option.name << "'\n";
-		  return lmcppop::ARG_NONE;
-	  }
-	  if(msg) printError("Unknown option '", option, "'\n");
-	    return lmcppop::ARG_ILLEGAL;
-  }
+	static lmcppop::ArgStatus UnknownArgHook(const lmcppop::Option& option, bool msg)
+	{
+		if(option.name != nullptr)
+		{
+			/// @todo std::cout << "Dynamic option: '" << option.name << "'\n";
+			return lmcppop::ARG_NONE;
+		}
+		if(msg) printError("Unknown option '", option, "'\n");
+		return lmcppop::ARG_ILLEGAL;
+	}
 
-  static lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
-  {
-    if (option.arg != 0)
-      return lmcppop::ARG_OK;
+	static lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
+	{
+		if (option.arg != 0)
+			return lmcppop::ARG_OK;
 
-    if (msg) printError("Option '", option, "' requires an argument\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
+		if (msg) printError("Option '", option, "' requires an argument\n");
+		return lmcppop::ARG_ILLEGAL;
+	}
 
-  static lmcppop::ArgStatus NonEmpty(const lmcppop::Option& option, bool msg)
-  {
-    if (option.arg != 0 && option.arg[0] != 0)
-      return lmcppop::ARG_OK;
+	static lmcppop::ArgStatus NonEmpty(const lmcppop::Option& option, bool msg)
+	{
+		if (option.arg != 0 && option.arg[0] != 0)
+		  return lmcppop::ARG_OK;
 
-    if (msg) printError("Option '", option, "' requires a non-empty argument\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
+		if (msg) printError("Option '", option, "' requires a non-empty argument\n");
+		return lmcppop::ARG_ILLEGAL;
+	}
 
-  static lmcppop::ArgStatus Numeric(const lmcppop::Option& option, bool msg)
-  {
-    char* endptr = 0;
-    if (option.arg != 0 && strtol(option.arg, &endptr, 10)){};
-    if (endptr != option.arg && *endptr == 0)
-      return lmcppop::ARG_OK;
+	static lmcppop::ArgStatus Numeric(const lmcppop::Option& option, bool msg)
+	{
+		char* endptr = 0;
+		if (option.arg != 0 && strtol(option.arg, &endptr, 10)){};
+		if (endptr != option.arg && *endptr == 0)
+		  return lmcppop::ARG_OK;
 
-    if (msg) printError("Option '", option, "' requires a numeric argument\n");
-    return lmcppop::ARG_ILLEGAL;
-  }
+		if (msg) printError("Option '", option, "' requires a numeric argument\n");
+		return lmcppop::ARG_ILLEGAL;
+	}
 };
 
 enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1,
 					IGNORE = 1, SMART_CASE = 2, NO_SMART_CASE = 3 };
-//enum optionIndex {UNKNOWN, SECTION, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY};
 
 static constexpr char m_opt_start_str[] {"  \t"};
 static constexpr char m_help_space_str[] {"      \t"};
@@ -309,23 +310,81 @@ static std::vector<std::shared_ptr<std::string>> delete_us;
 
 struct PreDescriptor
 {
-	const unsigned index;
-	const int type;
-	const char* const shortopts;
-	const char* const longopts;
+	const unsigned m_index;
+	const int m_type;
+	const int m_notype {0};
+	const char* const m_shortopts;
+	const char* const m_longopts;
 	const char *const m_argname;
-	const lmcppop::CheckArg check_arg;
-	const std::string help;
+	const lmcppop::CheckArg m_check_arg;
+	const std::string m_help;
+	const bool m_is_hidden { false };
+	const bool m_is_bracket_no { false };
 
-	PreDescriptor(unsigned i, int t, const char *const so, const char *const lo,
+	struct section_header_tag {};
+	struct normal_option_tag {};
+	struct arbtext_tag {};
+	struct hidden_tag {};
+
+
+	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts,
 			const lmcppop::CheckArg c, const char *h) noexcept
-			: index(i), type(t), shortopts(so), longopts(lo), m_argname(""), check_arg(c), help(h)
+			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(""), m_check_arg(c), m_help(h)
 	{
 	};
 
-	PreDescriptor(unsigned i, int t, const char *const so, const char *const lo, const char *const argname,
-			const lmcppop::CheckArg c, const char *h) noexcept
-			: index(i), type(t), shortopts(so), longopts(lo), m_argname(argname), check_arg(c), help(h)
+	/**
+	 * The generic option constructor.
+	 *
+	 * @param index
+	 * @param type
+	 * @param shortopts
+	 * @param longopts
+	 * @param argname
+	 * @param check_arg
+	 * @param help
+	 */
+	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
+			const lmcppop::CheckArg check_arg, const char *help) noexcept
+			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname), m_check_arg(check_arg), m_help(help)
+	{
+	};
+
+	/**
+	 * The "bracketed-no" constructor.  This is for options which look like this: "--[no]option=ARG".
+	 *
+	 * @param index
+	 * @param type
+	 * @param shortopts
+	 * @param longopts
+	 * @param argname
+	 * @param check_arg
+	 * @param help
+	 * @param
+	 */
+	PreDescriptor(unsigned index, OptionType yestype, OptionType notype, const char *const shortopts, const char *const longopts, const char *const argname,
+			const lmcppop::CheckArg check_arg, const char *help) noexcept
+			: m_index(index), m_type(yestype), m_notype(notype), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname),
+			  m_check_arg(check_arg), m_help(help), m_is_bracket_no(true)
+	{
+	};
+
+	/**
+	 * The generic hidden option constructor.
+	 *
+	 * @param index
+	 * @param type
+	 * @param shortopts
+	 * @param longopts
+	 * @param argname
+	 * @param check_arg
+	 * @param help
+	 * @param
+	 */
+	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
+			const lmcppop::CheckArg check_arg, const char *help, hidden_tag) noexcept
+			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname), m_check_arg(check_arg), m_help(help),
+			  m_is_hidden(true)
 	{
 	};
 
@@ -334,11 +393,27 @@ struct PreDescriptor
 	 *
 	 * @param section_header_name  Text of the section header.
 	 */
-	PreDescriptor(const char *section_header_name) noexcept
-		: index(255), type(0), shortopts(""), longopts(""), m_argname(""), check_arg(Arg::None),
-		  help(std::string("\n ") + section_header_name)
+	PreDescriptor(const char *section_header_name, section_header_tag = section_header_tag()) noexcept
+		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
+		  m_help(std::string("\n ") + section_header_name)
 	{
 	};
+
+	PreDescriptor(const char *arbitrary_text, arbtext_tag) noexcept
+		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
+		  m_help(arbitrary_text)
+	{
+	};
+
+	PreDescriptor(const char *arbitrary_text [[maybe_unused]], hidden_tag) noexcept
+			: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
+			  m_help(), m_is_hidden(true)
+	{
+	};
+
+	bool IsHidden() const noexcept { return m_is_hidden; };
+	bool IsBracketNo() const noexcept { return m_is_bracket_no; };
+	bool HasLongAliases() const noexcept { return std::strchr(m_longopts, ',') != nullptr; };
 
 	/**
 	 * Conversion operator for converting between PreDescriptors and "The Lean Mean C++ Option Parser"'s option Descriptors.
@@ -346,84 +421,167 @@ struct PreDescriptor
 	operator lmcppop::Descriptor() const noexcept
 	{
 		const char *fmt_help = "";
-		auto short_len = std::strlen(shortopts);
-		auto long_len = std::strlen(longopts);
-		if((short_len!=0 || long_len!=0) && (!help.empty()))
+
+		if(IsHidden())
 		{
-			// Paste together the options and the help text.
-			std::string shortops_s {m_opt_start_str};
-			if(short_len)
+			fmt_help = 0;
+		}
+		else
+		{
+			auto short_len = std::strlen(m_shortopts);
+			auto long_len = std::strlen(m_longopts);
+
+			if((short_len!=0 || long_len!=0) && (!m_help.empty()))
 			{
-				shortops_s += "-";
-				shortops_s += join(split(shortopts, ','), ", -");
-			}
-			if(short_len && long_len)
-			{
-				shortops_s += ", ";
-			}
-			if(long_len)
-			{
-				shortops_s += "--";
-				shortops_s += longopts;
-				if(std::strlen(m_argname) > 0)
+				// This is a non-hidden option.
+				// Paste together the options and the help text.
+				std::string opts_help_str {m_opt_start_str};
+				if(short_len)
 				{
-					shortops_s += "=";
-					shortops_s += m_argname;
+					opts_help_str += "-";
+					opts_help_str += join(split(m_shortopts, ','), ", -");
 				}
+				if(short_len && long_len)
+				{
+					opts_help_str += ", ";
+				}
+				if(long_len)
+				{
+					auto longopt_list = split(m_longopts, ',');
+					// Check if we need to append an arg expression.
+					if(std::strlen(m_argname) > 0)
+					{
+						for(auto& opt : longopt_list)
+						{
+							opt += "=";
+							opt += m_argname;
+						}
+					}
+					opts_help_str += "--";
+					opts_help_str += join(longopt_list, ", --");
+				}
+				std::shared_ptr<std::string> semi_fmt_help = std::make_shared<std::string>(
+						opts_help_str + m_help_space_str + m_help);
+				fmt_help = semi_fmt_help->c_str();
+
+				/// @todo We should control this lifetime in a lighter-weight way.
+				delete_us.push_back(semi_fmt_help);
 			}
-			std::shared_ptr<std::string> semi_fmt_help = std::make_shared<std::string>(
-					shortops_s + m_help_space_str + help);
-			fmt_help = semi_fmt_help->c_str();
-
-			/// @todo We should control this lifetime in a lighter-weight way.
-			delete_us.push_back(semi_fmt_help);
-		}
-		else if(!help.empty())
-		{
-			// It's a section header.
-			auto semi_fmt_help = std::make_shared<std::string>(help);
-			fmt_help = semi_fmt_help->c_str();
-			delete_us.push_back(semi_fmt_help);
-		}
-		else if(help.empty())
-		{
-			auto semi_fmt_help = std::make_shared<std::string>("");
-			fmt_help = semi_fmt_help->c_str();
-			delete_us.push_back(semi_fmt_help);
+			else if(!m_help.empty())
+			{
+				// It's a section header.
+				auto semi_fmt_help = std::make_shared<std::string>(m_help);
+				fmt_help = semi_fmt_help->c_str();
+				delete_us.push_back(semi_fmt_help);
+			}
+			else if(m_help.empty())
+			{
+				auto semi_fmt_help = std::make_shared<std::string>("");
+				fmt_help = semi_fmt_help->c_str();
+				delete_us.push_back(semi_fmt_help);
+			}
 		}
 
-		return lmcppop::Descriptor {index, type, shortopts, longopts, check_arg, fmt_help};
+		// We may have to change the long option string we pass to LMC++OP.  It only handles
+		// a single long option, while our layer here adds the capabilities of option aliases and --[no]opt style options.
+		std::shared_ptr<std::string> desc_longopt;
+
+		if(HasLongAliases())
+		{
+			// Only register the first long option here.
+			desc_longopt = std::make_shared<std::string>(m_longopts, std::strchr(m_longopts, ',')-m_longopts);
+			if(IsBracketNo())
+			{
+				// Strip out the '[no]', this will be the 'yes' option.
+				desc_longopt->erase(0,4);
+			}
+			delete_us.push_back(desc_longopt);
+		}
+
+		size_t bracket_no_offset {0};
+		if(IsBracketNo())
+		{
+			// Make this the "yes" case.  The hidden ones will be --noopt and --no-opt.
+			bracket_no_offset = 4;
+		}
+
+		return lmcppop::Descriptor {m_index, m_type, m_shortopts, desc_longopt ? desc_longopt->c_str() : (m_longopts + bracket_no_offset),
+				m_check_arg, fmt_help};
+	}
+
+	template <typename T>
+	void PushAliasDescriptors(T* usage_container)
+	{
+		auto long_aliases = split(m_longopts, ',');
+
+		for(auto it = long_aliases.begin()+1; it != long_aliases.end(); ++it)
+		{
+			auto long_alias = std::make_shared<std::string>(*it);
+			if(IsBracketNo())
+			{
+				// For bracket-no aliases, we have to add the --opt, --no-opt, and --noopt hidden entries.
+				long_alias->erase(0, 4);
+				auto no_opt_str = std::make_shared<std::string>("no-" + *long_alias);
+				auto noopt_str = std::make_shared<std::string>("no" + *long_alias);
+				delete_us.push_back(no_opt_str);
+				delete_us.push_back(noopt_str);
+//std::cout << "Adding " << *no_opt_str << "\n";
+//std::cout << "Adding " << *noopt_str << "\n";
+				usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", no_opt_str->c_str(), m_check_arg, 0});
+				usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
+			}
+			delete_us.push_back(long_alias);
+			usage_container->push_back(lmcppop::Descriptor{m_index, m_type, "", long_alias->c_str(), m_check_arg, 0});
+		}
+	}
+
+	template <typename T>
+	void PushBracketNoDescriptors(T* usage_container)
+	{
+		auto long_alias = split(m_longopts, ',')[0];
+		long_alias.erase(0, 4);
+//std::cout << "Long alias: " << long_alias << "\n";
+		auto no_opt_str = std::make_shared<std::string>("no-" + long_alias);
+		auto noopt_str = std::make_shared<std::string>("no" + long_alias);
+		delete_us.push_back(no_opt_str);
+//std::cout << "Adding " << *no_opt_str << "\n";
+//std::cout << "Adding " << *noopt_str << "\n";
+		delete_us.push_back(noopt_str);
+		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", no_opt_str->c_str(), m_check_arg, 0});
+		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
 	}
 
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
-std::vector<PreDescriptor> raw_options = {
-		//{ (std::string("Usage: ucg ") + args_doc + "\n\n").c_str() },
+static std::vector<PreDescriptor> raw_options {
+		/// @todo Put in an explicit OPT_UNKNOWN entry to pick up all unrecognized options.
+	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
+	{ (std::string("Usage: ucg [OPTION...] ") + args_doc).c_str(), PreDescriptor::arbtext_tag() },
+	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
+	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
 	{ "Searching:" },
-		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN."},
-		{ OPT_HANDLE_CASE, SMART_CASE, "", "smart-case", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)."},
-		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "nosmart-case", Arg::None, ""},
-		{ OPT_HANDLE_CASE, NO_SMART_CASE, "", "no-smart-case", Arg::None, "" /*Hidden alias*/},
+		{ OPT_HANDLE_CASE, SMART_CASE, NO_SMART_CASE, "", "[no]smart-case", "", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)." },
+		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN." },
 		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
 		{ OPT_LITERAL, 0, "Q", "literal", Arg::None, "Treat all characters in PATTERN as literal."},
 	{ "Search Output:" },
 		{ OPT_COLUMN, ENABLE, "", "column", Arg::None, "Print column of first match after line number."},
 		{ OPT_COLUMN, DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
 	{ "File presentation:" },
-		{ OPT_COLOR, ENABLE, "", "color", Arg::None, "Render the output with ANSI color codes."},
-		{ OPT_COLOR, ENABLE, "", "colour", Arg::None, "" },
-		{ OPT_COLOR, DISABLE, "", "nocolor", Arg::None, "Render the output without ANSI color codes."},
-		{ OPT_COLOR, DISABLE, "", "nocolour", Arg::None, "" },
+		{ OPT_COLOR, ENABLE, "", "color,colour", Arg::None, "Render the output with ANSI color codes."},
+		{ OPT_COLOR, DISABLE, "", "nocolor,nocolour", Arg::None, "Render the output without ANSI color codes."},
 	{ "File/directory inclusion/exclusion:" },
-		{ OPT_IGNORE_DIR, OPT_BRACKET_NO_STANDIN, "", "[no]ignore-dir", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
+		{ OPT_IGNORE_DIR, ENABLE, DISABLE, "", "[no]ignore-dir,[no]ignore-directory", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
 		// grep-style --include=glob and --exclude=glob
 		{ OPT_INCLUDE, 0, "", "include", "GLOB", Arg::NonEmpty, "Only files matching GLOB will be searched."},
-		{ OPT_EXCLUDE, 0, "", "exclude", "GLOB", Arg::NonEmpty, "Files matching GLOB will be ignored."},
+		{ OPT_EXCLUDE, 0, "", "exclude,ignore", "GLOB", Arg::NonEmpty, "Files matching GLOB will be ignored."},
+		// ack-style --ignore-file=FILTER:FILTERARGS
+		{ OPT_IGNORE_FILE, 0, "", "ignore-file", "FILTER:FILTERARGS", Arg::NonEmpty, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored." },
 		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
 		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
-		{ OPT_FOLLOW, ENABLE, "", "follow", Arg::None, "XXXX" },
-		{ OPT_FOLLOW, DISABLE, "", "nofollow", Arg::None, "XXXX" },
+		{ OPT_FOLLOW, ENABLE, DISABLE, "", "[no]follow", "", Arg::None, "[Do not] follow symlinks (default: nofollow)." },
+		{ OPT_ONLY_KNOWN_TYPES, ENABLE, "k", "known-types", Arg::None, "Only search in files of recognized types (default: on)."},
 		{ OPT_TYPE, ENABLE, "", "type", "[no]TYPE", Arg::NonEmpty, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
 	{ "File type specification:" },
 		{OPT_TYPE_SET, 0, "", "type-set", "TYPE:FILTER:FILTERARGS", Arg::NonEmpty, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
@@ -432,51 +590,28 @@ std::vector<PreDescriptor> raw_options = {
 	{ "Performance tuning:" },
 		{ OPT_PERF_DIRJOBS, 0, "", "dirjobs", "NUM_JOBS", Arg::Numeric, "Number of directory traversal jobs (std::thread<>s) to use." },
 		{ OPT_PERF_SCANJOBS, 0, "j", "jobs", "NUM_JOBS", Arg::Numeric, "Number of scanner jobs (std::thread<>s) to use."},
-#if 0
-		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
-		                                          "  \tTakes an argument but is happy without one." },
-		{ REQUIRED,0,"r","required",Arg::Required," \t-r <arg>, --required=<arg>  \tMust have an argument." },
-		{ NUMERIC, 0,"n","numeric", Arg::Numeric, " \t-n <num>, --numeric=<num>  \tRequires a number as argument." },
-#endif
 	{ "Miscellaneous:" },
-		{ OPT_NOENV,   0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
+		{ OPT_NOENV, 0, "", "noenv", Arg::None, "Ignore .ucgrc configuration files."},
 	{ "Informational options:" },
-		{ OPT_HELP,    0, "?", "help", Arg::None, "Give this help list" },
+		{ OPT_HELP,  0, "?", "help", Arg::None, "Give this help list" },
+		{ OPT_HELP_TYPES, 0, "", "help-types,list-file-types", Arg::None, "Print list of supported file types." },
+		{ OPT_USAGE, 0, "", "usage", Arg::None, "Give a short usage message"},
 		{ OPT_VERSION, 0, "V", "version", Arg::None, "Print program version"},
-		{ "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." },
-		{ OPT_UNKNOWN, 0, "", "", Arg::None,
-		 "\nExamples:\n"
-		 "  example_arg --unknown -o -n10 \n"
-		}
+	{ "Hidden Options:", PreDescriptor::hidden_tag() },
+	// Hidden options for debug, test, etc.
+	// DO NOT USE THESE.  They're going to change and go away without notice.
+		{ OPT_TEST_LOG_ALL, 0, "", "test-log-all", "", Arg::None, "Enable all logging output.", PreDescriptor::hidden_tag() },
+		{ OPT_TEST_NOENV_USER, 0, "", "test-noenv-user", "", Arg::None, "Don't search for or use $HOME/.ucgrc.", PreDescriptor::hidden_tag() },
+		{ OPT_TEST_USE_MMAP, 0, "", "test-use-mmap", "", Arg::None, "Use mmap() to access files being searched.", PreDescriptor::hidden_tag() },
+	// Epilogue Text.
+		{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
+		// Again, this folderol is to keep the doc[] string in the same format as used by argp.
+		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) + "\n").c_str(), PreDescriptor::arbtext_tag() },
+		{ (std::string("Report bugs to ") + argp_program_bug_address + ".").c_str(), PreDescriptor::arbtext_tag() }
 };
 
 static std::vector<lmcppop::Descriptor> dynamic_usage;
 
-#if 0
-const lmcppop::Descriptor usage[] = {
-		{ OPT_UNKNOWN, 0, "", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
-		                                          "Options:" },
-		{ OPT_SECTION, 0, "", "", Arg::Unknown, "Searching:" },
-		{ OPT_SMART_CASE, ENABLE, "", "smart-case", Arg::None, "  \t--[no]smart-case  \tIgnore case if PATTERN is all lowercase (default: enabled)."},
-		{ OPT_SMART_CASE, DISABLE, "", "nosmart-case", Arg::None, 0},
-#if 0
-		{ OPTIONAL,0,"o","optional",Arg::Optional," \t-o[<arg>], --optional[=<arg>]"
-		                                          "  \tTakes an argument but is happy without one." },
-		{ REQUIRED,0,"r","required",Arg::Required," \t-r <arg>, --required=<arg>  \tMust have an argument." },
-		{ NUMERIC, 0,"n","numeric", Arg::Numeric, " \t-n <num>, --numeric=<num>  \tRequires a number as argument." },
-		{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty," \t-1 <arg>, --nonempty=<arg>"
-		                                          "  \tCan NOT take the empty string as argument." },
-#endif
-		{ OPT_SECTION, 0, "", "", Arg::Unknown, "Informational options:"},
-		{ OPT_HELP,    0,"", "help",    Arg::None,    " \t--help  \tPrint usage and exit." },
-		{ OPT_UNKNOWN, 0,"", "",        Arg::None,
-		 "\nExamples:\n"
-		 "  example_arg --unknown -o -n10 \n"
-		 "  example_arg -o -n10 file1 file2 \n"
-		},
-		{ 0, 0, 0, 0, 0, 0 }
-};
-#endif
 #endif
 
 #if !NEW_OPTS
@@ -486,32 +621,32 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 
 	switch (key)
 	{
-	case 'i':
-		arguments->m_ignore_case = true;
-		// Shut off smart-case.
-		arguments->m_smart_case = false;
-		break;
-	case OPT_SMART_CASE:
-		arguments->m_smart_case = true;
-		// Shut off ignore-case.
-		arguments->m_ignore_case = false;
-		break;
-	case OPT_NO_SMART_CASE:
-		arguments->m_smart_case = false;
-		// Don't change ignore-case, regardless of whether it's on or off.
-		break;
-	case 'w':
-		arguments->m_word_regexp = true;
-		break;
-	case 'Q':
-		arguments->m_pattern_is_literal = true;
-		break;
-	case OPT_COLUMN:
-		arguments->m_column = true;
-		break;
-	case OPT_NOCOLUMN:
-		arguments->m_column = false;
-		break;
+///	case 'i':
+///		arguments->m_ignore_case = true;
+///		// Shut off smart-case.
+///		arguments->m_smart_case = false;
+///		break;
+///	case OPT_SMART_CASE:
+///		arguments->m_smart_case = true;
+///		// Shut off ignore-case.
+///		arguments->m_ignore_case = false;
+///		break;
+///	case OPT_NO_SMART_CASE:
+///		arguments->m_smart_case = false;
+///		// Don't change ignore-case, regardless of whether it's on or off.
+///		break;
+///	case 'w':
+///		arguments->m_word_regexp = true;
+///		break;
+///	case 'Q':
+///		arguments->m_pattern_is_literal = true;
+///		break;
+///	case OPT_COLUMN:
+///		arguments->m_column = true;
+///		break;
+///	case OPT_NOCOLUMN:
+///		arguments->m_column = false;
+///		break;
 	case OPT_IGNORE_DIR:
 		arguments->m_excludes.insert(arg);
 		break;
@@ -559,7 +694,7 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 		else
 		{
 			// This is a "--type=TYPE" option.
-			if(arguments->m_type_manager.type(arg) == false)
+			if(arguments->m_type_manager.m_type(arg) == false)
 			{
 				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
 			}
@@ -573,11 +708,11 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 	case OPT_NOENV:
 		// The --noenv option is handled specially outside of the argp parser.
 		break;
-	case OPT_HELP_TYPES:
-		// Consume the rest of the options/args.
-		state->next = state->argc;
-		arguments->PrintHelpTypes();
-		break;
+///	case OPT_HELP_TYPES:
+///		// Consume the rest of the options/args.
+///		state->next = state->argc;
+///		arguments->PrintHelpTypes();
+///		break;
 	case 'j':
 		if(atoi(arg) < 1)
 		{
@@ -589,29 +724,29 @@ error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
 			arguments->m_jobs = atoi(arg);
 		}
 		break;
-	case OPT_PERF_DIRJOBS:
-		if(atoi(arg) < 1)
-		{
-			// Specified 0 or negative jobs.
-			argp_failure(state, STATUS_EX_USAGE, 0, "jobs must be >= 1");
-		}
-		else
-		{
-			arguments->m_dirjobs = atoi(arg);
-		}
-		break;
-	case OPT_COLOR:
-		arguments->m_color = true;
-		arguments->m_nocolor = false;
-		break;
-	case OPT_NOCOLOR:
-		arguments->m_color = false;
-		arguments->m_nocolor = true;
-		break;
-	case OPT_TEST_LOG_ALL:
-		INFO::Enable(true);
-		DEBUG::Enable(true);
-		break;
+///	case OPT_PERF_DIRJOBS:
+///		if(atoi(arg) < 1)
+///		{
+///			// Specified 0 or negative jobs.
+///			argp_failure(state, STATUS_EX_USAGE, 0, "jobs must be >= 1");
+///		}
+///		else
+///		{
+///			arguments->m_dirjobs = atoi(arg);
+///		}
+///		break;
+///	case OPT_COLOR:
+///		arguments->m_color = true;
+///		arguments->m_nocolor = false;
+///		break;
+///	case OPT_NOCOLOR:
+///		arguments->m_color = false;
+///		arguments->m_nocolor = true;
+///		break;
+///	case OPT_TEST_LOG_ALL:
+///		INFO::Enable(true);
+///		DEBUG::Enable(true);
+///		break;
 	case OPT_TEST_NOENV_USER:
 		// The --test-noenv-user option is handled specially outside of the argp parser.
 		break;
@@ -653,17 +788,39 @@ ArgParse::ArgParse(TypeManager &type_manager)
 	: m_type_manager(type_manager)
 {
 #if NEW_OPTS
-	/*
-	std::for_each(std::begin(raw_options), std::end(raw_options),
-			[](decltype(std::begin(raw_options)) p){ dynamic_usage.push_back(lmcppop::Descriptor(p)); });
-	*/
 
-	for(size_t i=0; i < raw_options.size(); ++i)
+	for(auto& ro : raw_options)
 	{
-		lmcppop::Descriptor d = raw_options[i];
+		/// @note We may want to only push hidden options below, since they break the help formatting into sections.
+		/// If we do, we need to make sure the OPT_UNKNOWN handler is the first one.
+		lmcppop::Descriptor d = ro;
 		dynamic_usage.push_back(d);
 	}
-
+	for(auto& ro : raw_options)
+	{
+		if(ro.HasLongAliases())
+		{
+			ro.PushAliasDescriptors<std::vector<lmcppop::Descriptor>>(&dynamic_usage);
+		}
+	}
+	for(auto& ro : raw_options)
+	{
+		if(ro.IsBracketNo())
+		{
+			// Bracket-No option, add the hidden --noopt and --no-opt options.
+			ro.PushBracketNoDescriptors(&dynamic_usage);
+		}
+	}
+/** see above
+	for(auto& ro : raw_options)
+	{
+		if(ro.IsHidden())
+		{
+			lmcppop::Descriptor d = ro;
+			dynamic_usage.push_back(d);
+		}
+	}
+*/
 	dynamic_usage.push_back(PreDescriptor::NullEntry());
 #endif
 }
@@ -760,23 +917,27 @@ void ArgParse::Parse(int argc, char **argv)
 
  	if (parse.error())
  	{
- 		/// @todo ???
+ 		// Command line parsing error.  Possibly an unrecognized option, or not enough non-option params.
+ 		exit(STATUS_EX_USAGE);
     	return;
  	}
 
 	if (options[OPT_HELP] || argc == 0)
 	{
 		int columns = Terminal::GetColumns();
-/// @delete FOR TESTING ONLY
-columns = 80;
-		lmcppop::printUsage(fwrite, stdout, dynamic_usage.data(), columns);
-		std::cout << "Report bugs to "  << argp_program_bug_address << ".\n";
+		lmcppop::printUsage(std::cout, dynamic_usage.data(), columns);
 		exit(0);
 		return;
 	}
 	else if(options[OPT_VERSION])
 	{
 		PrintVersionText(stdout);
+		exit(0);
+		return;
+	}
+	else if(options[OPT_HELP_TYPES])
+	{
+		PrintHelpTypes();
 		exit(0);
 		return;
 	}
@@ -795,6 +956,12 @@ columns = 80;
 	for (int i = 1; i < parse.nonOptionsCount(); ++i)
 	{
     	m_paths.push_back(parse.nonOption(i));
+	}
+
+	if(options[OPT_TEST_LOG_ALL])
+	{
+		INFO::Enable(true);
+		DEBUG::Enable(true);
 	}
 
 	// Work out the interaction between ignore-case and smart-case.
@@ -847,6 +1014,20 @@ columns = 80;
 			{
 				///argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
 			}
+		}
+	}
+
+	if(lmcppop::Option* opt = options[OPT_PERF_DIRJOBS])
+	{
+		if(atoi(opt->arg) < 1)
+		{
+			// Specified 0 or negative jobs.
+			std::cerr << "ucg: error: dirjobs must be >= 1\n";
+			exit(STATUS_EX_USAGE);
+		}
+		else
+		{
+			m_dirjobs = atoi(opt->arg);
 		}
 	}
 }
