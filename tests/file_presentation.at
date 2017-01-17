@@ -11,7 +11,7 @@
 # UniversalCodeGrep is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -58,7 +58,7 @@ AT_DATA([test_file.cpp.expected],[test_file.cpp
 ])
 AT_CHECK([cat test_file.cpp.expected | $PROG_TOHEX > test_file.cpp.expected.hex], [0])
 
-AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor --column 'do_something'], [0], [stdout], [stderr])
+AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolour --column 'do_something'], [0], [stdout], [stderr])
 AT_CHECK([cat stdout | $PROG_TOHEX > stdout_tty.txt.hex], [0])
 AT_CAPTURE_FILE([test_file.cpp.expected.hex])
 AT_CAPTURE_FILE([stdout_tty.txt.hex])
@@ -115,36 +115,46 @@ test_file.cpp:3:abcd
 
 AT_CLEANUP
 
-#
-# Color-vs-terminal tests
-#
-AT_SETUP([Color-vs-terminal tests])
+###
+### Color-vs-terminal tests
+###
 
+# Helper macro for generating the files.
+m4_define([UCG_CREATE_TEST_FILES], [
 AT_DATA([test_file.cpp],[abcd
 efgh
 abcd
 ])
-
 AT_DATA([expout],[@<:@32;1m@<:@Ktest_file.cpp@<:@0m@<:@K
 @<:@33;1m@<:@K1@<:@0m@<:@K:a@<:@30;43;1m@<:@Kbc@<:@0m@<:@Kd
 @<:@33;1m@<:@K3@<:@0m@<:@K:a@<:@30;43;1m@<:@Kbc@<:@0m@<:@Kd
 ])
-
 AT_CHECK([cat expout | $PROG_TOHEX > expout.hex], [0])
 AT_CAPTURE_FILE([expout.hex])
+])
 
 # Check for color output to a TTY.
+AT_SETUP([Color-vs-terminal: with --color])
+# Create the test and expected files.
+UCG_CREATE_TEST_FILES
 AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --color 'bc' | $PROG_TOHEX > stdout.hex], [0], [stdout], [stderr])
 AT_CAPTURE_FILE([stdout.hex])
 AT_CHECK([diff expout.hex stdout.hex], [0], [stdout], [stderr])
+AT_CLEANUP
 
 # Check for nocolor to a TTY.
+AT_SETUP([Color-vs-terminal: with --nocolor])
+# Create the test and expected files.
+UCG_CREATE_TEST_FILES
 AT_CHECK([ASX_SCRIPT ucg --noenv --cpp --nocolor 'bc'], [0], [test_file.cpp
 1:abcd
 3:abcd
 ])
+AT_CLEANUP
 
 # Check for default (should be color).
+AT_SETUP([Color-vs-terminal: default])
+# Create the test and expected files.
+UCG_CREATE_TEST_FILES
 AT_CHECK([ASX_SCRIPT ucg --noenv --cpp 'bc'], [0], [expout])
-
 AT_CLEANUP
