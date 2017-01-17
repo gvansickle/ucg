@@ -71,8 +71,8 @@ script:
  - #pkg-config --list-all | grep argp || true
  - #find /usr -iname '*argp*' || true
  - pkg-config --list-all | grep pcre
- - pkg-config libpcre2 --print-variables
- - pkg-config libpcre2 --print-provides
+ - #pkg-config libpcre2 --print-variables
+ - #pkg-config libpcre2 --print-provides
  - # Actual build starts here.
  - autoreconf -i
  - mkdir build
