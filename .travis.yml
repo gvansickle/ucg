@@ -47,7 +47,7 @@ before_install:
  # Travis CI has a broken libtool/sed issue in the OSX image(s) <see e.g. https://github.com/libgd/libgd/issues/266#issuecomment-234697932>.
  # This is the recommended work-around until they fix it.
  - if [ $TRAVIS_OS_NAME == osx ]; then brew uninstall libtool && brew install libtool; fi
- - if [ $TRAVIS_OS_NAME == osx ]; then brew install pcre pcre2 argp-standalone the_silver_searcher; fi
+ - if [ $TRAVIS_OS_NAME == osx ]; then brew install pcre pcre2 the_silver_searcher; fi
  # Install gnu grep to test against. @todo Make things work so this can be installed only after a successful build.
  - if [ $TRAVIS_OS_NAME == osx ]; then brew tap homebrew/dupes; brew install grep; fi
  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update -qq; fi
@@ -68,11 +68,11 @@ before_script:
 script:
  - #if [ $TRAVIS_OS_NAME == osx ]; then find /usr -type d ! -perm -g+r,u+r,o+r -prune -o -type f -iname 'libpcre*.dylib' -exec ls -lF \{\} \; && echo -n "brew --prefix pcre=" && brew --prefix pcre && brew --help; fi
  - #if [ $TRAVIS_OS_NAME == osx ]; then ls -l -R $(brew --prefix pcre); fi
- - pkg-config --list-all | grep argp || true
- - find /usr -iname '*argp*' || true
+ - #pkg-config --list-all | grep argp || true
+ - #find /usr -iname '*argp*' || true
  - pkg-config --list-all | grep pcre
- - pkg-config libpcre --print-variables
- - pkg-config libpcre --print-provides
+ - pkg-config libpcre2 --print-variables
+ - pkg-config libpcre2 --print-provides
  - # Actual build starts here.
  - autoreconf -i
  - mkdir build
