@@ -25,8 +25,6 @@
 
 #include "../build_info.h"
 
-#include <iterator> /// @todo DELETE
-
 #include <libext/cpuidex.hpp>
 
 #include <locale>
@@ -41,15 +39,11 @@
 
 #define NEW_OPTS 1
 
-#if !NEW_OPTS
-#include <argp.h>
-#else
 // To avoid clash with "struct option" in argp.h.
 namespace lmcppop_int {
 #include <optionparser.h>
 }
 namespace lmcppop = lmcppop_int::option;
-#endif
 
 #if HAVE_LIBPCRE == 1
 #include <pcre.h>
@@ -81,18 +75,9 @@ namespace lmcppop = lmcppop_int::option;
 static constexpr size_t f_default_dirjobs = 4;
 
 
-#if !NEW_OPTS
-// Our --version output isn't just a static string, so we'll register with argp for a version callback.
-static void PrintVersionTextRedirector(FILE *stream, struct argp_state *state)
-{
-	static_cast<ArgParse*>(state->input)->PrintVersionText(stream);
-}
-void (*argp_program_version_hook)(FILE *stream, struct argp_state *state) = PrintVersionTextRedirector;
-#endif
-
 // Not static, argp.h externs this.
 const char *argp_program_version = PACKAGE_STRING "\n"
-	"Copyright (C) 2015-2016 Gary R. Van Sickle.\n"
+	"Copyright (C) 2015-2017 Gary R. Van Sickle.\n"
 	"\n"
 	"This program is free software; you can redistribute it and/or modify\n"
 	"it under the terms of version 3 of the GNU General Public License as\n"
@@ -170,80 +155,7 @@ enum OPT
 // Not static, argp.h externs this.
 int argp_err_exit_status = STATUS_EX_USAGE;
 
-#if !NEW_OPTS
-/// Argp Option Definitions
-// Disable (at least on gcc) the large number of spurious warnings about missing initializers
-// the declaration of options[] and ArgParse::argp normally cause.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-static struct argp_option options[] = {
-///		{0,0,0,0, "Searching:" },
-///		{"ignore-case", 'i', 0,	0,	"Ignore case distinctions in PATTERN."},
-///		{"[no]smart-case", OPT_BRACKET_NO_STANDIN, 0, 0, "Ignore case if PATTERN is all lowercase (default: enabled)."},
-///		{"smart-case", OPT_SMART_CASE, 0, OPTION_HIDDEN, ""},
-///		{"nosmart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN, ""},
-///		{"no-smart-case", OPT_NO_SMART_CASE, 0, OPTION_HIDDEN | OPTION_ALIAS },
-///		{"word-regexp", 'w', 0, 0, "PATTERN must match a complete word."},
-///		{"literal", 'Q', 0, 0, "Treat all characters in PATTERN as literal."},
-///		{0,0,0,0, "Search Output:"},
-///		{"column", OPT_COLUMN, 0, 0, "Print column of first match after line number."},
-///		{"nocolumn", OPT_NOCOLUMN, 0, 0, "Don't print column of first match (default)."},
-///		{0,0,0,0, "File presentation:" },
-///		{"color", OPT_COLOR, 0, 0, "Render the output with ANSI color codes."},
-///		{"colour", OPT_COLOR, 0, OPTION_ALIAS },
-///		{"nocolor", OPT_NOCOLOR, 0, 0, "Render the output without ANSI color codes."},
-///		{"nocolour", OPT_NOCOLOR, 0, OPTION_ALIAS },
-		{0,0,0,0, "File/directory inclusion/exclusion:"},
-//		{"[no]ignore-dir", OPT_BRACKET_NO_STANDIN, "NAME", 0, "[Do not] exclude directories with NAME."},
-//		{"[no]ignore-directory", OPT_BRACKET_NO_STANDIN, "NAME", OPTION_ALIAS },
-//		{"ignore-dir",  OPT_IGNORE_DIR, "NAME", OPTION_HIDDEN,  ""},
-//		{"ignore-directory", OPT_IGNORE_DIR, "NAME", OPTION_HIDDEN | OPTION_ALIAS },
-//		{"noignore-dir",  OPT_NOIGNORE_DIR, "NAME", OPTION_HIDDEN,  ""},
-//		{"noignore-directory", OPT_NOIGNORE_DIR, "NAME", OPTION_HIDDEN | OPTION_ALIAS },
-///		// ack-style --ignore-file=FILTER:FILTERARGS
-///		{"ignore-file", OPT_IGNORE_FILE, "FILTER:FILTERARGS", 0, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored."},
-///		// grep-style --include=glob and --exclude=glob
-///		{"include", OPT_INCLUDE, "GLOB", 0, "Only files matching GLOB will be searched."},
-///		{"exclude", OPT_EXCLUDE, "GLOB", 0, "Files matching GLOB will be ignored."},
-///		// ag-style --ignore=GLOB
-///		// In ag, this option applies to both files and directories.  For the present, ucg will only apply this to files.
-///		{"ignore", OPT_EXCLUDE, "GLOB", OPTION_ALIAS },
-///		{"recurse", 'r', 0, 0, "Recurse into subdirectories (default: on)." },
-///		{0, 'R', 0, OPTION_ALIAS },
-///		{"no-recurse", 'n', 0, 0, "Do not recurse into subdirectories."},
-//		{"[no]follow", OPT_BRACKET_NO_STANDIN, 0, 0, "[Do not] follow symlinks (default: nofollow)."},
-//		{"follow", OPT_FOLLOW, 0, OPTION_HIDDEN, ""},
-//		{"nofollow", OPT_NOFOLLOW, 0, OPTION_HIDDEN, ""},
-		{"known-types", 'k', 0, 0, "Only search in files of recognized types (default: on)."},
-///		{"type", OPT_TYPE, "[no]TYPE", 0, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
-		{0,0,0,0, "File type specification:"},
-		{"type-set", OPT_TYPE_SET, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced."},
-		{"type-add", OPT_TYPE_ADD, "TYPE:FILTER:FILTERARGS", 0, "Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is appended to."},
-		{"type-del", OPT_TYPE_DEL, "TYPE", 0, "Remove any existing definition of type TYPE."},
-///		{0,0,0,0, "Performance tuning:"},
-///		{"jobs",  'j', "NUM_JOBS",      0,  "Number of scanner jobs (std::thread<>s) to use." },
-///		{"dirjobs",  OPT_PERF_DIRJOBS, "NUM_JOBS",      0,  "Number of directory traversal jobs (std::thread<>s) to use." },
-///		{0,0,0,0, "Miscellaneous:" },
-///		{"noenv", OPT_NOENV, 0, 0, "Ignore .ucgrc configuration files."},
-//		{0,0,0,0, "Informational options:", -1}, // -1 is the same group the default --help and --version are in.
-//		{"help-types", OPT_HELP_TYPES, 0, 0, "Print list of supported file types."},
-//		{"list-file-types", 0, 0, OPTION_ALIAS }, // For ag compatibility.
-		// Hidden options for debug, test, etc.
-		// DO NOT USE THESE.  They're going to change and go away without notice.
-		{"test-log-all", OPT_TEST_LOG_ALL, 0, OPTION_HIDDEN, "Enable all logging output."},
-		{"test-noenv-user", OPT_TEST_NOENV_USER, 0, OPTION_HIDDEN, "Don't search for or use $HOME/.ucgrc."},
-		{"test-use-mmap", OPT_TEST_USE_MMAP, 0, OPTION_HIDDEN, "Use mmap() to access files being searched."},
-		{ 0 }
-	};
-
-/// The argp struct for argp.
-struct argp ArgParse::argp = { options, ArgParse::parse_opt, args_doc, doc };
-
-#pragma GCC diagnostic pop // Re-enable -Wmissing-field-initializers
-#endif
-
-#if NEW_OPTS
-
+/// Arg validity checkers.
 struct Arg: public lmcppop::Arg
 {
 	static void printError(const char* msg1, const lmcppop::Option& opt, const char* msg2)
@@ -316,7 +228,7 @@ struct Arg: public lmcppop::Arg
 					throw std::runtime_error("");
 				}
 			}
-			catch(...) { } // Don't do anything in the catch, if we haven't returned above we error out below.
+			catch(...) { } // Don't do anything in the catch.  If we haven't returned above, we error out below.
 		}
 
 		if (msg)
@@ -580,6 +492,7 @@ struct PreDescriptor
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
+/// Command line options.
 static std::vector<PreDescriptor> raw_options {
 		/// @todo Put in an explicit OPT_UNKNOWN entry to pick up all unrecognized options.
 	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
@@ -637,185 +550,13 @@ static std::vector<PreDescriptor> raw_options {
 		{ (std::string("Report bugs to ") + argp_program_bug_address + ".").c_str(), PreDescriptor::arbtext_tag() }
 };
 
+/// Option descriptions for the "The Lean Mean C++ Option Parser" library.
 static std::vector<lmcppop::Descriptor> dynamic_usage;
 
-#endif
-
-#if !NEW_OPTS
-error_t ArgParse::parse_opt (int key, char *arg, struct argp_state *state)
-{
-	class ArgParse *arguments = static_cast<ArgParse*>(state->input);
-
-	switch (key)
-	{
-///	case 'i':
-///		arguments->m_ignore_case = true;
-///		// Shut off smart-case.
-///		arguments->m_smart_case = false;
-///		break;
-///	case OPT_SMART_CASE:
-///		arguments->m_smart_case = true;
-///		// Shut off ignore-case.
-///		arguments->m_ignore_case = false;
-///		break;
-///	case OPT_NO_SMART_CASE:
-///		arguments->m_smart_case = false;
-///		// Don't change ignore-case, regardless of whether it's on or off.
-///		break;
-///	case 'w':
-///		arguments->m_word_regexp = true;
-///		break;
-///	case 'Q':
-///		arguments->m_pattern_is_literal = true;
-///		break;
-///	case OPT_COLUMN:
-///		arguments->m_column = true;
-///		break;
-///	case OPT_NOCOLUMN:
-///		arguments->m_column = false;
-///		break;
-//	case OPT_IGNORE_DIR:
-//		arguments->m_excludes.insert(arg);
-//		break;
-//	case OPT_NOIGNORE_DIR:
-//		/**
-//		 * @todo Ack is fancier in its noignore handling.  If you noignore a directory under an ignored
-//		 * directory, it gets put back into the set of paths that will be searched.  Feature for another day.
-//		 */
-//		arguments->m_excludes.erase(arg);
-//		break;
-//	case OPT_IGNORE_FILE:
-//		// ack-style --ignore-file=FILTER:FILTERARGS option.
-//		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
-//		break;
-//	case OPT_INCLUDE:
-//	case OPT_EXCLUDE:
-//		// grep-style --include/exclude=GLOB.
-//		// This is handled specially outside of the argp parser, since it interacts with the OPT_TYPE_SET/ADD/DEL mechanism.
-//		break;
-//	case 'r':
-//	case 'R':
-//		arguments->m_recurse = true;
-//		break;
-//	case 'n':
-//		arguments->m_recurse = false;
-//		break;
-//	case OPT_FOLLOW:
-//		arguments->m_follow_symlinks = true;
-//		break;
-//	case OPT_NOFOLLOW:
-//		arguments->m_follow_symlinks = false;
-//		break;
-	case 'k':
-		// No argument variable because currently we only support searching known types.
-		break;
-//	case OPT_TYPE:
-//		if(std::strncmp("no", arg, 2) == 0)
-//		{
-//			// The first two chars are "no", this is a "--type=noTYPE" option.
-//			if(arguments->m_type_manager.notype(arg+2) == false)
-//			{
-//				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg+2);
-//			}
-//		}
-//		else
-//		{
-//			// This is a "--type=TYPE" option.
-//			if(arguments->m_type_manager.m_type(arg) == false)
-//			{
-//				argp_failure(state, STATUS_EX_USAGE, 0, "Unknown type \'%s\'.", arg);
-//			}
-//		}
-//		break;
-	case OPT_TYPE_SET:
-	case OPT_TYPE_ADD:
-	case OPT_TYPE_DEL:
-		// These options are all handled specially outside of the argp parser.
-		break;
-///	case OPT_NOENV:
-///		// The --noenv option is handled specially outside of the argp parser.
-///		break;
-///	case OPT_HELP_TYPES:
-///		// Consume the rest of the options/args.
-///		state->next = state->argc;
-///		arguments->PrintHelpTypes();
-///		break;
-//	case 'j':
-//		if(atoi(arg) < 1)
-//		{
-//			// Specified 0 or negative jobs.
-//			argp_failure(state, STATUS_EX_USAGE, 0, "jobs must be >= 1");
-//		}
-//		else
-//		{
-//			arguments->m_jobs = atoi(arg);
-//		}
-//		break;
-///	case OPT_PERF_DIRJOBS:
-///		if(atoi(arg) < 1)
-///		{
-///			// Specified 0 or negative jobs.
-///			argp_failure(state, STATUS_EX_USAGE, 0, "jobs must be >= 1");
-///		}
-///		else
-///		{
-///			arguments->m_dirjobs = atoi(arg);
-///		}
-///		break;
-///	case OPT_COLOR:
-///		arguments->m_color = true;
-///		arguments->m_nocolor = false;
-///		break;
-///	case OPT_NOCOLOR:
-///		arguments->m_color = false;
-///		arguments->m_nocolor = true;
-///		break;
-///	case OPT_TEST_LOG_ALL:
-///		INFO::Enable(true);
-///		DEBUG::Enable(true);
-///		break;
-	case OPT_TEST_NOENV_USER:
-		// The --test-noenv-user option is handled specially outside of the argp parser.
-		break;
-	case OPT_TEST_USE_MMAP:
-		arguments->m_use_mmap = true;
-		break;
-	case ARGP_KEY_ARG:
-		if(state->arg_num == 0)
-		{
-			// First arg is the pattern.
-			arguments->m_pattern = arg;
-		}
-		else
-		{
-			// Remainder are optional file paths.
-			arguments->m_paths.push_back(arg);
-		}
-		break;
-	case ARGP_KEY_END:
-		if(state->arg_num < 1)
-		{
-			// Not enough args.
-			argp_usage(state);
-		}
-		break;
-	case OPT_BRACKET_NO_STANDIN:
-		// "Bracketed-No" long option stand-ins (i.e. "--[no]whatever") should never actually
-		// be given on the command line.
-		argp_error(state, "unrecognized option \'%s\'", state->argv[state->next-1]);
-		break;
-	default:
-		return ARGP_ERR_UNKNOWN;
-	}
-	return 0;
-}
-#endif
 
 ArgParse::ArgParse(TypeManager &type_manager)
 	: m_type_manager(type_manager)
 {
-#if NEW_OPTS
-
 	for(auto& ro : raw_options)
 	{
 		/// @note We may want to only push hidden options below, since they break the help formatting into sections.
@@ -849,7 +590,6 @@ ArgParse::ArgParse(TypeManager &type_manager)
 	}
 */
 	dynamic_usage.push_back(PreDescriptor::NullEntry());
-#endif
 }
 
 ArgParse::~ArgParse()
@@ -924,11 +664,8 @@ void ArgParse::Parse(int argc, char **argv)
 	// mechanism.
 	HandleTYPELogic(&combined_argv);
 
-#if !NEW_OPTS
-	// Parse the combined list of arguments.
-	argp_parse(&argp, combined_argv.size(), combined_argv.data(), 0, 0, this);
-#else
-{
+	/// Now parse the args with "The Lean Mean C++ Option Parser".
+
 	lmcppop::Stats stats(dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1);
 
 	lmcppop::Option* options = nullptr, *buffer = nullptr;
@@ -977,19 +714,24 @@ void ArgParse::Parse(int argc, char **argv)
 		exit(STATUS_EX_USAGE);
 	}
 
+	// Grab the pattern.
 	if(parse.nonOptionsCount() > 0)
 	m_pattern = parse.nonOption(0);
 
+	// Grab any file/dir paths specified on command line.
 	for (int i = 1; i < parse.nonOptionsCount(); ++i)
 	{
     	m_paths.push_back(parse.nonOption(i));
 	}
 
+	// Handle logging verbosity.
 	if(options[OPT_TEST_LOG_ALL])
 	{
 		INFO::Enable(true);
 		DEBUG::Enable(true);
 	}
+	// Handle --test-use-mmap.
+	m_use_mmap = (options[OPT_TEST_USE_MMAP].last()->type() == ENABLE);
 
 	// Work out the interaction between ignore-case and smart-case.
 	for(lmcppop::Option* opt = options[OPT_HANDLE_CASE]; opt; opt = opt->next())
@@ -1040,6 +782,9 @@ void ArgParse::Parse(int argc, char **argv)
 		}
 	}
 
+	// No-op currently, default is -k.
+	// m_only_known_types = (options[OPT_ONLY_KNOWN_TYPES] == ENABLE);
+
 	for(lmcppop::Option* opt = options[OPT_TYPE]; opt; opt=opt->next())
 	{
 		if(std::strncmp("no", opt->arg, 2) == 0)
@@ -1070,8 +815,6 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		m_jobs = std::stoi(opt->arg);
 	}
-}
-#endif
 
 	//// Now set up some defaults which we can only determine after all arg parsing is complete.
 
