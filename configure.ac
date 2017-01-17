@@ -562,9 +562,6 @@ AXUCG_CHECK_FUNC([#include <string>], [std::to_string(1);], [std::to_string])
 # This issue appears on at least Travis-CI's OSX build servers (all versions) as of 2016-12-17.
 AXUCG_CHECK_FUNC([#include <memory>], [std::make_unique<int>(1);], [std::make_unique])
 
-# We need the argp library.
-#AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
-
 AC_CHECK_FUNCS([sched_setaffinity])
 
 AC_CHECK_FUNCS([get_current_dir_name])
