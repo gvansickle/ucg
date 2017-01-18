@@ -161,7 +161,7 @@ void FileScanner::Run(int thread_index)
 			{
 				ml.SetFilename(next_file->GetPath());
 				// Force move semantics here.
-				m_output_queue.wait_push(std::move(ml));
+				m_output_queue.push_back(std::move(ml));
 				ml.clear();
 			}
 		}
@@ -246,7 +246,43 @@ bool FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
 	return is_lit;
 }
 
-int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept
+uint8_t FileScanner::GetLiteralPrefixLen(const std::string &regex) noexcept
+{
+	// Bail if there are any alternates anywhere in the pattern.  This avoids having to
+	// deal with situations like '(cat|cab|car|cot)', which is a likely an overall loss anyway.
+	auto alt_pos = regex.find_first_of("|");
+	if(alt_pos != std::string::npos)
+	{
+		return 1;
+	}
+
+	// Otherwise, keep going until we find something non-literal.
+	auto first_metachar_pos = regex.find_first_of("\\^$.[]()?*+{}");
+	if(first_metachar_pos == std::string::npos)
+	{
+		// The whole regex was literal, we shouldn't have gotten here.
+		LOG(INFO) << "No non-literal chars in regex.";
+		return 1;
+	}
+
+	if(first_metachar_pos > 1)
+	{
+		// There is at least one possible additional literal char.
+		// "Possible" because the non-literal following it could "de-literalize" it; e.g.,
+		// 'abc*' has a literal prefix of only 'ab', not 'abc'.  We adjust for such situations here.
+		/// @note '{' here because it could be e.g. 'abc{0,1}'.  We could get fancier about this case.
+		if(std::string("?*{").find(regex[first_metachar_pos]) != std::string::npos)
+		{
+			// It was one of the optional modifiers.  Remove the last char.
+			--first_metachar_pos;
+		}
+	}
+
+	return std::min(first_metachar_pos, static_cast<decltype(first_metachar_pos)>(255));
+}
+
+
+int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept
 {
 	int rc = 0;
 
@@ -314,6 +350,7 @@ FileScanner::LiteralMatch_type FileScanner::resolve_LiteralMatch(FileScanner * o
 bool FileScanner::ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept
 {
 	uint16_t out_index = 0;
+
 	for(uint16_t i=0; i<256; ++i)
 	{
 		if((pcre2_bitmap[i/8] & (0x01 << (i%8))) == 0)
@@ -328,23 +365,74 @@ bool FileScanner::ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept
 			out_index++;
 		}
 	}
-	m_end_index = out_index;
+	m_end_fpcu_table = out_index;
 	return true;
+}
+
+void FileScanner::ConstructRangePairTable() noexcept
+{
+	// Vars for pair finding.
+	uint16_t out_pair_index = 0;
+	uint8_t first_range_char = 0, last_range_char = 0;
+
+	if(m_end_fpcu_table == 0)
+	{
+		// No code unit table, can't be a ranges table.
+		LOG(DEBUG) << "No first-possible code unit table, skipping creation of range table.";
+		m_end_ranges_table = 0;
+		return;
+	}
+
+	first_range_char = m_compiled_cu_bitmap[0];
+	last_range_char = first_range_char;
+
+	for(uint16_t i=1; i<m_end_fpcu_table; ++i)
+	{
+		// We're looking for the end of this range.
+		if(m_compiled_cu_bitmap[i] == last_range_char + 1)
+		{
+			// We're still in the range.
+			++last_range_char;
+		}
+		else
+		{
+			// Range has ended.
+			m_compiled_range_bitmap[out_pair_index] = first_range_char;
+			++out_pair_index;
+			m_compiled_range_bitmap[out_pair_index] = last_range_char;
+			++out_pair_index;
+
+			LOG(DEBUG) << "Found range pair: [" << first_range_char << ", " << last_range_char << "]";
+
+			// Set up for the next range.
+			first_range_char = m_compiled_cu_bitmap[i];
+			last_range_char = first_range_char;
+		}
+	}
+
+	// Terminate the last pair.
+	m_compiled_range_bitmap[out_pair_index] = first_range_char;
+	++out_pair_index;
+	m_compiled_range_bitmap[out_pair_index] = last_range_char;
+	++out_pair_index;
+	LOG(DEBUG) << "Found range pair: [" << first_range_char << ", " << last_range_char << "]";
+
+	m_end_ranges_table = out_pair_index;
 }
 
 
 const char * FileScanner::FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) const noexcept
 {
 	const char *first_possible_cu = nullptr;
-	if(m_end_index > 1)
+	if(m_end_fpcu_table > 1)
 	{
 #if 0
-		first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_end_index);
+		first_possible_cu = std::find_first_of(cbegin, cbegin+len, m_compiled_cu_bitmap, m_compiled_cu_bitmap+m_end_fpcu_table);
 #else
 		first_possible_cu = find_first_of_sse4_2_popcnt(cbegin, len);
 #endif
 	}
-	else if(m_end_index == 1)
+	else if(m_end_fpcu_table == 1)
 	{
 #if 0
 		first_possible_cu = std::find(cbegin, cbegin+len, m_compiled_cu_bitmap[0]);
