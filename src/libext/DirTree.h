@@ -163,7 +163,8 @@ private:
 	 * @param dse
 	 * @param de
 	 */
-	void ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent *de, DirTraversalStats &stats);
+	void ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent *de, DirTraversalStats &stats,
+			std::deque<std::shared_ptr<FileID>> *local_file_queue);
 
 };
 

@@ -1,10 +1,20 @@
 # NEWS file for the UniversalCodeGrep project.
 
+## [UNRELEASED] - 2017
+
+### New Features
+
+### Changed
+- Removed dependency on GNU argp.  Now using [The Lean Mean C++ Option Parser](http://optionparser.sourceforge.net/), included in `ucg` distro, for option parsing.
+
+### Fixed
+
+
 ## [0.3.3] - 2016-12-30
 
 UniversalCodeGrep (ucg) 0.3.3 is a minor bugfix release.
 
-## Fixed
+### Fixed
 - Resolved issue with SSE4.2 literal string matching not working correctly.
 - Resolved legitimate Coverity issue in atomic compare/exchange template.
 
