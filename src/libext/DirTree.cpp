@@ -343,7 +343,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 				}
 			}
 
-			m_dir_queue.wait_push(std::move(dir_atfd));
+			m_dir_queue.push_back(std::move(dir_atfd));
 		}
 		else if(is_symlink)
 		{
