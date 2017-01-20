@@ -325,7 +325,7 @@ const char * MULTIVERSION(FileScanner::find_first_in_ranges)(const char * __rest
 
 		for(j=0; j < (m_end_ranges_table & vec_size_mask); j+=vec_size_bytes)
 		{
-			// Load our range strings, which are 16-byte aligned.
+			// Load one of our range strings, which are 16-byte aligned.
 			__m128i xmm1_ranges = _mm_load_si128((__m128i*)(m_compiled_range_bitmap+j));
 			// Do the search for values in the specified ranges.
 			int len_a = ((len-i)>vec_size_bytes) ? vec_size_bytes : (len-i);
@@ -394,6 +394,15 @@ int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, si
 	return rc;
 }
 
+#if KEEP_AS_EXAMPLE
+template <ISA_x86_64 OuterISA>
+auto FileScanner::FindFirstPossibleCodeUnit(const char * __restrict__ cbegin, size_t len) const noexcept
+		-> std::enable_if_t<ISAIsSubsetOf(OuterISA, ISA_x86_64::SSE4_2), const char *>
+{
+
+}
 #endif
+
+#endif // __POPCNT__
 
 #endif
