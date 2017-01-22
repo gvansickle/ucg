@@ -68,8 +68,8 @@ public:
 	 * "that's what std::enable_if<> is for!"...
 	 * ...and after I awakened, I realized that it was not that easy.  Here's some things which you can't do:
 	 *
-	 * - Overload a constructor with the same signature.  Obvious, of course, but it complicates other potential options.
-	 * - Use std::enable_if to enable/disable the return type to cause substitution failure.  Because of course, constructors
+	 * - Overload a constructor with one with the same signature.  Obvious, of course, but it complicates other potential options.
+	 * - Use std::enable_if to enable/disable the return type to cause substitution failure.  Because, of course, constructors
 	 *   have no return type.
 	 * - Use the class's template parameter directly to do any sort of SFINAE to eliminate member functions [@todo explain/ref]
 	 * - Overload based solely on a template parameter's default value.
@@ -189,6 +189,8 @@ public:
 	 */
 	inline size_type length() const noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
+		return countnonzeros(m_storage);
+#if 0
 		auto tmp = m_storage;
 
 		// Make sure the bytes of the tmp var are in big-endian order.
@@ -197,6 +199,7 @@ public:
 		auto ptr = reinterpret_cast<const char *>(&tmp);
 
 		return strnlen(ptr, this->max_size());
+#endif
 	};
 
 	constexpr inline size_type size() const noexcept ATTR_CONST ATTR_ARTIFICIAL

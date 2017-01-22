@@ -273,7 +273,7 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 # Google Test
 AC_MSG_CHECKING([for googletest library])
-AM_CONDITIONAL([HAVE_GOOGLETEST], [test -d ${top_srcdir}/third_party/googletest])
+AM_CONDITIONAL([HAVE_GOOGLETEST], [test -f $srcdir/third_party/googletest-release-1.8.0.tar.gz])
 AM_COND_IF([HAVE_GOOGLETEST], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
 
 # Add Valgrind support.
@@ -561,9 +561,6 @@ AXUCG_CHECK_FUNC([#include <string>], [std::to_string(1);], [std::to_string])
 # for certain versions of Clang's libc++; i.e., it won't be defined even though a std::make_unique() exists and works.
 # This issue appears on at least Travis-CI's OSX build servers (all versions) as of 2016-12-17.
 AXUCG_CHECK_FUNC([#include <memory>], [std::make_unique<int>(1);], [std::make_unique])
-
-# We need the argp library.
-AC_SEARCH_LIBS([argp_parse], [argp], [], [AC_MSG_ERROR([cannot find the GNU Argp library or equivalent.])])
 
 AC_CHECK_FUNCS([sched_setaffinity])
 

@@ -84,14 +84,14 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		{
 			// Explicitly not filtering files specified on command line.
 			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
-			m_out_queue.wait_push(file_or_dir);
+			m_out_queue.push_back(file_or_dir);
 			break;
 		}
 		case FT_DIR:
 		{
 			// Explicitly not filtering nor obeying no-recurse for dirs specified on command line.
 			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
-			m_dir_queue.wait_push(file_or_dir);
+			m_dir_queue.push_back(file_or_dir);
 			break;
 		}
 		case FT_SYMLINK:
@@ -153,7 +153,7 @@ void DirTree::ReaddirLoop(int dirjob_num)
 	// Set the name of this thread, for logging and debug purposes.
 	set_thread_name("READDIR_" + std::to_string(dirjob_num));
 
-	while(m_dir_queue.wait_pull(std::move(dse)) != queue_op_status::closed)
+	while(m_dir_queue.pull_front(std::move(dse)) != queue_op_status::closed)
 	{
 		LOG(DEBUG) << "Examining files in directory '" << dse->GetPath() << "'";
 
@@ -166,11 +166,15 @@ void DirTree::ReaddirLoop(int dirjob_num)
 			continue;
 		}
 
+		// Create a local queue to collect up any files we find without locking the main queue.
+		std::deque<std::shared_ptr<FileID>> local_file_queue;
+
+		// Read all entries in this directory.
 		do
 		{
 			if((dp = readdir(d)) != NULL)
 			{
-				ProcessDirent(dse, dp, stats);
+				ProcessDirent(dse, dp, stats, &local_file_queue);
 			}
 		} while(dp != NULL);
 
@@ -181,6 +185,11 @@ void DirTree::ReaddirLoop(int dirjob_num)
 			errno = 0;
 		}
 
+		if(!local_file_queue.empty())
+		{
+			m_out_queue.push_back(local_file_queue);
+		}
+
 		dse->CloseDir(d);
 	}
 
@@ -188,7 +197,8 @@ void DirTree::ReaddirLoop(int dirjob_num)
 }
 
 
-void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_dirent, DirTraversalStats &stats)
+void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* current_dirent, DirTraversalStats &stats,
+		std::deque<std::shared_ptr<FileID>> *local_file_queue)
 {
 	struct stat statbuf;
 
@@ -294,7 +304,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 						FAM_RDONLY, FCF_NOCTTY | FCF_NOATIME);
 
 				// Queue it up.
-				m_out_queue.wait_push(std::move(file_to_scan));
+				local_file_queue->push_back(std::move(file_to_scan));
 
 				// Count the number of files we found that were included in the search.
 				stats.m_num_files_scanned++;
@@ -333,7 +343,7 @@ void DirTree::ProcessDirent(std::shared_ptr<FileID> dse, struct dirent* current_
 				}
 			}
 
-			m_dir_queue.wait_push(std::move(dir_atfd));
+			m_dir_queue.push_back(std::move(dir_atfd));
 		}
 		else if(is_symlink)
 		{

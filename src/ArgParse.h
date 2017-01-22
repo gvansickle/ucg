@@ -27,7 +27,9 @@
 #include <vector>
 #include <set>
 #include <cstdio>
+#if 0
 #include <argp.h>
+#endif
 
 class TypeManager;
 class File;
@@ -71,7 +73,7 @@ private:
 	static struct argp argp;
 
 	/// The callback which receives the parsed options.
-	static error_t parse_opt (int key, char *arg, struct argp_state *state);
+	//static error_t parse_opt (int key, char *arg, struct argp_state *state);
 
 	void PrintHelpTypes() const;
 

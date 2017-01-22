@@ -280,6 +280,30 @@ inline std::string basename(const std::string &path) noexcept
 
 
 /**
+ * Get the current working directory's absolute pathname.
+ * @note ::get_current_dir_name() under Cygwin will currently return a DOS path if this is started
+ *              under the Eclipse gdb.
+ */
+inline std::string get_current_dir_name(void)
+{
+#ifdef HAVE_GET_CURRENT_DIR_NAME
+	char *cur_dir_name = ::get_current_dir_name();
+#else
+	/// @todo Note that POSIX doesn't guarantee this will malloc the cwd string.
+	char *cur_dir_name = ::getcwd(NULL, 0);
+#endif
+	if(cur_dir_name == nullptr)
+	{
+		/// @todo We probably should throw here instead.
+		return ".";
+	}
+
+	std::string retval {cur_dir_name};
+	free(cur_dir_name);
+	return retval;
+}
+
+/**
  * Convert #path into an absolute file path.
  *
  * @todo Suspect this is broken on... wait for it... OSX.
