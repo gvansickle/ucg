@@ -22,6 +22,9 @@
 #include <cstring>
 #include "gtest/gtest.h"
 
+/// @todo Microstring testing should be moved to its own file.
+#include "../src/libext/microstring.hpp"
+
 namespace {
 
 // The fixture for testing class Foo.
@@ -61,6 +64,7 @@ class OptimizationsTest : public ::testing::Test {
   };
 
 };
+
 
 // Tests that the Foo::Bar() method does Abc.
 TEST_F(OptimizationsTest, memmem_short_pattern_works) {
@@ -126,9 +130,17 @@ TEST_F(OptimizationsTest, memmem_short_pattern_vs_38_bytes)
   EXPECT_EQ(rs, matchstr);
 }
 
+
 // Tests that Foo does Xyz.
-TEST_F(OptimizationsTest, Renamed) {
-  // Exercises the Xyz feature of Foo.
+TEST_F(OptimizationsTest, microstring_length)
+{
+	microstring ms5{"01234", 5};
+
+	EXPECT_EQ(5, ms5.length());
+
+	microstring ms8{"01234567", 8};
+
+	EXPECT_EQ(8, ms8.length());
 }
 
 }  // namespace

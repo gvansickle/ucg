@@ -162,8 +162,7 @@ constexpr uint8_t countnonzeros(T x) noexcept
 template <> constexpr uint8_t countnonzeros(uint64_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 template <> constexpr uint8_t countnonzeros(uint64_t x) noexcept
 {
-	return 8 - (
-			((x & UINT64_C(0xFF)) > 0)
+	return ((x & UINT64_C(0xFF)) > 0)
 		+ ((x & UINT64_C(0xFF00)) > 0)
 		+ ((x & UINT64_C(0xFF0000)) > 0)
 		+ ((x & UINT64_C(0xFF000000)) > 0)
@@ -171,7 +170,7 @@ template <> constexpr uint8_t countnonzeros(uint64_t x) noexcept
 		+ ((x & UINT64_C(0xFF0000000000)) > 0)
 		+ ((x & UINT64_C(0xFF000000000000)) > 0)
 		+ ((x & UINT64_C(0xFF00000000000000)) > 0)
-		);
+		;
 }
 
 
