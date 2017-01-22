@@ -1,4 +1,4 @@
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
 # Hello! This is where you manage which Jekyll version is used to run.
 # When you want to use a different version, change it below, save the
@@ -10,14 +10,15 @@ source "https://rubygems.org"
 # Happy Jekylling!
 
 # For Linux.
-gem "github-pages", group: :jekyll_plugins
+#gem "github-pages", group: :jekyll_plugins
 
-# require 'json'
-# require 'open-uri'
-# versions = JSON.parse(open('https://pages.github.com/versions.json').read)
+require 'json'
+require 'open-uri'
+versions = JSON.parse(open('https://pages.github.com/versions.json').read)
 
 # gem 'certified', '~> 1.0' if Gem.win_platform?
-# gem 'github-pages', group: :jekyll_plugins
+gem 'github-pages', versions['github-pages']
+
 # For Windows.
 #gem 'github-pages'
 # gem 'wdm', '>= 0.1.0' if Gem.win_platform?
@@ -30,6 +31,6 @@ gem "github-pages", group: :jekyll_plugins
 # gem "wdm", "~> 0.1.0" if Gem.win_platform?
 
 # If you have any plugins, put them here!
-group :jekyll_plugins do
+#group :jekyll_plugins do
   # gem "jekyll-archives"
-end
+#end
