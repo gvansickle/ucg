@@ -1,401 +1,349 @@
 /* ==========================================================================
-   SINGLE PAGE/POST
+   Page/post layout and styling
+   ========================================================================== */
+
+/*
+   Main content
    ========================================================================== */
 
 #main {
-  @include container;
-  @include clearfix;
-  margin-top: 2em;
-  padding-left: 1em;
-  padding-right: 1em;
-  animation: intro 0.3s both;
-  animation-delay: 0.35s;
-
-  @include breakpoint($x-large) {
-    max-width: $x-large;
-  }
+	@include clearfix;
 }
 
-.page {
-  @include breakpoint($large) {
-    @include span(10 of 12 last);
-    @include prefix(0.5 of 12);
-    @include suffix(2 of 12);
-  }
-
-  .page__inner-wrap {
-    @include full();
-
-    .page__content,
-    .page__meta,
-    .page__share {
-      @include full();
-    }
-  }
+.entry,
+.hentry {
+	@include clearfix;
+	border-bottom: 1px solid lighten($black,80);
+	border-bottom: 1px solid rgba($black,.10);
 }
 
-.page__title {
-  margin-top: 0;
-  line-height: 1;
+/* feature image */
 
-  & + .page__meta {
-    margin-top: -0.5em;
-  }
+.entry-feature-image {
+	margin: 20px 0 0;
+	width: 100%;
+
+	@include media($medium) {
+		margin-top: -75px; /* move up to be overlapped by site logo */
+	}
+
+	@include media($large) {
+		margin-top: -145px; /* move up further to be overlapped by site logo */
+	}
 }
 
-.page__lead {
-  font-family: $global-font-family;
-  font-size: $type-size-4;
+/* page header */
+
+.entry-header {
+	@include fill-parent;
 }
 
-.page__content {
+/* tag listing in page header */
 
-  h2 {
-    padding-bottom: 0.5em;
-    border-bottom: 1px solid $border-color;
-  }
-
-  p, li, dl {
-    font-size: 1em;
-  }
-
-  /* paragraph indents */
-  p {
-    margin: 0 0 $indent-var;
-
-    /* sibling indentation*/
-    @if $paragraph-indent == true {
-      & + p {
-        text-indent: $indent-var;
-        margin-top: -($indent-var);
-      }
-    }
-  }
+.entry-tags {
+	margin: 2em 0 0;
+  padding: 0;
+	text-transform: uppercase;
+	@include font-size(16);
+	font-weight: 600;
 
   a {
-    text-decoration: none;
+    color: $text-color;
+    padding: 0 5px;
+  }
 
-    &:hover {
-      text-decoration: underline;
+  li {
+    display: inline-block;
+    margin-bottom: 0;
 
-      img {
-        box-shadow: 0 0 10px rgba(#000, 0.25);
+    &:before {
+      content: "\2022";
+    }
+
+    &:first-child {
+
+      &:before {
+        content: "";
       }
-    }
-  }
 
-  dt {
-    margin-top: 1em;
-    font-family: $sans-serif;
-    font-weight: bold;
-  }
-
-  dd {
-    margin-left: 1em;
-    font-family: $sans-serif;
-    font-size: $type-size-6;
-  }
-
-  .small {
-    font-size: $type-size-6;
-  }
-
-  /* blockquote citations */
-  blockquote + .small {
-    margin-top: -1.5em;
-    padding-left: 1.25rem;
-  }
-}
-
-.page__hero {
-  position: relative;
-  margin-bottom: 2em;
-  @include clearfix;
-  animation: intro 0.3s both;
-  animation-delay: 0.25s;
-
-  &--overlay {
-    position: relative;
-    margin-bottom: 2em;
-    padding: 3em 0;
-    @include clearfix;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    animation: intro 0.3s both;
-    animation-delay: 0.25s;
-
-    a {
-      color: #fff;
-    }
-
-    .wrapper {
-      padding-left: 1em;
-      padding-right: 1em;
-
-      @include breakpoint($x-large) {
-        max-width: $x-large;
-      }
-    }
-
-    .page__title,
-    .page__meta,
-    .page__lead,
-    .btn {
-      color: #fff;
-      text-shadow: 1px 1px 4px rgba(#000, 0.5);
-    }
-
-    .page__lead {
-      max-width: $medium;
-    }
-
-    .page__title {
-      font-size: $type-size-2;
-
-      @include breakpoint($small) {
-        font-size: $type-size-1;
+      a {
+        padding-left: 0;
       }
     }
   }
 }
 
-.page__hero-image {
-  width: 100%;
-  height: auto;
-  -ms-interpolation-mode: bicubic;
+/* page title */
+
+span + .entry-title {
+	margin-top: 0;
 }
 
-.page__hero-caption {
-  position: absolute;
-  bottom: 0;
-  right: 0;
+.entry-title {
+	font-family: $alt-font;
+	font-style: italic;
+	@include font-size(36,yes,36);
+	font-weight: 400;
+	line-height: 1;
+	letter-spacing: -3px;
+
+	a {
+		color: $black;
+		text-decoration: underline;
+	}
+
+	@include media($medium) {
+		@include font-size(52,yes,54);
+	}
+
+	@include media($large) {
+		@include font-size(68,yes,72);
+	}
+}
+
+/* page/post wrapper */
+
+.entry-wrapper {
+	@include outer-container;
+	margin-top: 0;
+	margin-bottom: 3em;
+	padding-right: $gutter;
+	padding-left: $gutter;
+}
+
+/* page/post meta content (date, author, etc) */
+
+.entry-meta {
+	@include span-columns(12);
+	text-transform: uppercase;
+	@include font-size(14);
+
+	a {
+		color: $text-color;
+	}
+
+	@include media($large) {
+		@include span-columns(2.5);
+	}
+
+	& > span {
+		padding: 0 20px 10px 0;
+		display: inline-block;
+
+		@include media($large) {
+			display: block;
+			padding: 8px 0;
+			border-bottom: 1px solid lighten($black,80);
+			border-bottom: 1px solid rgba($black,.10);
+		}
+	}
+}
+
+/* author avatar (circular) */
+
+.bio-photo {
+	display: none;
+
+	@include media($large) {
+		display: block;
+		width: 150px;
+		height: 150px;
+		margin-bottom: 10px;
+		@include rounded(150px);
+		@include clearfix;
+	}
+}
+
+
+/* feature image credit */
+
+.image-credit {
   margin: 0 auto;
-  padding: 2px 5px;
-  color: #fff;
-  font-family: $caption-font-family;
-  font-size: $type-size-7;
-  background: #000;
+  max-width: 440px;
+  padding-top: 5px;
+  padding-right: 20px;
+  padding-left: 20px;
   text-align: right;
-  z-index: 5;
-  opacity: 0.5;
-  border-radius: $border-radius 0 $border-radius 0;
-
-  @include breakpoint($large) {
-    padding: 5px 10px;
-  }
-
-  a {
-    color: #fff;
-    text-decoration: none;
-  }
-}
-
-/*
-   Social sharing
-   ========================================================================== */
-
-.page__share {
-  margin-top: 2em;
-  padding-top: 1em;
-  border-top: 1px solid $border-color;
-
-  @include breakpoint(max-width $small) {
-    .btn span {
-      border: 0;
-      clip: rect(0 0 0 0);
-      height: 1px;
-      margin: -1px;
-      overflow: hidden;
-      padding: 0;
-      position: absolute;
-      width: 1px;
-    }
-  }
-}
-
-.page__share-title {
-  margin-bottom: 10px;
-  font-size: $type-size-6;
-  text-transform: uppercase;
-}
-
-
-/*
-   Page meta
-   ========================================================================== */
-
-.page__meta {
-  margin-top: 2em;
-  color: mix(#fff, $gray, 25%);
-  font-family: $sans-serif;
-  font-size: $type-size-6;
-
-  p {
-    margin: 0;
-  }
-
-  a {
-    color: inherit;
-  }
-}
-
-.page__meta-title {
-  margin-bottom: 10px;
-  font-size: $type-size-6;
-  text-transform: uppercase;
-}
-
-
-/*
-   Page taxonomy
-   ========================================================================== */
-
-.page__taxonomy {
-  .sep {
-    display: none;
-  }
-
-  strong {
-    margin-right: 10px;
-  }
-}
-
-.page__taxonomy-item {
-  display: inline-block;
-  margin-right: 5px;
-  margin-bottom: 8px;
-  padding: 5px 10px;
-  text-decoration: none;
-  border: 1px solid $light-gray;
-  border-radius: $border-radius;
-
-  &:hover {
-    text-decoration: none;
-    color: $link-color-hover;
-  }
-}
-
-
-/*
-   Comments
-   ========================================================================== */
-
-.page__comments {
-  @include full();
-}
-
-.page__comments-title {
-  margin-top: 2rem;
-  margin-bottom: 10px;
-  padding-top: 2rem;
-  font-size: $type-size-6;
-  border-top: 1px solid $border-color;
-  text-transform: uppercase;
-}
-
-.page__comments-form {
-  padding: 1em;
-  background: $lighter-gray;
-  transition: $global-transition;
-
-  &.disabled {
-    input,
-    button,
-    textarea,
-    label {
-      pointer-events: none;
-      cursor: not-allowed;
-      filter: alpha(opacity=65);
-      box-shadow: none;
-      opacity: 0.65;
-    }
-  }
-}
-
-.comment {
+  @include font-size(12, no);
+  line-height: 1.3;
+  color: lighten($text-color, 30);
   @include clearfix();
-  margin: 1em 0;
 
-  &:not(:last-child) {
+  @include media($medium) {
+    max-width: 760px;
+    padding-right: 60px;
+    padding-left: 60px;
+    @include font-size(14, no);
+  }
+
+  @include media($large) {
+    max-width: 960px;
+  }
+
+  a {
+    color: lighten($text-color, 30);
+  }
+}
+
+/* main content block */
+
+.entry-content {
+	@include span-columns(12);
+
+	p:first-child {
+		margin-top: 0;
+	}
+
+	@include media($large) {
+		@include span-columns(9.5);
+	}
+
+	/* nice link underlines */
+  p > a,
+	li > a {
+		border-bottom: 1px dotted lighten($link-color, 50);
+
+		&:hover {
+			border-bottom-style: solid;
+		}
+	}
+}
+
+/*
+   Disqus
+   ========================================================================== */
+
+#disqus_thread {
+	margin-top: 2em;
+}
+
+/*
+   Pagination
+   ========================================================================== */
+
+.pagination {
+	margin-top: 2em;
+	text-align: center;
+}
+
+/*
+   Overrides
+   ========================================================================== */
+
+/* adjust width for lack of meta/author column */
+
+#home,
+#page {
+
+	.entry-wrapper {
+		max-width: em(760);
+	}
+
+	.entry-title {
+		text-align: center;
+		max-width: 100%;
+	}
+
+	.entry-content {
+		@include span-columns(12);
+	}
+}
+
+/*
+   Kramdown generated table of contents
+   ========================================================================== */
+
+#markdown-toc {
+	font-family: $alt-font;
+	margin-top: $gutter;
+	margin-bottom: $gutter;
+	padding-left: 0;
+	border: 1px solid $border-color;
+	border-radius: $border-radius;
+
+  ul {
+  	list-style-type: none;
+  	padding-left: 0;
+  }
+
+  li {
+    @include font-size(16,no,18);
     border-bottom: 1px solid $border-color;
+    list-style-type: none;
   }
-}
 
-.comment__avatar-wrapper {
-  float: left;
-  width: 60px;
-  height: 60px;
-
-  @include breakpoint($large) {
-    width: 100px;
-    height: 100px;
+  h6 {
+    margin: 0;
+    padding: (.25 * $gutter) (.5 * $gutter);
+    background: $table-stripe-color;
   }
-}
-
-.comment__avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-
-  @include breakpoint($large) {
-    width: 80px;
-    height: 80px;
-    padding: 5px;
-    border: 1px solid $border-color;
-  }
-}
-
-.comment__content-wrapper {
-  float: right;
-  width: calc(100% - 60px);
-
-  @include breakpoint($large) {
-    width: calc(100% - 100px);
-  }
-}
-
-.comment__author {
-  margin: 0;
 
   a {
-    text-decoration: none;
+    display: block;
+    padding: (.25 * $gutter) (.5 * $gutter);
+    border-left: 2px solid transparent;
+    border-bottom: 0 solid transparent;
+
+    &:hover,
+    &:focus {
+      background: lighten($border-color,5);
+    }
   }
 }
-
-.comment__date {
-  @extend .page__meta;
-  margin: 0;
-
-  a {
-    text-decoration: none;
-  }
-}
-
 
 /*
-   Related
+   Tables
    ========================================================================== */
 
-.page__related {
-  margin-top: 2em;
-  padding-top: 1em;
-  border-top: 1px solid $border-color;
-  @include clearfix();
-  float: left;
+/** For nicer looking tables apply the .table class
+ *  Example:
+ *  <table class="table">
+ *    <tr>
+ *      <td>cell1</td>
+ *      <td>cell2</td>
+ *      <td>cell3</td>
+ *    </tr>
+ *  </table>
+*/
 
-  @include breakpoint($large) {
-    @include pre(2.5 of 12);
-  }
+.table {
+	border-collapse: collapse;
+	margin: ((0px + $doc-line-height) / 2) 0;
+	margin: ((0rem + ($doc-line-height / $doc-font-size)) / 2) 0;
+	width: 100%;
 
-  a {
-    color: inherit;
-    text-decoration: none;
-  }
-}
+	tbody {
 
-.page__related-title {
-  margin-bottom: 10px;
-  font-size: $type-size-6;
-  text-transform: uppercase;
+		tr:hover > td, tr:hover > th {
+			background-color: $table-hover-color;
+		}
+	}
+
+	thead {
+
+		tr:first-child td {
+			border-bottom: 2px solid $table-border-color;
+		}
+	}
+
+	th {
+		padding: (0px + $doc-line-height) / 2;
+		padding: (0rem + ($doc-line-height / $doc-font-size)) / 2;
+		font-family: $alt-font;
+		font-weight: bold;
+		text-align: left;
+		background-color: $table-header-color;
+		border-bottom: 1px solid darken($border-color, 15%);
+	}
+
+	td {
+		border-bottom: 1px solid $border-color;
+		padding: (0px + $doc-line-height) / 2;
+		padding: (0rem + ($doc-line-height / $doc-font-size)) / 2;
+		@include font-size(18);
+	}
+
+	tr, td, th {
+		vertical-align: middle;
+	}
 }
