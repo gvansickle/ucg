@@ -1,11 +1,12 @@
 # Site wide configuration
 
-title: Site Title
+title: UniversalCodeGrep
 locale: en_US
-description: Describe your website here.
+description: Easy as Ack, Faster than grep
 logo: site-logo.png
 search: true
-url: http://localhost:4000
+### @todo PUT THIS BACK BEFORE COMMITTING.
+# url                      : "https://gvansickle.github.io/ucg" # the base hostname & protocol for your site
 
 # Jekyll configuration
 
@@ -36,9 +37,9 @@ exclude: ["lib", "config.rb", "Capfile", "config", "log", "Rakefile", "Rakefile.
 
 # Site owner
 owner:
-  name: Your Name
-  avatar: bio-photo.jpg
-  email: you@email.com
+  name: "Gary R. Van Sickle"
+  avatar: "https://avatars0.githubusercontent.com/u/14008106?v=3&s=460"
+  email: "grvs@users.sourceforge.net"
   disqus-shortname:
   twitter: #username
   facebook: #username

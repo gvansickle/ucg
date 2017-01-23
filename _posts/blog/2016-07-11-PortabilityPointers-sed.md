@@ -1,7 +1,7 @@
 ---
+layout: post
 title:  "Portability Pointers: sed"
-categories:
-  - "Portability Pointers"
+categories: blog
 tags:
   - sed
   - 21st Century
@@ -16,7 +16,7 @@ It's the `-r`.  Meaning "use extended regular expressions instead of the 'basic'
 Yep, in the year 200-ought-16, 21st century, [extended regular expressions are not portable](http://pubs.opengroup.org/onlinepubs/9699919799/utilities/sed.html):
 
 > Regular Expressions in sed
-> 
+>
 > The sed utility shall support the BREs [Basic Regular Expressions] described in XBD Basic Regular Expressions,[...]
 
 Well, at least not in `sed` anyway.  Thanks [Open Group Base Specifications Issue 7](http://pubs.opengroup.org/onlinepubs/9699919799/).  If that is your real name.
