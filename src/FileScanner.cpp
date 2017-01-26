@@ -292,7 +292,7 @@ int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, s
 	if(str_match == nullptr)
 	{
 		// No match.
-		rc = -1; //PCRE2_ERROR_NOMATCH;  /// @todo This will probably break non-PCRE2 builds.
+		rc = -1; // == PCRE[2]_ERROR_NOMATCH;
 		ovector[0] = file_size;
 		ovector[1] = file_size;
 	}

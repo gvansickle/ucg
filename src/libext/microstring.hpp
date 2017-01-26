@@ -182,24 +182,11 @@ public:
 	/**
 	 * Return the number of characters in the microstring.
 	 *
-	 * @todo Redo this function with sse2 or just bit-twiddling instead of strnlen etc.  Not used much at the moment, so this
-	 * is ok for now.
-	 *
 	 * @return Length of string.
 	 */
 	inline size_type length() const noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
 		return countnonzeros(m_storage);
-#if 0
-		auto tmp = m_storage;
-
-		// Make sure the bytes of the tmp var are in big-endian order.
-		tmp = host_to_be(tmp);
-
-		auto ptr = reinterpret_cast<const char *>(&tmp);
-
-		return strnlen(ptr, this->max_size());
-#endif
 	};
 
 	constexpr inline size_type size() const noexcept ATTR_CONST ATTR_ARTIFICIAL
