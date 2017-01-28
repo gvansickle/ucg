@@ -489,7 +489,7 @@ struct PreDescriptor
 
 /// The vector of all command line options.
 static std::vector<PreDescriptor> raw_options {
-		/// @todo Put in an explicit OPT_UNKNOWN entry to pick up all unrecognized options.
+	// This first OPT_UNKNOWN entry picks up all unrecognized options.
 	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
 	{ (std::string("Usage: ucg [OPTION...] ") + args_doc).c_str(), PreDescriptor::arbtext_tag() },
 	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
