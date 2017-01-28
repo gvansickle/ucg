@@ -95,8 +95,8 @@ FileScanner::FileScanner(sync_queue<std::shared_ptr<FileID>> &in_queue,
 		std::string regex,
 		bool ignore_case,
 		bool word_regexp,
-		bool pattern_is_literal) : m_ignore_case(ignore_case), m_word_regexp(word_regexp), m_pattern_is_literal(pattern_is_literal),
-				m_in_queue(in_queue), m_output_queue(output_queue), m_regex(regex),
+		bool pattern_is_literal) : m_regex(regex), m_ignore_case(ignore_case), m_word_regexp(word_regexp), m_pattern_is_literal(pattern_is_literal),
+				m_in_queue(in_queue), m_output_queue(output_queue),
 				m_next_core(0), m_use_mmap(false), m_manually_assign_cores(false)
 {
 	LiteralMatch = resolve_LiteralMatch(this);
@@ -292,7 +292,7 @@ int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, s
 	if(str_match == nullptr)
 	{
 		// No match.
-		rc = -1; //PCRE2_ERROR_NOMATCH;  /// @todo This will probably break non-PCRE2 builds.
+		rc = -1; // == PCRE[2]_ERROR_NOMATCH;
 		ovector[0] = file_size;
 		ovector[1] = file_size;
 	}

@@ -186,6 +186,9 @@ protected:
 	uint8_t GetLiteralPrefixLen(const std::string &regex) noexcept;
 
 
+	/// The original regex (as a std::string) passed in during construction.
+	std::string m_regex;
+
 	bool m_ignore_case;
 
 	bool m_word_regexp;
@@ -236,8 +239,6 @@ private:
 	sync_queue<std::shared_ptr<FileID>>& m_in_queue;
 
 	sync_queue<MatchList> &m_output_queue;
-
-	std::string m_regex;
 
 	int m_next_core;
 
