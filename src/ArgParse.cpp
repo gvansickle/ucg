@@ -463,8 +463,6 @@ struct PreDescriptor
 				auto noopt_str = std::make_shared<std::string>("no" + *long_alias);
 				delete_us.push_back(no_opt_str);
 				delete_us.push_back(noopt_str);
-//std::cout << "Adding " << *no_opt_str << "\n";
-//std::cout << "Adding " << *noopt_str << "\n";
 				usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", no_opt_str->c_str(), m_check_arg, 0});
 				usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
 			}
@@ -478,12 +476,9 @@ struct PreDescriptor
 	{
 		auto long_alias = split(m_longopts, ',')[0];
 		long_alias.erase(0, 4);
-//std::cout << "Long alias: " << long_alias << "\n";
 		auto no_opt_str = std::make_shared<std::string>("no-" + long_alias);
 		auto noopt_str = std::make_shared<std::string>("no" + long_alias);
 		delete_us.push_back(no_opt_str);
-//std::cout << "Adding " << *no_opt_str << "\n";
-//std::cout << "Adding " << *noopt_str << "\n";
 		delete_us.push_back(noopt_str);
 		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", no_opt_str->c_str(), m_check_arg, 0});
 		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
@@ -492,7 +487,7 @@ struct PreDescriptor
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
-/// Command line options.
+/// The vector of all command line options.
 static std::vector<PreDescriptor> raw_options {
 		/// @todo Put in an explicit OPT_UNKNOWN entry to pick up all unrecognized options.
 	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
