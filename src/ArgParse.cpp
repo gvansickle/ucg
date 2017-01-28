@@ -463,8 +463,6 @@ struct PreDescriptor
 				auto noopt_str = std::make_shared<std::string>("no" + *long_alias);
 				delete_us.push_back(no_opt_str);
 				delete_us.push_back(noopt_str);
-//std::cout << "Adding " << *no_opt_str << "\n";
-//std::cout << "Adding " << *noopt_str << "\n";
 				usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", no_opt_str->c_str(), m_check_arg, 0});
 				usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
 			}
@@ -478,12 +476,9 @@ struct PreDescriptor
 	{
 		auto long_alias = split(m_longopts, ',')[0];
 		long_alias.erase(0, 4);
-//std::cout << "Long alias: " << long_alias << "\n";
 		auto no_opt_str = std::make_shared<std::string>("no-" + long_alias);
 		auto noopt_str = std::make_shared<std::string>("no" + long_alias);
 		delete_us.push_back(no_opt_str);
-//std::cout << "Adding " << *no_opt_str << "\n";
-//std::cout << "Adding " << *noopt_str << "\n";
 		delete_us.push_back(noopt_str);
 		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", no_opt_str->c_str(), m_check_arg, 0});
 		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
@@ -492,7 +487,7 @@ struct PreDescriptor
 	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
-/// Command line options.
+/// The vector of all command line options.
 static std::vector<PreDescriptor> raw_options {
 		/// @todo Put in an explicit OPT_UNKNOWN entry to pick up all unrecognized options.
 	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
@@ -579,7 +574,7 @@ ArgParse::ArgParse(TypeManager &type_manager)
 			ro.PushBracketNoDescriptors(&dynamic_usage);
 		}
 	}
-/** see above
+/** see note above
 	for(auto& ro : raw_options)
 	{
 		if(ro.IsHidden())
@@ -596,9 +591,10 @@ ArgParse::~ArgParse()
 {
 }
 
+
 /**
  * Why?  There's a legitimate reason, honestly:
- * 1. argp's argp_parse() is expecting an argv array of char*'s.
+ * 1. Our parser library is expecting an argv array of char*'s.
  * 2. For handling the rc files, we're creating vectors of new[]'ed char*'s.
  * 3. main's argv of course is an array of char*'s of unknown allocation.
  * 4. We combine #2 and #3 into one big vector<char*>, pass it to argp_parse().
@@ -614,16 +610,6 @@ static char * cpp_strdup(const char *orig)
 	return retval;
 }
 
-template <typename T>
-class scoped_array
-{
-public:
-	explicit scoped_array(T* ptr = nullptr) noexcept { m_ptr_to_destroy = ptr; };
-	~scoped_array() noexcept { delete [] m_ptr_to_destroy; };
-
-private:
-	T* m_ptr_to_destroy = nullptr;
-};
 
 void ArgParse::Parse(int argc, char **argv)
 {
@@ -666,17 +652,18 @@ void ArgParse::Parse(int argc, char **argv)
 
 	/// Now parse the args with "The Lean Mean C++ Option Parser".
 
-	lmcppop::Stats stats(dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1);
+	// Determine how big the arrays need to be.
+	lmcppop::Stats stats(true /* GNU == parse all non-options after options. */,
+			dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1,
+			2 /* Enable unambiguous prefix option parsing, 2 or more chars. */);
 
-	lmcppop::Option* options = nullptr, *buffer = nullptr;
-	scoped_array<lmcppop::Option> destroyer(options);
-	scoped_array<lmcppop::Option> destroyer2(buffer);
-	options = new lmcppop::Option[stats.options_max];
-	buffer = new lmcppop::Option[stats.buffer_max];
-	//auto options = std::make_shared<lmcppop::Option[]>(stats.options_max);  // This would be better than the scoped_array<>s, but the lib isn't set up for it.
+	// Allocate the arrays.
+	std::vector<lmcppop::Option> options(stats.options_max);
+	std::vector<lmcppop::Option> buffer(stats.buffer_max);
 
+	// Finally parse the options.
 	lmcppop::Parser parse(true /* GNU == parse all non-options after options. */,
-			dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1, options, buffer,
+			dynamic_usage.data(), combined_argv.size()-1, combined_argv.data()+1, options.data(), buffer.data(),
 			2 /* Enable unambiguous prefix option parsing, 2 or more chars. */);
 
  	if (parse.error())

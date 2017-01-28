@@ -39,12 +39,40 @@ AT_CHECK([$EGREP 'cpp.*\.cpp' stdout], [0], [ignore], [ignore])
 AT_CLEANUP
 
 #
-# Check that --help-types, does *not* work - the comma should have been stripped in ArgParse.
+# Check that '--help-types,' does *not* work - the comma should have been stripped in ArgParse's initialization.
 #
 AT_SETUP([Long alias init parsing])
 AT_CHECK([ucg --help-types,], [255], [stdout], [stderr])
 AT_CHECK([$EGREP 'cpp.*\.cpp' stdout], [1], [ignore], [ignore])
 AT_CLEANUP
+
+
+#
+# Check option parser can handle options after non-options (GNU-style)
+#
+AT_SETUP([All options after all non-options])
+AT_DATA([file_to_search.cpp],
+[abcd
+])
+AT_DATA([file_to_search.py],
+[efgh
+])
+AT_CHECK([ucg 'bc' . --noenv --type=cpp --nocolor], [0], [stdout], [stderr])
+AT_CLEANUP
+
+AT_SETUP([Options interspersed with non-options])
+AT_DATA([file_to_search.cpp],
+[abcd
+])
+AT_DATA([file_to_search.py],
+[efgh
+])
+# Should be no match.
+AT_CHECK([ucg --noenv --color 'ab' --nocolor . --type=python], [1], [stdout], [stderr])
+# Should be a match.
+AT_CHECK([ucg --noenv --color 'ef' --nocolor . --type=python], [0], [stdout], [stderr])
+AT_CLEANUP
+
 
 #
 # Check that "-- --noenv" does not treat --noenv as an option, but as a non-option argument.
@@ -69,7 +97,7 @@ AT_CLEANUP
 #
 # Prefix matching for --TYPE options.
 #
-AT_SETUP([prefix matching for --TYPE options])
+AT_SETUP([Prefix matching for --TYPE options])
 
 AT_DATA([file_to_search.py],
 [from somewhere import something
@@ -87,7 +115,7 @@ AT_CLEANUP
 #
 # Prefix matching for --noTYPE options.
 #
-AT_SETUP([prefix matching for --noTYPE options])
+AT_SETUP([Prefix matching for --noTYPE options])
 
 AT_DATA([file_to_search.py],
 [from somewhere import something
@@ -112,7 +140,7 @@ AT_CLEANUP
 #
 # Ambiguous parameters on --TYPE options.
 #
-AT_SETUP([ambiguous option handling, --TYPE options])
+AT_SETUP([Ambiguous option handling, --TYPE options])
 
 # @note 255 is the same as what ack returns in this situation.  ag returns 1.
 AT_CHECK([ucg --noenv --c 'class'], [255], [stdout], [stderr])
@@ -124,7 +152,7 @@ AT_CLEANUP
 #
 # Ambiguous parameters on --noTYPE options.
 #
-AT_SETUP([ambiguous option handling, --noTYPE options])
+AT_SETUP([Ambiguous option handling, --noTYPE options])
 
 # @note 255 is the same as what ack returns in this situation.  ag returns 1.
 AT_CHECK([ucg --noenv --nocs 'class'], [255], [stdout], [stderr])
