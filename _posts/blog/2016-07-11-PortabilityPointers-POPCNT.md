@@ -6,6 +6,7 @@ tags:
   - POPCNT
 image:
   feature: unsplash-milkyway-photo-1280w-cropped-1444703686981-a3abbc4d4fe3.jpg
+share: true
 ---
 
 ## The POPCNT Instruction: Not Portable Unless It Is, And Then Only Sometimes

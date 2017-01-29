@@ -3,7 +3,7 @@
 title: UniversalCodeGrep
 locale: en_US
 description: Easy as Ack, Faster than grep
-logo: site-logo.png
+logo: site-logo-ucg.png
 search: true
 ### @todo PUT THIS BACK BEFORE COMMITTING.
 # url                      : "https://gvansickle.github.io/ucg" # the base hostname & protocol for your site
