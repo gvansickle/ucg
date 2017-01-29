@@ -44,9 +44,9 @@ libsrc_la_SOURCES = \
 	sync_queue_impl_selector.h \
 	TypeManager.cpp TypeManager.h
 
-libsrc_la_CPPFLAGS = $(AM_CPPFLAGS)
-libsrc_la_CFLAGS = $(AM_CFLAGS)
-libsrc_la_CXXFLAGS = $(AM_CXXFLAGS)
+libsrc_la_CPPFLAGS = -I $(srcdir)/../third_party/optionparser-1.4/src $(AM_CPPFLAGS)
+libsrc_la_CFLAGS = $(AM_CFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
+libsrc_la_CXXFLAGS = $(AM_CXXFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
 libsrc_la_LIBADD =
 
 
