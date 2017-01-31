@@ -68,10 +68,6 @@ private:
 
 	void PrintHelpTypes() const;
 
-	/// Get the home directory of the user.  Returns an empty string if no
-	/// home dir can be found.
-	std::string GetUserHomeDir() const;
-
 	std::string GetProjectRCFilename() const;
 
 	/**

@@ -26,6 +26,11 @@
 
 #include <cassert>
 #include <cstdio>  // For perror() on FreeBSD.
+
+#ifdef HAVE_PWD_H
+#include <pwd.h> // for get_home_dir_name()-->getpwuid().
+#endif
+
 #include <fcntl.h> // For openat() and other *at() functions, AT_* defines.
 #include <unistd.h> // For close().
 #include <sys/stat.h>
@@ -300,6 +305,31 @@ inline std::string get_current_dir_name(void)
 
 	std::string retval {cur_dir_name};
 	free(cur_dir_name);
+	return retval;
+}
+
+
+/// Get the home directory of the current user.  Returns an empty string if no
+/// home dir can be found.
+inline std::string get_home_dir_name()
+{
+	std::string retval;
+
+	// First try the $HOME environment variable.
+	const char * home_path = getenv("HOME");
+
+	if(home_path == nullptr)
+	{
+		// No HOME variable, check the user database.
+		home_path = getpwuid(getuid())->pw_dir;
+	}
+
+	if(home_path != nullptr)
+	{
+		// Found user's HOME dir.
+		retval = home_path;
+	}
+
 	return retval;
 }
 
