@@ -67,6 +67,12 @@ private:
 	/// Reference to the TypeManager passed into the constructor.
 	TypeManager &m_type_manager;
 
+	/// The argp struct we'll pass to arg_parse() from the GNU argp library.
+	static struct argp argp;
+
+	/// The callback which receives the parsed options.
+	//static error_t parse_opt (int key, char *arg, struct argp_state *state);
+
 	void PrintHelpTypes() const;
 
 	/// Get the home directory of the user.  Returns an empty string if no
