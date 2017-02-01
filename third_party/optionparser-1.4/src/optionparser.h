@@ -43,9 +43,9 @@
  * @brief This is the only file required to use The Lean Mean C++ Option Parser.
  *        Just \#include it and you're set.
  *
- * The Lean Mean C++ Option Parser handles the program's command line arguments 
+ * The Lean Mean C++ Option Parser handles the program's command line arguments
  * (argc, argv).
- * It supports the short and long option formats of getopt(), getopt_long() 
+ * It supports the short and long option formats of getopt(), getopt_long()
  * and getopt_long_only() but has a more convenient interface.
  * The following features set it apart from other option parsers:
  *
@@ -82,7 +82,7 @@
  *     @endcode
  *     </ul>
  * </ul> @n
- * Despite these features the code size remains tiny. 
+ * Despite these features the code size remains tiny.
  * It is smaller than <a href="http://uclibc.org">uClibc</a>'s GNU getopt() and just a
  * couple 100 bytes larger than uClibc's SUSv3 getopt(). @n
  * (This does not include the usage formatter, of course. But you don't have to use that.)
@@ -1355,6 +1355,10 @@ private:
  */
 struct Parser::Action
 {
+
+	/// @note 2017-01-26 GRVS Added virtual destructor.
+	virtual ~Action() = default;
+
   /**
    * @brief Called by Parser::workhorse() for each Option that has been successfully
    * parsed (including unknown
@@ -1556,9 +1560,9 @@ inline bool Parser::workhorse(bool gnu, const Descriptor usage[], int numargs, c
 
     do // loop over short options in group, for long options the body is executed only once
     {
-      int idx;
+      int idx = 0;
 
-      const char* optarg;
+      const char* optarg = nullptr; /// @note 2017-01-26 GRVS Initialize to nullptr, wasn't initialized before.
 
       /******************** long option **********************/
       if (handle_short_options == false || try_single_minus_longopt)
@@ -1695,9 +1699,7 @@ struct PrintUsageImplementation
     /**
      * @brief Writes the given number of chars beginning at the given pointer somewhere.
      */
-    virtual void operator()(const char*, int)
-    {
-    }
+    virtual void operator()(const char*, int) = 0; /// @note 2017-01-26 GRVS Made pure virtual.
   };
 
   /**
@@ -1710,7 +1712,7 @@ struct PrintUsageImplementation
   {
     Function* write;
 
-    virtual void operator()(const char* str, int size)
+    virtual void operator()(const char* str, int size) override  /// @note 2017-01-26 GRVS Added override.
     {
       (*write)(str, size);
     }
@@ -1731,7 +1733,7 @@ struct PrintUsageImplementation
   {
     OStream& ostream;
 
-    virtual void operator()(const char* str, int size)
+    virtual void operator()(const char* str, int size) override
     {
       ostream.write(str, size);
     }
@@ -1752,7 +1754,7 @@ struct PrintUsageImplementation
   {
     const Temporary& userstream;
 
-    virtual void operator()(const char* str, int size)
+    virtual void operator()(const char* str, int size) override
     {
       userstream.write(str, size);
     }
@@ -1775,7 +1777,7 @@ struct PrintUsageImplementation
     Syscall* write;
     int fd;
 
-    virtual void operator()(const char* str, int size)
+    virtual void operator()(const char* str, int size) override
     {
       (*write)(fd, str, size);
     }
@@ -1796,7 +1798,7 @@ struct PrintUsageImplementation
     Function* fwrite;
     Stream* stream;
 
-    virtual void operator()(const char* str, int size)
+    virtual void operator()(const char* str, int size) override
     {
       (*fwrite)(str, size, 1, stream);
     }
@@ -1924,8 +1926,8 @@ struct PrintUsageImplementation
     int target_line_in_block; //!< Line index of the parts we should return to the user on this iteration.
     bool hit_target_line; //!< Flag whether we encountered a part with line index target_line_in_block in the current cell.
 
-    /** 
-     * @brief Determines the byte and character lengths of the part at @ref ptr and 
+    /**
+     * @brief Determines the byte and character lengths of the part at @ref ptr and
      * stores them in @ref len and @ref screenlen respectively.
      */
     void update_length()

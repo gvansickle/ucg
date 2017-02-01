@@ -77,7 +77,7 @@ fi
 
 # Else run the test.
 
-echo "Test description short: '${desc_long}'" >> ${results_file}
+echo "Test description short: ${desc_long}" >> ${results_file}
 
 # Record info on the filesystem where the test data lies.
 TEST_DATA_FS_INFO=`get_dev_and_fs_type ${corpus}`
@@ -286,7 +286,7 @@ class TestGenDatabase(object):
         for row in rows:
             if desc_long == "":
                 # Escape any embedded double quotes.
-                desc_long = row['desc_long'].replace("'", "\\'").replace('"', '\\"')
+                desc_long = row['desc_long'].replace('"', '\\"')
                 corpus = row['corpus']
             test_inst_num += 1
             search_results_filename="SearchResults_{}.txt".format(test_inst_num)

@@ -108,7 +108,7 @@ FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::shared_ptr<FileID>> &in_queue
 	std::string original_pattern = regex;
 
 	// For now, we won't support capturing.  () will be treated as (?:).
-	regex_compile_options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE | PCRE2_NEVER_BACKSLASH_C |  PCRE2_NEVER_UTF | PCRE2_NEVER_UCP
+	regex_compile_options = PCRE2_NO_AUTO_CAPTURE | PCRE2_MULTILINE | PCRE2_NEVER_BACKSLASH_C | PCRE2_NEVER_UTF | PCRE2_NEVER_UCP
 			| PCRE2_JIT_COMPLETE;
 
 	if(ignore_case)
