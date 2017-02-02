@@ -37,7 +37,9 @@
 #include <sstream>
 #include <system_error>
 
-// To avoid clash with "struct option" in argp.h.
+// Include "The Lean Mean C++ Option Parser".
+// The namespaces here were originally to avoid clashes with "struct option" in argp.h during the transition,
+// but "option" is so common a name that we'll just leave this in place even though we've removed argp.
 namespace lmcppop_int {
 #include <optionparser.h>
 }
