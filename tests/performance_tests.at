@@ -195,13 +195,15 @@ done;
 # $2 = Test case title.
 m4_define([ATUCG_INSTANTIATE_ONE_BENCHMARK],
 [
-AT_SETUP(m4_esyscmd_s(echo $2))dnl The echo here is to "shell-unescape" the shell-escaped title.
+#m4_errprintn([$2])
+AT_SETUP([m4_esyscmd_s([echo $2])])dnl The echo here is to "shell-unescape" the shell-escaped title.
 AT_KEYWORDS([benchmark])
 
 # Skip this test if the test script reports it's not ready.  The most likely cause is that we can't find the necessary test corpus.
 ## @todo var exports here are for finding the 3 corpi.  Find cleaner way to do this.
 AT_SKIP_IF([export srcdir && export top_srcdir && export builddir && $srcdir/$1.sh -s])
 
+AS_ECHO([""]) >> UCG_PERF_RESULTS_FILE
 AS_ECHO(["START PERFTEST"]) >> UCG_PERF_RESULTS_FILE
 
 # Run the test script.
