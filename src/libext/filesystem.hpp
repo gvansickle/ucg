@@ -181,7 +181,7 @@ static_assert(std::is_class<dev_ino_pair>::value, "not an aggregate type");
 static_assert(std::is_literal_type<dev_ino_pair>::value, "dev_ino_pair isn't trivial");
 
 /**
- * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as possible.
+ * Get the d_name field out of the passed dirent struct @c de and into a std::string, in as efficient manner as possible.
  *
  * @param de
  * @return

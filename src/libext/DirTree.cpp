@@ -207,7 +207,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 	bool is_symlink {false};
 	bool is_unknown {true};
 
-#ifdef _DIRENT_HAVE_D_TYPE
+#ifdef _DIRENT_HAVE_D_TYPE  // The dirent struct has a d_type field.
 	// Reject anything that isn't a directory, a regular file, or a symlink.
 	// If it's DT_UNKNOWN, we'll have to do a stat to find out.
 	is_dir = (current_dirent->d_type == DT_DIR);
@@ -226,7 +226,10 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 		stats.m_num_filetype_without_stat++;
 	}
 #endif
+
+	// Now we'll need to start looking at the file/dir name.
 	const char *dname = current_dirent->d_name;
+
 	// Skip "." and "..".
 	if(dname[0] == '.' && (dname[1] == 0 || (dname[1] == '.' && dname[2] == 0)))
 	{

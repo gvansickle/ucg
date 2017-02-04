@@ -133,11 +133,11 @@ TypeManager::TypeManager()
 	}
 }
 
-bool TypeManager::FileShouldBeScanned(const name_string_type& name) const noexcept
+bool TypeManager::FileShouldBeScanned(const std::string& name) const noexcept
 {
 	// Find the name's extension.
 	auto last_period_offset = name.find_last_of('.');
-	auto last_period = (last_period_offset == name_string_type::npos) ? name.cend() : name.cbegin() + last_period_offset;
+	auto last_period = (last_period_offset == std::string::npos) ? name.cend() : name.cbegin() + last_period_offset;
 	if(last_period != name.cend())
 	{
 		// There was a period, might be an extension.
@@ -475,7 +475,7 @@ void TypeManager::CompileTypeTables()
 				// First char is a '.', this is an extension specification.
 				if(j.length() <= microstring::max_size()+1)
 				{
-					// It's 4 chars or less, minus the '.'.
+					// It will fit in a microstring, minus the '.'.
 					LOG(INFO) << "Compiling ext spec \'" << j << "\' as microstring";
 					microstring m(j.cbegin()+1, j.cend());
 					unique_microstring_extensions.insert(m);
@@ -518,8 +518,8 @@ void TypeManager::CompileTypeTables()
 		LOG(INFO) << "Added " << static_cast<std::string>(i) << " (" << to_string(i.urep(), std::hex) << ") to m_fast_include_extensions";
 	}
 
-	// Sort the fast_include_extensions list so we can binary search it.
-	std::sort(m_fast_include_extensions.begin(), m_fast_include_extensions.end());
+	// Sort the m_fast_include_extensions list so we can binary search it.
+	///std::sort(m_fast_include_extensions.begin(), m_fast_include_extensions.end());
 }
 
 void TypeManager::PrintTypesForHelp(std::ostream& s) const
