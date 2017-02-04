@@ -64,7 +64,7 @@ ReturnType DoubleCheckedLock(AtomicTypeWrapper &wrap, MutexType &mutex, CacheFil
 
 
 /**
- * Function template implementing a double-checked lock protecting multiple subsets of objects.
+ * Function template implementing a double-checked lock protecting multiple objects.
  *
  * @param wrap          An instance of std::atomic<BitmaskType>.
  * @param mutex
@@ -84,8 +84,11 @@ void DoubleCheckedMultiLock(AtomicTypeWrapper &wrap, const BitmaskType bits, Mut
 	if(temp_retval == NullVal)
 	{
 		// First check says we don't have the cached value yet.
+
+		// Acquire the lock in preparation for executing the critical section and setting the flag.
 		std::unique_lock<MutexType> lock(mutex);
-		// One more try.
+
+		// Second check to make sure another thread didn't sneak in between the first check and the lock acquire.
 		temp_retval = wrap.load(std::memory_order_relaxed) & bits;
 		if(temp_retval == NullVal)
 		{
@@ -99,8 +102,15 @@ void DoubleCheckedMultiLock(AtomicTypeWrapper &wrap, const BitmaskType bits, Mut
 	}
 }
 
+
+/**
+ * Function template for compare/exchange loops.  Takes a lambda as the "value changer".
+ *
+ * @param atomic_var
+ * @param val_changer
+ */
 template <typename T, typename Lambda = std::function<T(T&)>&>
-void com_exch_loop(std::atomic<T> &atomic_var, Lambda val_changer)
+void comp_exch_loop(std::atomic<T> &atomic_var, Lambda val_changer)
 {
 	T old_val = atomic_var.load();
 	while(!atomic_var.compare_exchange_weak(old_val, val_changer(old_val))) {};
