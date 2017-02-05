@@ -158,3 +158,14 @@ AT_SETUP([Color-vs-terminal: default])
 UCG_CREATE_TEST_FILES
 AT_CHECK([ASX_SCRIPT ucg --noenv --cpp 'bc'], [0], [expout])
 AT_CLEANUP
+
+
+#
+# Context tests.
+#
+AT_SETUP([Context: -C])
+UCG_CREATE_TEST_FILES
+
+AT_CHECK([$EGREP -Hnr -C1 'bc' .], [0], [stdout], [stderr])
+
+AT_CLEANUP

@@ -114,7 +114,6 @@ enum OPT
 	OPT_LITERAL,
 	OPT_WORDREGEX,
 	OPT_COLOR,
-	OPT_NOCOLOR,
 	OPT_IGNORE_DIR,
 	OPT_NOIGNORE_DIR,
 	OPT_IGNORE_FILE,
@@ -136,11 +135,18 @@ enum OPT
 	OPT_USAGE,
 	OPT_VERSION,
 	OPT_COLUMN,
-	OPT_NOCOLUMN,
+	OPT_CONTEXT,
 	OPT_TEST_LOG_ALL,
 	OPT_TEST_NOENV_USER,
-	OPT_TEST_USE_MMAP,
-	OPT_BRACKET_NO_STANDIN
+	OPT_TEST_USE_MMAP
+};
+
+enum OptionType
+{
+	UNSPECIFIED = 0,
+	DISABLE = 0, ENABLE = 1,
+	IGNORE = 1, SMART_CASE = 2, NO_SMART_CASE = 3,
+	CONTEXT_A = 1, CONTEXT_B = 2, CONTEXT_C = 3,
 };
 
 /// Status code to use for a bad parameter which terminates the program via argp_failure().
@@ -234,8 +240,6 @@ struct Arg: public lmcppop::Arg
 	}
 };
 
-enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1,
-					IGNORE = 1, SMART_CASE = 2, NO_SMART_CASE = 3 };
 
 static constexpr char m_opt_start_str[] {"  \t"};
 static constexpr char m_help_space_str[] {"      \t"};
@@ -497,6 +501,9 @@ static std::vector<PreDescriptor> raw_options {
 	{ "Search Output:" },
 		{ OPT_COLUMN, ENABLE, "", "column", Arg::None, "Print column of first match after line number."},
 		{ OPT_COLUMN, DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
+		{ OPT_CONTEXT, CONTEXT_A, "A", "after-context", "NUM", Arg::IntegerGreater<-1>, "Print NUM lines of trailing context after matching lines." },
+		{ OPT_CONTEXT, CONTEXT_B, "B", "before-context", "NUM", Arg::IntegerGreater<-1>, "Print NUM lines of leading context before matching lines." },
+		{ OPT_CONTEXT, CONTEXT_C, "C", "context", "NUM", Arg::IntegerGreater<-1>, "Print NUM lines of context around matching lines." },
 	{ "File presentation:" },
 		{ OPT_COLOR, ENABLE, "", "color,colour", Arg::None, "Render the output with ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolor,nocolour", Arg::None, "Render the output without ANSI color codes."},
