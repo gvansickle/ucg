@@ -273,16 +273,9 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 # Google Test
 AC_MSG_CHECKING([for googletest library])
-AM_CONDITIONAL([HAVE_GOOGLETEST], [test -f $srcdir/third_party/googletest-release-1.8.0.tar.gz])
+# @todo Remove the false when we're ready for this.
+AM_CONDITIONAL([HAVE_GOOGLETEST], [false && test -f $srcdir/third_party/googletest-release-1.8.0.tar.gz])
 AM_COND_IF([HAVE_GOOGLETEST], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
-
-# Add Valgrind support.
-# @todo Note that this expands to GNU-make-only constructs, which fails on the BSDs.
-#AX_VALGRIND_DFLT([memcheck], [off])
-#AX_VALGRIND_DFLT([helgrind], [off])
-#AX_VALGRIND_DFLT([drd], [off])
-#AX_VALGRIND_DFLT([sgcheck], [off])
-#AX_VALGRIND_CHECK
 
 # Doxygen support.
 DX_DOXYGEN_FEATURE(ON)

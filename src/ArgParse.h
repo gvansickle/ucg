@@ -51,6 +51,12 @@ public:
 	ArgParse(TypeManager &tm);
 	~ArgParse();
 
+	/**
+	 * Parse the given command line.
+	 *
+	 * @param argc  The argc from main().
+	 * @param argv  The argv from main().
+	 */
 	void Parse(int argc, char **argv);
 
 	/**
@@ -75,10 +81,6 @@ private:
 
 	void PrintHelpTypes() const;
 
-	/// Get the home directory of the user.  Returns an empty string if no
-	/// home dir can be found.
-	std::string GetUserHomeDir() const;
-
 	std::string GetProjectRCFilename() const;
 
 	/**
@@ -97,6 +99,7 @@ private:
 	void HandleTYPELogic(std::vector<char *> *v);
 
 	/// If true, ArgParse won't look for or use $HOME/.ucgrc.
+	/// Used for testing.
 	bool m_test_noenv_user { false };
 
 	/// true if smart-case should be used.
