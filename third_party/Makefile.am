@@ -42,19 +42,34 @@ EXTRA_DIST =
 MOSTLYCLEANFILES =
 CLEANFILES =
 
+# Libtool libraries only needed for "make check".
+check_LTLIBRARIES =
 
 ###
 ### Google Test
 ###
 
-check_LTLIBRARIES =
 if HAVE_GOOGLETEST
 # @todo Fix this, "make distcheck" wants to distribute gtest-all.cc.
-#check_LTLIBRARIES += libgtest_all.la
-#libgtest_all_la_SOURCES = googletest/src/gtest-all.cc
-#libgtest_all_la_CPPFLAGS= -I$(srcdir)/googletest/include -I$(srcdir)/googletest
-#libgtest_all_la_CXXFLAGS = -pthread
+
+third_party_complete_deps += stampfile-gtest-tarball-untarred
+
+# Directory where Google Test tarball will be extracted.
+#GTEST_ROOT = ./googletest-release-1.8.0
+
+# Tarball as downloaded from <https://github.com/google/googletest/releases>
+stampfile-gtest-tarball-untarred: $(srcdir)/googletest-release-1.8.0.tar.gz
+	tar -xaf "$<"
+	echo "$$(date)" > $@.tmp
+	mv $@.tmp $@
+
+check_LTLIBRARIES += libgtest_all.la
+libgtest_all_la_SOURCES = ./googletest-release-1.8.0/googletest/src/gtest-all.cc
+libgtest_all_la_CPPFLAGS= -I./googletest-release-1.8.0/googletest/include -I./googletest-release-1.8.0/googletest
+libgtest_all_la_CXXFLAGS = -pthread
+EXTRA_libgtest_all_la_DEPENDENCIES = stampfile-gtest-tarball-untarred
 endif
+
 
 ###
 ### Include third-party Makefile.am's here.
@@ -69,7 +84,7 @@ stampfile-all-third-party-builds-complete: $(third_party_complete_deps)
 
 ###
 ### MAINTAINER-ONLY TARGETS
-### These are strictly of use for the maintainer, e.g. to update the version of Boost.
+### These are strictly of use for the maintainer, e.g. to update the version of a third-party lib.
 ###
 
 

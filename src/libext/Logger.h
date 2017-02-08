@@ -72,7 +72,7 @@ public:
 		m_program_invocation_name = program_invocation_name;
 		m_program_invocation_short_name = program_invocation_short_name;
 #else
-		// We're not linked to the GNU C librray (probably clang's libc).  Figure these out from argv[0].
+		// We're not linked to the GNU C library (probably clang's libc).  Figure these out from argv[0].
 		m_program_invocation_name = argv0;
 		m_program_invocation_short_name = argv0;
 		auto last_slash_pos = m_program_invocation_short_name.find_last_of("/\\");
@@ -142,6 +142,7 @@ class INFO : public EnableableLogger<INFO>
 {
 public:
 	INFO() : EnableableLogger<INFO>(__func__) { };
+	~INFO() final = default;
 };
 
 

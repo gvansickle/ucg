@@ -31,6 +31,12 @@
 #ifdef __SSE2__
 STATIC_MSG("Have SSE2")
 #endif
+#ifdef __SSE3__
+STATIC_MSG("Have SSE3")
+#endif
+#ifdef __SSSE3__
+STATIC_MSG("Have SSSE3")
+#endif
 #ifdef __SSE4_2__
 STATIC_MSG("Have SSE4_2")
 #endif
@@ -198,6 +204,7 @@ size_t MULTIVERSION(FileScanner::CountLinesSinceLastMatch)(const char * __restri
 
 #if defined(__SSE4_2__)
 
+
 const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ cbegin, size_t len) const noexcept
 {
 	constexpr auto vec_size_bytes = sizeof(__m128i);
@@ -207,7 +214,7 @@ const char * MULTIVERSION(FileScanner::find_first_of)(const char * __restrict__ 
 	size_t i=0;
 
 	// @note The last vector may spill over the end of the input.  That's ok here, we catch any false
-	// hits in the return statements, and our input should have been allocated with at least a page worth of
+	// hits in the return statements, and our input should have been allocated with at least a vector's worth of
 	// padding so we don't hit problems there.
 	for(i=0; i < len ; i+=vec_size_bytes)
 	{

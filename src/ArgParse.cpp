@@ -37,9 +37,9 @@
 #include <sstream>
 #include <system_error>
 
-#define NEW_OPTS 1
-
-// To avoid clash with "struct option" in argp.h.
+// Include "The Lean Mean C++ Option Parser".
+// The namespaces here were originally to avoid clashes with "struct option" in argp.h during the transition,
+// but "option" is so common a name that we'll just leave this in place even though we've removed argp.
 namespace lmcppop_int {
 #include <optionparser.h>
 }
@@ -55,12 +55,7 @@ namespace lmcppop = lmcppop_int::option;
 #include <cstring>
 #include <cstdio>
 
-#ifdef HAVE_PWD_H
-#include <pwd.h> // for GetUserHomeDir()-->getpwuid().
-#endif
-
 #include <fcntl.h>
-#include <unistd.h> // for GetUserHomeDir()-->getuid().
 #include <sys/stat.h>
 
 #include <libext/string.hpp>
@@ -992,7 +987,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 	if(!m_test_noenv_user)
 	{
 		// Parse the user's config file.
-		std::string homedir = GetUserHomeDir();
+		std::string homedir = portable::get_home_dir_name();
 		if(!homedir.empty())
 		{
 			// See if we can open the user's .ucgrc file.
@@ -1077,27 +1072,6 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 	}
 }
 
-std::string ArgParse::GetUserHomeDir() const
-{
-	std::string retval;
-
-	// First try the $HOME environment variable.
-	const char * home_path = getenv("HOME");
-
-	if(home_path == nullptr)
-	{
-		// No HOME variable, check the user database.
-		home_path = getpwuid(getuid())->pw_dir;
-	}
-
-	if(home_path != nullptr)
-	{
-		// Found user's HOME dir.
-		retval = home_path;
-	}
-
-	return retval;
-}
 
 std::string ArgParse::GetProjectRCFilename() const
 {
@@ -1112,7 +1086,7 @@ std::string ArgParse::GetProjectRCFilename() const
 	std::string retval;
 
 	// Get a file descriptor to the user's home dir, if there is one.
-	std::string homedirname = GetUserHomeDir();
+	std::string homedirname = portable::get_home_dir_name();
 	int home_fd = -1;
 	if(!homedirname.empty())
 	{

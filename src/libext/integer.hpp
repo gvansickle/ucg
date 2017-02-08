@@ -39,9 +39,9 @@
  * Example:
  * @code{.cpp}
  * // I need a type with at least 34 bits:
- * using uint_34 = uint_t<34>::fast;
+ * using uint_34 = uint_t<34>::type;
  * // Now use the new type.
- * uint_34 = 12;
+ * uint_34 var = 12;
  * [...]
  * @endcode
  */
@@ -106,7 +106,7 @@ constexpr
 };
 
 /**
- * constexpr function template which clamps integral value #val between [ #lo, #hi ] and returns the result.
+ * constexpr function template which clamps integral value @c val between [ @c lo, @c hi ] and returns the result.
  * @note C++17 has something like this, so this should probably go in a "future/algorithms" library.
  */
 template <typename T>
@@ -118,6 +118,62 @@ constexpr
 	return (val > hi) ? hi : ((val < lo) ? lo : val );
 };
 
+
+/// Macro for templates which only make sense if they have a specialization.
+#define STATIC_ASSERT_NO_SPECIALIZATION(param) \
+		/**/ \
+		/* @note This tuple business is to get the compiler to dump the name of the type when it errors out.  E.g.: */ \
+		/*       "error:'dummy' is not a member of 'std::tuple<long unsigned int>'" */ \
+		auto test_var = std::make_tuple(param); \
+		static_assert(decltype(test_var)::dummy, "No template specialization for type T.");
+
+template <typename T>
+constexpr bool haszero(T x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <typename T>
+constexpr bool haszero(T x) noexcept
+{
+	// Should never get to this unspecialized version.
+	STATIC_ASSERT_NO_SPECIALIZATION(x);
+	return false;
+}
+
+template <> constexpr bool haszero(uint64_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <> constexpr bool haszero(uint64_t x) noexcept
+{
+	// From https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord (public domain)
+	return ((x - UINT64_C(0x0101010101010101)) & (~(x) & UINT64_C(0x8080808080808080)));
+}
+
+/**
+ * Returns the number of nonzero bytes in @c x.
+ * @param x
+ * @return
+ */
+template <typename T>
+constexpr uint8_t countnonzeros(T x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <typename T>
+constexpr uint8_t countnonzeros(T x) noexcept
+{
+	// Should never get to this unspecialized version.
+	STATIC_ASSERT_NO_SPECIALIZATION(x);
+	return false;
+}
+
+template <> constexpr uint8_t countnonzeros(uint64_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <> constexpr uint8_t countnonzeros(uint64_t x) noexcept
+{
+	return ((x & UINT64_C(0xFF)) > 0)
+		+ ((x & UINT64_C(0xFF00)) > 0)
+		+ ((x & UINT64_C(0xFF0000)) > 0)
+		+ ((x & UINT64_C(0xFF000000)) > 0)
+		+ ((x & UINT64_C(0xFF00000000)) > 0)
+		+ ((x & UINT64_C(0xFF0000000000)) > 0)
+		+ ((x & UINT64_C(0xFF000000000000)) > 0)
+		+ ((x & UINT64_C(0xFF00000000000000)) > 0)
+		;
+}
+
+
 // Separate declaration here to avoid "attributes are not allowed on a function-definition" error.
 template < typename T >
 constexpr inline T bswap(T x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
@@ -125,10 +181,7 @@ template < typename T >
 constexpr inline T bswap(T x) noexcept
 {
 	// Should never get to this unspecialized version.
-	///@note This tuple business is to get the compiler to dump the name of the type when it errors out.  E.g.:
-	/// "error:'dummy' is not a member of 'std::tuple<long unsigned int>'"
-	auto test_var = std::make_tuple(x);
-	static_assert(decltype(test_var)::dummy, "No template specialization for type T.");
+	STATIC_ASSERT_NO_SPECIALIZATION(x);
 }
 
 template <> constexpr inline uint32_t bswap<uint32_t>(uint32_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
@@ -223,14 +276,14 @@ inline uint8_t popcount16(uint16_t bits) noexcept
 #else
 
 /**
- * Count the number of bits set in #bits using the Brian Kernighan method (https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan).
+ * Count the number of bits set in @p bits using the Brian Kernighan method (https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan).
  * Iterates once per set bit, i.e. a maximum of 16 times.
  *
  * @note On systems which do not support POPCNT, we can't use the __builtin_popcount() here.  It expands into a function call
  *       to a generic implementation which is much too slow for our needs here.
  *
  * @param bits  The 16-bit value to count the set bits of.
- * @return The number of bits set in #bits.
+ * @return The number of bits set in @p bits.
  */
 inline uint8_t popcount16(uint16_t bits) noexcept
 {

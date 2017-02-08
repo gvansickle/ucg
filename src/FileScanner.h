@@ -160,6 +160,7 @@ protected:
 	///@}
 
 	/**
+	 * Analyzes the given #regex and returns true if it's a literal string.
 	 *
 	 * @returns  true if regex is literal.
 	 */
