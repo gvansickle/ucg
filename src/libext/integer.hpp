@@ -48,7 +48,7 @@
 template <unsigned char NumBits>
 struct uint_t
 {
-	static_assert(NumBits <= 128, "NumBits > 128 not supported");
+	static_assert(NumBits <= 64, "NumBits > 64 not supported");
 
 	/// @name Member Types
 	/// @{
@@ -58,7 +58,7 @@ struct uint_t
 	// The number of bits this type can hold (ala std::bitset).
 	static constexpr auto size =  NumBits;
 };
-template<> struct uint_t<128> { using type = unsigned __int128; };
+//template<> struct uint_t<128> { using type = unsigned __int128; }; ///< @todo x86-64 gcc and clang support this.
 //template<> struct uint_t<128> { using type = __m128i; }; ///< @todo Use something like this for platforms without a builtin 128-bit type.
 template<> struct uint_t<64> { using type = uint64_t; };
 template<> struct uint_t<32> { using type = uint32_t; };
@@ -72,7 +72,7 @@ template<> struct uint_t<8> { using type = uint8_t; };
 template <unsigned char NumBits>
 struct int_t
 {
-	static_assert(NumBits <= 128, "NumBits > 128 not supported");
+	static_assert(NumBits <= 64, "NumBits > 64 not supported");
 
 	/// @name Member Types
 	/// @{
@@ -82,7 +82,7 @@ struct int_t
 	// The number of bits this type can hold (ala std::bitset).
 	static constexpr auto size =  NumBits;
 };
-template<> struct int_t<128> { using type = __int128; };
+//template<> struct int_t<128> { using type = __int128; };  ///< @todo x86-64 gcc and clang support this.
 template<> struct int_t<64> { using type = int64_t; };
 template<> struct int_t<32> { using type = int32_t; };
 template<> struct int_t<16> { using type = int16_t; };
