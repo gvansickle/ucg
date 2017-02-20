@@ -3,10 +3,10 @@ layout: page
 title: Theme Setup
 excerpt: "Instructions on how to install and customize the Jekyll theme So Simple."
 modified: 2016-09-12T08:42:37-04:00
-image:
-  feature: so-simple-sample-image-6.jpg
-  credit: WeGraphics
-  creditlink: http://wegraphics.net/downloads/free-ultimate-blurred-background-pack/
+#image:
+#  feature: so-simple-sample-image-6.jpg
+#  credit: WeGraphics
+#  creditlink: http://wegraphics.net/downloads/free-ultimate-blurred-background-pack/
 ---
 
 General notes and suggestions for customizing **So Simple Theme**.
@@ -32,7 +32,7 @@ If you want to use So Simple with an existing Jekyll site follow these steps:
 3. Run `bundle install` to install Jekyll and all dependencies.
 4. Remove demo posts/pages and replace with your own posts, pages, and any other content you want to move over.
 5. Update posts' and pages' YAML to match variables used by So Simple. Full details below.
-6. Update `_config.yml` and add navigation links and additional author data if applicable. Full details below. 
+6. Update `_config.yml` and add navigation links and additional author data if applicable. Full details below.
 
 **Pro-tip:** Delete the `gh-pages` branch after cloning and start fresh by branching off `master`. There is a bunch of garbage in `gh-pages` used for the theme's demo site that I'm guessing you won't want.
 {: .notice}
@@ -89,7 +89,7 @@ so-simple-theme/
 ├── images/                      # images for posts and pages
 ├── 404.md                       # 404 page
 ├── feed.xml                     # Atom feed template
-├── index.md                     # sample homepage. lists 5 latest posts 
+├── index.md                     # sample homepage. lists 5 latest posts
 └── theme-setup/                 # theme setup page. safe to remove
 ```
 
@@ -123,7 +123,7 @@ Examples:
 url: https://mmistakes.github.io/so-simple-theme
 url: http://localhost:4000
 url: http://yourdomain.com
-url: 
+url:
 ```
 
 #### Google Analytics and Webmaster Tools
@@ -139,7 +139,7 @@ To set what links appear in the top navigation edit `_data/navigation.yml`. Use 
   url: /portfolio/
 
 - title: Made Mistakes
-  url: http://mademistakes.com  
+  url: http://mademistakes.com
 ```
 
 ---
@@ -323,4 +323,4 @@ Found a bug or aren't quite sure how something works? By all means Ping me on Tw
 
 ## License
 
-This theme is free and open source software, distributed under the MIT License. So feel free to use this Jekyll theme on your site without linking back to me or including a disclaimer. 
+This theme is free and open source software, distributed under the MIT License. So feel free to use this Jekyll theme on your site without linking back to me or including a disclaimer.

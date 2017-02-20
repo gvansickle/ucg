@@ -1,5 +1,8 @@
 # Site navigation links
 
+- title: README
+  url: /readme/
+
 - title: About
   url: /about/
 
