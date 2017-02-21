@@ -163,9 +163,24 @@ AT_CLEANUP
 #
 # Context tests.
 #
-AT_SETUP([Context: -C])
-UCG_CREATE_TEST_FILES
 
-AT_CHECK([$EGREP -Hnr -C1 'bc' .], [0], [stdout], [stderr])
+m4_define([UCG_CONTEXT_TEST_FILES],
+[AT_DATA([context.txt],
+[Context Test File
+abc def
+ghi def
+jkl mno Ctx
+pqr stu
+vwx yz1
+234 mno Ctx
+567 890
+abc cba
+abc stu
+])
+])
 
+AT_SETUP([Context: -C1, abutting])
+UCG_CONTEXT_TEST_FILES
+AT_CHECK([$EGREP -Hnr -C1 'mno' context.txt > expout], [0], [stdout], [stderr])
+AT_CHECK([ucg --noenv -C1 'mno' context.txt], [0], [expout], [stderr])
 AT_CLEANUP
