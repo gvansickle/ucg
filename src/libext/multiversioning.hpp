@@ -100,11 +100,17 @@ enum class ISA_x86_64 : uint64_t
 	AVX_512 = 0x1000000000000200
 };
 
-inline ISA_x86_64 operator|(ISA_x86_64 outer, ISA_x86_64 inner)
+inline ISA_x86_64 operator|(ISA_x86_64 left, ISA_x86_64 right)
 {
-	return static_cast<ISA_x86_64>(static_cast<uint64_t>(outer) | static_cast<uint64_t>(inner));
+	return static_cast<ISA_x86_64>(static_cast<uint64_t>(left) | static_cast<uint64_t>(right));
 }
 
+/**
+ * Returns true if @c inner is a subset of @c outer.  For use in SFINAE-based ISA-specific function template selection.
+ * @param outer
+ * @param inner
+ * @return
+ */
 inline constexpr bool ISAIsSubsetOf(ISA_x86_64 outer, ISA_x86_64 inner)
 {
 	return (static_cast<uint64_t>(outer) & static_cast<uint64_t>(inner)) == static_cast<uint64_t>(inner);

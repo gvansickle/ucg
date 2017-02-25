@@ -90,7 +90,7 @@ inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed
 }
 
 
-#if defined(__SSE4_2__)
+#if 1 || defined(__SSE4_2__)
 
 //template <typename BaseISA, BaseISA ISAExtensions>
 MULTIVERSION_DEF(ISA_x86_64::SSE4_2, const void*)
