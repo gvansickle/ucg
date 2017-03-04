@@ -154,12 +154,15 @@ void FileScanner::Run(int thread_index)
 			const char *file_data = f.data();
 			size_t file_size = f.size();
 
+			// Initialize the match list for this file.
+			ml.clear();
+			ml.SetFilename(next_file->GetPath(), file_data, file_size);
+
 			// Scan the file data for occurrences of the regex, sending matches to the MatchList ml.
 			ScanFile(file_data, file_size, ml);
 
 			if(!ml.empty())
 			{
-				ml.SetFilename(next_file->GetPath());
 				// Force move semantics here.
 				m_output_queue.push_back(std::move(ml));
 				ml.clear();
@@ -187,6 +190,7 @@ void FileScanner::Run(int thread_index)
 	duration<double> elapsed = duration_cast<duration<double>>(accum_elapsed_time);
 	LOG(INFO) << "Total bytes read = " << total_bytes_read << ", elapsed time = " << elapsed.count() << ", Bytes/Sec=" << total_bytes_read/elapsed.count() << std::endl;
 }
+
 
 void FileScanner::AssignToNextCore()
 {

@@ -101,8 +101,6 @@ public:
 
 	void Run(int thread_index);
 
-protected:
-
 	/// @name Member-Function Pseudo-Multiversioning
 	/// All this mechanism is to support something along the lines of gcc's function multiversioning,
 	/// which doesn't work prior to gcc 4.9, at all on Cygwin even when the compiler/binutils support it,
@@ -131,6 +129,7 @@ protected:
 	static size_t CountLinesSinceLastMatch_sse2(const char * __restrict__ prev_lineno_search_end,
 					const char * __restrict__ start_of_current_match) noexcept;
 
+protected:
 
 	bool ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept;
 	const char * FindFirstPossibleCodeUnit_default(const char * __restrict__ cbegin, size_t len) const noexcept;

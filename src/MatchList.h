@@ -54,10 +54,12 @@ public:
 
 	/// When any matches are found, give the MatchList the given #filename before sending it to the next stage.
 	/// Passing #filename by value because we're storing it.
-	void SetFilename(std::string filename);
+	void SetFilename(std::string filename, const char * file_data, size_t file_size);
 
 	/// Add a match to this MatchList.  Note that this is done by moving, not copying, the given %match.
 	void AddMatch(Match &&match);
+
+	void AddMatch(size_t match_start, size_t match_end);
 
 	void Print(std::ostream &sstrm, OutputContext &output_context) const;
 
@@ -78,6 +80,24 @@ private:
 
 	/// The Matches found in this file.
 	std::vector<Match> m_match_list;
+
+
+	/// @name Temp state variables for AddMatch().
+	/// @{
+
+	/// The current line number.  Always 1-based.
+	size_t m_line_no {1};
+
+	/// The previous line number.
+	size_t m_prev_lineno {0};
+
+	const char *m_file_data;
+	size_t m_file_size;
+
+	/// Pointer to the end of the previous line number search.
+	const char *m_prev_lineno_search_end;
+
+	/// @}
 };
 
 // Require MatchList to be nothrow move constructible so that a container of them can use move on reallocation.

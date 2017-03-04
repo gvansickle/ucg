@@ -288,9 +288,6 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 	// Create a std::unique_ptr<> with a custom deleter (see above) to manage the lifetime of the match data.
 	std::unique_ptr<pcre2_match_data> match_data;
 
-	size_t line_no {1};
-	size_t prev_lineno {0};
-	const char *prev_lineno_search_end {file_data};
 	size_t start_offset { 0 };
 
 	match_data.reset(pcre2_match_data_create_from_pattern(m_pcre2_regex, NULL));
@@ -394,7 +391,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 				 *       possibly multi-byte character.
 				 *       Again, UTF-8 is not something we support at the moment.
 				 */
-				else if(true /** @todo utf8 */)
+				else if(false /** @todo utf8 */)
 				{
 					// Increment a whole UTF8 character.
 					while(ovector[1] < file_size)
@@ -433,17 +430,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		try
 		{
 			// There was a match.  Package it up in the MatchList which was passed in.
-			line_no += CountLinesSinceLastMatch(prev_lineno_search_end, file_data+ovector[0]);
-			prev_lineno_search_end = file_data+ovector[0];
-			if(line_no == prev_lineno)
-			{
-				// Skip multiple matches on one line.
-				continue;
-			}
-			prev_lineno = line_no;
-			Match m(file_data, file_size, ovector[0], ovector[1], line_no);
-
-			ml.AddMatch(std::move(m));
+			ml.AddMatch(ovector[0], ovector[1]);
 		}
 		catch(...)
 		{

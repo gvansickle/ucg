@@ -25,10 +25,15 @@
 #include <sstream>
 #include <future/string.hpp>
 
+/// @todo Move CountLinesSinceLastMatch out of FileScanner.
+#include "FileScanner.h"
 
-void MatchList::SetFilename(std::string filename)
+void MatchList::SetFilename(std::string filename, const char * file_data, size_t file_size)
 {
 	m_filename = filename;
+	m_file_data = file_data;
+	m_prev_lineno_search_end = file_data;
+	m_file_size = file_size;
 }
 
 void MatchList::AddMatch(Match &&match)
@@ -36,10 +41,30 @@ void MatchList::AddMatch(Match &&match)
 	m_match_list.push_back(std::move(match));
 }
 
+void MatchList::AddMatch(size_t match_start_index, size_t match_end_index)
+{
+	m_line_no += FileScanner::CountLinesSinceLastMatch(m_prev_lineno_search_end, m_file_data+match_start_index);
+	m_prev_lineno_search_end = m_file_data+match_start_index;
+	if(m_line_no == m_prev_lineno)
+	{
+		// Skip multiple matches on one line.
+		return;
+	}
+	m_prev_lineno = m_line_no;
+	Match m(m_file_data, m_file_size, match_start_index, match_end_index, m_line_no);
+
+	AddMatch(std::move(m));
+}
+
 void MatchList::clear() noexcept
 {
 	m_filename.clear();
 	m_match_list.clear();
+	m_line_no = 1;
+	m_prev_lineno = 0;
+	m_file_data = nullptr;
+	m_prev_lineno_search_end = nullptr;
+	m_file_size = 0;
 }
 
 void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const

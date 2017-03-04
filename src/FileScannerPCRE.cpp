@@ -253,17 +253,7 @@ void FileScannerPCRE::ScanFile(const char* __restrict__ file_data, size_t file_s
 		}
 
 		// There was a match.  Package it up in the MatchList which was passed in.
-		line_no += CountLinesSinceLastMatch(prev_lineno_search_end, file_data+ovector[0]);
-		prev_lineno_search_end = file_data+ovector[0];
-		if(line_no == prev_lineno)
-		{
-			// Skip multiple matches on one line.
-			continue;
-		}
-		prev_lineno = line_no;
-		Match m(file_data, file_size, ovector[0], ovector[1], line_no);
-
-		ml.AddMatch(std::move(m));
+		ml.AddMatch(ovector[0], ovector[1]);
 	}
 #endif // HAVE_LIBPCRE
 }

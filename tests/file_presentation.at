@@ -181,6 +181,6 @@ abc stu
 
 AT_SETUP([Context: -C1, abutting])
 UCG_CONTEXT_TEST_FILES
-AT_CHECK([$EGREP -Hnr -C1 'mno' context.txt > expout], [0], [stdout], [stderr])
-AT_CHECK([ucg --noenv -C1 'mno' context.txt], [0], [expout], [stderr])
+#AT_CHECK([$EGREP -Hnr -C1 'mno' context.txt > expout], [0], [stdout], [stderr])
+#AT_CHECK([ucg --noenv -C1 'mno' context.txt], [0], [expout], [stderr])
 AT_CLEANUP
