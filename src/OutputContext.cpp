@@ -21,8 +21,10 @@
 
 #include "OutputContext.h"
 
-OutputContext::OutputContext(bool output_is_tty, bool enable_color, bool print_column)
-	: m_output_is_tty(output_is_tty), m_enable_color(enable_color), m_print_column(print_column)
+OutputContext::OutputContext(bool output_is_tty, bool enable_color, bool print_column,
+		size_t ctx_pre, size_t ctx_post)
+	: m_output_is_tty(output_is_tty), m_enable_color(enable_color), m_print_column(print_column),
+	  m_context_lines_pre(ctx_pre), m_context_lines_post(ctx_post)
 {
 	if(m_enable_color)
 	{

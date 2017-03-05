@@ -145,6 +145,10 @@ public:
 
 	bool m_follow_symlinks { false };
 
+	size_t m_context_pre {0};
+
+	size_t m_context_post {0};
+
 	bool m_use_mmap { false };
 
 	///@}

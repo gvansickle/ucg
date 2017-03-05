@@ -796,6 +796,28 @@ void ArgParse::Parse(int argc, char **argv)
 		}
 	}
 
+	// Output context.
+	// Later options override earlier ones, but because of the interaction of the three types we can't just take the last option.
+	for(lmcppop::Option* opt = options[OPT_CONTEXT]; opt; opt=opt->next())
+	{
+		switch(opt->last()->type())
+		{
+		case CONTEXT_A:
+			m_context_post = std::stoi(opt->arg);
+			break;
+		case CONTEXT_B:
+			m_context_pre = std::stoi(opt->arg);
+			break;
+		case CONTEXT_C:
+			m_context_pre = std::stoi(opt->arg);
+			m_context_post = std::stoi(opt->arg);
+			break;
+		default:
+			break;
+		}
+		/// @todo Even if the end result is no context (e.g. -C0), grep will still print separators.  Duplicate that behavior?
+	}
+
 	if(lmcppop::Option* opt = options[OPT_PERF_DIRJOBS])
 	{
 		m_dirjobs = std::stoi(opt->arg);

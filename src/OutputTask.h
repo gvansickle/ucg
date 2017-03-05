@@ -35,7 +35,7 @@
 class OutputTask
 {
 public:
-	OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, sync_queue<MatchList> &input_queue);
+	OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, size_t ctx_pre, size_t ctx_post, sync_queue<MatchList> &input_queue);
 	virtual ~OutputTask();
 
 	void Run();

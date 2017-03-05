@@ -30,12 +30,15 @@
 class OutputContext
 {
 public:
-	OutputContext(bool output_is_tty, bool enable_color, bool print_column);
+	OutputContext(bool output_is_tty, bool enable_color, bool print_column,
+			size_t ctx_pre, size_t ctx_post);
 	~OutputContext();
 
 	inline bool is_output_tty() const noexcept { return m_output_is_tty; };
 	inline bool is_color_enabled() const noexcept { return m_enable_color; };
 	inline bool is_column_print_enabled() const noexcept { return m_print_column; };
+	inline size_t lines_of_ctx_pre() const noexcept { return m_context_lines_pre; };
+	inline size_t lines_of_ctx_post() const noexcept { return m_context_lines_post; };
 
 	/// @name Active colors.
 	/// @{
@@ -54,6 +57,9 @@ private:
 
 	/// Whether to print the column number of the first match or not.
 	bool m_print_column;
+
+	size_t m_context_lines_pre {0};
+	size_t m_context_lines_post {0};
 
 	/// @name Default output colors.
 	/// @{
