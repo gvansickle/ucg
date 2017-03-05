@@ -815,7 +815,7 @@ void ArgParse::Parse(int argc, char **argv)
 		default:
 			break;
 		}
-		/// @todo Even if the end result is no context (e.g. -C0), grep will still print separators.  Duplicate that behavior?
+		/// @todo Even if the end result is no context (e.g. -C0), grep will still print separators.  Duplicate that behavior?  ag doesn't.
 	}
 
 	if(lmcppop::Option* opt = options[OPT_PERF_DIRJOBS])

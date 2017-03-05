@@ -75,7 +75,7 @@ void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 
 	// If the file path starts with a "./", chop it off.
 	// This is to match the behavior of ack.
-	if(m_filename.find("./") == 0)
+	if(m_filename.compare(0, 2, "./") == 0)
 	{
 		no_dotslash_fn = std::string(m_filename.begin()+2, m_filename.end());
 	}
