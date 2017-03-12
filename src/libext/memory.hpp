@@ -106,8 +106,6 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 
 	const char* p1 = static_cast<const char *>(mem_to_search);
 	__m128i frag1;
-	__m128i xmm0;
-	const __m128i xmm_all_FFs = _mm_set1_epi8(0xFF);
 
 	// Return nullptr if there's no possibility of a match.
 	if( pattlen > memlen || !memlen || !pattlen)
@@ -120,9 +118,11 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 	// Load the pattern.
 	const __m128i xmm_patt = _mm_lddqu_si128(static_cast<const __m128i *>(pattern));
 
-#if 0
+
 	// Create the prefilter patterns.
 	const __m128i xmm_temp0 = _mm_set1_epi8(static_cast<const char*>(pattern)[0]);
+	const __m128i xmm_all_FFs = _mm_set1_epi8(0xFF);
+#if 0
 	const __m128i xmm_temp1 = _mm_set1_epi8(static_cast<const char*>(pattern)[1]);
 	const __m128i xmm_all_AAs = _mm_set1_epi16(0xFF00);
 	const __m128i xmm_all_55s = _mm_set1_epi16(0x00FF);
@@ -138,6 +138,15 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 		{
 			// Load 16 bytes from mem_to_search.
 			frag1 = _mm_lddqu_si128(reinterpret_cast<const __m128i*>(p1));
+
+			// Is the first char in this fragment?
+			__m128i match_bytemask = _mm_cmpeq_epi8(frag1, xmm_temp0);
+			//uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
+			if(/*match_bitmask == 0) ///*/ _mm_test_all_zeros(match_bytemask, xmm_all_FFs))
+			{
+				// No matches.
+				continue;
+			}
 #if 0
 			// Are the first two chars in this fragment, in order?
 			__m128i match_bytemask = _mm_cmpeq_epi16(frag1, xmm_01search);
