@@ -90,7 +90,7 @@ inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed
 }
 
 
-#if defined(__SSE4_2__) /// @todo Old compilers (gcc 4.8.2) need the template to be compilable.
+#if 1 /// defined(__SSE4_2__) /// @todo Old compilers (gcc 4.8.2) need the template to be compilable.
 
 //template <typename BaseISA, BaseISA ISAExtensions>
 MULTIVERSION_DEF(ISA_x86_64::SSE4_2, const void*)
@@ -104,9 +104,10 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 	constexpr auto vec_size_bytes = 16;
 	constexpr auto vec_size_mask = ~static_cast<decltype(memlen)>(vec_size_bytes-1);
 
-	const char* p1 = (const char *) mem_to_search;
+	const char* p1 = static_cast<const char *>(mem_to_search);
 	__m128i frag1;
 	__m128i xmm0;
+	const __m128i xmm_all_FFs = _mm_set1_epi8(0xFF);
 
 	// Return nullptr if there's no possibility of a match.
 	if( pattlen > memlen || !memlen || !pattlen)
@@ -117,7 +118,18 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 	assume(pattlen <= 16);
 
 	// Load the pattern.
-	const __m128i xmm_patt = _mm_lddqu_si128((const __m128i *)pattern);
+	const __m128i xmm_patt = _mm_lddqu_si128(static_cast<const __m128i *>(pattern));
+
+#if 0
+	// Create the prefilter patterns.
+	const __m128i xmm_temp0 = _mm_set1_epi8(static_cast<const char*>(pattern)[0]);
+	const __m128i xmm_temp1 = _mm_set1_epi8(static_cast<const char*>(pattern)[1]);
+	const __m128i xmm_all_AAs = _mm_set1_epi16(0xFF00);
+	const __m128i xmm_all_55s = _mm_set1_epi16(0x00FF);
+	const __m128i xmm_01search = _mm_blendv_epi8(xmm_temp0, xmm_temp1, xmm_all_55s);
+	const __m128i xmm_10search = _mm_blendv_epi8(xmm_temp0, xmm_temp1, xmm_all_AAs);
+	const __m128i xmm_11search = _mm_set_epi8(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,static_cast<const char*>(pattern)[0]);
+#endif
 
 	while(p1 < (const char*)mem_to_search+(memlen&vec_size_mask))
 	{
@@ -125,21 +137,32 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 		for(; p1 < (const char*)mem_to_search+(memlen&vec_size_mask); p1+=vec_size_bytes)
 		{
 			// Load 16 bytes from mem_to_search.
-			frag1 = _mm_lddqu_si128((const __m128i*)p1);
-
+			frag1 = _mm_lddqu_si128(reinterpret_cast<const __m128i*>(p1));
+#if 0
+			// Are the first two chars in this fragment, in order?
+			__m128i match_bytemask = _mm_cmpeq_epi16(frag1, xmm_01search);
+			match_bytemask = _mm_or_si128(match_bytemask, _mm_cmpeq_epi16(frag1, xmm_10search));
+			match_bytemask = _mm_or_si128(match_bytemask, _mm_cmpeq_epi8(frag1, xmm_11search));
+			// Convert the bytemask into a bitmask in the lower 16 bits of match_bitmask.  SSE2, L/Th: 3-1/1
+			//uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
+			if(/*match_bitmask == 0) ///*/ _mm_test_all_zeros(match_bytemask, xmm_all_FFs))
+			{
+				// No matches.
+				continue;
+			}
+#endif
 			// Do the search.
 
-			constexpr uint8_t imm8 = _SIDD_BIT_MASK | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS;
+			constexpr uint8_t imm8 = _SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS;
 
 			// Returns bitmask of bits set in IntRes2. (SSE4.2)
 			/// @note Ordering here is correct: pattern first, string to search second.
-			/// @note The multiple _mm_cmpestr?()'s here compile down into a single pcmpestrm insruction,
+			/// @note Multiple _mm_cmpestr?()'s here compile down into a single pcmpestrm insruction,
 			/// and serve only to expose the processor flags to the C++ code.  This would probably be easier in
 			/// the end if I did it in actual assembly.
-			auto cf = _mm_cmpestrc(xmm_patt, pattlen, frag1, vec_size_bytes, imm8);
-			xmm0 = _mm_cmpestrm(xmm_patt, pattlen, frag1, vec_size_bytes, imm8);
+			int fsb = _mm_cmpestri(xmm_patt, pattlen, frag1, vec_size_bytes, imm8);
 
-			if(unlikely(cf))
+			if(unlikely(fsb < 16))
 			{
 				// Some bits in xmm0 are set.  Found at least the start of a match, maybe a full match, maybe more than one match.
 				// Note that while Intel's documentation doesn't make this very clear, pcmpestrm's Equal Ordered mode does in fact
@@ -148,29 +171,20 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 				//   xmm_patt : "efghijk"
 				//   xmm0     : "0000000000000010"
 
-				// Get the bitmask into a non-SSE register.
-				/// @todo This depends on GCC's definition of __m128i as a vector of 2 long longs.
-				uint32_t esi = xmm0[0];
-
-				auto fsb = find_first_set_bit(esi);
-				if(fsb)
+				if((fsb + pattlen <= 16))
 				{
-					if(((fsb-1) + pattlen <= 16))
-					{
-						// Found a full match.
-						return reinterpret_cast<const void*>(p1 + (fsb-1));
-					}
-					else
-					{
-						// Only found a partial match.
-						// Adjust the pointer into the mem_to_search to point at the first matching char,
-						// then 'goto' (via break+while) the next for-loop iteration without adding 16.  This will then
-						// result in either a full match (since p1 and xmm_pat are now aligned), or no match.
-						p1 += fsb-1;
-						break;
-					}
+					// Found a full match.
+					return reinterpret_cast<const void*>(p1 + fsb);
 				}
-				// Should never get here.
+				else
+				{
+					// Only found a partial match.
+					// Adjust the pointer into the mem_to_search to point at the first matching char,
+					// then 'goto' (via break+while) the next for-loop iteration without adding 16.  This will then
+					// result in either a full match (since p1 and xmm_pat are now aligned), or no match.
+					p1 += fsb;
+					break;
+				}
 			}
 			// Else no match starts in this 16 bytes, go to the next 16 bytes of the mem_to_search string.
 		}
