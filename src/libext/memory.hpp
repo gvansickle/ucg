@@ -121,13 +121,16 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 
 	// Create the prefilter patterns.
 	const __m128i xmm_temp0 = _mm_set1_epi8(static_cast<const char*>(pattern)[0]);
-	const __m128i xmm_all_FFs = _mm_set1_epi8(0xFF);
-#if 0
 	const __m128i xmm_temp1 = _mm_set1_epi8(static_cast<const char*>(pattern)[1]);
-	const __m128i xmm_all_AAs = _mm_set1_epi16(0xFF00);
-	const __m128i xmm_all_55s = _mm_set1_epi16(0x00FF);
-	const __m128i xmm_01search = _mm_blendv_epi8(xmm_temp0, xmm_temp1, xmm_all_55s);
-	const __m128i xmm_10search = _mm_blendv_epi8(xmm_temp0, xmm_temp1, xmm_all_AAs);
+	const __m128i xmm_all_FFs = _mm_set1_epi8(0xFF);
+//	const __m128i xmm_all_AAs = _mm_set1_epi16(0xFF00);
+	const __m128i xmm_00FFs = _mm_set1_epi16(0x00FF);
+	const __m128i xmm_01search = _mm_blendv_epi8(xmm_temp0, xmm_temp1, xmm_00FFs);
+	const __m128i xmm_10search = _mm_blendv_epi8(xmm_temp1, xmm_temp0, xmm_00FFs);
+	//xmm_10search = _mm_srli_si128(xmm_10search, 1);
+	//xmm_10search = _mm_insert_epi8(xmm_10search, static_cast<const char*>(pattern)[0], 14);
+	//const __m128i xmm_001search = _mm_srli_si128(xmm_temp0, 1);
+#if 0
 	const __m128i xmm_11search = _mm_set_epi8(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,static_cast<const char*>(pattern)[0]);
 #endif
 
@@ -138,7 +141,7 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 		{
 			// Load 16 bytes from mem_to_search.
 			frag1 = _mm_lddqu_si128(reinterpret_cast<const __m128i*>(p1));
-
+#if 1
 			// Is the first char in this fragment?
 			__m128i match_bytemask = _mm_cmpeq_epi8(frag1, xmm_temp0);
 			//uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
@@ -147,11 +150,15 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 				// No matches.
 				continue;
 			}
-#if 0
+#else
 			// Are the first two chars in this fragment, in order?
 			__m128i match_bytemask = _mm_cmpeq_epi16(frag1, xmm_01search);
-			match_bytemask = _mm_or_si128(match_bytemask, _mm_cmpeq_epi16(frag1, xmm_10search));
-			match_bytemask = _mm_or_si128(match_bytemask, _mm_cmpeq_epi8(frag1, xmm_11search));
+			__m128i xmm_10_match_bytemask = _mm_cmpeq_epi8(frag1, xmm_10search);
+			xmm_10_match_bytemask = _mm_slli_si128(xmm_10_match_bytemask, 1);
+			//xmm_001temp = _mm_insert_epi8(xmm_001temp, _mm_extract_epi8(xmm_001temp, 14), 15);
+			xmm_10_match_bytemask = _mm_cmpeq_epi16(xmm_10_match_bytemask, xmm_all_FFs);
+			match_bytemask = _mm_or_si128(match_bytemask, xmm_10_match_bytemask);
+			//match_bytemask = _mm_or_si128(match_bytemask, _mm_cmpeq_epi8(frag1, xmm_11search));
 			// Convert the bytemask into a bitmask in the lower 16 bits of match_bitmask.  SSE2, L/Th: 3-1/1
 			//uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
 			if(/*match_bitmask == 0) ///*/ _mm_test_all_zeros(match_bytemask, xmm_all_FFs))
