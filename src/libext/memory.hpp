@@ -90,7 +90,7 @@ inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed
 }
 
 
-#if 1 /// defined(__SSE4_2__) /// @todo Old compilers (gcc 4.8.2) need the template to be compilable.
+#if defined(__SSE4_2__) /// @todo Old compilers (gcc 4.8.2) need the template to be compilable.
 
 //template <typename BaseISA, BaseISA ISAExtensions>
 MULTIVERSION_DEF(ISA_x86_64::SSE4_2, const void*)
