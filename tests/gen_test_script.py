@@ -33,6 +33,8 @@ import sqlite3
 import csv
 from string import Template
 
+f_verbose = 0
+
 # Benchmark script header template.
 # Only instantiated once.
 test_script_master_template = Template("""\
@@ -208,6 +210,26 @@ class TestGenDatabase(object):
         """.format(output_table_name))
         return c
 
+# SELECT p.prog_id, l.opts_cpp_only
+# FROM benchmark_progs AS p, opts_defs AS l
+# WHERE p.opt_only_lang = l.opt_id;
+# ...
+# DROP VIEW IF EXISTS v1;
+# DROP VIEW IF EXISTS v2;
+# CREATE VIEW v1 AS
+# SELECT p.prog_id, p.exename, p.pre_options, p.opt_only_lang_type
+# FROM benchmark_progs AS p, opts_defs AS l
+# WHERE p.opt_only_lang_type = l.opt_id
+# ;
+#CREATE VIEW v2 AS
+#SELECT t.test_case_id, v1.*, t.file_type, t.regex, t.corpus
+#FROM test_cases AS t, v1
+#INNER JOIN opts_defs ON v1.opt_only_lang_type = opts_defs.opt_id
+#;
+#SELECT v1.*, (SELECT opts_defs.opts_c_only FROM opts_defs WHERE opts_defs.opt_id = v1.opt_only_lang_type)
+#FROM v1
+#LEFT JOIN opts_defs AS l ON l.opt_id = v1.opt_only_lang_type;
+
     def parse_opt(self, optstring):
         opt_parts = optstring.split("=")
         return opt_parts
@@ -215,7 +237,7 @@ class TestGenDatabase(object):
     def generate_tests_type_2(self, opts=None, output_table_name=None):
         c = self.dbconnection.cursor()
         select_opts = ""
-        select_opts += "coalesce(o.opt_expansion, '') "
+        select_opts += "coalesce(o.opts_cpp_only, '') "
         for opt in opts:
             #print("opt: " + opt)
             (opt_id, opt_val) = self.parse_opt(opt)
@@ -225,8 +247,9 @@ class TestGenDatabase(object):
         select_string = """CREATE TABLE {} AS
         SELECT t.test_case_id, t.desc_long, p.prog_id, p.exename, p.pre_options, {} AS other_options, t.regex, t.corpus
         FROM test_cases AS t CROSS JOIN benchmark_progs as p
-        INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
+        INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_lang_type)
         """.format(output_table_name, select_opts)
+        if f_verbose > 0: print("DEBUG: SELECT string: {}".format(select_string))
         c.execute(select_string)
         return c
 
@@ -276,7 +299,7 @@ class TestGenDatabase(object):
         """
         # Query the db.
         self.generate_tests_type_2(options, "benchmark1")
-        #self.PrintTable("benchmark1")
+        if f_verbose > 0: self.PrintTable("benchmark1")
 
         test_cases = ""
         test_inst_num=0
@@ -331,9 +354,10 @@ class TestGenDatabase(object):
     def LoadDatabaseFiles(self, csv_dir=None):
         #print("sqlite3 lib version: {}".format(sqlite3.sqlite_version), file=sys.stderr)
         self.read_csv_into_table(table_name="opts_defs", filename=csv_dir+'/opts_defs.csv', prim_key='opt_id')
+        if f_verbose > 0: self.PrintTable("opts_defs")
         self.read_csv_into_table(table_name="benchmark_progs", filename=csv_dir+'/benchmark_progs.csv',
-                                 foreign_key_tuples=[("opt_only_cpp", "opts_defs(opt_id)")])
-        #self.PrintTable("benchmark_progs")
+                                 foreign_key_tuples=[("opt_only_lang_type", "opts_defs(opt_id)")])
+        if f_verbose > 0: self.PrintTable("benchmark_progs")
         self.read_csv_into_table(table_name="test_cases", filename=csv_dir+'/test_cases.csv')
         self._select_data("benchmark_1")
         #self.PrintTable("benchmark_1")
@@ -374,15 +398,17 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument("-d", "--csv-dir", dest="csv_dir", help="Directory where the source csv files can be found.", required=True)
         parser.add_argument("--opt", dest="opts", action='append', help="Options to give the test programs.  Can be specified multiple times.")
         parser.add_argument("-r", "--test-output", dest="test_output_filename", help="Test results combined output filename.", required=True)
-        #parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
+        parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
         parser.add_argument("-i", "--include", dest="include", help="only include paths matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
         parser.add_argument("-e", "--exclude", dest="exclude", help="exclude paths matching this regex pattern. [default: %(default)s]", metavar="RE" )
-        parser.add_argument('-V', '--version', action='version', version=program_version_message)
+        parser.add_argument('-V', '--version', action='version', version=program_version_message, help="Print version info.")
         parser.add_argument(dest="paths", help="paths to folder(s) with source file(s) [default: %(default)s]", metavar="path", nargs='?')
 
         # Process arguments
         args = parser.parse_args()
 
+        global f_verbose
+        f_verbose = args.verbose
         outfile_name = args.outfile_name
         test_case = args.test_case
         csv_dir = args.csv_dir
