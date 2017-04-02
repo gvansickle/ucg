@@ -7,7 +7,7 @@ from ast import parse
 
 copyright_notice=\
 '''
-# Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2016-2017 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -137,7 +137,7 @@ fi;
 """)
 
 cmd_line_template = Template("""\
-{ $${PROG_TIME} ${prog} ${pre_params} ${opt_only_type} '${regex}' "${corpus}"; 1>&3 2>&4; }""")
+{ $${PROG_TIME} ${prog} ${pre_params} ${select_opts} ${opt_only_type} '${regex}' "${corpus}"; 1>&3 2>&4; }""")
 
 
 class TestGenDatabase(object):
@@ -217,11 +217,11 @@ class TestGenDatabase(object):
     def generate_tests_type_3(self, opts=None, output_table_name=None):
         c = self.dbconnection.cursor()
         select_opts = ""
-        select_opts += "coalesce(o.opts_cpp_only, '') "
+        select_opts += "coalesce('""', '') "
         for opt in opts:
-            #print("opt: " + opt)
+            print("opt: " + opt)
             (opt_id, opt_val) = self.parse_opt(opt)
-            select_opts += """|| " " || coalesce(p.opt_""" + opt_id + """, '')"""
+            select_opts += """|| " " || coalesce(opt_""" + opt_id + """, '')"""
             if opt_val:
                 select_opts += ' || "' + opt_val + '"'
 
@@ -231,16 +231,18 @@ class TestGenDatabase(object):
         -- v1 is the almost-complete table of tests.  We just need another join to translate opt_only_lang_type
         -- into the real command-line parameters.
         CREATE VIEW v1 AS
-        SELECT t.test_case_id, t.desc_long, p.prog_id, p.exename, p.pre_options, p.opt_only_lang_type, t.file_type, t.regex, t.corpus
+        SELECT t.test_case_id, t.desc_long,
+            p.prog_id, p.exename, p.pre_options, p.opt_exclude_dir_literal, p.opt_only_lang_type, t.file_type, t.regex, t.corpus
         FROM test_cases AS t, benchmark_progs AS p, opts_defs AS l
         WHERE p.opt_only_lang_type = l.opt_id
         ;
         CREATE TABLE {} AS
-        SELECT DISTINCT test_case_id, desc_long, prog_id, exename, pre_options, (SELECT opt_text FROM opts_defs AS o WHERE (v1.file_type = o.opt_lang_id) AND (v1.opt_only_lang_type = o.opt_id)) AS opt_filetype, regex, corpus
+        SELECT DISTINCT test_case_id, desc_long,
+            prog_id, exename, pre_options, {} AS other_options, (SELECT opt_text FROM opts_defs AS o WHERE (v1.file_type = o.opt_lang_id) AND (v1.opt_only_lang_type = o.opt_id)) AS opt_filetype, regex, corpus
         FROM v1
         -- ORDER BY test_case_id
         ;
-        """.format(output_table_name, select_opts)
+        """.format(output_table_name, select_opts) ### @todo Fix select_opts.
         if f_verbose > 0: print("DEBUG: SQL script: {}".format(select_string))
         c.executescript(select_string)
         return c
@@ -333,6 +335,7 @@ class TestGenDatabase(object):
             cmd_line=cmd_line_template.substitute(
                 prog=row['exename'],
                 pre_params=row['pre_options'],
+                select_opts=row['other_options'],
                 opt_only_type=row['opt_filetype'],
                 regex=row['regex'],
                 corpus=row['corpus']
