@@ -90,7 +90,7 @@ inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed
 }
 
 
-#if defined(__SSE4_2__) /// @todo Old compilers (gcc 4.8.2) need the template to be compilable.
+#if 1 || defined(__SSE4_2__) /// @todo Old compilers (gcc 4.8.2) need the template to be compilable.
 
 //template <typename BaseISA, BaseISA ISAExtensions>
 MULTIVERSION_DEF(ISA_x86_64::SSE4_2, const void*)
@@ -128,9 +128,7 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 	const __m128i xmm_00FFs = _mm_set1_epi16(0xFF00);
 	const __m128i xmm_01search = _mm_blendv_epi8(xmm_temp0, xmm_temp1, xmm_00FFs);
 	const __m128i xmm_10search = _mm_slli_si128(xmm_01search, 1);
-#if 0
-	const __m128i xmm_11search = _mm_set_epi8(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,static_cast<const char*>(pattern)[0]);
-#endif
+	const __m128i xmm_FF00 = _mm_set_epi8(0xFF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 
 	while(p1 < (const char*)mem_to_search+(memlen&vec_size_mask))
 	{
@@ -151,11 +149,12 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 				// Shift 10 bytemask one byte to the right (remember, little endian).
 				// ST'ST'ST'S0
 				xmm_10_match_bytemask = _mm_srli_si128(xmm_10_match_bytemask, 1);
+				// ST'ST'ST'SF
+				xmm_10_match_bytemask = _mm_or_si128(xmm_10_match_bytemask, xmm_FF00);
 				// Do a compare of the 16-bit fields of the shifted 10 bytemask with 0xFFFF.
 				xmm_10_match_bytemask = _mm_cmpeq_epi16(xmm_10_match_bytemask, xmm_all_FFs);
 				// OR the two bytemasks together.
-				if(_mm_test_all_zeros(xmm_10_match_bytemask, xmm_all_FFs)
-						&& (p1[15] != static_cast<const char*>(pattern)[0]))
+				if(_mm_test_all_zeros(xmm_10_match_bytemask, xmm_all_FFs))
 				{
 					// No match for the first two chars, and the last char of the substring doesn't
 					// match the first char of the pattern.  The rest of string can't match.
