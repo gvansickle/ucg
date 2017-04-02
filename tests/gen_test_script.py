@@ -210,22 +210,6 @@ class TestGenDatabase(object):
         """.format(output_table_name))
         return c
 
-# DROP VIEW IF EXISTS v1;
-# DROP VIEW IF EXISTS v2;
-# CREATE VIEW v1 AS
-# SELECT p.prog_id, p.exename, p.pre_options, p.opt_only_lang_type
-# FROM benchmark_progs AS p, opts_defs AS l
-# WHERE p.opt_only_lang_type = l.opt_id
-# ;
-#CREATE VIEW v2 AS
-#SELECT t.test_case_id, v1.*, t.file_type, t.regex, t.corpus
-#FROM test_cases AS t, v1
-#INNER JOIN opts_defs ON v1.opt_only_lang_type = opts_defs.opt_id
-#;
-#SELECT v1.*, (SELECT opts_defs.opts_c_only FROM opts_defs WHERE opts_defs.opt_id = v1.opt_only_lang_type)
-#FROM v1
-#LEFT JOIN opts_defs AS l ON l.opt_id = v1.opt_only_lang_type;
-
     def parse_opt(self, optstring):
         opt_parts = optstring.split("=")
         return opt_parts
