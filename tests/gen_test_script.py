@@ -188,34 +188,14 @@ class TestGenDatabase(object):
             qmarks += ",?"
         return qmarks
 
-    def _select_data(self, output_table_name=None):
-
-        # Use a Row object.
-        self.dbconnection.row_factory = sqlite3.Row
-        c = self.dbconnection.cursor()
-
-        # Do a cartesian join.
-        c.execute("""CREATE TABLE {} AS SELECT test_cases.test_case_id, benchmark_progs.prog_id, benchmark_progs.exename, benchmark_progs.pre_options,
-                coalesce(benchmark_progs.opt_dirjobs, '') as opt_dirjobs, coalesce(test_cases.regex,'') || "   " || coalesce(test_cases.corpus,'') AS CombinedColumnsTest
-            FROM test_cases
-            CROSS JOIN benchmark_progs
-            """.format(output_table_name))
-
-    def generate_tests_type_1(self, output_table_name=None):
-        c = self.dbconnection.cursor()
-        c.execute("""CREATE TABLE {} AS
-        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, o.opt_expansion, t.regex, t.corpus
-        FROM test_cases AS t CROSS JOIN benchmark_progs as p
-        INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
-        """.format(output_table_name))
-        return c
-
     def parse_opt(self, optstring):
         opt_parts = optstring.split("=")
         return opt_parts
 
     def generate_tests_type_3(self, opts=None, output_table_name=None):
         c = self.dbconnection.cursor()
+
+        # @todo I'm very not-wild about this "select_opts"/other_options mechanism, but my SQL-fu has its limits.
         select_opts = ""
         select_opts += "coalesce('""', '') "
         for opt in opts:
@@ -238,32 +218,15 @@ class TestGenDatabase(object):
         ;
         CREATE TABLE {} AS
         SELECT DISTINCT test_case_id, desc_long,
-            prog_id, exename, pre_options, {} AS other_options, (SELECT opt_text FROM opts_defs AS o WHERE (v1.file_type = o.opt_lang_id) AND (v1.opt_only_lang_type = o.opt_id)) AS opt_filetype, regex, corpus
+            prog_id, exename, pre_options, {} AS other_options,
+                (SELECT opt_text FROM opts_defs AS o WHERE (v1.file_type = o.opt_lang_id) AND (v1.opt_only_lang_type = o.opt_id)) AS opt_filetype,
+            regex, corpus
         FROM v1
         -- ORDER BY test_case_id
         ;
-        """.format(output_table_name, select_opts) ### @todo Fix select_opts.
+        """.format(output_table_name, select_opts)
         if f_verbose > 0: print("DEBUG: SQL script: {}".format(select_string))
         c.executescript(select_string)
-        return c
-
-    def generate_tests_type_2(self, opts=None, output_table_name=None):
-        c = self.dbconnection.cursor()
-        select_opts = ""
-        select_opts += "coalesce(o.opts_cpp_only, '') "
-        for opt in opts:
-            #print("opt: " + opt)
-            (opt_id, opt_val) = self.parse_opt(opt)
-            select_opts += """|| " " || coalesce(p.opt_""" + opt_id + """, '')"""
-            if opt_val:
-                select_opts += ' || "' + opt_val + '"'
-        select_string = """CREATE TABLE {} AS
-        SELECT t.test_case_id, t.desc_long, p.prog_id, p.exename, p.pre_options, {} AS other_options, t.regex, t.corpus
-        FROM test_cases AS t CROSS JOIN benchmark_progs as p
-        INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_lang_type)
-        """.format(output_table_name, select_opts)
-        if f_verbose > 0: print("DEBUG: SELECT string: {}".format(select_string))
-        c.execute(select_string)
         return c
 
     def read_csv_into_table(self, table_name=None, filename=None, prim_key=None, foreign_key_tuples=None):
@@ -311,13 +274,8 @@ class TestGenDatabase(object):
         Generate and output the test script.
         """
         # Query the db.
-        #self.generate_tests_type_2(options, "benchmark1")
-        #if f_verbose > 0: self.PrintTable("benchmark1")
-
-        ### @todo
         self.generate_tests_type_3(options, "ResultTable")
         if f_verbose > 0: self.PrintTable("ResultTable")
-        ### @todo
 
         test_cases = ""
         test_inst_num=0
@@ -378,8 +336,6 @@ class TestGenDatabase(object):
 #                                 foreign_key_tuples=[("opt_only_lang_type", "opts_defs(opt_id)")])
         if f_verbose > 0: self.PrintTable("benchmark_progs")
         self.read_csv_into_table(table_name="test_cases", filename=csv_dir+'/test_cases.csv')
-        self._select_data("benchmark_1")
-        #self.PrintTable("benchmark_1")
 
 
 class CLIError(Exception):
