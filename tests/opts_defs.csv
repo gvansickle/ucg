@@ -8,6 +8,6 @@ only_grep,opts_any,
 only_pcre2grep,opts_c_only,XXXX
 only_pcre2grep,opts_cpp_only,'--exclude=^.*(?<!\\.cpp|\\.hpp|\\.h|\\.cc|\\.cxx)$'
 only_pcre2grep,opts_any,
-only_rg,opts_c_only,-t cc
+only_rg,opts_c_only,-t c
 only_rg,opts_cpp_only,-t cpp
 only_rg,opts_any,
