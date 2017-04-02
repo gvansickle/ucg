@@ -1,5 +1,13 @@
-opt_id,opts_c_only,opts_cpp_only
-only_ack,--cc,--cpp
-only_grep,XXXX,--include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx
-only_pcre2grep,XXXX,'--exclude=^.*(?<!\\.cpp|\\.hpp|\\.h|\\.cc|\\.cxx)$'
-only_rg,-t cc,-t cpp
+opt_id,opt_lang_id,opt_text
+only_ack,opts_c_only,--cc
+only_ack,opts_cpp_only,--cpp
+only_ack,opts_any,
+only_grep,opts_c_only,XXXX
+only_grep,opts_cpp_only,--include=\\*.cpp --include=\\*.hpp --include=\\*.h --include=\\*.cc --include=\\*.cxx
+only_grep,opts_any,
+only_pcre2grep,opts_c_only,XXXX
+only_pcre2grep,opts_cpp_only,'--exclude=^.*(?<!\\.cpp|\\.hpp|\\.h|\\.cc|\\.cxx)$'
+only_pcre2grep,opts_any,
+only_rg,opts_c_only,-t cc
+only_rg,opts_cpp_only,-t cpp
+only_rg,opts_any,
