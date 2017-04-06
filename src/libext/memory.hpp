@@ -149,10 +149,11 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 			xmm_10_match_bytemask = _mm_srli_si128(xmm_10_match_bytemask, 1);
 			// ST'ST'ST'SF
 			xmm_10_match_bytemask = _mm_or_si128(xmm_10_match_bytemask, xmm_FF00);
+			// bitwise-OR in the match results from ST'ST'ST'ST above.
 			xmm_10_match_bytemask = _mm_or_si128(match_bytemask, xmm_10_match_bytemask);
-			// Do a compare of the 16-bit fields of the shifted 10 bytemask with 0xFFFF.
+			// Do a compare of the 16-bit fields of the bytemask with 0xFFFF.
 			xmm_10_match_bytemask = _mm_cmpeq_epi16(xmm_10_match_bytemask, xmm_all_FFs);
-			// OR the two bytemasks together.
+			// The xmm_10_match_bytemask will now have an aligned 0xFFFF in it for each ST match.
 			if(_mm_test_all_zeros(xmm_10_match_bytemask, xmm_all_FFs))
 			{
 				// No match for the first two chars, and the last char of the substring doesn't
