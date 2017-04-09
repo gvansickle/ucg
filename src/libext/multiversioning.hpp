@@ -87,7 +87,7 @@ enum class ISA
 
 enum class ISA_x86_64 : uint64_t
 {
-	BASE    = 0x1000000000000001,
+	DEFAULT = 0x1000000000000001,
 	SSE2    = 0x1000000000000001, // Mostly redundant; x86-64 implies SSE2.
 	SSE3    = 0x1000000000000002,
 	SSSE3   = 0x1000000000000004,
@@ -100,18 +100,19 @@ enum class ISA_x86_64 : uint64_t
 	AVX_512 = 0x1000000000000200
 };
 
-inline ISA_x86_64 operator|(ISA_x86_64 left, ISA_x86_64 right)
+static inline ISA_x86_64 operator|(ISA_x86_64 left, ISA_x86_64 right)
 {
 	return static_cast<ISA_x86_64>(static_cast<uint64_t>(left) | static_cast<uint64_t>(right));
 }
 
 /**
  * Returns true if @c inner is a subset of @c outer.  For use in SFINAE-based ISA-specific function template selection.
+ *
  * @param outer
  * @param inner
  * @return
  */
-inline constexpr bool ISAIsSubsetOf(ISA_x86_64 outer, ISA_x86_64 inner)
+static inline constexpr bool ISAIsSubsetOf(ISA_x86_64 outer, ISA_x86_64 inner)
 {
 	return (static_cast<uint64_t>(outer) & static_cast<uint64_t>(inner)) == static_cast<uint64_t>(inner);
 };

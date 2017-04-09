@@ -281,7 +281,15 @@ uint8_t FileScanner::GetLiteralPrefixLen(const std::string &regex) noexcept
 	return std::min(first_metachar_pos, static_cast<decltype(first_metachar_pos)>(255));
 }
 
-
+/**
+ * Default FileScanner::LiteralMatch() implementation.
+ *
+ * @param file_data
+ * @param file_size
+ * @param start_offset
+ * @param ovector
+ * @return
+ */
 int FileScanner::LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept
 {
 	int rc = 0;
@@ -331,6 +339,12 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
 	return retval;
 }
 
+/**
+ * Resolver for FileScanner::LiteralMatch().
+ *
+ * @param obj
+ * @return
+ */
 FileScanner::LiteralMatch_type FileScanner::resolve_LiteralMatch(FileScanner * obj [[maybe_unused]]) noexcept
 {
 	FileScanner::LiteralMatch_type retval;

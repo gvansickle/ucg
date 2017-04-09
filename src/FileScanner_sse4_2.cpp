@@ -396,7 +396,7 @@ int FileScanner::LiteralMatch_sse4_2(const char *file_data, size_t file_size, si
 
 #if KEEP_AS_EXAMPLE
 template <ISA_x86_64 OuterISA>
-auto FileScanner::FindFirstPossibleCodeUnit(const char * __restrict__ cbegin, size_t len) const noexcept
+static inline auto FileScanner::FindFirstPossibleCodeUnit(const char * __restrict__ cbegin, size_t len) const noexcept
 		-> std::enable_if_t<ISAIsSubsetOf(OuterISA, ISA_x86_64::SSE4_2), const char *>
 {
 

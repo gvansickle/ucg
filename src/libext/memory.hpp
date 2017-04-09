@@ -25,6 +25,7 @@
 #include <unistd.h> // For sysconf().
 
 #include <cstdlib>  // For aligned_alloc().
+#include <string.h>  // for memmem().
 
 #include "hints.hpp"
 #include "integer.hpp"
@@ -45,7 +46,7 @@ inline void* aligned_alloc(size_t algn, size_t size) { void *p=0; posix_memalign
 /**
  * Everything anyone could ever hope for in an aligned memory allocation interface, without all the guff.
  *
- * @note aligned_alloc() is declared in cstdlib, and posix_memalign() is in stdlib.h.  I'm bucking the trend here by
+ * @note aligned_alloc() is declared in <cstdlib>, and posix_memalign() is in <stdlib.h>.  I'm bucking the trend here by
  *       putting this in memory.hpp, but it seems not unreasonable.
  *
  * @returns Pointer to heap-allocated memory, aligned as requested, with an additional 1024 kbits at the end,
@@ -89,15 +90,38 @@ inline void * overaligned_alloc(std::size_t needed_alignment, std::size_t needed
 	return retval;
 }
 
+/**
+ * @todo This should be the overall default, not just ISA_x86_64 default.
+ *
+ * @param mem_to_search
+ * @param memlen
+ * @param pattern
+ * @param pattlen
+ * @return
+ */
+MULTIVERSION_DEF(ISA_x86_64::DEFAULT, const void *)
+static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+MULTIVERSION_DEF(ISA_x86_64::DEFAULT, const void *)
+static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept
+{
+	return memmem(mem_to_search, memlen, pattern, pattlen);
+}
+
 
 #if defined(__SSE4_2__) || (__GNUG__ >= 6) /// @note Ver check for old compilers (gcc 4.8.2) which need the template to be compilable even when not instantiated.
 
-//template <typename BaseISA, BaseISA ISAExtensions>
+/**
+ *
+ * @param mem_to_search  Pointer to the memory block to search.
+ * @param memlen         Length of the memory block to search.  Must *not* include the trailing vector's worth of bytes.
+ * @param pattern        The pattern to search for.
+ * @param pattlen        Lenth of the pattern to search for.  Must be <= 16 bytes.
+ * @return
+ */
 MULTIVERSION_DEF(ISA_x86_64::SSE4_2, const void*)
-inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept ATTR_CONST ATTR_ARTIFICIAL;
-
+static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 MULTIVERSION_DEF(ISA_x86_64::SSE4_2, const void*)
-inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept
+static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void *pattern, size_t pattlen) noexcept
 {
 	static_assert(ISAIsSubsetOf(ISAExtensions, ISA_x86_64::SSE4_2), "Only SSE4.2 vectorization currently supported");
 
@@ -153,7 +177,8 @@ inline memmem_short_pattern(const void *mem_to_search, size_t memlen, const void
 			xmm_10_match_bytemask = _mm_or_si128(match_bytemask, xmm_10_match_bytemask);
 			// Do a compare of the 16-bit fields of the bytemask with 0xFFFF.
 			xmm_10_match_bytemask = _mm_cmpeq_epi16(xmm_10_match_bytemask, xmm_all_FFs);
-			// The xmm_10_match_bytemask will now have an aligned 0xFFFF in it for each ST match.
+			// The xmm_10_match_bytemask will now have an aligned 0xFFFF in it for each ST match, or for a
+			// trailing S.
 			if(_mm_test_all_zeros(xmm_10_match_bytemask, xmm_all_FFs))
 			{
 				// No match for the first two chars, and the last char of the substring doesn't
