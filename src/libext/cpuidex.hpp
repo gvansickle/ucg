@@ -27,6 +27,7 @@
 bool sys_has_sse2() noexcept;
 bool sys_has_sse4_2() noexcept;
 bool sys_has_popcnt() noexcept;
+bool sys_has_avx() noexcept;
 /// @}
 
 #endif /* SRC_LIBEXT_CPUIDEX_HPP_ */

@@ -43,6 +43,9 @@ STATIC_MSG("Have SSE4_2")
 #ifdef __POPCNT__
 STATIC_MSG("Have POPCNT")
 #endif
+#ifdef __AVX__
+STATIC_MSG("Have AVX")
+#endif
 
 
 

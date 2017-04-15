@@ -145,3 +145,14 @@ libsrc_sse4_2_popcnt_la_CPPFLAGS = $(AM_CPPFLAGS)
 libsrc_sse4_2_popcnt_la_CFLAGS = $(AM_CFLAGS)
 libsrc_sse4_2_popcnt_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_SSE4_2) $(CXXFLAGS_EXT_X86_64_POPCNT)
 
+
+# AVX
+if BUILD_CXXFLAGS_EXT_X86_64_AVX
+EXTRA_LTLIBRARIES += libsrc_avx.la
+libsrc_la_LIBADD += libsrc_avx.fmv.la
+MOSTLYCLEANFILES += libsrc_avx.fmv.la libsrc_avx.la
+endif
+libsrc_avx_la_SOURCES = FileScanner_sse4_2.cpp
+libsrc_avx_la_CPPFLAGS = $(AM_CPPFLAGS)
+libsrc_avx_la_CFLAGS = $(AM_CFLAGS)
+libsrc_avx_la_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_EXT_X86_64_AVX)
