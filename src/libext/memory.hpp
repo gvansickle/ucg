@@ -168,11 +168,16 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 			__m128i match_bytemask = _mm_cmpeq_epi16(frag1, xmm_01search);
 			// 0S'TS'TS'TS
 			__m128i xmm_10_match_bytemask = _mm_cmpeq_epi8(frag1, xmm_10search);
-			// Shift 10 bytemask one byte to the right (remember, little endian).
+			// Shift 10 bytemask one byte to the right (remember, little endian), shifting in 1's.
+			/// @note Using alignr for this on Nehalem seems to be slightly slower than slri+or.
+#if 1
 			// ST'ST'ST'S0
 			xmm_10_match_bytemask = _mm_srli_si128(xmm_10_match_bytemask, 1);
 			// ST'ST'ST'SF
 			xmm_10_match_bytemask = _mm_or_si128(xmm_10_match_bytemask, xmm_FF00);
+#else
+			xmm_10_match_bytemask = _mm_alignr_epi8(xmm_all_FFs, xmm_10_match_bytemask, 1);
+#endif
 			// bitwise-OR in the match results from ST'ST'ST'ST above.
 			xmm_10_match_bytemask = _mm_or_si128(match_bytemask, xmm_10_match_bytemask);
 			// Do a compare of the 16-bit fields of the bytemask with 0xFFFF.
