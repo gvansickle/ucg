@@ -194,7 +194,7 @@ UniversalCodeGrep 0.3.3 should build and run on any reasonably POSIX-compliant p
 - Windows:
   - Windows 7 + Cygwin 64-bit
 
-Note that at this time, only x86-64/amd64 architectures are supported.
+Note that at this time, only x86-64/amd64 architectures are fully supported.  32-bit x86 builds are also occasionally tested.
 
 ## Usage
 

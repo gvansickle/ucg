@@ -31,7 +31,7 @@
 
 #include "DoubleCheckedLock.hpp"
 
-#define M_ENABLE_FD_STATS 1
+#define M_ENABLE_FD_STATS 0
 
 /**
  * pImpl factorization of the FileID class.  This is the unsynchronized "pImpl" part which holds all the data.
@@ -204,17 +204,17 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 		{
 		case FT_REG:
 		{
-			com_exch_loop(m_atomic_fd_max_reg, [](uint64_t old_val){ return old_val + 1; });
+			comp_exch_loop(m_atomic_fd_max_reg, [](uint64_t old_val){ return old_val + 1; });
 			break;
 		}
 		case FT_DIR:
 		{
-			com_exch_loop(m_atomic_fd_max_dir, [](uint64_t old_val){ return old_val + 1; });
+			comp_exch_loop(m_atomic_fd_max_dir, [](uint64_t old_val){ return old_val + 1; });
 			break;
 		}
 		default:
 		{
-			com_exch_loop(m_atomic_fd_max_other, [](uint64_t old_val){ return old_val + 1; });
+			comp_exch_loop(m_atomic_fd_max_other, [](uint64_t old_val){ return old_val + 1; });
 			break;
 		}
 		}

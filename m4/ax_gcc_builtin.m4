@@ -1,5 +1,5 @@
 # ===========================================================================
-#      http://www.gnu.org/software/autoconf-archive/ax_gcc_builtin.html
+#      https://www.gnu.org/software/autoconf-archive/ax_gcc_builtin.html
 # ===========================================================================
 #
 # SYNOPSIS
@@ -91,7 +91,7 @@
 #   and this notice are preserved.  This file is offered as-is, without any
 #   warranty.
 
-#serial 3
+#serial 4
 
 AC_DEFUN([AX_GCC_BUILTIN], [
     AS_VAR_PUSHDEF([ac_var], [ax_cv_have_$1])

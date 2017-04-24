@@ -43,6 +43,9 @@ export PYTHON="@PYTHON@"
 
 # At testsuite-run-time, find the programs we wish to compare performance with.
 # Export the vars so the TCn.sh scripts can find the programs.
+# NOTE: The order here does not determine the order in which the programs are benchmarked, only
+#       whether or not they are benchmarked.  Order is currently determined by the order of the
+#       program IDs in branchmark_progs.csv.
 PROGLIST=built_ucg:ucg
 if PROG_INST_UCG="$(which ucg 2>/dev/null)";
 then
@@ -72,7 +75,7 @@ then
 	PROGLIST=$PROGLIST,inst_gnu_grep_e:$PROG_GNU_GREP
 	export PROG_GNU_GREP;
 fi
-if test -x "${PROG_GREP_P}";
+if test -x $(echo "${PROG_GREP_P}" | $ESED -n 's/^([^ ]+).*$/\1/p');
 then
 	PROGLIST=$PROGLIST,inst_gnu_grep_p:$PROG_GREP_P
 	export PROG_GREP_P;
@@ -97,7 +100,11 @@ uname_or_unknown()
 
 get_system_info()
 {
-	# Collects and returns information regarding the test system.
+	# Collects and returns information regarding the test system, such as:
+	# - Number of CPUs
+	# - OS
+	# - Amount of memory
+	# No two POSIX-like systems agree on how to expose this sort of info to the user, so we have to look in a lot of places.
 
 	# Distro, using /etc/os-release.
 	# This is a file specified by freedesktop.  See https://www.freedesktop.org/software/systemd/man/os-release.html
@@ -141,6 +148,7 @@ get_system_info()
 	echo "";
 
 	# Using sysctl.
+	# Primarily for the *BSDs and OS X.  Linux has sysctl, but doesn't expose what we're looking for through it.
 	echo "";
 	echo "START sysctl info.";
 	if PROG_SYSCTL=$(which sysctl 2>/dev/null);
@@ -148,11 +156,12 @@ get_system_info()
 		echo "# Found sysctl: PROG_SYSCTL=$PROG_SYSCTL";
 		#
 		# For *BSD:
-		#   hw.ncpu, kern.smp.cpus, hw.physmem, hw.usermem
+		#   hw.ncpu, kern.smp.cpus
+		#   hw.physmem, hw.usermem, hw.realmem == all in bytes (as of TrueOS/FreeBSD 12.0).
 		#   kern.ostype: FreeBSD
 		#   kern.version: FreeBSD 10.3-RELEASE-p5 #0: Thu Jun 30 03:52:15 UTC 2016
         #        root@amd64-builder.pcbsd.org:/usr/obj/usr/src/sys/GENERIC
-		#
+        #
 		# For OSX:
 		#   hw.physicalcpu ==> Number of cores
 		#   hw.logicalcpu ==> Number of cores * number of hyperthreads per core
@@ -164,7 +173,7 @@ get_system_info()
 		#   machdep.cpu.extfeatures: ==> More CPU extensions.  E.g.:
 		#		"SYSCALL XD EM64T LAHF RDTSCP TSCI"
 		#
-		for NAME in hw.ncpu hw.physmem hw.usermem \
+		for NAME in hw.ncpu hw.physmem hw.usermem hw.realmem \
 		hw.activecpu hw.physicalcpu hw.logicalcpu hw.packages hw.model hw.optional kern.smp.cpus kernel.osrelease kernel.ostype \
 		machdep.cpu.vendor machdep.cpu.brand_string machdep.cpu.features machdep.cpu.extfeatures;
 		do
@@ -202,10 +211,19 @@ get_system_info()
 	echo "";
 
 	# Using cat /proc/cpuinfo.
+	# This is for Linux, this doesn't exist on *BSDs.
 	echo "";
 	echo "START /proc/cpuinfo info.";
 	cat /proc/cpuinfo 2>/dev/null || echo "ERROR: Could not cat /proc/cpuinfo."
 	echo "END /proc/cpuinfo info.";
+	echo "";
+
+	# Using cat /proc/meminfo.
+	# This is for Linux, this doesn't exist on *BSDs.
+	echo "";
+	echo "START /proc/meminfo info.";
+	cat /proc/meminfo 2>/dev/null || echo "ERROR: Could not cat /proc/meminfo."
+	echo "END /proc/meminfo info.";
 	echo "";
 
 	# Checking for specific virtualization environment.

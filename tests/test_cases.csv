@@ -1,12 +1,11 @@
-test_case_id, desc_short, desc_long, regex, corpus
-TC1, Test Case 1, "Benchmark: 'BOOST.*HPP' on Boost source.", BOOST.*HPP, "${top_srcdir}/../TestCorpus/boost_1_58_0"
-TC2, Test Case 2, "Benchmark: '#include\\s+\".*\"' on Boost source", #include\\s+".*", "${top_srcdir}/../TestCorpus/boost_1_58_0"
-TC3, Test Case 3, "Benchmark: literal '#endif' with --ignore-dir=doc on Boost source.", #endif, "${top_srcdir}/../TestCorpus/boost_1_58_0"
-TC4, "rg's linux_literal", "Benchmark: 'PM_RESUME' on Linux source.", PM_RESUME, "${top_srcdir}/../TestCorpus/linux"
-TC5, "rg's linux_alternates", "Benchmark: 'ERR_SYS|PME_TURN_OFF|LINK_REQ_RST|CFG_BME_EVT' on Linux source.", ERR_SYS|PME_TURN_OFF|LINK_REQ_RST|CFG_BME_EVT, "${top_srcdir}/../TestCorpus/linux"
-TC6, "rg's linux_re_literal_suffix", "Benchmark: '[A-Z]+_RESUME' on Linux source.", [A-Z]+_RESUME, "${top_srcdir}/../TestCorpus/linux"
-TC7, "rg's subtitles_literal", "Benchmark: 'Sherlock Holmes' on OpenSubtitles2016.raw.en", "Sherlock Holmes", "${top_srcdir}/../TestCorpus/subtitles/OpenSubtitles2016.raw.en.disable"
-TC8, Test Case 8, "Benchmark: regex 'iudice[\\w]*umputo' on single ~500MB file.", iudice[\\w]*umputo, "${builddir}/500MBLoremIpsum.cpp"
-TC9, Test Case 9, "Benchmark: 'iudicemaequumputo' on 500MB file with match at end.", iudicemaequumputo, "${builddir}/500MBLoremIpsum.cpp"
-TC10, Test Case 10, "Benchmark: 'NO_MATCH' on 500MB file with no match.", NO_MATCH, "${builddir}/500MBLoremIpsum.cpp"
-
+test_case_id, desc_short, desc_long, file_type, regex, corpus
+TC1, Test Case 1, "Benchmark: 'BOOST.*HPP' on Boost source.", opts_cpp_only, BOOST.*HPP, "${top_srcdir}/../TestCorpus/boost_1_58_0"
+TC2, Test Case 2, "Benchmark: '#include\\s+\".*\"' on Boost source", opts_cpp_only, #include\\s+".*", "${top_srcdir}/../TestCorpus/boost_1_58_0"
+TC3, Test Case 3, "Benchmark: literal '#endif' with --ignore-dir=doc on Boost source.", opts_cpp_only, #endif, "${top_srcdir}/../TestCorpus/boost_1_58_0"
+TC4, "rg's linux_literal", "Benchmark: 'PM_RESUME' on Linux source.", opts_c_only, PM_RESUME, "${top_srcdir}/../TestCorpus/linux"
+TC5, "rg's linux_alternates", "Benchmark: 'ERR_SYS|PME_TURN_OFF|LINK_REQ_RST|CFG_BME_EVT' on Linux source.", opts_c_only, ERR_SYS|PME_TURN_OFF|LINK_REQ_RST|CFG_BME_EVT, "${top_srcdir}/../TestCorpus/linux"
+TC6, "rg's linux_re_literal_suffix", "Benchmark: '[A-Z]+_RESUME' on Linux source.", opts_c_only, [A-Z]+_RESUME, "${top_srcdir}/../TestCorpus/linux"
+TC7, "rg's subtitles_literal", "Benchmark: 'Sherlock Holmes' on OpenSubtitles2016.raw.en", opts_any, "Sherlock Holmes", "${top_srcdir}/../TestCorpus/subtitles/OpenSubtitles2016.raw.en.disable"
+TC8, Test Case 8, "Benchmark: regex 'iudice[\\w]*umputo' on single ~500MB file.", opts_any, iudice[\\w]*umputo, "${builddir}/500MBLoremIpsum.cpp"
+TC9, Test Case 9, "Benchmark: 'iudicemaequumputo' on 500MB file with match at end.", opts_any, iudicemaequumputo, "${builddir}/500MBLoremIpsum.cpp"
+TC10, Test Case 10, "Benchmark: 'NO_MATCH' on 500MB file with no match.", opts_any, NO_MATCH, "${builddir}/500MBLoremIpsum.cpp"
