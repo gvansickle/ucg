@@ -31,7 +31,7 @@
 
 #include "DoubleCheckedLock.hpp"
 
-#define M_ENABLE_FD_STATS 1
+#define M_ENABLE_FD_STATS 0
 
 /**
  * pImpl factorization of the FileID class.  This is the unsynchronized "pImpl" part which holds all the data.

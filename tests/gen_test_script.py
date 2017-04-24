@@ -7,7 +7,7 @@ from ast import parse
 
 copyright_notice=\
 '''
-# Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2016-2017 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -32,6 +32,8 @@ from argparse import RawDescriptionHelpFormatter
 import sqlite3
 import csv
 from string import Template
+
+f_verbose = 0
 
 # Benchmark script header template.
 # Only instantiated once.
@@ -135,7 +137,7 @@ fi;
 """)
 
 cmd_line_template = Template("""\
-{ $${PROG_TIME} ${prog} ${pre_params} ${opt_only_type} '${regex}' "${corpus}"; 1>&3 2>&4; }""")
+{ $${PROG_TIME} ${prog} ${pre_params} ${select_opts} ${opt_only_type} '${regex}' "${corpus}"; 1>&3 2>&4; }""")
 
 
 class TestGenDatabase(object):
@@ -186,48 +188,45 @@ class TestGenDatabase(object):
             qmarks += ",?"
         return qmarks
 
-    def _select_data(self, output_table_name=None):
-
-        # Use a Row object.
-        self.dbconnection.row_factory = sqlite3.Row
-        c = self.dbconnection.cursor()
-
-        # Do a cartesian join.
-        c.execute("""CREATE TABLE {} AS SELECT test_cases.test_case_id, benchmark_progs.prog_id, benchmark_progs.exename, benchmark_progs.pre_options,
-                coalesce(benchmark_progs.opt_dirjobs, '') as opt_dirjobs, coalesce(test_cases.regex,'') || "   " || coalesce(test_cases.corpus,'') AS CombinedColumnsTest
-            FROM test_cases
-            CROSS JOIN benchmark_progs
-            """.format(output_table_name))
-
-    def generate_tests_type_1(self, output_table_name=None):
-        c = self.dbconnection.cursor()
-        c.execute("""CREATE TABLE {} AS
-        SELECT t.test_case_id, p.prog_id, p.exename, p.pre_options, o.opt_expansion, t.regex, t.corpus
-        FROM test_cases AS t CROSS JOIN benchmark_progs as p
-        INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
-        """.format(output_table_name))
-        return c
-
     def parse_opt(self, optstring):
         opt_parts = optstring.split("=")
         return opt_parts
 
-    def generate_tests_type_2(self, opts=None, output_table_name=None):
+    def generate_tests_type_3(self, opts=None, output_table_name=None):
         c = self.dbconnection.cursor()
+
+        # @todo I'm very not-wild about this "select_opts"/other_options mechanism, but my SQL-fu has its limits.
         select_opts = ""
-        select_opts += "coalesce(o.opt_expansion, '') "
+        select_opts += "coalesce('""', '') "
         for opt in opts:
-            #print("opt: " + opt)
+            print("opt: " + opt)
             (opt_id, opt_val) = self.parse_opt(opt)
-            select_opts += """|| " " || coalesce(p.opt_""" + opt_id + """, '')"""
+            select_opts += """|| " " || coalesce(opt_""" + opt_id + """, '')"""
             if opt_val:
                 select_opts += ' || "' + opt_val + '"'
-        select_string = """CREATE TABLE {} AS
-        SELECT t.test_case_id, t.desc_long, p.prog_id, p.exename, p.pre_options, {} AS other_options, t.regex, t.corpus
-        FROM test_cases AS t CROSS JOIN benchmark_progs as p
-        INNER JOIN opts_defs as o ON (o.opt_id = p.opt_only_cpp)
+
+        select_string = """\
+        DROP VIEW IF EXISTS v1
+        ;
+        -- v1 is the almost-complete table of tests.  We just need another join to translate opt_only_lang_type
+        -- into the real command-line parameters.
+        CREATE VIEW v1 AS
+        SELECT t.test_case_id, t.desc_long,
+            p.prog_id, p.exename, p.pre_options, p.opt_exclude_dir_literal, p.opt_only_lang_type, t.file_type, t.regex, t.corpus
+        FROM test_cases AS t, benchmark_progs AS p, opts_defs AS l
+        WHERE p.opt_only_lang_type = l.opt_id
+        ;
+        CREATE TABLE {} AS
+        SELECT DISTINCT test_case_id, desc_long,
+            prog_id, exename, pre_options, {} AS other_options,
+                (SELECT opt_text FROM opts_defs AS o WHERE (v1.file_type = o.opt_lang_id) AND (v1.opt_only_lang_type = o.opt_id)) AS opt_filetype,
+            regex, corpus
+        FROM v1
+        -- ORDER BY test_case_id
+        ;
         """.format(output_table_name, select_opts)
-        c.execute(select_string)
+        if f_verbose > 0: print("DEBUG: SQL script: {}".format(select_string))
+        c.executescript(select_string)
         return c
 
     def read_csv_into_table(self, table_name=None, filename=None, prim_key=None, foreign_key_tuples=None):
@@ -275,14 +274,14 @@ class TestGenDatabase(object):
         Generate and output the test script.
         """
         # Query the db.
-        self.generate_tests_type_2(options, "benchmark1")
-        #self.PrintTable("benchmark1")
+        self.generate_tests_type_3(options, "ResultTable")
+        if f_verbose > 0: self.PrintTable("ResultTable")
 
         test_cases = ""
         test_inst_num=0
         desc_long = ""
         corpus = ""
-        rows = self.dbconnection.execute('SELECT * FROM benchmark1 WHERE test_case_id == "{}"'.format(test_case_id))
+        rows = self.dbconnection.execute('SELECT * FROM ResultTable WHERE test_case_id == "{}"'.format(test_case_id))
         for row in rows:
             if desc_long == "":
                 # Escape any embedded double quotes.
@@ -294,7 +293,8 @@ class TestGenDatabase(object):
             cmd_line=cmd_line_template.substitute(
                 prog=row['exename'],
                 pre_params=row['pre_options'],
-                opt_only_type=row['other_options'],
+                select_opts=row['other_options'],
+                opt_only_type=row['opt_filetype'],
                 regex=row['regex'],
                 corpus=row['corpus']
                 )
@@ -330,13 +330,12 @@ class TestGenDatabase(object):
 
     def LoadDatabaseFiles(self, csv_dir=None):
         #print("sqlite3 lib version: {}".format(sqlite3.sqlite_version), file=sys.stderr)
-        self.read_csv_into_table(table_name="opts_defs", filename=csv_dir+'/opts_defs.csv', prim_key='opt_id')
-        self.read_csv_into_table(table_name="benchmark_progs", filename=csv_dir+'/benchmark_progs.csv',
-                                 foreign_key_tuples=[("opt_only_cpp", "opts_defs(opt_id)")])
-        #self.PrintTable("benchmark_progs")
+        self.read_csv_into_table(table_name="opts_defs", filename=csv_dir+'/opts_defs.csv')
+        if f_verbose > 0: self.PrintTable("opts_defs")
+        self.read_csv_into_table(table_name="benchmark_progs", filename=csv_dir+'/benchmark_progs.csv')
+#                                 foreign_key_tuples=[("opt_only_lang_type", "opts_defs(opt_id)")])
+        if f_verbose > 0: self.PrintTable("benchmark_progs")
         self.read_csv_into_table(table_name="test_cases", filename=csv_dir+'/test_cases.csv')
-        self._select_data("benchmark_1")
-        #self.PrintTable("benchmark_1")
 
 
 class CLIError(Exception):
@@ -374,15 +373,17 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument("-d", "--csv-dir", dest="csv_dir", help="Directory where the source csv files can be found.", required=True)
         parser.add_argument("--opt", dest="opts", action='append', help="Options to give the test programs.  Can be specified multiple times.")
         parser.add_argument("-r", "--test-output", dest="test_output_filename", help="Test results combined output filename.", required=True)
-        #parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
+        parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
         parser.add_argument("-i", "--include", dest="include", help="only include paths matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
         parser.add_argument("-e", "--exclude", dest="exclude", help="exclude paths matching this regex pattern. [default: %(default)s]", metavar="RE" )
-        parser.add_argument('-V', '--version', action='version', version=program_version_message)
+        parser.add_argument('-V', '--version', action='version', version=program_version_message, help="Print version info.")
         parser.add_argument(dest="paths", help="paths to folder(s) with source file(s) [default: %(default)s]", metavar="path", nargs='?')
 
         # Process arguments
         args = parser.parse_args()
 
+        global f_verbose
+        f_verbose = args.verbose
         outfile_name = args.outfile_name
         test_case = args.test_case
         csv_dir = args.csv_dir

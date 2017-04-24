@@ -24,6 +24,7 @@ EXTRA_DIST = $(TESTSUITE_AT) $(TESTSUITE) $(srcdir)/package.m4 atlocal.in \
 CLEANFILES = perf_test_results.txt
 DISTCLEANFILES = atconfig
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE) $(BENCHMARKSCRIPTS)
+CHECKLOCALDEPS =
 
 ###
 ### Test utilities.
@@ -31,6 +32,7 @@ MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE) $(BENCHMARKSCRIPTS)
 check_PROGRAMS = dummy-file-gen portable_time
 if HAVE_GOOGLETEST
 check_PROGRAMS += unittests
+CHECKLOCALDEPS += unittests$(EXEEXT)
 endif
 
 ###
@@ -57,8 +59,8 @@ portable_time_LDFLAGS = $(AM_LDFLAGS)
 ###
 if HAVE_GOOGLETEST
 unittests_SOURCES = unittests.cpp
-unittests_CPPFLAGS = -I $(top_srcdir)/third_party/googletest/include $(AM_CPPFLAGS)
-unittests_CXXFLAGS = -msse4.2 $(AM_CXXFLAGS)
+unittests_CPPFLAGS = -I $(top_builddir)/third_party/googletest-release-1.8.0/googletest/include -I $(top_srcdir)/src $(AM_CPPFLAGS)
+unittests_CXXFLAGS = -msse4.2 $(AM_CXXFLAGS) -O0
 unittests_LDFLAGS = $(AM_LDFLAGS)
 unittests_LDADD = ../third_party/libgtest_all.la
 endif
@@ -124,6 +126,7 @@ TESTSUITE_AT = \
 	sanity.at \
 	search_modifiers.at \
 	performance_tests.at \
+	unittests.at \
 	$(BENCHMARKSCRIPTS)
 
 # The actual shell script which is the testsuite.

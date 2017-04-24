@@ -639,6 +639,7 @@ void ArgParse::Parse(int argc, char **argv)
 	{
 		combined_argv.push_back(cpp_strdup(argv[i]));
 	}
+	//combined_argv.push_back(nullptr);
 
 	// We have to handle User Defined Types and --TYPEs ourselves, before finally calling argp_parse().  argp doesn't
 	// support dynamically added options, which we need for the --TYPEs that will be created by the User Defined Type
@@ -698,7 +699,9 @@ void ArgParse::Parse(int argc, char **argv)
 
 	// Grab the pattern.
 	if(parse.nonOptionsCount() > 0)
-	m_pattern = parse.nonOption(0);
+	{
+		m_pattern = parse.nonOption(0);
+	}
 
 	// Grab any file/dir paths specified on command line.
 	for (int i = 1; i < parse.nonOptionsCount(); ++i)
