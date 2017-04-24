@@ -23,6 +23,7 @@
 
 #include <config.h>
 
+#include <cstdint>
 #include "static_diagnostics.hpp"
 
 /// @name MULTIVERSION_DECORATOR_<FEATURE> function definition decorators
@@ -64,11 +65,56 @@
 /// @todo Now that I have this working, I think I don't like it.  It just hides what is almost exactly the
 /// gcc syntax for this, and if we're not going to ever use gcc's ifunc(), probably just obfuscates things.
 /// Probably won't get used unless I can come up with a good reason.
+#if 0
 #define MULTIVERSION_DEF(funcname, func_type_def, ifunc_resolver_name) \
 	/* ifunc()-like resolver for funcname(). */ \
 	extern "C"	void * ifunc_resolver_name (void) ; \
 	/* static initialization line for the function pointer. */ \
 	func_type_def = reinterpret_cast<decltype(funcname)>(:: ifunc_resolver_name ());
+#endif
 
+#define MULTIVERSION_DEF(isa_ext, rettype) \
+	template <typename BaseISA, BaseISA ISAExtensions> \
+	typename std::enable_if<ISAIsSubsetOf(ISAExtensions, (isa_ext)), rettype>::type
+
+#define MV_USE(func_name, isa_ext) func_name<decltype(isa_ext), (isa_ext)>
+
+
+enum class ISA
+{
+	DEFAULT = 0 // Denotes code suitable for any architecture.
+};
+
+enum class ISA_x86_64 : uint64_t
+{
+	DEFAULT = 0x1000000000000001,
+	SSE2    = 0x1000000000000001, // Mostly redundant; x86-64 implies SSE2.
+	SSE3    = 0x1000000000000002,
+	SSSE3   = 0x1000000000000004,
+	SSE4_1  = 0x1000000000000008,
+	SSE4_2  = 0x1000000000000010,
+	POPCNT  = 0x1000000000000020,
+	LZCNT   = 0x1000000000000040,
+	AVX     = 0x1000000000000080,
+	AVX2    = 0x1000000000000100,
+	AVX_512 = 0x1000000000000200
+};
+
+static inline ISA_x86_64 operator|(ISA_x86_64 left, ISA_x86_64 right)
+{
+	return static_cast<ISA_x86_64>(static_cast<uint64_t>(left) | static_cast<uint64_t>(right));
+}
+
+/**
+ * Returns true if @c inner is a subset of @c outer.  For use in SFINAE-based ISA-specific function template selection.
+ *
+ * @param outer
+ * @param inner
+ * @return
+ */
+static inline constexpr bool ISAIsSubsetOf(ISA_x86_64 outer, ISA_x86_64 inner)
+{
+	return (static_cast<uint64_t>(outer) & static_cast<uint64_t>(inner)) == static_cast<uint64_t>(inner);
+};
 
 #endif /* SRC_LIBEXT_MULTIVERSIONING_HPP_ */

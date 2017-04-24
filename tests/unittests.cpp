@@ -19,7 +19,11 @@
 
 
 #include "../src/libext/memory.hpp"
+#include <cstring>
 #include "gtest/gtest.h"
+
+/// @todo Microstring testing should be moved to its own file.
+#include "../src/libext/microstring.hpp"
 
 namespace {
 
@@ -51,7 +55,16 @@ class OptimizationsTest : public ::testing::Test {
   }
 
   // Objects declared here can be used by all tests in the test case for Foo.
+
+  char *padstrdup(const char* s) const
+  {
+	  char * retval = (char*)overaligned_alloc(16, std::strlen(s));
+	  std::strcpy(retval, s);
+	  return retval;
+  };
+
 };
+
 
 // Tests that the Foo::Bar() method does Abc.
 TEST_F(OptimizationsTest, memmem_short_pattern_works) {
@@ -60,20 +73,74 @@ TEST_F(OptimizationsTest, memmem_short_pattern_works) {
 
 #define M_STRCLEN(str) (str), strlen(str)
 
-  const char* retval = (const char*)memmem_short_pattern<16>("abcde", 5, "cd", 2);
-  std::string rs(retval, 2);
+  const char* str;
+  const char* retval;
+  std::string rs;
+
+  str = padstrdup("abcde");
+  retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(str, 5, "cd", 2);
+
+  EXPECT_NE(nullptr, retval);
+
+  rs = std::string(retval, 2);
 
   EXPECT_EQ("cd", rs);
 
-  retval = (const char*)memmem_short_pattern<16>(M_STRCLEN("abcdefghijklmnopqrstuvwxyz"), "cd", 2);
+  retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(M_STRCLEN("abcdefghijklmnopqrstuvwxyz"), "cd", 2);
+  EXPECT_NE(nullptr, retval);
+
   rs = std::string(retval, 2);
 
   EXPECT_EQ("cd", rs);
 }
 
+TEST_F(OptimizationsTest, memmem_short_pattern_vs_32_bytes)
+{
+	const char* str;
+	const char* retval;
+	char* rs;
+	std::string matchstr;
+
+	str = padstrdup("0123456789ABCDEFfedcba9876543210");
+	rs = padstrdup("10");
+
+	retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(str, strlen(str), rs, strlen(rs));
+	EXPECT_NE(nullptr, retval);
+	matchstr.assign(retval, strlen(rs));
+	EXPECT_EQ(rs, matchstr);
+
+	std::free(rs);
+
+	// Check for a match spanning a 16-byte boundary.
+	rs = padstrdup("EFfe");
+
+	retval = (const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(str, strlen(str), rs, strlen(rs));
+	EXPECT_NE(nullptr, retval);
+	matchstr.assign(retval, strlen(rs));
+	EXPECT_EQ(rs, matchstr);
+
+	std::free(rs);
+}
+
+TEST_F(OptimizationsTest, memmem_short_pattern_vs_38_bytes)
+{
+  std::string str = "0123456789ABCDEFfedcba9876543210qwerty";
+  std::string rs = "0qw";
+  std::string matchstr {(const char*)MV_USE(memmem_short_pattern,ISA_x86_64::SSE4_2)(str.c_str(), str.length(), rs.c_str(), rs.length()), rs.length()};
+  EXPECT_EQ(rs, matchstr);
+}
+
+
 // Tests that Foo does Xyz.
-TEST_F(OptimizationsTest, SomeOtherTest) {
-  // Exercises the Xyz feature of Foo.
+TEST_F(OptimizationsTest, microstring_length)
+{
+	microstring ms5{"01234", 5};
+
+	EXPECT_EQ(5, ms5.length());
+
+	microstring ms8{"01234567", 8};
+
+	EXPECT_EQ(8, ms8.length());
 }
 
 }  // namespace
