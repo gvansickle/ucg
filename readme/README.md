@@ -214,7 +214,8 @@ Version 0.3.3 of `ucg` supports a significant subset of the options supported by
 on the command line override options specified earlier on the command line.
 
 #### Searching
-| Option | Description |
+
+| Option               | Description                              |
 |----------------------|------------------------------------------|
 | `--[no]smart-case`   | Ignore case if PATTERN is all lowercase (default: enabled). |
 | `-i, --ignore-case`  | Ignore case distinctions in PATTERN.                        |
