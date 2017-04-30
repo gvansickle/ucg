@@ -6,7 +6,7 @@ description: Easy as Ack, Faster than grep
 logo: site-logo-ucg.png
 search: true
 ### @todo PUT THIS BACK BEFORE COMMITTING.
-# url                      : "https://gvansickle.github.io/ucg" # the base hostname & protocol for your site
+url                      : "https://gvansickle.github.io/ucg" # the base hostname & protocol for your site
 repository               : "gvansickle/ucg"  # GitHub username/repo-name, Required to have access to repo metadata locally/prevent Jekyll-metadata from failing.
 
 # Jekyll configuration
