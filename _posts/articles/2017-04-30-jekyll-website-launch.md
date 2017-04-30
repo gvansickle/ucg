@@ -1,12 +1,9 @@
 ---
-title: "About UniversalCodeGrep"
-permalink: /pages/about.html
+layout: post
+title: "New UniversalCodeGrep Website Launched"
+categories: blog
 ---
 
-{% include toc %}
+Welcome to the new UniversalCodeGrep website!  The main difference is that it's been Jekyllized and the README table formatting has been fixed.
 
-UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.
 
-Here is the README from ucg version 0.2.2:
-
-{% include_relative README-olducg.md  %}
