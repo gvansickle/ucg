@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Portability Pointers: sed"
-categories: blog
+categories: articles
 tags:
   - sed
   - 21st Century

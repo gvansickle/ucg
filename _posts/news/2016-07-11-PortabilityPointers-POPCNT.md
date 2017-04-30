@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Portability Pointers: POPCNT"
-categories: blog
+categories: articles
 tags:
   - POPCNT
   - Portability Pointers
