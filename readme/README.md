@@ -7,6 +7,17 @@
        src="https://scan.coverity.com/projects/7451/badge.svg"/>
 </a>
 
+<!-- styling for tables -->
+<style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 5px;
+}
+</style>
+
 UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for searching large bodies of source code.
 
 ## Table of Contents
@@ -223,18 +234,21 @@ on the command line override options specified earlier on the command line.
 | `-w, --word-regexp`  | PATTERN must match a complete word.                         |
 
 ####  Search Output
+
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--column`   | Print column of first match after line number. |
 | `--nocolumn` | Don't print column of first match (default).   |
 
 #### File presentation
+
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--color, --colour`     | Render the output with ANSI color codes.    |
 | `--nocolor, --nocolour` | Render the output without ANSI color codes. |
 
 #### File/directory inclusion/exclusion:
+
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--[no]ignore-dir=name, --[no]ignore-directory=name`     | [Do not] exclude directories with this name.        |
@@ -247,6 +261,7 @@ on the command line override options specified earlier on the command line.
 | `--type=[no]TYPE`                                | Include only [exclude all] TYPE files.  Types may also be specified as `--[no]TYPE`: e.g., `--cpp` is equivalent to `--type=cpp`.  May be specified multiple times. |
 
 #### File type specification:
+
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--type-add=TYPE:FILTER:FILTERARGS` | Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is appended to. |
@@ -254,17 +269,20 @@ on the command line override options specified earlier on the command line.
 | `--type-set=TYPE:FILTER:FILTERARGS` | Files FILTERed with the given FILTERARGS are treated as belonging to type TYPE.  Any existing definition of type TYPE is replaced. |
 
 #### Performance Tuning:
+
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--dirjobs=NUM_JOBS`   |  Number of directory traversal jobs (std::thread<>s) to use.  Default is 2. |
 | `-j, --jobs=NUM_JOBS`       | Number of scanner jobs (std::thread<>s) to use.  Default is the number of cores on the system. |
 
 #### Miscellaneous:
+
 | Option | Description |
 |----------------------|------------------------------------------|
 | `--noenv`         | Ignore .ucgrc files.                            |
 
 #### Informational options:
+
 | Option | Description |
 |----------------------|------------------------------------------|
 | `-?, --help`                      | give this help list                 |
@@ -300,19 +318,25 @@ Options read later will override earlier options.
 ### Extension List Filter
 
 The extension list filter allows you to specify a comma-separated list of file extensions which are to be considered as belonging to file type TYPE.
+
 Example:
+
 `--type-set=type1:ext:abc,xqz,def`
 
 ### Literal Filename Filter
 
 The literal filename filter simply specifies a single literal filename which is to be considered as belonging to file type TYPE.
+
 Example:
+
 `--type-add=autoconf:is:configure.ac`
 
 ### Glob filter
 
 The glob filter allows you to specify a glob pattern to match against filenames.  If the glob matches, the file is considered as belonging to the file type TYPE.
+
 Example:
+
 `--type-set=mk:glob:?akefile*`
 
 ## Author
