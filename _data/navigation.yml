@@ -1,5 +1,8 @@
 # Site navigation links
 
+- title: "Latest Release: 0.3.3"
+  url: https://github.com/gvansickle/ucg/releases/latest
+
 - title: README
   url: /readme/
 
