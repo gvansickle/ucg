@@ -7,7 +7,7 @@ modified: 2014-08-08T19:44:38.564948-04:00
 
 Looking for a fast code search tool that's easier to use than `grep`?  **UniversalCodeGrep** may be just what you're looking for.
 
-Please see the [Readme]({{ site.url }}/readme) for more information.
+Please see the [README]({{ site.url }}/readme) for more information.
 
 <!--
 <a markdown="0" href="{{ site.url }}/theme-setup" class="btn">Install So Simple Theme</a>
