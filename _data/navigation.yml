@@ -1,0 +1,23 @@
+# Site navigation links
+
+- title: "Latest Release: 0.3.3"
+  url: https://github.com/gvansickle/ucg/releases/latest
+
+- title: README
+  url: /readme/
+
+- title: News
+  url: /news/
+
+- title: Articles
+  url: /articles/
+
+- title: About
+  url: /about/
+
+- title: Search
+  url: /search/
+
+- title: View on GitHub
+  url: https://github.com/gvansickle/ucg
+

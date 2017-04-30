@@ -1,8 +1,71 @@
-title: UniversalCodeGrep
-description: ucg - UniversalCodeGrep
-google_analytics: 
-show_downloads: true
-theme: jekyll-theme-cayman
+# Site wide configuration
 
+title: UniversalCodeGrep
+locale: en_US
+description: Easy as Ack, Faster than grep
+logo: site-logo-ucg.png
+search: true
+### @todo PUT THIS BACK BEFORE COMMITTING.
+url                      : "https://gvansickle.github.io/ucg" # the base hostname & protocol for your site
+repository               : "gvansickle/ucg"  # GitHub username/repo-name, Required to have access to repo metadata locally/prevent Jekyll-metadata from failing.
+
+# Jekyll configuration
+
+permalink:   /:categories/:title/
+markdown:    kramdown
+highlighter: rouge
+sass:
+  sass_dir: _sass
+  style: compressed
 gems:
-  - jekyll-mentions
+  - jekyll-sitemap
+  - jekyll-gist
+  - jekyll-feed
+
+kramdown:
+  input: GFM
+  hard_wrap: false
+  auto_ids: true
+  footnote_nr: 1
+  entity_output: as_char
+  toc_levels: 1..4
+  enable_coderay: false
+
+mathjax: true
+
+include: [".htaccess"]
+exclude: ["lib", "config.rb", "Capfile", "config", "log", "Rakefile", "Rakefile.rb", "tmp", ".less", "*.sublime-project", "*.sublime-workspace", "test", "spec", "Gruntfile.js", "package.json", "node_modules", "Gemfile", "Gemfile.lock", "LICENSE", "README.md", "vendor"]
+
+
+# Site owner
+owner:
+  name: "Gary R. Van Sickle"
+  avatar: "https://avatars0.githubusercontent.com/u/14008106?v=3&s=460"
+  email: "grvs@users.sourceforge.net"
+  disqus-shortname:
+  twitter: #username
+  facebook: #username
+  github: "gvansickle"
+  stackexchange: #http://stackoverflow.com/users/123456/username
+  linkedin: #username
+  instagram: #username
+  flickr: #username
+  tumblr: #username
+  pinterest: #username
+  weibo: #userid
+  google:
+    plus: #username
+    analytics:
+    verify:
+    ad-client:
+    ad-slot:
+  bing-verify:
+
+
+# Front-matter defaults.
+defaults:
+  - scope:
+      path: ""
+    values:
+      share: "true"
+
