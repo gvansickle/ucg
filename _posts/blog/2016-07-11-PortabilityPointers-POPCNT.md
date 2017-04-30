@@ -4,8 +4,7 @@ title:  "Portability Pointers: POPCNT"
 categories: blog
 tags:
   - POPCNT
-image:
-  feature: unsplash-milkyway-photo-1280w-cropped-1444703686981-a3abbc4d4fe3.jpg
+  - Portability Pointers
 share: true
 ---
 

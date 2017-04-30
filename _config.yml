@@ -60,3 +60,11 @@ owner:
     ad-client:
     ad-slot:
   bing-verify:
+
+
+# Front-matter defaults.
+defaults:
+  - scope:
+      path: ""
+    values:
+      share: "true"

@@ -5,6 +5,7 @@ categories: blog
 tags:
   - sed
   - 21st Century
+  - Portability Pointers
 ---
 
 ## sed: Not Portable
