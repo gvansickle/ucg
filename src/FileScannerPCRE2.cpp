@@ -361,7 +361,8 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 			{
 				PCRE2_SIZE old_ovector[2] = { ovector[0], ovector[1] };
 				// Find the literal prefix.
-				rc = LiteralMatch(this, file_data, file_size, start_offset, ovector);
+				/// @todo std::invoke from C++17 might be better here.
+				rc = (this->*LiteralMatch)(file_data, file_size, start_offset, ovector);
 				if(ovector[0] > file_size)
 				{
 					break;
@@ -425,7 +426,8 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		}
 		else
 		{
-			rc = LiteralMatch(this, file_data, file_size, start_offset, ovector);
+			/// @todo std::invoke from C++17 might be better here.
+			rc = (this->*LiteralMatch)(file_data, file_size, start_offset, ovector);
 		}
 
 		// Check for no match.
