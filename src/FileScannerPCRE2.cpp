@@ -426,6 +426,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 		}
 		else
 		{
+			/// @todo std::invoke from C++17 might be better here.
 			rc = (this->*LiteralMatch)(file_data, file_size, start_offset, ovector);
 		}
 

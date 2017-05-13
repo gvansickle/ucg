@@ -156,14 +156,21 @@ protected:
 	const char * find_sse4_2_no_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
 	const char * find_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
 
-
-	//using LiteralMatch_type = std::function<int (const FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept>;
+	/**
+	 * Member function pointer to the multiversioned LiteralMatch function.
+	 *
+	 * @param file_data
+	 * @param file_size
+	 * @param start_offset
+	 * @param ovector
+	 * @return
+	 */
 	int (FileScanner::*LiteralMatch)(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept;
+
+	/**
+	 * Runtime resolver function for the LiteralMatch function.
+	 */
 	static decltype(LiteralMatch) resolve_LiteralMatch(FileScanner *obj) noexcept;
-
-	//LiteralMatch_type LiteralMatch noexcept;
-
-	//int (*FileScanner::LiteralMatch)(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept;
 
 	int LiteralMatch_default(const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) const noexcept;
 
@@ -172,9 +179,9 @@ protected:
 	///@}
 
 	/**
-	 * Analyzes the given #regex and returns true if it's a literal string.
+	 * Analyzes the given @c regex and returns true if it's a literal string.
 	 *
-	 * @returns  true if regex is literal.
+	 * @returns  true if @c regex is literal.
 	 */
 	bool IsPatternLiteral(const std::string &regex) const noexcept;
 
@@ -207,6 +214,10 @@ protected:
 	/// One past the end of the last valid value in m_compiled_range_bitmap.
 	uint16_t m_end_ranges_table {0};
 
+	/**
+	 * The literal string to search for.  This string has been allocated by overaligned_alloc(), and so must be
+	 * deallocated by std::free().  We package it up in a std::unique_ptr<> with a custom deleter to prevent leaks.
+	 */
 	std::unique_ptr<uint8_t,void(*)(void*)> m_literal_search_string { nullptr, std::free };
 	size_t m_literal_search_string_len {0};
 
