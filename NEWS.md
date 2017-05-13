@@ -8,7 +8,7 @@
 - Removed dependency on GNU argp.  Now using [The Lean Mean C++ Option Parser](http://optionparser.sourceforge.net/), included in `ucg` distro, for option parsing.
 
 ### Fixed
-
+- Resolved issue with std::function<> vs. noexcept breaking build under Clang 4.0.0.  Resolves #118.
 
 ## [0.3.3] - 2016-12-30
 
