@@ -99,10 +99,9 @@ private:
 };
 
 /// Types of the file and directory include/exclude predicates.
-//using file_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
-//using dir_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
-typedef typename std::function<bool (const std::string& name) noexcept> file_basename_filter_type;
-typedef typename std::function<bool (const std::string& name) noexcept> dir_basename_filter_type;
+using file_basename_filter_type = std::function<bool (const std::string& name)>;
+using dir_basename_filter_type = std::function<bool (const std::string& name)>;
+
 
 /**
  * Multithreaded directory tree traversal class.
@@ -142,8 +141,8 @@ private:
 	/// File output queue.
 	sync_queue<std::shared_ptr<FileID>>& m_out_queue;
 
-	file_basename_filter_type m_file_basename_filter = {};
-	dir_basename_filter_type m_dir_basename_filter = {};
+	file_basename_filter_type m_file_basename_filter;
+	dir_basename_filter_type m_dir_basename_filter;
 
 	DirTraversalStats m_stats;
 

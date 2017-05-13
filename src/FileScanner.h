@@ -135,7 +135,7 @@ protected:
 	bool ConstructCodeUnitTable(const uint8_t *pcre2_bitmap) noexcept;
 	void ConstructRangePairTable() noexcept;
 
-	using FindFirstPossibleCodeUnit_type = std::function<const char *(const FileScanner&, const char * __restrict__ cbegin, size_t len) noexcept>;
+	using FindFirstPossibleCodeUnit_type = std::function<const char *(const FileScanner&, const char * __restrict__ cbegin, size_t len)>;
 
 	static FindFirstPossibleCodeUnit_type resolve_FindFirstPossibleCodeUnit();
 
@@ -157,7 +157,7 @@ protected:
 	const char * find_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
 
 
-	using LiteralMatch_type = std::function<int (const FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept>;
+	using LiteralMatch_type = std::function<int (const FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector)>;
 
 	static LiteralMatch_type resolve_LiteralMatch(FileScanner *obj) noexcept;
 
