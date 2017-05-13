@@ -157,7 +157,7 @@ protected:
 	const char * find_sse4_2_popcnt(const char * __restrict__ cbegin, size_t len) const noexcept;
 
 
-	using LiteralMatch_type = std::function<int (const FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector)>;
+	using LiteralMatch_type = std::function<int (const FileScanner *obj, const char *file_data, size_t file_size, size_t start_offset, size_t *ovector) noexcept>;
 
 	static LiteralMatch_type resolve_LiteralMatch(FileScanner *obj) noexcept;
 
