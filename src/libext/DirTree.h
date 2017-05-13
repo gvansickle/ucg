@@ -98,6 +98,9 @@ private:
 #undef M_STATLIST
 };
 
+/// Types of the file and directory include/exclude predicates.
+using file_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
+using dir_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
 
 /**
  * Multithreaded directory tree traversal class.
@@ -105,9 +108,6 @@ private:
 class DirTree
 {
 public:
-	/// Type of the file and directory include/exclude predicates.
-	using file_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
-	using dir_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
 
 	DirTree(sync_queue<std::shared_ptr<FileID>>& output_queue,
 			const file_basename_filter_type &file_basename_filter,
