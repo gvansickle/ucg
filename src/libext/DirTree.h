@@ -101,8 +101,8 @@ private:
 /// Types of the file and directory include/exclude predicates.
 //using file_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
 //using dir_basename_filter_type = std::function<bool (const std::string& name) noexcept>;
-typedef std::function<bool (const std::string& name) noexcept> file_basename_filter_type;
-typedef std::function<bool (const std::string& name) noexcept> dir_basename_filter_type;
+typedef typename std::function<bool (const std::string& name) noexcept> file_basename_filter_type;
+typedef typename std::function<bool (const std::string& name) noexcept> dir_basename_filter_type;
 
 /**
  * Multithreaded directory tree traversal class.
