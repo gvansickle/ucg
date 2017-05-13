@@ -110,7 +110,7 @@ typedef std::function<bool (const std::string& name) noexcept> dir_basename_filt
 class DirTree
 {
 public:
-
+	DirTree() = delete;
 	DirTree(sync_queue<std::shared_ptr<FileID>>& output_queue,
 			const file_basename_filter_type &file_basename_filter,
 			const dir_basename_filter_type &dir_basename_filter,
@@ -142,8 +142,8 @@ private:
 	/// File output queue.
 	sync_queue<std::shared_ptr<FileID>>& m_out_queue;
 
-	file_basename_filter_type m_file_basename_filter;
-	dir_basename_filter_type m_dir_basename_filter;
+	file_basename_filter_type m_file_basename_filter = {};
+	dir_basename_filter_type m_dir_basename_filter = {};
 
 	DirTraversalStats m_stats;
 
