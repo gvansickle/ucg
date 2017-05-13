@@ -345,9 +345,9 @@ extern "C" void * resolve_CountLinesSinceLastMatch(void)
  * @param obj
  * @return
  */
-FileScanner::LiteralMatch_type FileScanner::resolve_LiteralMatch(FileScanner * obj [[maybe_unused]]) noexcept
+decltype(FileScanner::LiteralMatch) FileScanner::resolve_LiteralMatch(FileScanner * obj [[maybe_unused]]) noexcept
 {
-	FileScanner::LiteralMatch_type retval;
+	decltype(FileScanner::LiteralMatch) retval;
 
 	if(sys_has_sse4_2())
 	{
