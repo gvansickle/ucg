@@ -280,7 +280,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 	if(is_file || is_dir || is_symlink)
 	{
 		// We'll need the file's basename.
-		std::string basename = dirent_get_name(current_dirent);
+		std::string basename {dirent_get_name(current_dirent)};
 
 		LOG(INFO) << "Considering dirent name='" << basename << "'";
 
