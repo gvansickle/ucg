@@ -162,7 +162,7 @@ private:
 
 namespace std
 {
-	// Inject a specialization of std::hash<> into std:: for dev_ino_pair.
+	/// Injects a specialization of std::hash<> into std:: for dev_ino_pair.
 	template <>
 	struct hash<dev_ino_pair>
 	{
@@ -181,7 +181,7 @@ static_assert(std::is_class<dev_ino_pair>::value, "not an aggregate type");
 static_assert(std::is_literal_type<dev_ino_pair>::value, "dev_ino_pair isn't trivial");
 
 /**
- * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as possible.
+ * Get the d_name field out of the passed dirent struct @p de and into a @c std::string, in as efficient manner as possible.
  *
  * @param de
  * @return
@@ -245,8 +245,8 @@ namespace portable
  * A more usable and portable replacement for glibc and POSIX dirname()'s.
  *
  * @param path  const ref to a path string.  Guaranteed to not be modified in any way by the function call.
- * @return  A std::string representing the dirname part of #path.  Guaranteed to be a normal std::string with which you may do
- *          whatever you can do with any other std::string.
+ * @return A std::string representing the dirname part of @p path.  Guaranteed to be a normal std::string with which you may do
+ *         whatever you can do with any other std::string.
  */
 inline std::string dirname(const std::string &path) noexcept
 {
@@ -266,8 +266,8 @@ inline std::string dirname(const std::string &path) noexcept
  * A more usable and portable replacement for glibc and POSIX basename()'s.
  *
  * @param path  const ref to a path string.  Guaranteed to not be modified in any way by the function call.
- * @return  A std::string representing the basename part of path.  Guaranteed to be a normal std::string with which you may do
- *          whatever you can do with any other std::string.
+ * @return A std::string representing the basename part of @p path.  Guaranteed to be a normal std::string with which you may do
+ *         whatever you can do with any other std::string.
  */
 inline std::string basename(const std::string &path) noexcept
 {
@@ -334,7 +334,7 @@ inline std::string get_home_dir_name()
 }
 
 /**
- * Convert #path into an absolute file path.
+ * Convert @p path into an absolute file path.
  *
  * @todo Suspect this is broken on... wait for it... OSX.
  *
@@ -358,7 +358,10 @@ inline std::string canonicalize_file_name(const std::string &path)
 } // namespace
 
 /**
- * Examines the given #path and determines if it is absolute.
+ * Examines the given @p path and determines if it is absolute.
+ *
+ * @note Only POSIX-like systems currently supported.
+ * @todo Expand support to Windows.
  *
  * @param path
  * @return
