@@ -159,11 +159,15 @@ public:
 
 	/// @name Constructors.
 	/// @{
+
+	/// Default constructor.
 	FileID();
+	/// Copy constructor.
 	FileID(const FileID& other);
+	/// Move constructor.
 	FileID(FileID&& other);
 
-	/// Our equivalent for AT_FDCWD, the cwd of the process.
+	/// Constructor for our equivalent of AT_FDCWD, the cwd of the process.
 	/// Different in that each FileID created with this constructor holds a real file handle to the "." directory.
 	FileID(path_known_cwd_tag tag);
 	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename,
@@ -186,7 +190,7 @@ public:
 	/// Destructor.
 	~FileID();
 
-	std::string GetBasename() const noexcept;
+	const std::string& GetBasename() const noexcept;
 
 	/**
 	 * Returns the "full path" of the file.  May be absolute or relative to the root AT dir.

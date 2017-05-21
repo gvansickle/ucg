@@ -52,12 +52,19 @@ public:
 	/// Move assignment.
 	impl& operator=(impl&& other) = default;
 
-	/// @name Various non-default constructors.
+	/// @name The non-default constructors.
 	/// @{
-	impl(std::shared_ptr<FileID> at_dir_fileid, std::string base_or_pathname);
-	impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
+
+	/**
+	 * Construct from an "at" directory FileID and an arbitrary path.
+	 * This is the most general of the constructors.
+	 * @param at_dir_fileid     The "at" directory.
+	 * @param base_or_pathname  An arbitrary path.  May be relative or absolute, but must be well-formed.
+	 */
+	impl(std::shared_ptr<FileID>&& at_dir_fileid, std::string&& base_or_pathname);
+	impl(std::shared_ptr<FileID>&& at_dir_fileid, std::string&& basename, std::string&& pathname,
 			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
-	///@}
+	/// @}
 
 	/// Default destructor.
 	~impl() = default;
@@ -149,8 +156,8 @@ static_assert(std::is_move_assignable<FileID::impl>::value, "UnsynchronizedFileI
 
 
 
-FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
-	: m_at_dir(at_dir_fileid), m_basename(bname)
+FileID::impl::impl(std::shared_ptr<FileID>&& at_dir_fileid, std::string&& bname)
+	: m_at_dir(std::move(at_dir_fileid)), m_basename(std::move(bname))
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
@@ -166,9 +173,9 @@ FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
 	}
 }
 
-FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std::string pname,
+FileID::impl::impl(std::shared_ptr<FileID>&& at_dir_fileid, std::string&& bname, std::string&& pname,
 		const struct stat *stat_buf, FileType type)
-		: m_at_dir(at_dir_fileid), m_basename(bname), m_path(pname), m_file_type(type)
+		: m_at_dir(std::move(at_dir_fileid)), m_basename(std::move(bname)), m_path(std::move(pname)), m_file_type(type)
 {
 	LOG(DEBUG) << "5-param const., m_basename=" << m_basename << ", m_at_dir=" << (!!m_at_dir ? (m_at_dir->m_pimpl->m_path) : "<nullptr>");
 	if(stat_buf != nullptr)
@@ -395,7 +402,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 		FileType type,
 		dev_t d, ino_t i,
 		FileAccessMode fam, FileCreationFlag fcf)
-	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", stat_buf, type))
+	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), std::move(basename), "", stat_buf, type))
 {
 	uint_fast8_t orbits = NONE;
 
@@ -425,7 +432,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
-	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", nullptr, type))
+	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), std::move(basename), "", nullptr, type))
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
@@ -443,7 +450,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type)
-	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname /*==basename*/, pathname, nullptr, type))
+	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), std::move(pathname) /*==basename*/, std::move(pathname), nullptr, type))
 {
 	/// @note Taking pathname by value since we are always storing it.
 	/// Full openat() semantics:
@@ -452,8 +459,11 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 
 	uint_fast8_t orbits = NONE;
 
-	if(is_pathname_absolute(pathname))
+	if(!m_pimpl->m_path.empty() && is_pathname_absolute(m_pimpl->m_path))
 	{
+		// Pathname was absolute.
+		/// @todo Since this is the path_known_absolute_tag overload, seems like this should really not need
+		/// the test and/or be an error if it isn't absolute.
 		orbits |= PATH;
 	}
 	if(type != FT_UNINITIALIZED)
@@ -464,14 +474,15 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileAccessMode fam, FileCreationFlag fcf)
-	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname))
+	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), std::move(pathname)))
 {
 	SetFileDescriptorMode(fam, fcf);
 
 	uint_fast8_t orbits = NONE;
 
-	/// @todo This check is kind of out of place.  It ends up being done twice, here and in the impl constructor.
-	if(is_pathname_absolute(pathname))
+	// Check for absolute path is done in the impl constructor, and m_path is assigned if it is absolute.
+	// We can't use the pathname param here (in a is_path_absolute() check) because it's been moved from.
+	if(!m_pimpl->m_path.empty())
 	{
 		orbits |= PATH;
 	}
@@ -514,7 +525,7 @@ FileID::~FileID()
 	// and hence we wouldn't be getting destroyed.
 }
 
-std::string FileID::GetBasename() const noexcept
+const std::string& FileID::GetBasename() const noexcept
 {
 	// This is const after construction, and always exists, so it doesn't need a lock here.
 	return m_pimpl->GetBasename();
