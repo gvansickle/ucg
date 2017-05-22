@@ -256,8 +256,8 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 		is_dir = S_ISDIR(statbuf.st_mode);
 		is_file = S_ISREG(statbuf.st_mode);
 		/// @note This shouldn't ever come back as a symlink if we're doing a logical traversal, since
-		///       fstatat() follows symlinks by default.  We add the AT_SYMLINK_NOFOLLOW flag and then
-		///       ignore any symlinks returned if we're doing a physical traversal.
+		///       fstatat() follows symlinks by default.  If we're doing a physical traversal, we add the
+		///       AT_SYMLINK_NOFOLLOW flag and then ignore any symlinks returned.
 		is_symlink = S_ISLNK(statbuf.st_mode);
 		if(is_dir || is_file || is_symlink)
 		{

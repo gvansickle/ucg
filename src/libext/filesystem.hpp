@@ -251,7 +251,7 @@ namespace portable
 inline std::string dirname(const std::string &path) noexcept
 {
 	// Get a copy of the path string which ::dirname() can modify all it wants.
-	char * modifiable_path = strdup(path.c_str());
+	char * modifiable_path = strndup(path.c_str(), path.length());
 
 	// Copy the output of dirname into a std:string.  We don't ever free the string dirname() returns
 	// because it's either a static buffer, or it's a pointer to modifiable_path.  The latter we'll free below.
@@ -272,7 +272,7 @@ inline std::string dirname(const std::string &path) noexcept
 inline std::string basename(const std::string &path) noexcept
 {
 	// Get a copy of the path string which ::basename() can modify all it wants.
-	char * modifiable_path = strdup(path.c_str());
+	char * modifiable_path = strndup(path.c_str(), path.length());
 
 	// Copy the output of dirname into a std:string.  We don't ever free the string basename() returns
 	// because it's either a static buffer, or it's a pointer to modifiable_path.  The latter we'll free below.

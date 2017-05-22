@@ -138,7 +138,7 @@ private:
 	/// Directory queue.  Used internally.
 	sync_queue<std::shared_ptr<FileID>> m_dir_queue;
 
-	/// File output queue.
+	/// Reference to the FileID output queue.
 	sync_queue<std::shared_ptr<FileID>>& m_out_queue;
 
 	file_basename_filter_type m_file_basename_filter;
@@ -158,8 +158,8 @@ private:
 	void ReaddirLoop(int dirjob_num);
 
 	/**
-	 * Process a single directory entry (dirent) structure #de, with parent #dse.  Push any files found on the #m_out_queue,
-	 * push any directories found on the #m_dir_queue.  Maintain statistics in #stats.
+	 * Process a single directory entry (@c dirent) structure @p de, with parent @p dse.  Push any files found onto the @p m_out_queue,
+	 * push any directories found onto the @p m_dir_queue.  Maintain statistics in @p stats.
 	 *
 	 * @param dse
 	 * @param de
