@@ -232,7 +232,7 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 #if DEBUG
 			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
 #endif
-			FileDescriptor temp_atdir{m_at_dir->GetTempAtDir()};
+			FileDescriptor temp_atdir{ m_at_dir->GetTempAtDir() };
 			int atdirfd = temp_atdir.GetFD();
 			int tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
 			if(tempfd == -1)
