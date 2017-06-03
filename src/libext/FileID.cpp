@@ -24,6 +24,7 @@
 #include <libext/string.hpp>
 
 #include "FileID.h"
+#include "libext/FileDescriptorCache.h"
 
 #include <fcntl.h> // For AT_FDCWD, AT_NO_AUTOMOUNT
 #include <unistd.h> // For close().
@@ -119,7 +120,8 @@ public:
 	mutable int m_open_flags { 0 };
 
 	/// The file descriptor object.
-	mutable FileDescriptor m_file_descriptor {};
+	//mutable FileDescriptor m_file_descriptor {};
+	mutable FileDesc m_file_descriptor {};
 
 	/// @name Info normally gathered from a stat() call.
 	///@{
@@ -196,7 +198,7 @@ std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_other;
 
 FileID::IsValid FileID::impl::GetFileDescriptor()
 {
-	if(m_file_descriptor.empty())
+	if(FileDescriptorCache::Get()->DescriptorIsEmpty(m_file_descriptor))
 	{
 		// File hasn't been opened.
 
@@ -232,15 +234,22 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 #if DEBUG
 			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
 #endif
+#if 0
 			FileDescriptor temp_atdir{ m_at_dir->GetTempAtDir() };
 			int atdirfd = temp_atdir.GetFD();
 			int tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
-			if(tempfd == -1)
+#endif
+			auto atdirfd = m_at_dir->GetFileDescriptor();
+			auto tempfd = FileDescriptorCache::Get()->OpenAt(atdirfd, GetBasename(), m_open_flags);
+			if(FileDescriptorCache::Get()->DescriptorIsEmpty(tempfd))
 			{
 				//LOG(DEBUG) << "OPENAT FAIL: " << explain_openat(atdirfd, GetBasename().c_str(), m_open_flags, 0666);
-				throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with valid m_at_dir=" + std::to_string(atdirfd) + " failed");
+				throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with valid m_at_dir=" + std::to_string(atdirfd.m_nonsys_descriptor) + " failed");
 			}
+#if 0
 			m_file_descriptor = make_shared_fd(tempfd);
+#endif
+			m_file_descriptor = tempfd;
 		}
 	}
 
@@ -253,6 +262,7 @@ void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
 	m_unique_file_identifier = dev_ino_pair(d, i);
 }
 
+#if 0
 int FileID::impl::TryGetFD() const noexcept
 {
 	if(!m_file_descriptor.empty())
@@ -263,6 +273,7 @@ int FileID::impl::TryGetFD() const noexcept
 	// No descriptor open yet.
 	return -1;
 }
+#endif
 
 FileID::IsValid FileID::impl::LazyLoadStatInfo() const noexcept
 {
@@ -384,14 +395,20 @@ FileID::FileID(path_known_cwd_tag)
 {
 	// Open the file descriptor immediately, since we don't want to use openat() here unlike in all other cases.
 	SetFileDescriptorMode(FAM_SEARCH, FCF_DIRECTORY | FCF_NOCTTY);
+#if 0
 	int tempfd = open(".", O_SEARCH | O_DIRECTORY | O_NOCTTY);
-	if(tempfd == -1)
+#endif
+	FileDesc tempfd = FileDescriptorCache::Get()->GetAT_FDCWD();
+	if(tempfd.empty())
 	{
 		LOG(DEBUG) << "Error in fdcwd constructor: " << LOG_STRERROR();
 	}
+#if 0
 	m_pimpl->m_file_descriptor = make_shared_fd(tempfd);
+#endif
+	m_pimpl->m_file_descriptor = tempfd;
 
-	LOG(DEBUG) << "FDCWD constructor, file descriptor: " << m_pimpl->m_file_descriptor.GetFD();
+	LOG(DEBUG) << "FDCWD constructor, file descriptor: " << m_pimpl->m_file_descriptor.m_nonsys_descriptor;
 
 	m_valid_bits.fetch_or(FILE_DESC | TYPE | PATH);
 
@@ -426,11 +443,15 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	if(fam != FAM_UNINITIALIZED && fcf != FCF_UNINITIALIZED)
 	{
 		m_pimpl->m_open_flags = fam | fcf;
+		m_pimpl->m_file_descriptor = FileDescriptorCache::Get()->OpenAt(m_pimpl->m_at_dir->m_pimpl->m_file_descriptor,
+				m_pimpl->m_basename, m_pimpl->m_open_flags);
+		orbits |= FILE_DESC;
 	}
 
 	m_valid_bits.fetch_or(orbits);
 }
 
+#if 0
 FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
 	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), std::move(basename), "", nullptr, type))
 {
@@ -448,7 +469,9 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 
 	m_valid_bits.fetch_or(orbits);
 }
+#endif
 
+#if 0
 FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type)
 	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), std::move(pathname) /*==basename*/, std::move(pathname), nullptr, type))
 {
@@ -472,6 +495,7 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	}
 	m_valid_bits.fetch_or(orbits);
 }
+#endif
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileAccessMode fam, FileCreationFlag fcf)
 	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), std::move(pathname)))
@@ -486,6 +510,10 @@ FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, File
 	{
 		orbits |= PATH;
 	}
+
+	m_pimpl->m_file_descriptor = FileDescriptorCache::Get()->OpenAt(m_pimpl->m_at_dir->m_pimpl->m_file_descriptor,
+			m_pimpl->m_basename, m_pimpl->m_open_flags);
+	orbits |= FILE_DESC;
 
 	m_valid_bits.fetch_or(orbits);
 }
@@ -575,17 +603,19 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-	FileDescriptor temp_atdir {GetTempAtDir()};
-	int retval = fstatat(temp_atdir.GetFD(), name.c_str(), statbuf, flags);
+	int temp_atdir = FileDescriptorCache::Get()->Lock(m_pimpl->m_file_descriptor);
+	int retval = fstatat(temp_atdir, name.c_str(), statbuf, flags);
 
 	if(retval == -1)
 	{
 		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' failed: " << LOG_STRERROR();
 		// Note: We don't clear errno here, we want to be able to look at it in the caller.
 		//errno = 0;
+		FileDescriptorCache::Get()->Unlock(m_pimpl->m_file_descriptor);
 		return false;
 	}
 
+	FileDescriptorCache::Get()->Unlock(m_pimpl->m_file_descriptor);
 	return true;
 }
 
@@ -601,6 +631,7 @@ FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 
 DIR *FileID::OpenDir()
 {
+#if 0
 	int fd = m_pimpl->TryGetFD();
 	int dirfd {0};
 	if(fd < 0)
@@ -612,6 +643,12 @@ DIR *FileID::OpenDir()
 		// We already have a file descriptor.  Dup it, because fdopendir() takes ownership of it.
 		dirfd = dup(fd);
 	}
+#endif
+
+	auto fd = FileDescriptorCache::Get()->Lock(m_pimpl->m_file_descriptor);
+	int dirfd = dup(fd);
+	FileDescriptorCache::Get()->Unlock(m_pimpl->m_file_descriptor);
+
 	return fdopendir(dirfd);
 }
 
@@ -620,6 +657,7 @@ void FileID::CloseDir(DIR *d)
 	closedir(d);
 }
 
+#if 0
 FileDescriptor FileID::GetTempAtDir()
 {
 	int fd = m_pimpl->TryGetFD();
@@ -636,10 +674,11 @@ FileDescriptor FileID::GetTempAtDir()
 	}
 	return FileDescriptor(dirfd);
 }
+#endif
 
-const FileDescriptor& FileID::GetFileDescriptor()
+FileDesc& FileID::GetFileDescriptor()
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, FILE_DESC, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
+	//DoubleCheckedMultiLock<uint8_t>(m_valid_bits, FILE_DESC, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
 	return m_pimpl->m_file_descriptor;
 }
 

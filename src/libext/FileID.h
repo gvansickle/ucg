@@ -24,6 +24,7 @@
 
 #include <future/memory.hpp>
 #include <future/shared_mutex.hpp>
+#include "libext/FileDescriptorCache.h"
 
 #include "hints.hpp"
 
@@ -234,6 +235,7 @@ public:
 	DIR *OpenDir();
 	void CloseDir(DIR*d);
 
+#if 0
 	/**
 	 * Returns a FileDescriptor containing a file descriptor usable as the at-directory in openat() etc.
 	 * Descriptor may be opened O_PATH, so should not be used for any other purpose.
@@ -241,12 +243,13 @@ public:
 	 * @return
 	 */
 	FileDescriptor GetTempAtDir();
+#endif
 
 	/**
 	 *
 	 * @return
 	 */
-	const FileDescriptor& GetFileDescriptor();
+	FileDesc& GetFileDescriptor();
 
 	/**
 	 * Return the type of file this FileID represents.  May involve stat()ing the file.

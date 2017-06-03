@@ -76,22 +76,24 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		/// @note At the moment, we're doing the equivalent of fts' COMFOLLOW here;
 		/// we follow symlinks during the fstatat() call in the FileID constructor by not specifying
 		/// AT_SYMLINK_NOFOLLOW.  So, we shouldn't get a FT_SYMLINK back from GetFileType().
-		auto file_or_dir = std::make_shared<FileID>(FileID(root_file_id, p));
+		auto file_or_dir = std::make_shared<FileID>(FileID(root_file_id, p, FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY));
 		auto type = file_or_dir->GetFileType();
 		switch(type)
 		{
 		case FT_REG:
 		{
 			// Explicitly not filtering files specified on command line.
-			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
-			m_out_queue.push_back(file_or_dir);
+			//file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY);
+			auto file = std::make_shared<FileID>(FileID(root_file_id, p, FAM_RDONLY, FCF_NOATIME | FCF_NOCTTY));
+			m_out_queue.push_back(std::move(file));
 			break;
 		}
 		case FT_DIR:
 		{
 			// Explicitly not filtering nor obeying no-recurse for dirs specified on command line.
-			file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
-			m_dir_queue.push_back(file_or_dir);
+			//file_or_dir->SetFileDescriptorMode(FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
+			auto dir = std::make_shared<FileID>(FileID(root_file_id, p, FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK));
+			m_dir_queue.push_back(std::move(dir));
 			break;
 		}
 		case FT_SYMLINK:
@@ -336,7 +338,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 				// We have to detect any symlink cycles ourselves.
 				if(HasDirBeenVisited(dir_atfd->GetUniqueFileIdentifier()))
 				{
-					// Found cycle.
+					// Found possible cycle.
 					WARN() << "'" << dir_atfd->GetPath() << "': already visited this directory, possible recursive directory loop?";
 					stats.m_num_dirs_rejected++;
 					return;

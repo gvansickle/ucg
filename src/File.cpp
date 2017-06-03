@@ -44,7 +44,7 @@ File::File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>
 
 	try
 	{
-		file_descriptor = m_fileid->GetFileDescriptor().GetFD();
+		file_descriptor = FileDescriptorCache::Get()->Lock(m_fileid->GetFileDescriptor());
 
 		/// @todo Does the above ever not throw on error?
 		if(file_descriptor == -1)
@@ -79,6 +79,8 @@ File::File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>
 	{
 		//close(m_file_descriptor);
 		//m_file_descriptor = -1;
+		/// @todo Not exception safe.
+		FileDescriptorCache::Get()->Close(m_fileid->GetFileDescriptor());
 		return;
 	}
 
@@ -93,6 +95,9 @@ File::File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>
 	// something not unreasonable, e.g. 1MB.
 	auto io_size = clamp(m_fileid->GetBlockSize(), static_cast<blksize_t>(0x20000), static_cast<blksize_t>(0x100000));
 	m_file_data = GetFileData(file_descriptor, file_size, io_size);
+
+	/// @todo Not exception safe.
+	FileDescriptorCache::Get()->Close(m_fileid->GetFileDescriptor());
 
 	if(m_file_data == MAP_FAILED)
 	{
@@ -112,6 +117,8 @@ File::~File()
 {
 	// Clean up.
 	FreeFileData(m_file_data, m_fileid->GetFileSize());
+
+	/// @todo DELETEME FileDescriptorCache::Get()->Close(m_fileid->GetFileDescriptor());
 }
 
 const char* File::GetFileData(int file_descriptor, size_t file_size, size_t preferred_block_size)
