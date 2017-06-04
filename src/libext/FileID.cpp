@@ -676,7 +676,7 @@ FileDescriptor FileID::GetTempAtDir()
 }
 #endif
 
-FileDesc& FileID::GetFileDescriptor()
+FileDesc FileID::GetFileDescriptor()
 {
 	//DoubleCheckedMultiLock<uint8_t>(m_valid_bits, FILE_DESC, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
 	return m_pimpl->m_file_descriptor;

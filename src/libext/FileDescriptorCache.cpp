@@ -65,14 +65,14 @@ FileDesc FileDescriptorCache::GetAT_FDCWD()
 	return fd;
 }
 
-FileDesc FileDescriptorCache::OpenAt(const FileDesc& atdir, const std::string& relname, int mode)
+FileDesc FileDescriptorCache::OpenAt(const FileDesc atdir, const std::string& relname, int mode)
 {
 	std::lock_guard<decltype(m_mutex)> lock(m_mutex);
 
 	return OpenAtImpl(atdir, relname, mode);
 }
 
-FileDesc FileDescriptorCache::OpenAtImpl(const FileDesc& atdir, const std::string& relname, int mode)
+FileDesc FileDescriptorCache::OpenAtImpl(const FileDesc atdir, const std::string& relname, int mode)
 {
 	FileDescImpl fdi {atdir, -1, mode, relname};
 
@@ -84,14 +84,14 @@ FileDesc FileDescriptorCache::OpenAtImpl(const FileDesc& atdir, const std::strin
 	return fd;
 }
 
-int FileDescriptorCache::Lock(FileDesc& fd)
+int FileDescriptorCache::Lock(FileDesc fd)
 {
 	std::lock_guard<decltype(m_mutex)> lock(m_mutex);
 
 	return LockImpl(fd);
 }
 
-int FileDescriptorCache::LockImpl(FileDesc& fd)
+int FileDescriptorCache::LockImpl(FileDesc fd)
 {
 	// Check for an existing entry.  There should be one.
 	auto fdit = m_cache.find(fd);
@@ -140,21 +140,17 @@ int FileDescriptorCache::LockImpl(FileDesc& fd)
 	return fdit->second.m_system_descriptor;
 }
 
-void FileDescriptorCache::Unlock(FileDesc& fd)
+void FileDescriptorCache::Unlock(FileDesc fd)
 {
 	std::lock_guard<decltype(m_mutex)> lock(m_mutex);
 
 	UnlockImpl(fd);
 }
 
-void FileDescriptorCache::UnlockImpl(FileDesc& fd)
+void FileDescriptorCache::UnlockImpl(FileDesc fd)
 {
 	// Remove fd from the lock hash.
 	m_locked_fds.erase(fd);
-
-	// Remove from the LRU FIFO.
-	//Touch(fd);
-	//m_fd_fifo.pop_back();
 }
 
 FileDesc FileDescriptorCache::Dup(FileDesc fd)
@@ -165,7 +161,7 @@ FileDesc FileDescriptorCache::Dup(FileDesc fd)
 	return OpenAtImpl(fdit->second.m_atdir_fd, fdit->second.m_atdir_relative_name, fdit->second.m_mode);
 }
 
-void FileDescriptorCache::Close(FileDesc& fd)
+void FileDescriptorCache::Close(FileDesc fd)
 {
 	std::lock_guard<decltype(m_mutex)> lock(m_mutex);
 
@@ -190,22 +186,27 @@ void FileDescriptorCache::Close(FileDesc& fd)
 	--m_num_sys_fds_in_use;
 
 	// Remove fd from the cache.
-	//m_cache.erase(fd);
+	m_cache.erase(fdiit);
+
+	// Remove from the LRU FIFO.
+	Touch(fd);
+	m_fd_fifo.pop_back();
 }
 
-void FileDescriptorCache::Touch(FileDesc& fd)
+void FileDescriptorCache::Touch(FileDesc fd)
 {
 	// Find the FileDesc.
-	auto fdit = std::find(m_fd_fifo.begin(), m_fd_fifo.end(), fd);
+	auto fdit = std::find(m_fd_fifo.rbegin(), m_fd_fifo.rend(), fd);
 
-	if(fdit == m_fd_fifo.end())
+	if(fdit == m_fd_fifo.rend())
 	{
 		throw FileException("INTERNAL ERROR: fd not in fifo");
 	}
 
 	// Move it to the end of the deque.
-	m_fd_fifo.erase(fdit);
+	m_fd_fifo.erase(std::next(fdit).base());
 	m_fd_fifo.push_back(fd);
+
 }
 
 void FileDescriptorCache::FreeSysFileDesc()

@@ -249,7 +249,7 @@ public:
 	 *
 	 * @return
 	 */
-	FileDesc& GetFileDescriptor();
+	FileDesc GetFileDescriptor();
 
 	/**
 	 * Return the type of file this FileID represents.  May involve stat()ing the file.

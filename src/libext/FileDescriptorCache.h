@@ -95,28 +95,28 @@ public:
 
 	FileDesc GetAT_FDCWD();
 
-	bool DescriptorIsEmpty(const FileDesc& fd) const noexcept { return fd.empty(); };
+	bool DescriptorIsEmpty(FileDesc fd) const noexcept { return fd.empty(); };
 
-	FileDesc OpenAt(const FileDesc& atdir, const std::string& relname, int mode);
-	int Lock(FileDesc& fd);
-	void Unlock(FileDesc& fd);
+	FileDesc OpenAt(FileDesc atdir, const std::string& relname, int mode);
+	int Lock(FileDesc fd);
+	void Unlock(FileDesc fd);
 	FileDesc Dup(FileDesc fd);
-	void Close(FileDesc& fd);
+	void Close(FileDesc fd);
 
 private:
 
 	std::mutex m_mutex;
 	uint32_t m_last_file_desc {0};
 	uint32_t m_num_sys_fds_in_use {0};
-	uint32_t m_max_sys_fds {100};
+	uint32_t m_max_sys_fds {1000};
 	std::unordered_map<FileDesc, FileDescImpl> m_cache;
 	std::unordered_set<FileDesc> m_locked_fds;
 	std::deque<FileDesc> m_fd_fifo;
 
-	FileDesc OpenAtImpl(const FileDesc& atdir, const std::string& relname, int mode);
-	int LockImpl(FileDesc& fd);
-	void UnlockImpl(FileDesc& fd);
-	void Touch(FileDesc& fd);
+	FileDesc OpenAtImpl(FileDesc atdir, const std::string& relname, int mode);
+	int LockImpl(FileDesc fd);
+	void UnlockImpl(FileDesc fd);
+	void Touch(FileDesc fd);
 	void FreeSysFileDesc();
 };
 
