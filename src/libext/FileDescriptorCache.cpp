@@ -32,18 +32,11 @@ FileDescriptorCache* FileDescriptorCache::Get() noexcept
 	return &FileDescriptorCacheSingleton;
 }
 
-#if 0
-FileDesc::FileDesc(const FileDesc& other)
-{
-	*this = FileDescriptorCache::Get()->Dup(other);
-};
-#endif
-
 
 FileDescriptorCache::FileDescriptorCache()
 {
 	// Create the AT_FDCWD.
-	FileDescImpl fdi { FileDesc(0), -1, O_SEARCH | O_DIRECTORY | O_NOCTTY, "."};
+	FileDescImpl fdi { FileDesc(0), -1, O_SEARCH | O_DIRECTORY | O_NOCTTY, false, "."};
 	++m_last_file_desc;
 	FileDesc fd {m_last_file_desc};
 	//m_cache.insert(std::move(std::make_pair(std::move(fd), std::move(fdi))));
@@ -74,7 +67,7 @@ FileDesc FileDescriptorCache::OpenAt(const FileDesc atdir, const std::string& re
 
 FileDesc FileDescriptorCache::OpenAtImpl(const FileDesc atdir, const std::string& relname, int mode)
 {
-	FileDescImpl fdi {atdir, -1, mode, relname};
+	FileDescImpl fdi {atdir, -1, mode, false, relname};
 
 	++m_last_file_desc;
 	FileDesc fd {m_last_file_desc};
@@ -133,8 +126,8 @@ int FileDescriptorCache::LockImpl(FileDesc fd)
 	// Touch this FileDesc to move it to the front of the FIFO.
 	Touch(fd);
 
-	// Move the FileDesc to the locked hash so we don't delete it.
-	m_locked_fds.insert(fd);
+	// Flag the FileDesc as locked so we don't close() the underlying file handle.
+	fdit->second.m_is_locked = true;
 
 	// Return the system file descriptor.
 	return fdit->second.m_system_descriptor;
@@ -149,8 +142,9 @@ void FileDescriptorCache::Unlock(FileDesc fd)
 
 void FileDescriptorCache::UnlockImpl(FileDesc fd)
 {
-	// Remove fd from the lock hash.
-	m_locked_fds.erase(fd);
+	// Remove the lock from the fd.
+	auto fdit = m_cache.find(fd);
+	fdit->second.m_is_locked = false;
 }
 
 FileDesc FileDescriptorCache::Dup(FileDesc fd)
@@ -165,25 +159,26 @@ void FileDescriptorCache::Close(FileDesc fd)
 {
 	std::lock_guard<decltype(m_mutex)> lock(m_mutex);
 
+	auto fdiit = m_cache.find(fd);
+
 	// Unlock first if we need to.
-	if(m_locked_fds.count(fd) == 1)
+	if(fdiit->second.m_is_locked)
 	{
-		UnlockImpl(fd);
+		/// UnlockImpl(fd);
+		fdiit->second.m_is_locked = false;
 	}
 
-	// Close the system file descriptor.
-	auto fdiit = m_cache.find(fd);
 	if(fdiit == m_cache.end())
 	{
 		throw FileException("INTERNAL ERROR: file being closed not in cache");
 	}
-	else if(fdiit->second.m_system_descriptor < 0)
+	else if(fdiit->second.m_system_descriptor >= 0)
 	{
-		throw FileException("INTERNAL ERROR: file being closed has no descriptor");
+		// Close the system file descriptor.
+		close(fdiit->second.m_system_descriptor);
+		fdiit->second.m_system_descriptor = -1;
+		--m_num_sys_fds_in_use;
 	}
-	close(fdiit->second.m_system_descriptor);
-	fdiit->second.m_system_descriptor = -1;
-	--m_num_sys_fds_in_use;
 
 	// Remove fd from the cache.
 	m_cache.erase(fdiit);
@@ -213,13 +208,6 @@ void FileDescriptorCache::FreeSysFileDesc()
 {
 	for(auto fdit = m_fd_fifo.begin(); fdit < m_fd_fifo.end(); ++fdit)
 	{
-		if(m_locked_fds.count(*fdit) == 1)
-		{
-			// This fd is locked, skip to the next one.
-			continue;
-		}
-
-		// File isn't locked, does it have an allocated system file descriptor?
 		auto fdiit = m_cache.find(*fdit);
 
 		if(fdiit == m_cache.end())
@@ -227,6 +215,13 @@ void FileDescriptorCache::FreeSysFileDesc()
 			throw FileException("INTERNAL ERROR: error while freeing sys fd");
 		}
 
+		if(fdiit->second.m_is_locked)
+		{
+			// This fd is locked, skip to the next one.
+			continue;
+		}
+
+		// File isn't locked, does it have an allocated system file descriptor?
 		if(fdiit->second.m_system_descriptor < 0)
 		{
 			// No, skip it.
@@ -238,7 +233,6 @@ void FileDescriptorCache::FreeSysFileDesc()
 			// close() it so we can re-use it.
 			close(fdiit->second.m_system_descriptor);
 			fdiit->second.m_system_descriptor = -1;
-			//m_fd_fifo.erase(fdit);
 			--m_num_sys_fds_in_use;
 			return;
 		}

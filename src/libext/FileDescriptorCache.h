@@ -40,11 +40,11 @@ struct FileDesc
 	explicit FileDesc(uint32_t fd) noexcept { m_nonsys_descriptor = fd; };
 	FileDesc(const FileDesc& other) noexcept { m_nonsys_descriptor = other.m_nonsys_descriptor; };
 	FileDesc(FileDesc&& other) noexcept { m_nonsys_descriptor = other.m_nonsys_descriptor; };
-	FileDesc& operator=(const FileDesc& other) { m_nonsys_descriptor = other.m_nonsys_descriptor; return *this; };
-	FileDesc& operator=(FileDesc&& other) { m_nonsys_descriptor = other.m_nonsys_descriptor; return *this; };
+	FileDesc operator=(const FileDesc& other) noexcept { m_nonsys_descriptor = other.m_nonsys_descriptor; return *this; };
+	FileDesc operator=(FileDesc&& other) noexcept { m_nonsys_descriptor = other.m_nonsys_descriptor; return *this; };
 	~FileDesc() = default;
 
-	bool operator==(const FileDesc& other) const noexcept { return m_nonsys_descriptor == other.m_nonsys_descriptor; };
+	bool operator==(FileDesc other) const noexcept { return m_nonsys_descriptor == other.m_nonsys_descriptor; };
 	bool empty() const noexcept { return m_nonsys_descriptor == 0; };
 };
 
@@ -53,6 +53,7 @@ struct FileDescImpl
 	FileDesc m_atdir_fd;
 	int m_system_descriptor = -1;
 	int m_mode = 0;
+	bool m_is_locked = false;
 	std::string m_atdir_relative_name;
 };
 
@@ -110,7 +111,6 @@ private:
 	uint32_t m_num_sys_fds_in_use {0};
 	uint32_t m_max_sys_fds {1000};
 	std::unordered_map<FileDesc, FileDescImpl> m_cache;
-	std::unordered_set<FileDesc> m_locked_fds;
 	std::deque<FileDesc> m_fd_fifo;
 
 	FileDesc OpenAtImpl(FileDesc atdir, const std::string& relname, int mode);
