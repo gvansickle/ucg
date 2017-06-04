@@ -39,9 +39,8 @@ FileDescriptorCache::FileDescriptorCache()
 	FileDescImpl fdi { FileDesc(0), -1, O_SEARCH | O_DIRECTORY | O_NOCTTY, false, "."};
 	++m_last_file_desc;
 	FileDesc fd {m_last_file_desc};
-	//m_cache.insert(std::move(std::make_pair(std::move(fd), std::move(fdi))));
 	m_cache.emplace(fd, std::move(fdi));
-	m_fd_fifo.push_back(fd);
+	m_fd_fifo.push_front(fd);
 
 	// Keep AT_FDCWD locked for the duration of the program.
 	Lock(fd);
@@ -52,7 +51,7 @@ FileDescriptorCache::~FileDescriptorCache()
 	///Unlock(GetAT_FDCWD());
 }
 
-FileDesc FileDescriptorCache::GetAT_FDCWD()
+FileDesc FileDescriptorCache::GetAT_FDCWD() const noexcept
 {
 	FileDesc fd{1};
 	return fd;
@@ -72,7 +71,7 @@ FileDesc FileDescriptorCache::OpenAtImpl(const FileDesc atdir, const std::string
 	++m_last_file_desc;
 	FileDesc fd {m_last_file_desc};
 	m_cache.emplace(fd, std::move(fdi));
-	m_fd_fifo.push_back(fd);
+	m_fd_fifo.push_front(fd);
 
 	return fd;
 }
@@ -184,29 +183,41 @@ void FileDescriptorCache::Close(FileDesc fd)
 	m_cache.erase(fdiit);
 
 	// Remove from the LRU FIFO.
-	Touch(fd);
-	m_fd_fifo.pop_back();
+	//Touch(fd);
+	//m_fd_fifo.pop_front();
+	m_fd_fifo.remove(fd);
 }
 
 void FileDescriptorCache::Touch(FileDesc fd)
 {
 	// Find the FileDesc.
-	auto fdit = std::find(m_fd_fifo.rbegin(), m_fd_fifo.rend(), fd);
+	decltype(m_fd_fifo)::iterator before_it {m_fd_fifo.before_begin()}, fdit;
+	for(fdit = m_fd_fifo.begin(); fdit != m_fd_fifo.end(); ++fdit)
+	{
+		if(*fdit == fd)
+		{
+			break;
+		}
+		++before_it;
+	}
 
-	if(fdit == m_fd_fifo.rend())
+	if(fdit == m_fd_fifo.end())
 	{
 		throw FileException("INTERNAL ERROR: fd not in fifo");
 	}
 
-	// Move it to the end of the deque.
-	m_fd_fifo.erase(std::next(fdit).base());
-	m_fd_fifo.push_back(fd);
-
+	if(true)//fdit != m_fd_fifo.begin())
+	{
+		// Move it to the front of the fifo.
+		m_fd_fifo.erase_after(before_it);
+		m_fd_fifo.push_front(fd);
+	}
+	// else it was already at the beginning.
 }
 
 void FileDescriptorCache::FreeSysFileDesc()
 {
-	for(auto fdit = m_fd_fifo.begin(); fdit < m_fd_fifo.end(); ++fdit)
+	for(auto fdit = m_fd_fifo.begin(); fdit != m_fd_fifo.end(); ++fdit)
 	{
 		auto fdiit = m_cache.find(*fdit);
 

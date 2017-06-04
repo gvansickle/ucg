@@ -608,7 +608,7 @@ bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 
 	if(retval == -1)
 	{
-		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' failed: " << LOG_STRERROR();
+		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' (atfd=" << temp_atdir << ") failed: " << LOG_STRERROR();
 		// Note: We don't clear errno here, we want to be able to look at it in the caller.
 		//errno = 0;
 		FileDescriptorCache::Get()->Unlock(m_pimpl->m_file_descriptor);
@@ -645,7 +645,7 @@ DIR *FileID::OpenDir()
 	}
 #endif
 
-	auto fd = FileDescriptorCache::Get()->Lock(m_pimpl->m_file_descriptor);
+	int fd = FileDescriptorCache::Get()->Lock(m_pimpl->m_file_descriptor);
 	int dirfd = dup(fd);
 	FileDescriptorCache::Get()->Unlock(m_pimpl->m_file_descriptor);
 

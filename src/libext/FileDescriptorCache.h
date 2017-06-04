@@ -27,7 +27,7 @@
 
 #include <unordered_map>
 #include <unordered_set>
-#include <deque>
+#include <forward_list>
 #include <string>
 #include <mutex>
 
@@ -94,11 +94,11 @@ public:
 
 	static FileDescriptorCache* Get() noexcept;
 
-	FileDesc GetAT_FDCWD();
+	FileDesc GetAT_FDCWD() const noexcept;
 
 	bool DescriptorIsEmpty(FileDesc fd) const noexcept { return fd.empty(); };
 
-	FileDesc OpenAt(FileDesc atdir, const std::string& relname, int mode);
+	FileDesc OpenAt(const FileDesc atdir, const std::string& relname, int mode);
 	int Lock(FileDesc fd);
 	void Unlock(FileDesc fd);
 	FileDesc Dup(FileDesc fd);
@@ -111,9 +111,9 @@ private:
 	uint32_t m_num_sys_fds_in_use {0};
 	uint32_t m_max_sys_fds {1000};
 	std::unordered_map<FileDesc, FileDescImpl> m_cache;
-	std::deque<FileDesc> m_fd_fifo;
+	std::forward_list<FileDesc> m_fd_fifo;
 
-	FileDesc OpenAtImpl(FileDesc atdir, const std::string& relname, int mode);
+	FileDesc OpenAtImpl(const FileDesc atdir, const std::string& relname, int mode);
 	int LockImpl(FileDesc fd);
 	void UnlockImpl(FileDesc fd);
 	void Touch(FileDesc fd);
