@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2016-2017 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -35,7 +35,7 @@
 
 /**
  * pImpl factorization of the FileID class.  This is the unsynchronized "pImpl" part which holds all the data.
- * It does not concern itself with concurrency issues with respect to copying, moving, or assigning.
+ * It does not concern itself with concurrency issues with respect to initialization, copying, moving, or assigning.
  * As such, its interface is not intended to be directly exposed to the world.
  * @see FileID
  */
@@ -140,11 +140,11 @@ public:
 	static std::atomic<std::uint64_t> m_atomic_fd_max_other;
 };
 
-/// @name Compile-time invariants for the UnsynchronizedFileID class.
+/// @name Compile-time invariants for the FileID::impl class.
 /// @{
-static_assert(std::is_assignable<FileID::impl, FileID::impl>::value, "UnsynchronizedFileID must be assignable to itself.");
-static_assert(std::is_copy_assignable<FileID::impl>::value, "UnsynchronizedFileID must be copy assignable to itself.");
-static_assert(std::is_move_assignable<FileID::impl>::value, "UnsynchronizedFileID must be move assignable to itself.");
+static_assert(std::is_assignable<FileID::impl, FileID::impl>::value, "FileID::impl must be assignable to itself.");
+static_assert(std::is_copy_assignable<FileID::impl>::value, "FileID::impl must be copy assignable to itself.");
+static_assert(std::is_move_assignable<FileID::impl>::value, "FileID::impl must be move assignable to itself.");
 /// @}
 
 
@@ -222,16 +222,29 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 
 		if(m_at_dir)
 		{
-#if DEBUG
-			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
-#endif
-			FileDescriptor temp_atdir{m_at_dir->GetTempAtDir()};
-			int atdirfd = temp_atdir.GetFD();
-			int tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
-			if(tempfd == -1)
+			int tempfd = -1;
+			if(m_file_type == FT_REG)
 			{
-				//LOG(DEBUG) << "OPENAT FAIL: " << explain_openat(atdirfd, GetBasename().c_str(), m_open_flags, 0666);
-				throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with valid m_at_dir=" + std::to_string(atdirfd) + " failed");
+#if 1
+				//FileDescriptor temp_atdir {m_at_dir->GetFileDescriptor()};
+#else
+				FileDescriptor temp_atdir{m_at_dir->GetTempAtDir()};
+#endif
+				int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
+				tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
+				if(tempfd == -1)
+				{
+					throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with valid m_at_dir=" + std::to_string(atdirfd) + " failed");
+				}
+			}
+			else if(m_file_type == FT_DIR)
+			{
+				// Should only get here via a recursive call from the FT_REG case, for an at_dir.
+				tempfd = open(m_path.c_str(), m_open_flags);
+				if(tempfd == -1)
+				{
+					throw FileException("GetFileDescriptor(): open(" + m_path + ") failed");
+				}
 			}
 			m_file_descriptor = make_shared_fd(tempfd);
 		}
@@ -565,11 +578,12 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
 	FileDescriptor temp_atdir {GetTempAtDir()};
-	int retval = fstatat(temp_atdir.GetFD(), name.c_str(), statbuf, flags);
+	int atdir_fd = temp_atdir.GetFD();
+	int retval = fstatat(atdir_fd, name.c_str(), statbuf, flags);
 
 	if(retval == -1)
 	{
-		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' failed: " << LOG_STRERROR();
+		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' (atfd=" << atdir_fd << ") failed: " << LOG_STRERROR();
 		// Note: We don't clear errno here, we want to be able to look at it in the caller.
 		//errno = 0;
 		return false;
@@ -612,18 +626,19 @@ void FileID::CloseDir(DIR *d)
 FileDescriptor FileID::GetTempAtDir()
 {
 	int fd = m_pimpl->TryGetFD();
-	int dirfd {0};
+	int fd_dir {0};
 	if(fd < 0)
 	{
 		// We don't have a file descriptor.  Open a temporary one.
-		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY | O_PATH);
+		fd_dir = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY | O_PATH);
+m_pimpl->m_file_descriptor = make_shared_fd(dup(fd_dir));
 	}
 	else
 	{
 		// We already have a file descriptor.  Dup it.
-		dirfd = dup(fd);
+		fd_dir = dup(fd);
 	}
-	return FileDescriptor(dirfd);
+	return FileDescriptor(fd_dir);
 }
 
 const FileDescriptor& FileID::GetFileDescriptor()

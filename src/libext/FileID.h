@@ -40,7 +40,7 @@
 
 // Forward declarations.
 struct dirent;
-class FileID;  // UnsynchronizedFileID keeps a ptr to its parent directory's FileID.
+class FileID;  // FileID::impl keeps a ptr to its parent directory's FileID.
 
 /// File Types enum.
 enum FileType
