@@ -148,9 +148,8 @@ static_assert(std::is_move_assignable<FileID::impl>::value, "FileID::impl must b
 /// @}
 
 
-
 FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
-	: m_at_dir(at_dir_fileid), m_basename(bname)
+	: m_at_dir(std::move(at_dir_fileid)), m_basename(bname)
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
@@ -168,7 +167,7 @@ FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
 
 FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std::string pname,
 		const struct stat *stat_buf, FileType type)
-		: m_at_dir(at_dir_fileid), m_basename(bname), m_path(pname), m_file_type(type)
+		: m_at_dir(std::move(at_dir_fileid)), m_basename(bname), m_path(pname), m_file_type(type)
 {
 	LOG(DEBUG) << "5-param const., m_basename=" << m_basename << ", m_at_dir=" << (!!m_at_dir ? (m_at_dir->m_pimpl->m_path) : "<nullptr>");
 	if(stat_buf != nullptr)
@@ -225,11 +224,6 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 			int tempfd = -1;
 			if(m_file_type == FT_REG)
 			{
-#if 1
-				//FileDescriptor temp_atdir {m_at_dir->GetFileDescriptor()};
-#else
-				FileDescriptor temp_atdir{m_at_dir->GetTempAtDir()};
-#endif
 				int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
 				tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
 				if(tempfd == -1)
@@ -240,7 +234,7 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 			else if(m_file_type == FT_DIR)
 			{
 				// Should only get here via a recursive call from the FT_REG case, for an at_dir.
-				tempfd = open(m_path.c_str(), m_open_flags);
+				tempfd = open(m_path.c_str(), m_open_flags | O_PATH);
 				if(tempfd == -1)
 				{
 					throw FileException("GetFileDescriptor(): open(" + m_path + ") failed");
@@ -414,12 +408,12 @@ FileID::FileID(path_known_cwd_tag)
 
 }
 
-FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename,
+FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string bname,
 		const struct stat *stat_buf,
 		FileType type,
 		dev_t d, ino_t i,
 		FileAccessMode fam, FileCreationFlag fcf)
-	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), basename, "", stat_buf, type))
+	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), bname, "", stat_buf, type))
 {
 	uint_fast8_t orbits = NONE;
 
@@ -448,24 +442,6 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	m_valid_bits.fetch_or(orbits);
 }
 
-FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
-	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", nullptr, type))
-{
-	/// @note Taking basename by value since we are always storing it.
-	/// Full openat() semantics:
-	/// - If pathname is absolute, at_dir_fd is ignored.
-	/// - If pathname is relative, it's relative to at_dir_fd.
-
-	uint_fast8_t orbits = NONE;
-
-	if(type != FT_UNINITIALIZED)
-	{
-		orbits |= TYPE;
-	}
-
-	m_valid_bits.fetch_or(orbits);
-}
-
 FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type)
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname /*==basename*/, pathname, nullptr, type))
 {
@@ -488,7 +464,7 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileAccessMode fam, FileCreationFlag fcf)
-	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname))
+	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), pathname))
 {
 	SetFileDescriptorMode(fam, fcf);
 
@@ -588,7 +564,6 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-	//FileDescriptor temp_atdir {GetTempAtDir()};
 	int atdir_fd = GetFileDescriptor().GetFD();
 	int retval = fstatat(atdir_fd, name.c_str(), statbuf, flags);
 
