@@ -283,7 +283,18 @@ FileID::IsValid FileID::impl::LazyLoadStatInfo() const noexcept
 #pragma GCC diagnostic pop
 
 	struct stat stat_buf;
-	bool fstat_success = m_at_dir->FStatAt(m_basename, &stat_buf, AT_NO_AUTOMOUNT);
+	bool fstat_success = false;
+
+	if(!m_file_descriptor.empty())
+	{
+		// We have a file descriptor, stat it directly.
+		int status = fstat(m_file_descriptor.GetFD(), &stat_buf);
+		fstat_success = (status == 0);
+	}
+	else
+	{
+		fstat_success = m_at_dir->FStatAt(m_basename, &stat_buf, AT_NO_AUTOMOUNT);
+	}
 
 	if(fstat_success)
 	{
@@ -408,7 +419,7 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 		FileType type,
 		dev_t d, ino_t i,
 		FileAccessMode fam, FileCreationFlag fcf)
-	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", stat_buf, type))
+	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), basename, "", stat_buf, type))
 {
 	uint_fast8_t orbits = NONE;
 
@@ -577,8 +588,8 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-	FileDescriptor temp_atdir {GetTempAtDir()};
-	int atdir_fd = temp_atdir.GetFD();
+	//FileDescriptor temp_atdir {GetTempAtDir()};
+	int atdir_fd = GetFileDescriptor().GetFD();
 	int retval = fstatat(atdir_fd, name.c_str(), statbuf, flags);
 
 	if(retval == -1)
@@ -631,7 +642,6 @@ FileDescriptor FileID::GetTempAtDir()
 	{
 		// We don't have a file descriptor.  Open a temporary one.
 		fd_dir = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY | O_PATH);
-m_pimpl->m_file_descriptor = make_shared_fd(dup(fd_dir));
 	}
 	else
 	{
