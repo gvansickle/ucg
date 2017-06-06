@@ -167,7 +167,7 @@ FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
 
 FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std::string pname,
 		const struct stat *stat_buf, FileType type)
-		: m_at_dir(std::move(at_dir_fileid)), m_basename(bname), m_path(pname), m_file_type(type)
+		: m_at_dir(std::move(at_dir_fileid)), m_basename(std::move(bname)), m_path(std::move(pname)), m_file_type(type)
 {
 	LOG(DEBUG) << "5-param const., m_basename=" << m_basename << ", m_at_dir=" << (!!m_at_dir ? (m_at_dir->m_pimpl->m_path) : "<nullptr>");
 	if(stat_buf != nullptr)
@@ -408,12 +408,12 @@ FileID::FileID(path_known_cwd_tag)
 
 }
 
-FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string bname,
+FileID::FileID(path_known_relative_tag, const std::shared_ptr<FileID>& at_dir_fileid, const std::string &bname,
 		const struct stat *stat_buf,
 		FileType type,
 		dev_t d, ino_t i,
 		FileAccessMode fam, FileCreationFlag fcf)
-	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), bname, "", stat_buf, type))
+	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, bname, "", stat_buf, type))
 {
 	uint_fast8_t orbits = NONE;
 
@@ -591,17 +591,17 @@ FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 DIR *FileID::OpenDir()
 {
 	int fd = m_pimpl->TryGetFD();
-	int dirfd {0};
+	int fd_dir {0};
 	if(fd < 0)
 	{
-		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY);
+		fd_dir = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY);
 	}
 	else
 	{
 		// We already have a file descriptor.  Dup it, because fdopendir() takes ownership of it.
-		dirfd = dup(fd);
+		fd_dir = dup(fd);
 	}
-	return fdopendir(dirfd);
+	return fdopendir(fd_dir);
 }
 
 void FileID::CloseDir(DIR *d)
