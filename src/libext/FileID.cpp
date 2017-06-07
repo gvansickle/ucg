@@ -59,8 +59,14 @@ public:
 			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 	///@}
 
-	/// Default destructor.
-	~impl() = default;
+	/// Destructor.
+	~impl()
+	{
+		if(m_file_descriptor >= 0)
+		{
+			close(m_file_descriptor);
+		}
+	}
 
 	const std::string& GetBasename() const noexcept;
 
@@ -111,8 +117,11 @@ public:
 	/// Flags to use when we open the file descriptor.
 	mutable int m_open_flags { 0 };
 
+#if 0
 	/// The file descriptor object.
 	mutable FileDescriptor m_file_descriptor {};
+#endif
+	mutable int m_file_descriptor = -987;
 
 	/// @name Info normally gathered from a stat() call.
 	///@{
@@ -188,7 +197,7 @@ std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_other;
 
 FileID::IsValid FileID::impl::GetFileDescriptor()
 {
-	if(m_file_descriptor.empty())
+	if(m_file_descriptor < 0)
 	{
 		// File hasn't been opened.
 
@@ -224,7 +233,7 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 			int tempfd = -1;
 			if(m_file_type == FT_REG)
 			{
-				int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
+				int atdirfd = m_at_dir->GetFileDescriptor();
 				tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
 				if(tempfd == -1)
 				{
@@ -240,7 +249,8 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 					throw FileException("GetFileDescriptor(): open(" + m_path + ") failed");
 				}
 			}
-			m_file_descriptor = make_shared_fd(tempfd);
+
+			m_file_descriptor = tempfd;
 		}
 	}
 
@@ -255,9 +265,9 @@ void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
 
 int FileID::impl::TryGetFD() const noexcept
 {
-	if(!m_file_descriptor.empty())
+	if(m_file_descriptor >= 0)
 	{
-		return m_file_descriptor.GetFD();
+		return m_file_descriptor;
 	}
 
 	// No descriptor open yet.
@@ -279,10 +289,10 @@ FileID::IsValid FileID::impl::LazyLoadStatInfo() const noexcept
 	struct stat stat_buf;
 	bool fstat_success = false;
 
-	if(!m_file_descriptor.empty())
+	if(m_file_descriptor >= 0)
 	{
 		// We have a file descriptor, stat it directly.
-		int status = fstat(m_file_descriptor.GetFD(), &stat_buf);
+		int status = fstat(m_file_descriptor, &stat_buf);
 		fstat_success = (status == 0);
 	}
 	else
@@ -400,9 +410,9 @@ FileID::FileID(path_known_cwd_tag)
 	{
 		LOG(DEBUG) << "Error in fdcwd constructor: " << LOG_STRERROR();
 	}
-	m_pimpl->m_file_descriptor = make_shared_fd(tempfd);
+	m_pimpl->m_file_descriptor = tempfd;
 
-	LOG(DEBUG) << "FDCWD constructor, file descriptor: " << m_pimpl->m_file_descriptor.GetFD();
+	LOG(DEBUG) << "FDCWD constructor, file descriptor: " << m_pimpl->m_file_descriptor;
 
 	m_valid_bits.fetch_or(FILE_DESC | TYPE | PATH);
 
@@ -564,7 +574,7 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-	int atdir_fd = GetFileDescriptor().GetFD();
+	int atdir_fd = GetFileDescriptor();
 	int retval = fstatat(atdir_fd, name.c_str(), statbuf, flags);
 
 	if(retval == -1)
@@ -609,24 +619,7 @@ void FileID::CloseDir(DIR *d)
 	closedir(d);
 }
 
-FileDescriptor FileID::GetTempAtDir()
-{
-	int fd = m_pimpl->TryGetFD();
-	int fd_dir {0};
-	if(fd < 0)
-	{
-		// We don't have a file descriptor.  Open a temporary one.
-		fd_dir = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY | O_PATH);
-	}
-	else
-	{
-		// We already have a file descriptor.  Dup it.
-		fd_dir = dup(fd);
-	}
-	return FileDescriptor(fd_dir);
-}
-
-const FileDescriptor& FileID::GetFileDescriptor()
+int FileID::GetFileDescriptor()
 {
 	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, FILE_DESC, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
 	return m_pimpl->m_file_descriptor;

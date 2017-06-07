@@ -42,7 +42,7 @@ File::File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>
 
 	try
 	{
-		file_descriptor = m_fileid->GetFileDescriptor().GetFD();
+		file_descriptor = m_fileid->GetFileDescriptor();
 
 		/// @todo Does the above ever not throw on error?
 		if(file_descriptor == -1)

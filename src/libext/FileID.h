@@ -230,18 +230,10 @@ public:
 	void CloseDir(DIR*d);
 
 	/**
-	 * Returns a FileDescriptor containing a file descriptor usable as the at-directory in openat() etc.
-	 * Descriptor may be opened O_PATH, so should not be used for any other purpose.
-	 * Operation only valid if this is a directory.
-	 * @return
-	 */
-	FileDescriptor GetTempAtDir();
-
-	/**
 	 *
 	 * @return
 	 */
-	const FileDescriptor& GetFileDescriptor();
+	int GetFileDescriptor();
 
 	/**
 	 * Return the type of file this FileID represents.  May involve stat()ing the file.
