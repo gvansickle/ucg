@@ -233,12 +233,15 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 			int tempfd = -1;
 			if(m_file_type == FT_REG)
 			{
-				int atdirfd = m_at_dir->GetFileDescriptor();
-				tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
+				///int atdirfd = open(m_at_dir->GetPath().c_str(), m_at_dir->m_pimpl->m_open_flags | O_PATH);//m_at_dir->GetFileDescriptor();
+				//tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
+				ResolvePath();
+				tempfd = open(m_path.c_str(), m_open_flags);
 				if(tempfd == -1)
 				{
-					throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with valid m_at_dir=" + std::to_string(atdirfd) + " failed");
+					throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with valid m_at_dir=" /** + std::to_string(atdirfd) + **/ " failed");
 				}
+///close(atdirfd);
 			}
 			else if(m_file_type == FT_DIR)
 			{
@@ -532,31 +535,31 @@ std::string FileID::GetBasename() const noexcept
 
 const std::string& FileID::GetPath() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, PATH, m_mutex, [this](){ m_pimpl->ResolvePath(); return PATH; });
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, PATH, m_mutex, [this](){ m_pimpl->ResolvePath(); return PATH; });
 	return m_pimpl->m_path;
 }
 
 FileType FileID::GetFileType() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, TYPE, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, TYPE, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_file_type;
 }
 
 off_t FileID::GetFileSize() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, STATINFO, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, STATINFO, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_size;
 };
 
 blksize_t FileID::GetBlockSize() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, STATINFO, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, STATINFO, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_block_size;
 };
 
 const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, UUID, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo();});
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, UUID, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo();});
 	return m_pimpl->m_unique_file_identifier;
 }
 
@@ -621,19 +624,19 @@ void FileID::CloseDir(DIR *d)
 
 int FileID::GetFileDescriptor()
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, FILE_DESC, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, FILE_DESC, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
 	return m_pimpl->m_file_descriptor;
 }
 
 dev_t FileID::GetDev() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, UUID, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, UUID, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_dev;
 }
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, UUID, m_mutex,
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, UUID, m_mutex,
 			[&](){ m_pimpl->SetDevIno(d, i); return UUID; });
 }
 
