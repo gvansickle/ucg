@@ -55,7 +55,7 @@ public:
 	/// @name Various non-default constructors.
 	/// @{
 	impl(std::shared_ptr<FileID> at_dir_fileid, std::string base_or_pathname);
-	impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
+	impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std::string pathname,
 			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 	///@}
 
@@ -183,6 +183,11 @@ FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std
 	{
 		SetStatInfo(*stat_buf);
 	}
+
+	if(is_pathname_absolute(m_basename))
+	{
+		m_path = m_basename;
+	}
 }
 
 const std::string& FileID::impl::GetBasename() const noexcept
@@ -212,17 +217,17 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 		{
 		case FT_REG:
 		{
-			comp_exch_loop(m_atomic_fd_max_reg, [](uint64_t old_val){ return old_val + 1; });
+			m_atomic_fd_max_reg++;
 			break;
 		}
 		case FT_DIR:
 		{
-			comp_exch_loop(m_atomic_fd_max_dir, [](uint64_t old_val){ return old_val + 1; });
+			m_atomic_fd_max_dir++;
 			break;
 		}
 		default:
 		{
-			comp_exch_loop(m_atomic_fd_max_other, [](uint64_t old_val){ return old_val + 1; });
+			m_atomic_fd_max_other++;
 			break;
 		}
 		}
@@ -231,7 +236,16 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 		if(m_at_dir)
 		{
 			int tempfd = -1;
-			if(m_file_type == FT_REG)
+			if(m_file_type == FT_DIR)
+			{
+				// Should only get here via a recursive call from the FT_REG case, for an at_dir.
+				tempfd = open(m_path.c_str(), m_open_flags | O_PATH);
+				if(tempfd == -1)
+				{
+					throw FileException("GetFileDescriptor(): open(" + m_path + ") failed");
+				}
+			}
+			else
 			{
 				///int atdirfd = open(m_at_dir->GetPath().c_str(), m_at_dir->m_pimpl->m_open_flags | O_PATH);//m_at_dir->GetFileDescriptor();
 				//tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
@@ -242,15 +256,6 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 					throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with valid m_at_dir=" /** + std::to_string(atdirfd) + **/ " failed");
 				}
 ///close(atdirfd);
-			}
-			else if(m_file_type == FT_DIR)
-			{
-				// Should only get here via a recursive call from the FT_REG case, for an at_dir.
-				tempfd = open(m_path.c_str(), m_open_flags | O_PATH);
-				if(tempfd == -1)
-				{
-					throw FileException("GetFileDescriptor(): open(" + m_path + ") failed");
-				}
 			}
 
 			m_file_descriptor = tempfd;
@@ -372,12 +377,13 @@ const std::string& FileID::impl::ResolvePath() const
 /// BEGINNING OF FILEID.
 /////////////////////////////////
 
-
+#if 0
 // Default constructor.
 // Note that it's defined here in the cpp vs. in the header because it needs to be able to see the full definition of FileID::impl.
 FileID::FileID()
 {
 }
+#endif
 
 // Copy constructor.
 FileID::FileID(const FileID& other)

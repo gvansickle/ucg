@@ -280,9 +280,9 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 	if(is_file || is_dir || is_symlink)
 	{
 		// We'll need the file's basename.
-		std::string basename {dirent_get_name(current_dirent)};
+		std::string bname {dirent_get_name(current_dirent)};
 
-		LOG(INFO) << "Considering dirent name='" << basename << "'";
+		LOG(INFO) << "Considering dirent name='" << bname << "'";
 
 		if(is_file)
 		{
@@ -291,13 +291,13 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 			stats.m_num_files_found++;
 
 			// Check for inclusion.
-			if(m_file_basename_filter(basename))
+			if(m_file_basename_filter(bname))
 			{
 				// Based on the file name, this file should be scanned.
 
 				LOG(INFO) << "... should be scanned.";
 
-				std::shared_ptr<FileID> file_to_scan = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, basename,
+				std::shared_ptr<FileID> file_to_scan = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, bname,
 						statbuff_ptr,
 						FT_REG,
 						dse->GetDev(), current_dirent->d_ino,
@@ -319,7 +319,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 			LOG(INFO) << "... directory.";
 			stats.m_num_directories_found++;
 
-			if(!m_recurse || m_dir_basename_filter(basename))
+			if(!m_recurse || m_dir_basename_filter(bname))
 			{
 				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 				LOG(INFO) << "... should be ignored.";
@@ -327,7 +327,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 				return;
 			}
 
-			auto dir_atfd = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, basename, statbuff_ptr, FT_DIR,
+			auto dir_atfd = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, bname, statbuff_ptr, FT_DIR,
 					dse->GetDev(), current_dirent->d_ino,
 					FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
 
@@ -355,7 +355,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 			else
 			{
 				// Physical traversal, just ignore the symlink.
-				LOG(INFO) << "Found symlink during physical traversal: '" << dse->GetPath() << "/" << basename << "'";
+				LOG(INFO) << "Found symlink during physical traversal: '" << dse->GetPath() << "/" << bname << "'";
 			}
 			return;
 		}
