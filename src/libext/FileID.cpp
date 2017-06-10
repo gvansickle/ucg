@@ -240,7 +240,7 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 			{
 				// Should only get here via a recursive call from the FT_REG case, for an at_dir.
 				tempfd = open(m_path.c_str(), m_open_flags | O_PATH);
-				if(tempfd == -1)
+				if(unlikely(tempfd == -1))
 				{
 					throw FileException("GetFileDescriptor(): open(" + m_path + ") failed");
 				}
@@ -251,9 +251,9 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 				//tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
 				ResolvePath();
 				tempfd = open(m_path.c_str(), m_open_flags);
-				if(tempfd == -1)
+				if(unlikely(tempfd == -1))
 				{
-					throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with valid m_at_dir=" /** + std::to_string(atdirfd) + **/ " failed");
+					throw FileException("GetFileDescriptor(): open(" + m_path + ") failed");
 				}
 ///close(atdirfd);
 			}
@@ -583,8 +583,22 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 
 bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
 {
-	int atdir_fd = GetFileDescriptor();
+	int atdir_fd = m_pimpl->TryGetFD();
+	int fd_dir {0};
+	if(atdir_fd < 0)
+	{
+		// We don't have a file descriptor, open a temp one.
+		fd_dir = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY);
+		atdir_fd = fd_dir;
+	}
+
+	// Stat the file.
 	int retval = fstatat(atdir_fd, name.c_str(), statbuf, flags);
+
+	if(fd_dir > 0)
+	{
+		close(fd_dir);
+	}
 
 	if(retval == -1)
 	{

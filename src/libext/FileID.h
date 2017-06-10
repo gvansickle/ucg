@@ -39,7 +39,6 @@
 
 
 // Forward declarations.
-struct dirent;
 class FileID;  // FileID::impl keeps a ptr to its parent directory's FileID.
 
 /// File Types enum.
@@ -127,12 +126,12 @@ public: // To allow access from impl.
 
 	enum IsValid
 	{
-		NONE = 0,
+		NONE      = 0,
 		FILE_DESC = 1,
-		UUID = 2, ///< i.e. dev/ino.
-		STATINFO = 4,
-		TYPE = 8,
-		PATH = 16,
+		UUID      = 2, ///< i.e. dev/ino.
+		STATINFO  = 4,
+		TYPE      = 8,
+		PATH      = 16,
 	};
 
 private:
