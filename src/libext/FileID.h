@@ -15,7 +15,9 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file */
+/** @file
+ * Interface for the FileID class.
+ */
 
 #ifndef SRC_LIBEXT_FILEID_H_
 #define SRC_LIBEXT_FILEID_H_
@@ -37,9 +39,6 @@
 #include "filesystem.hpp"
 #include "FileDescriptor.hpp"
 
-
-// Forward declarations.
-class FileID;  // FileID::impl keeps a ptr to its parent directory's FileID.
 
 /// File Types enum.
 enum FileType
@@ -104,7 +103,7 @@ constexpr inline FileCreationFlag operator|(FileCreationFlag a, FileCreationFlag
 
 
 /**
- * The public interface to the underlying UnsynchronizedFileID instance.  This class adds thread safety.
+ * The public interface to the underlying FileID::impl instance.  This class adds thread safety.
  */
 class FileID
 {
@@ -141,7 +140,7 @@ private:
 public:
 
 	/// pImpl forward declaration.
-	/// Not private: only because we want to do some static_assert() checks on it.
+	/// @note Not private only because we want to do some static_assert() checks on it.
 	class impl;
 
 	/// @name Tag types for selecting FileID() constructors when the given path is known to be relative or absolute.

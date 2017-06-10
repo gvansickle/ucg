@@ -89,6 +89,8 @@ public:
 	 */
 	int TryGetFD() const noexcept;
 
+	int GetTempDirFileDesc() const noexcept;
+
 //private:
 
 	FileID::IsValid LazyLoadStatInfo() const noexcept;
@@ -117,11 +119,12 @@ public:
 	/// Flags to use when we open the file descriptor.
 	mutable int m_open_flags { 0 };
 
-#if 0
-	/// The file descriptor object.
-	mutable FileDescriptor m_file_descriptor {};
-#endif
+	/// The file descriptor.
 	mutable int m_file_descriptor = -987;
+
+	/// A temporary file descriptor which will be valid only between a call to OpenDir() and
+	/// the subsequent call to CloseDir().  Used for caching the AT-dir descriptor for FStatAt().
+	mutable int m_temp_dir_file_descriptor = -987;
 
 	/// @name Info normally gathered from a stat() call.
 	///@{
@@ -280,6 +283,30 @@ int FileID::impl::TryGetFD() const noexcept
 
 	// No descriptor open yet.
 	return -1;
+}
+
+int FileID::impl::GetTempDirFileDesc() const noexcept
+{
+	if(m_temp_dir_file_descriptor >= 0)
+	{
+		return m_temp_dir_file_descriptor;
+	}
+	else
+	{
+		// See if we already have a "permanent" file desc. we can dup().
+		if(m_file_descriptor >= 0)
+		{
+			m_temp_dir_file_descriptor = dup(m_file_descriptor);
+		}
+		else
+		{
+			// Create a new temp file descriptor.
+			ResolvePath();
+			m_temp_dir_file_descriptor = open(m_path.c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY);
+		}
+	}
+
+	return m_temp_dir_file_descriptor;
 }
 
 FileID::IsValid FileID::impl::LazyLoadStatInfo() const noexcept
@@ -623,23 +650,19 @@ FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 
 DIR *FileID::OpenDir()
 {
-	int fd = m_pimpl->TryGetFD();
-	int fd_dir {0};
-	if(fd < 0)
-	{
-		fd_dir = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY);
-	}
-	else
-	{
-		// We already have a file descriptor.  Dup it, because fdopendir() takes ownership of it.
-		fd_dir = dup(fd);
-	}
+	int fd = m_pimpl->GetTempDirFileDesc();
+
+	/// @todo Do we need this dup?
+	int fd_dir = dup(fd);
+
 	return fdopendir(fd_dir);
 }
 
 void FileID::CloseDir(DIR *d)
 {
 	closedir(d);
+
+	close(m_pimpl->GetTempDirFileDesc());
 }
 
 int FileID::GetFileDescriptor()
