@@ -158,9 +158,14 @@ void DirTree::ReaddirLoop(int dirjob_num)
 	// Set the name of this thread, for logging and debug purposes.
 	set_thread_name("READDIR_" + std::to_string(dirjob_num));
 
+	// Create a local queue to collect up any files we find without locking the main queue.
+	std::deque<std::shared_ptr<FileID>> local_file_queue;
+
 	while(m_dir_queue.pull_front(std::move(dse)) != queue_op_status::closed)
 	{
 		LOG(DEBUG) << "Examining files in directory '" << dse->GetPath() << "'";
+
+		local_file_queue.clear();
 
 		// Get a DIR* representing the directory specified by dse.
 		d = dse->OpenDir();
@@ -170,9 +175,6 @@ void DirTree::ReaddirLoop(int dirjob_num)
 			WARN() << "OpenDir() failed on path " << dse->GetBasename() << ": " << LOG_STRERROR();
 			continue;
 		}
-
-		// Create a local queue to collect up any files we find without locking the main queue.
-		std::deque<std::shared_ptr<FileID>> local_file_queue;
 
 		// Read all entries in this directory.
 		do
