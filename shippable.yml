@@ -20,6 +20,8 @@ build:
 #    pull:
 #    options:
   ci:
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq libpcre3-dev
     - autoreconf -i
     - mkdir build
     - cd build
