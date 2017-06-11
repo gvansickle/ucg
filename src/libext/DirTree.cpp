@@ -212,8 +212,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 	bool is_symlink {false};
 	bool is_unknown {true};
 
-#warning "PUT THIS BACK"
-#if defined(_DIRENT_HAVE_D_TYPE) && defined(REMOVE_ME)
+#if defined(_DIRENT_HAVE_D_TYPE)
 	// Reject anything that isn't a directory, a regular file, or a symlink.
 	// If it's DT_UNKNOWN, we'll have to do a stat to find out.
 	is_dir = (current_dirent->d_type == DT_DIR);
