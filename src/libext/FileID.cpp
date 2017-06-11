@@ -367,7 +367,7 @@ FileID::IsValid FileID::impl::ResolvePath() const noexcept
 	if(m_path.empty())
 	{
 		// No.  Build the full path.
-		auto at_path = m_at_dir->GetPath();
+		const std::string& at_path = m_at_dir->GetPath();
 		if(!(at_path.length() == 1 && at_path[0] == '.'))
 		{
 			// This isn't the AT_FDCWD.
