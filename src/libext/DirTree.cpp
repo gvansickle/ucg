@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2016-2017 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -155,11 +155,11 @@ void DirTree::ReaddirLoop(int dirjob_num)
 
 	DirTraversalStats stats;
 
-	// Set the name of this thread, for logging and debug purposes.
-	set_thread_name("READDIR_" + std::to_string(dirjob_num));
-
 	// Create a local queue to collect up any files we find without locking the main queue.
 	std::deque<std::shared_ptr<FileID>> local_file_queue;
+
+	// Set the name of this thread, for logging and debug purposes.
+	set_thread_name("READDIR_" + std::to_string(dirjob_num));
 
 	while(m_dir_queue.pull_front(std::move(dse)) != queue_op_status::closed)
 	{

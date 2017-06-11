@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2016-2017 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -123,24 +123,27 @@ private:
 
 public: // To allow access from impl.
 
+	/// Enum of the various subcomponents of this class which have independent validity at runtime.
+	/// @see m_valid_bits below.
 	enum IsValid
 	{
-		NONE      = 0,
-		FILE_DESC = 1,
+		NONE      = 0, //!< NONE
+		FILE_DESC = 1, //!< FILE_DESC
 		UUID      = 2, ///< i.e. dev/ino.
-		STATINFO  = 4,
-		TYPE      = 8,
-		PATH      = 16,
+		STATINFO  = 4, //!< STATINFO
+		TYPE      = 8, //!< TYPE
+		PATH      = 16,//!< PATH
 	};
 
 private:
 
+	/// Atomic bitfield for use with DoubleCheckedMultiLock<> for recording the validity of the various
+	/// subcomponents of this class instance.
 	mutable std::atomic_uint_fast8_t m_valid_bits { NONE };
 
 public:
 
 	/// pImpl forward declaration.
-	/// @note Not private only because we want to do some static_assert() checks on it.
 	class impl;
 
 	/// @name Tag types for selecting FileID() constructors when the given path is known to be relative or absolute.
@@ -157,7 +160,7 @@ public:
 
 	/// @name Constructors.
 	/// @{
-	FileID();
+	FileID() = delete;
 	FileID(const FileID& other);
 	FileID(FileID&& other);
 
@@ -229,6 +232,9 @@ public:
 	void CloseDir(DIR* d);
 
 	/**
+	 * Returns the system file descriptor for the file.
+	 *
+	 * @note Will throw if file cannot be opened.
 	 *
 	 * @return
 	 */
@@ -252,9 +258,7 @@ public:
 
 	friend std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid);
 
-///@debug private:
-
-	void SetStatInfo(const struct stat &stat_buf) noexcept;
+private:
 
 	/// The pImpl.
 	std::unique_ptr<impl> m_pimpl;

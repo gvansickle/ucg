@@ -260,17 +260,6 @@ void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
 	m_unique_file_identifier = dev_ino_pair(d, i);
 }
 
-int FileID::impl::TryGetFD() const noexcept
-{
-	if(m_file_descriptor >= 0)
-	{
-		return m_file_descriptor;
-	}
-
-	// No descriptor open yet.
-	return -1;
-}
-
 int FileID::impl::GetTempDirFileDesc() const noexcept
 {
 	if(m_temp_dir_file_descriptor >= 0)
@@ -392,13 +381,6 @@ FileID::IsValid FileID::impl::ResolvePath() const noexcept
 /// BEGINNING OF FILEID.
 /////////////////////////////////
 
-#if 0
-// Default constructor.
-// Note that it's defined here in the cpp vs. in the header because it needs to be able to see the full definition of FileID::impl.
-FileID::FileID()
-{
-}
-#endif
 
 // Copy constructor.
 FileID::FileID(const FileID& other)
@@ -653,13 +635,6 @@ void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, UUID, m_mutex,
 			[&](){ m_pimpl->SetDevIno(d, i); return UUID; });
 }
-
-void FileID::SetStatInfo(const struct stat &stat_buf) noexcept
-{
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, STATINFO, m_mutex,
-			[&](){ m_pimpl->SetStatInfo(stat_buf); return UUID | STATINFO | TYPE; });
-}
-
 
 std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid)
 {
