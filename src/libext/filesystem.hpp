@@ -410,27 +410,4 @@ inline std::string clean_up_path(const std::string &path) noexcept
 	}
 }
 
-
-inline DIR* opendirat(int at_dir, const char *name)
-{
-	LOG(INFO) << "Attempting to open directory '" << name << "' at file descriptor " << at_dir;
-
-	int file_fd = openat(at_dir, name, O_SEARCH | O_DIRECTORY | O_NOCTTY);
-	if(file_fd < 0)
-	{
-		ERROR() << "openat() failed: " << LOG_STRERROR();
-		//errno = 0;
-		return nullptr;
-	}
-	DIR* d = fdopendir(file_fd);
-	if(d == nullptr)
-	{
-		ERROR() << "fdopendir failed: " << LOG_STRERROR();
-		//errno = 0;
-		close(file_fd);
-	}
-
-	return d;
-}
-
 #endif /* SRC_LIBEXT_FILESYSTEM_HPP_ */

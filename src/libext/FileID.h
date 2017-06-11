@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2016-2017 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -15,7 +15,9 @@
  * UniversalCodeGrep.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file */
+/** @file
+ * Interface for the FileID class.
+ */
 
 #ifndef SRC_LIBEXT_FILEID_H_
 #define SRC_LIBEXT_FILEID_H_
@@ -37,10 +39,6 @@
 #include "filesystem.hpp"
 #include "FileDescriptor.hpp"
 
-
-// Forward declarations.
-struct dirent;
-class FileID;  // UnsynchronizedFileID keeps a ptr to its parent directory's FileID.
 
 /// File Types enum.
 enum FileType
@@ -105,7 +103,7 @@ constexpr inline FileCreationFlag operator|(FileCreationFlag a, FileCreationFlag
 
 
 /**
- * The public interface to the underlying UnsynchronizedFileID instance.  This class adds thread safety.
+ * The public interface to the underlying FileID::impl instance.  This class adds thread safety.
  */
 class FileID
 {
@@ -125,24 +123,27 @@ private:
 
 public: // To allow access from impl.
 
+	/// Enum of the various subcomponents of this class which have independent validity at runtime.
+	/// @see m_valid_bits below.
 	enum IsValid
 	{
-		NONE = 0,
-		FILE_DESC = 1,
-		UUID = 2, ///< i.e. dev/ino.
-		STATINFO = 4,
-		TYPE = 8,
-		PATH = 16,
+		NONE      = 0, //!< NONE
+		FILE_DESC = 1, //!< FILE_DESC
+		UUID      = 2, ///< i.e. dev/ino.
+		STATINFO  = 4, //!< STATINFO
+		TYPE      = 8, //!< TYPE
+		PATH      = 16,//!< PATH
 	};
 
 private:
 
+	/// Atomic bitfield for use with DoubleCheckedMultiLock<> for recording the validity of the various
+	/// subcomponents of this class instance.
 	mutable std::atomic_uint_fast8_t m_valid_bits { NONE };
 
 public:
 
 	/// pImpl forward declaration.
-	/// Not private: only because we want to do some static_assert() checks on it.
 	class impl;
 
 	/// @name Tag types for selecting FileID() constructors when the given path is known to be relative or absolute.
@@ -159,19 +160,18 @@ public:
 
 	/// @name Constructors.
 	/// @{
-	FileID();
+	FileID() = delete;
 	FileID(const FileID& other);
 	FileID(FileID&& other);
 
 	/// Our equivalent for AT_FDCWD, the cwd of the process.
 	/// Different in that each FileID created with this constructor holds a real file handle to the "." directory.
 	FileID(path_known_cwd_tag tag);
-	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename,
+	FileID(path_known_relative_tag tag, const std::shared_ptr<FileID>& at_dir_fileid, const std::string& basename,
 			const struct stat *stat_buf = nullptr,
 			FileType type = FT_UNINITIALIZED,
 			dev_t d = static_cast<dev_t>(-1), ino_t i = 0,
 			FileAccessMode fam = FAM_UNINITIALIZED, FileCreationFlag fcf = FCF_UNINITIALIZED);
-	FileID(path_known_relative_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type = FT_UNINITIALIZED);
 	FileID(path_known_absolute_tag tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type = FT_UNINITIALIZED);
 	FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname,
 			FileAccessMode fam = FAM_UNINITIALIZED, FileCreationFlag fcf = FCF_UNINITIALIZED);
@@ -194,24 +194,34 @@ public:
 	 */
 	const std::string& GetPath() const noexcept;
 
-	const std::string& GetAbsPath() const noexcept;
-
 	/**
-	 * This is essentially a possibly-deferred "open()" for this class.
+	 * This is essentially a deferred "open()" for this class.
 	 *
-	 * @post GetFileDescriptor() will return a FileDescriptor to the file with the given access mode and creation flags.
+	 * @post GetFileDescriptor() will return a file descriptor to the file with the given access mode and creation flags.
 	 *
 	 * @param fam
 	 * @param fcf
 	 */
 	void SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf);
 
+#if 0
+	FileID OpenAt(const std::string &name, FileType type, int flags);
+#endif
+
+	/**
+	 * Open the directory referenced by this FileID.
+	 * Consumes one file descriptor until CloseDir() is called.
+	 *
+	 * @todo Derived class for dirs?
+     *
+	 * @return
+	 */
+	DIR *OpenDir();
+
 	/**
 	 * Stat the given filename at the directory represented by this.
 	 *
-	 * @note Only makes sense to call on FileIDs representing directories.
-	 *
-	 * @todo Derived class for dirs?
+	 * @note Only makes sense to call on FileIDs representing directories where OpenDir() has been called.
 	 *
 	 * @param name
 	 * @param statbuf
@@ -219,30 +229,16 @@ public:
 	 */
 	bool FStatAt(const std::string &name, struct stat *statbuf, int flags);
 
-	FileID OpenAt(const std::string &name, FileType type, int flags);
+	void CloseDir(DIR* d);
 
 	/**
-	 * Open the directory referenced by this FileID.
-	 * Consumes one file descriptor until CloseDir() is called.
+	 * Returns the system file descriptor for the file.
+	 *
+	 * @note Will throw if file cannot be opened.
 	 *
 	 * @return
 	 */
-	DIR *OpenDir();
-	void CloseDir(DIR*d);
-
-	/**
-	 * Returns a FileDescriptor containing a file descriptor usable as the at-directory in openat() etc.
-	 * Descriptor may be opened O_PATH, so should not be used for any other purpose.
-	 * Operation only valid if this is a directory.
-	 * @return
-	 */
-	FileDescriptor GetTempAtDir();
-
-	/**
-	 *
-	 * @return
-	 */
-	const FileDescriptor& GetFileDescriptor();
+	int GetFileDescriptor();
 
 	/**
 	 * Return the type of file this FileID represents.  May involve stat()ing the file.
@@ -262,9 +258,7 @@ public:
 
 	friend std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid);
 
-///@debug private:
-
-	void SetStatInfo(const struct stat &stat_buf) noexcept;
+private:
 
 	/// The pImpl.
 	std::unique_ptr<impl> m_pimpl;

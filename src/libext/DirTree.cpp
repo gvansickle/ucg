@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2016-2017 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -63,6 +63,9 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 	// Start at the cwd of the process (~AT_FDCWD)
 	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(FileID::path_known_cwd_tag());
 
+	// OpenDir() it just so that FStatAt() works.
+	DIR *d = root_file_id->OpenDir();
+
 	//
 	// Step 1: Process the paths and/or filenames specified by the user on the command line.
 	// We always use only a single thread (the current one) for this step.
@@ -116,6 +119,8 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		}
 	}
 
+	root_file_id->CloseDir(d);
+
 	// Create and start the directory traversal threads.
 	std::vector<std::thread> threads;
 
@@ -150,12 +155,17 @@ void DirTree::ReaddirLoop(int dirjob_num)
 
 	DirTraversalStats stats;
 
+	// Create a local queue to collect up any files we find without locking the main queue.
+	std::deque<std::shared_ptr<FileID>> local_file_queue;
+
 	// Set the name of this thread, for logging and debug purposes.
 	set_thread_name("READDIR_" + std::to_string(dirjob_num));
 
 	while(m_dir_queue.pull_front(std::move(dse)) != queue_op_status::closed)
 	{
 		LOG(DEBUG) << "Examining files in directory '" << dse->GetPath() << "'";
+
+		local_file_queue.clear();
 
 		// Get a DIR* representing the directory specified by dse.
 		d = dse->OpenDir();
@@ -165,9 +175,6 @@ void DirTree::ReaddirLoop(int dirjob_num)
 			WARN() << "OpenDir() failed on path " << dse->GetBasename() << ": " << LOG_STRERROR();
 			continue;
 		}
-
-		// Create a local queue to collect up any files we find without locking the main queue.
-		std::deque<std::shared_ptr<FileID>> local_file_queue;
 
 		// Read all entries in this directory.
 		do
@@ -207,7 +214,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 	bool is_symlink {false};
 	bool is_unknown {true};
 
-#ifdef _DIRENT_HAVE_D_TYPE
+#if defined(_DIRENT_HAVE_D_TYPE)
 	// Reject anything that isn't a directory, a regular file, or a symlink.
 	// If it's DT_UNKNOWN, we'll have to do a stat to find out.
 	is_dir = (current_dirent->d_type == DT_DIR);
@@ -280,9 +287,9 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 	if(is_file || is_dir || is_symlink)
 	{
 		// We'll need the file's basename.
-		std::string basename {dirent_get_name(current_dirent)};
+		std::string bname {dirent_get_name(current_dirent)};
 
-		LOG(INFO) << "Considering dirent name='" << basename << "'";
+		LOG(INFO) << "Considering dirent name='" << bname << "'";
 
 		if(is_file)
 		{
@@ -291,13 +298,13 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 			stats.m_num_files_found++;
 
 			// Check for inclusion.
-			if(m_file_basename_filter(basename))
+			if(m_file_basename_filter(bname))
 			{
 				// Based on the file name, this file should be scanned.
 
 				LOG(INFO) << "... should be scanned.";
 
-				std::shared_ptr<FileID> file_to_scan = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, basename,
+				std::shared_ptr<FileID> file_to_scan = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, bname,
 						statbuff_ptr,
 						FT_REG,
 						dse->GetDev(), current_dirent->d_ino,
@@ -319,7 +326,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 			LOG(INFO) << "... directory.";
 			stats.m_num_directories_found++;
 
-			if(!m_recurse || m_dir_basename_filter(basename))
+			if(!m_recurse || m_dir_basename_filter(bname))
 			{
 				// This name is in the dir exclude list.  Exclude the dir and all subdirs from the scan.
 				LOG(INFO) << "... should be ignored.";
@@ -327,7 +334,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 				return;
 			}
 
-			auto dir_atfd = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, basename, statbuff_ptr, FT_DIR,
+			auto dir_atfd = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, bname, statbuff_ptr, FT_DIR,
 					dse->GetDev(), current_dirent->d_ino,
 					FAM_RDONLY, FCF_DIRECTORY | FCF_NOATIME | FCF_NOCTTY | FCF_NONBLOCK);
 
@@ -355,7 +362,7 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 			else
 			{
 				// Physical traversal, just ignore the symlink.
-				LOG(INFO) << "Found symlink during physical traversal: '" << dse->GetPath() << "/" << basename << "'";
+				LOG(INFO) << "Found symlink during physical traversal: '" << dse->GetPath() << "/" << bname << "'";
 			}
 			return;
 		}

@@ -169,10 +169,8 @@ public:
 		// by the notify, and then blocking because we still hold the mutex.
 		lock.unlock();
 
-		// Notify one thread waiting on the queue's condition variable that it now has something to pull.
-		// Note that since we only pushed one item, we only need to notify one waiting thread.  This prevents waking up
-		// all waiting threads, all but one of which will end up immediately blocking again.
-		m_cv.notify_one();
+		// Notify any threads waiting on the queue's condition variable that they now have something to pull.
+		m_cv.notify_all();
 
 		return queue_op_status::success;
 	}

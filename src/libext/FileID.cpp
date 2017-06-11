@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2016-2017 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -35,7 +35,7 @@
 
 /**
  * pImpl factorization of the FileID class.  This is the unsynchronized "pImpl" part which holds all the data.
- * It does not concern itself with concurrency issues with respect to copying, moving, or assigning.
+ * It does not concern itself with concurrency issues with respect to initialization, copying, moving, or assigning.
  * As such, its interface is not intended to be directly exposed to the world.
  * @see FileID
  */
@@ -55,17 +55,23 @@ public:
 	/// @name Various non-default constructors.
 	/// @{
 	impl(std::shared_ptr<FileID> at_dir_fileid, std::string base_or_pathname);
-	impl(std::shared_ptr<FileID> at_dir_fileid, std::string basename, std::string pathname,
+	impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std::string pathname,
 			const struct stat *stat_buf = nullptr, FileType type = FT_UNINITIALIZED);
 	///@}
 
-	/// Default destructor.
-	~impl() = default;
+	/// Destructor.
+	~impl()
+	{
+		if(m_file_descriptor >= 0)
+		{
+			close(m_file_descriptor);
+		}
+	}
 
 	const std::string& GetBasename() const noexcept;
 
 	/// Resolve and cache this FileID's path.  Recursively visits its parent directories to do so.
-	const std::string& ResolvePath() const;
+	FileID::IsValid ResolvePath() const noexcept;
 
 	FileID::IsValid GetFileDescriptor();
 
@@ -82,6 +88,8 @@ public:
 	 * @return
 	 */
 	int TryGetFD() const noexcept;
+
+	int GetTempDirFileDesc() const noexcept;
 
 //private:
 
@@ -111,8 +119,12 @@ public:
 	/// Flags to use when we open the file descriptor.
 	mutable int m_open_flags { 0 };
 
-	/// The file descriptor object.
-	mutable FileDescriptor m_file_descriptor {};
+	/// The file descriptor.
+	mutable int m_file_descriptor = -987;
+
+	/// A temporary file descriptor which will be valid only between a call to OpenDir() and
+	/// the subsequent call to CloseDir().  Used for caching the AT-dir descriptor for FStatAt().
+	mutable int m_temp_dir_file_descriptor = -987;
 
 	/// @name Info normally gathered from a stat() call.
 	///@{
@@ -140,17 +152,16 @@ public:
 	static std::atomic<std::uint64_t> m_atomic_fd_max_other;
 };
 
-/// @name Compile-time invariants for the UnsynchronizedFileID class.
+/// @name Compile-time invariants for the FileID::impl class.
 /// @{
-static_assert(std::is_assignable<FileID::impl, FileID::impl>::value, "UnsynchronizedFileID must be assignable to itself.");
-static_assert(std::is_copy_assignable<FileID::impl>::value, "UnsynchronizedFileID must be copy assignable to itself.");
-static_assert(std::is_move_assignable<FileID::impl>::value, "UnsynchronizedFileID must be move assignable to itself.");
+static_assert(std::is_assignable<FileID::impl, FileID::impl>::value, "FileID::impl must be assignable to itself.");
+static_assert(std::is_copy_assignable<FileID::impl>::value, "FileID::impl must be copy assignable to itself.");
+static_assert(std::is_move_assignable<FileID::impl>::value, "FileID::impl must be move assignable to itself.");
 /// @}
 
 
-
 FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
-	: m_at_dir(at_dir_fileid), m_basename(bname)
+	: m_at_dir(std::move(at_dir_fileid)), m_basename(bname)
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
@@ -168,12 +179,17 @@ FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
 
 FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std::string pname,
 		const struct stat *stat_buf, FileType type)
-		: m_at_dir(at_dir_fileid), m_basename(bname), m_path(pname), m_file_type(type)
+		: m_at_dir(std::move(at_dir_fileid)), m_basename(std::move(bname)), m_path(std::move(pname)), m_file_type(type)
 {
 	LOG(DEBUG) << "5-param const., m_basename=" << m_basename << ", m_at_dir=" << (!!m_at_dir ? (m_at_dir->m_pimpl->m_path) : "<nullptr>");
 	if(stat_buf != nullptr)
 	{
 		SetStatInfo(*stat_buf);
+	}
+
+	if(is_pathname_absolute(m_basename))
+	{
+		m_path = m_basename;
 	}
 }
 
@@ -189,7 +205,7 @@ std::atomic<std::uint64_t> FileID::impl::m_atomic_fd_max_other;
 
 FileID::IsValid FileID::impl::GetFileDescriptor()
 {
-	if(m_file_descriptor.empty())
+	if(m_file_descriptor < 0)
 	{
 		// File hasn't been opened.
 
@@ -204,17 +220,17 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 		{
 		case FT_REG:
 		{
-			comp_exch_loop(m_atomic_fd_max_reg, [](uint64_t old_val){ return old_val + 1; });
+			m_atomic_fd_max_reg++;
 			break;
 		}
 		case FT_DIR:
 		{
-			comp_exch_loop(m_atomic_fd_max_dir, [](uint64_t old_val){ return old_val + 1; });
+			m_atomic_fd_max_dir++;
 			break;
 		}
 		default:
 		{
-			comp_exch_loop(m_atomic_fd_max_other, [](uint64_t old_val){ return old_val + 1; });
+			m_atomic_fd_max_other++;
 			break;
 		}
 		}
@@ -222,22 +238,20 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 
 		if(m_at_dir)
 		{
-#if DEBUG
-			int atdirfd = m_at_dir->GetFileDescriptor().GetFD();
-#endif
-			FileDescriptor temp_atdir{m_at_dir->GetTempAtDir()};
-			int atdirfd = temp_atdir.GetFD();
-			int tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
-			if(tempfd == -1)
+			int tempfd = -1;
+
+			ResolvePath();
+			tempfd = open(m_path.c_str(), m_open_flags);
+			if(unlikely(tempfd == -1))
 			{
-				//LOG(DEBUG) << "OPENAT FAIL: " << explain_openat(atdirfd, GetBasename().c_str(), m_open_flags, 0666);
-				throw FileException("GetFileDescriptor(): openat(" + GetBasename() + ") with valid m_at_dir=" + std::to_string(atdirfd) + " failed");
+				throw FileException("GetFileDescriptor(): open(" + m_path + ") failed");
 			}
-			m_file_descriptor = make_shared_fd(tempfd);
+
+			m_file_descriptor = tempfd;
 		}
 	}
 
-	return FileID::FILE_DESC;
+	return FileID::FILE_DESC | FileID::PATH;
 }
 
 void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
@@ -246,15 +260,28 @@ void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
 	m_unique_file_identifier = dev_ino_pair(d, i);
 }
 
-int FileID::impl::TryGetFD() const noexcept
+int FileID::impl::GetTempDirFileDesc() const noexcept
 {
-	if(!m_file_descriptor.empty())
+	if(m_temp_dir_file_descriptor >= 0)
 	{
-		return m_file_descriptor.GetFD();
+		return m_temp_dir_file_descriptor;
+	}
+	else
+	{
+		// See if we already have a "permanent" file desc. we can dup().
+		if(m_file_descriptor >= 0)
+		{
+			m_temp_dir_file_descriptor = dup(m_file_descriptor);
+		}
+		else
+		{
+			// Create a new temp file descriptor.
+			ResolvePath();
+			m_temp_dir_file_descriptor = open(m_path.c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY);
+		}
 	}
 
-	// No descriptor open yet.
-	return -1;
+	return m_temp_dir_file_descriptor;
 }
 
 FileID::IsValid FileID::impl::LazyLoadStatInfo() const noexcept
@@ -270,7 +297,18 @@ FileID::IsValid FileID::impl::LazyLoadStatInfo() const noexcept
 #pragma GCC diagnostic pop
 
 	struct stat stat_buf;
-	bool fstat_success = m_at_dir->FStatAt(m_basename, &stat_buf, AT_NO_AUTOMOUNT);
+	bool fstat_success = false;
+
+	if(m_file_descriptor >= 0)
+	{
+		// We have a file descriptor, stat it directly.
+		int status = fstat(m_file_descriptor, &stat_buf);
+		fstat_success = (status == 0);
+	}
+	else
+	{
+		fstat_success = m_at_dir->FStatAt(m_basename, &stat_buf, AT_NO_AUTOMOUNT);
+	}
 
 	if(fstat_success)
 	{
@@ -312,15 +350,16 @@ void FileID::impl::SetStatInfo(const struct stat &stat_buf) const noexcept
 	m_blocks = stat_buf.st_blocks;
 }
 
-const std::string& FileID::impl::ResolvePath() const
+FileID::IsValid FileID::impl::ResolvePath() const noexcept
 {
 	// Do we not have a full path already?
 	if(m_path.empty())
 	{
 		// No.  Build the full path.
-		auto at_path = m_at_dir->GetPath();
-		if(at_path != ".")
+		const std::string& at_path = m_at_dir->GetPath();
+		if(!(at_path.length() == 1 && at_path[0] == '.'))
 		{
+			// This isn't the AT_FDCWD.
 			m_path.reserve(at_path.length() + m_basename.size()+2);
 			m_path.append(at_path);
 			m_path.append("/", 1);
@@ -328,11 +367,12 @@ const std::string& FileID::impl::ResolvePath() const
 		}
 		else
 		{
+			// This is the AT_FDCWD.
 			m_path = m_basename;
 		}
 	}
 
-	return m_path;
+	return FileID::PATH;
 }
 
 /////////////////////////////////
@@ -341,12 +381,6 @@ const std::string& FileID::impl::ResolvePath() const
 /// BEGINNING OF FILEID.
 /////////////////////////////////
 
-
-// Default constructor.
-// Note that it's defined here in the cpp vs. in the header because it needs to be able to see the full definition of FileID::impl.
-FileID::FileID()
-{
-}
 
 // Copy constructor.
 FileID::FileID(const FileID& other)
@@ -382,20 +416,20 @@ FileID::FileID(path_known_cwd_tag)
 	{
 		LOG(DEBUG) << "Error in fdcwd constructor: " << LOG_STRERROR();
 	}
-	m_pimpl->m_file_descriptor = make_shared_fd(tempfd);
+	m_pimpl->m_file_descriptor = tempfd;
 
-	LOG(DEBUG) << "FDCWD constructor, file descriptor: " << m_pimpl->m_file_descriptor.GetFD();
+	LOG(DEBUG) << "FDCWD constructor, file descriptor: " << m_pimpl->m_file_descriptor;
 
 	m_valid_bits.fetch_or(FILE_DESC | TYPE | PATH);
 
 }
 
-FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename,
+FileID::FileID(path_known_relative_tag, const std::shared_ptr<FileID>& at_dir_fileid, const std::string &bname,
 		const struct stat *stat_buf,
 		FileType type,
 		dev_t d, ino_t i,
 		FileAccessMode fam, FileCreationFlag fcf)
-	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", stat_buf, type))
+	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, bname, "", stat_buf, type))
 {
 	uint_fast8_t orbits = NONE;
 
@@ -424,24 +458,6 @@ FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, s
 	m_valid_bits.fetch_or(orbits);
 }
 
-FileID::FileID(path_known_relative_tag, std::shared_ptr<FileID> at_dir_fileid, std::string basename, FileType type)
-	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, basename, "", nullptr, type))
-{
-	/// @note Taking basename by value since we are always storing it.
-	/// Full openat() semantics:
-	/// - If pathname is absolute, at_dir_fd is ignored.
-	/// - If pathname is relative, it's relative to at_dir_fd.
-
-	uint_fast8_t orbits = NONE;
-
-	if(type != FT_UNINITIALIZED)
-	{
-		orbits |= TYPE;
-	}
-
-	m_valid_bits.fetch_or(orbits);
-}
-
 FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileType type)
 	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname /*==basename*/, pathname, nullptr, type))
 {
@@ -464,14 +480,14 @@ FileID::FileID(path_known_absolute_tag, std::shared_ptr<FileID> at_dir_fileid, s
 }
 
 FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, FileAccessMode fam, FileCreationFlag fcf)
-	: m_pimpl(std::make_unique<FileID::impl>(at_dir_fileid, pathname))
+	: m_pimpl(std::make_unique<FileID::impl>(std::move(at_dir_fileid), pathname))
 {
 	SetFileDescriptorMode(fam, fcf);
 
 	uint_fast8_t orbits = NONE;
 
-	/// @todo This check is kind of out of place.  It ends up being done twice, here and in the impl constructor.
-	if(is_pathname_absolute(pathname))
+	// Did we get a full path?
+	if(!m_pimpl->m_path.empty())
 	{
 		orbits |= PATH;
 	}
@@ -522,31 +538,31 @@ std::string FileID::GetBasename() const noexcept
 
 const std::string& FileID::GetPath() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, PATH, m_mutex, [this](){ m_pimpl->ResolvePath(); return PATH; });
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, PATH, m_mutex, [this](){ return m_pimpl->ResolvePath(); });
 	return m_pimpl->m_path;
 }
 
 FileType FileID::GetFileType() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, TYPE, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, TYPE, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_file_type;
 }
 
 off_t FileID::GetFileSize() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, STATINFO, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, STATINFO, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_size;
 };
 
 blksize_t FileID::GetBlockSize() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, STATINFO, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, STATINFO, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_block_size;
 };
 
 const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, UUID, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo();});
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, UUID, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo();});
 	return m_pimpl->m_unique_file_identifier;
 }
 
@@ -562,22 +578,6 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 	}
 }
 
-bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
-{
-	FileDescriptor temp_atdir {GetTempAtDir()};
-	int retval = fstatat(temp_atdir.GetFD(), name.c_str(), statbuf, flags);
-
-	if(retval == -1)
-	{
-		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' failed: " << LOG_STRERROR();
-		// Note: We don't clear errno here, we want to be able to look at it in the caller.
-		//errno = 0;
-		return false;
-	}
-
-	return true;
-}
-
 #if 0
 FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 {
@@ -590,66 +590,51 @@ FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 
 DIR *FileID::OpenDir()
 {
-	int fd = m_pimpl->TryGetFD();
-	int dirfd {0};
-	if(fd < 0)
-	{
-		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY);
-	}
-	else
-	{
-		// We already have a file descriptor.  Dup it, because fdopendir() takes ownership of it.
-		dirfd = dup(fd);
-	}
-	return fdopendir(dirfd);
+	int fd = m_pimpl->GetTempDirFileDesc();
+
+	return fdopendir(fd);
 }
 
+bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
+{
+	int atdir_fd = m_pimpl->m_temp_dir_file_descriptor;
+
+	// Stat the file.
+	int retval = fstatat(atdir_fd, name.c_str(), statbuf, flags);
+
+	if(retval == -1)
+	{
+		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' (atfd=" << atdir_fd << ") failed: " << LOG_STRERROR();
+		// Note: We don't clear errno here, we want to be able to look at it in the caller.
+		//errno = 0;
+		return false;
+	}
+
+	return true;
+}
 void FileID::CloseDir(DIR *d)
 {
+	m_pimpl->m_temp_dir_file_descriptor = -987;
 	closedir(d);
 }
 
-FileDescriptor FileID::GetTempAtDir()
+int FileID::GetFileDescriptor()
 {
-	int fd = m_pimpl->TryGetFD();
-	int dirfd {0};
-	if(fd < 0)
-	{
-		// We don't have a file descriptor.  Open a temporary one.
-		dirfd = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY | O_PATH);
-	}
-	else
-	{
-		// We already have a file descriptor.  Dup it.
-		dirfd = dup(fd);
-	}
-	return FileDescriptor(dirfd);
-}
-
-const FileDescriptor& FileID::GetFileDescriptor()
-{
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, FILE_DESC, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, FILE_DESC, m_mutex, [this](){ return m_pimpl->GetFileDescriptor();});
 	return m_pimpl->m_file_descriptor;
 }
 
 dev_t FileID::GetDev() const noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, UUID, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, UUID, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo(); });
 	return m_pimpl->m_dev;
 }
 
 void FileID::SetDevIno(dev_t d, ino_t i) noexcept
 {
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, UUID, m_mutex,
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, UUID, m_mutex,
 			[&](){ m_pimpl->SetDevIno(d, i); return UUID; });
 }
-
-void FileID::SetStatInfo(const struct stat &stat_buf) noexcept
-{
-	DoubleCheckedMultiLock<uint8_t>(m_valid_bits, STATINFO, m_mutex,
-			[&](){ m_pimpl->SetStatInfo(stat_buf); return UUID | STATINFO | TYPE; });
-}
-
 
 std::ostream& operator<<(std::ostream &ostrm, const FileID &fileid)
 {

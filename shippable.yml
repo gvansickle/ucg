@@ -1,0 +1,58 @@
+language: c
+
+compiler:
+  - gcc
+  - clang
+
+#env:
+#  - #env1=foo
+#  - #env2=bar
+
+matrix:
+
+build:
+
+#  pre_ci:
+
+#  pre_ci_boot:
+#    image_name:
+#    image_tag:
+#    pull:
+#    options:
+  ci:
+    - autoreconf -i
+    - mkdir build
+    - cd build
+#    - echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"
+    - ../configure
+    - make
+    - make check 'TESTSUITEFLAGS=--keywords=!benchmark'
+    - find . -iname '*.log' -exec cat "{}" \;
+    - echo "====" && echo "build_info.cpp:" && cat build_info.cpp && echo "===="
+#  post_ci:
+#    - #command1
+#    - #command2
+#  on_success:
+#    - #command1
+#    - #command2
+#  on_failure:
+#    - #command1
+#    - #command2
+#  cache:
+#  cache_dir_list:
+#    - #dir1
+#  push:
+
+#integrations:
+# notifications:
+#   - integrationName:
+#     type:
+#     recipients:
+#       - #recp1
+#       - #recp2
+
+#  hub:
+#    - integrationName:
+#      type:
+#      agent_only:
+

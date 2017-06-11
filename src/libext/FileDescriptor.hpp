@@ -80,7 +80,7 @@ public:
 	}
 
 	/// Move constructor.  Ownership of the fd will be transferred from other to this.
-	/// For a move, the #other FileDescriptor has to be invalidated.  Otherwise,
+	/// For a move, the @p other FileDescriptor has to be invalidated.  Otherwise,
 	/// when it is destroyed, it will close the file, which it no longer owns.
 	FileDescriptor(FileDescriptor&& other) noexcept
 	{

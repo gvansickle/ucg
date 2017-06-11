@@ -36,15 +36,13 @@
 #define MAP_NORESERVE 0
 #endif
 
-File::File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>> storage) : m_storage(storage)
+File::File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>> storage) : m_fileid(std::move(file_id)), m_storage(storage)
 {
-	m_fileid = file_id;
-
 	int file_descriptor { -1 };
 
 	try
 	{
-		file_descriptor = m_fileid->GetFileDescriptor().GetFD();
+		file_descriptor = m_fileid->GetFileDescriptor();
 
 		/// @todo Does the above ever not throw on error?
 		if(file_descriptor == -1)
@@ -142,7 +140,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size, size_t pref
 		// - That we'll need the contents in the near future.  Per the Linux manpage, this will cause it to start
 		//   a non-blocking read of the file.
 		// Explicitly ignoring the return value for Coverity's sake.  If the advice is ignored, we should still be functional.
-		(void)posix_fadvise(file_descriptor, 0, 0, POSIX_FADV_SEQUENTIAL | POSIX_FADV_WILLNEED);
+		(void)posix_fadvise(file_descriptor, 0, 0, POSIX_FADV_SEQUENTIAL /*| POSIX_FADV_WILLNEED*/);
 #endif
 
 		m_storage->reserve_no_copy(file_size, preferred_block_size);
