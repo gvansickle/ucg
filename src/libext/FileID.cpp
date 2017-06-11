@@ -516,8 +516,8 @@ FileID::FileID(std::shared_ptr<FileID> at_dir_fileid, std::string pathname, File
 
 	uint_fast8_t orbits = NONE;
 
-	/// @todo This check is kind of out of place.  It ends up being done twice, here and in the impl constructor.
-	if(is_pathname_absolute(pathname))
+	// Did we get a full path?
+	if(!m_pimpl->m_path.empty())
 	{
 		orbits |= PATH;
 	}
@@ -608,36 +608,6 @@ void FileID::SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf)
 	}
 }
 
-bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
-{
-	int atdir_fd = m_pimpl->TryGetFD();
-	int fd_dir {0};
-	if(atdir_fd < 0)
-	{
-		// We don't have a file descriptor, open a temp one.
-		fd_dir = open(GetPath().c_str(), O_RDONLY | O_NOATIME | O_NOCTTY | O_DIRECTORY);
-		atdir_fd = fd_dir;
-	}
-
-	// Stat the file.
-	int retval = fstatat(atdir_fd, name.c_str(), statbuf, flags);
-
-	if(fd_dir > 0)
-	{
-		close(fd_dir);
-	}
-
-	if(retval == -1)
-	{
-		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' (atfd=" << atdir_fd << ") failed: " << LOG_STRERROR();
-		// Note: We don't clear errno here, we want to be able to look at it in the caller.
-		//errno = 0;
-		return false;
-	}
-
-	return true;
-}
-
 #if 0
 FileID FileID::OpenAt(const std::string &name, FileType type, int flags)
 {
@@ -652,17 +622,30 @@ DIR *FileID::OpenDir()
 {
 	int fd = m_pimpl->GetTempDirFileDesc();
 
-	/// @todo Do we need this dup?
-	int fd_dir = dup(fd);
-
-	return fdopendir(fd_dir);
+	return fdopendir(fd);
 }
 
+bool FileID::FStatAt(const std::string &name, struct stat *statbuf, int flags)
+{
+	int atdir_fd = m_pimpl->m_temp_dir_file_descriptor;
+
+	// Stat the file.
+	int retval = fstatat(atdir_fd, name.c_str(), statbuf, flags);
+
+	if(retval == -1)
+	{
+		WARN() << "Attempt to stat file '" << name << "' in directory '" << GetPath() << "' (atfd=" << atdir_fd << ") failed: " << LOG_STRERROR();
+		// Note: We don't clear errno here, we want to be able to look at it in the caller.
+		//errno = 0;
+		return false;
+	}
+
+	return true;
+}
 void FileID::CloseDir(DIR *d)
 {
+	m_pimpl->m_temp_dir_file_descriptor = -987;
 	closedir(d);
-
-	close(m_pimpl->GetTempDirFileDesc());
 }
 
 int FileID::GetFileDescriptor()

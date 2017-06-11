@@ -63,6 +63,9 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 	// Start at the cwd of the process (~AT_FDCWD)
 	std::shared_ptr<FileID> root_file_id = std::make_shared<FileID>(FileID::path_known_cwd_tag());
 
+	// OpenDir() it just so that FStatAt() works.
+	DIR *d = root_file_id->OpenDir();
+
 	//
 	// Step 1: Process the paths and/or filenames specified by the user on the command line.
 	// We always use only a single thread (the current one) for this step.
@@ -115,6 +118,8 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 		}
 		}
 	}
+
+	root_file_id->CloseDir(d);
 
 	// Create and start the directory traversal threads.
 	std::vector<std::thread> threads;
@@ -207,7 +212,8 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 	bool is_symlink {false};
 	bool is_unknown {true};
 
-#ifdef _DIRENT_HAVE_D_TYPE
+#warning "PUT THIS BACK"
+#if defined(_DIRENT_HAVE_D_TYPE) && defined(REMOVE_ME)
 	// Reject anything that isn't a directory, a regular file, or a symlink.
 	// If it's DT_UNKNOWN, we'll have to do a stat to find out.
 	is_dir = (current_dirent->d_type == DT_DIR);

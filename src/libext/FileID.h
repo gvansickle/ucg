@@ -191,24 +191,34 @@ public:
 	 */
 	const std::string& GetPath() const noexcept;
 
-	const std::string& GetAbsPath() const noexcept;
-
 	/**
-	 * This is essentially a possibly-deferred "open()" for this class.
+	 * This is essentially a deferred "open()" for this class.
 	 *
-	 * @post GetFileDescriptor() will return a FileDescriptor to the file with the given access mode and creation flags.
+	 * @post GetFileDescriptor() will return a file descriptor to the file with the given access mode and creation flags.
 	 *
 	 * @param fam
 	 * @param fcf
 	 */
 	void SetFileDescriptorMode(FileAccessMode fam, FileCreationFlag fcf);
 
+#if 0
+	FileID OpenAt(const std::string &name, FileType type, int flags);
+#endif
+
+	/**
+	 * Open the directory referenced by this FileID.
+	 * Consumes one file descriptor until CloseDir() is called.
+	 *
+	 * @todo Derived class for dirs?
+     *
+	 * @return
+	 */
+	DIR *OpenDir();
+
 	/**
 	 * Stat the given filename at the directory represented by this.
 	 *
-	 * @note Only makes sense to call on FileIDs representing directories.
-	 *
-	 * @todo Derived class for dirs?
+	 * @note Only makes sense to call on FileIDs representing directories where OpenDir() has been called.
 	 *
 	 * @param name
 	 * @param statbuf
@@ -216,16 +226,7 @@ public:
 	 */
 	bool FStatAt(const std::string &name, struct stat *statbuf, int flags);
 
-	FileID OpenAt(const std::string &name, FileType type, int flags);
-
-	/**
-	 * Open the directory referenced by this FileID.
-	 * Consumes one file descriptor until CloseDir() is called.
-	 *
-	 * @return
-	 */
-	DIR *OpenDir();
-	void CloseDir(DIR*d);
+	void CloseDir(DIR* d);
 
 	/**
 	 *
