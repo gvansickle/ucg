@@ -71,7 +71,7 @@ public:
 	const std::string& GetBasename() const noexcept;
 
 	/// Resolve and cache this FileID's path.  Recursively visits its parent directories to do so.
-	const std::string& ResolvePath() const;
+	FileID::IsValid ResolvePath() const noexcept;
 
 	FileID::IsValid GetFileDescriptor();
 
@@ -239,33 +239,19 @@ FileID::IsValid FileID::impl::GetFileDescriptor()
 		if(m_at_dir)
 		{
 			int tempfd = -1;
-			if(m_file_type == FT_DIR)
+
+			ResolvePath();
+			tempfd = open(m_path.c_str(), m_open_flags);
+			if(unlikely(tempfd == -1))
 			{
-				// Should only get here via a recursive call from the FT_REG case, for an at_dir.
-				tempfd = open(m_path.c_str(), m_open_flags | O_PATH);
-				if(unlikely(tempfd == -1))
-				{
-					throw FileException("GetFileDescriptor(): open(" + m_path + ") failed");
-				}
-			}
-			else
-			{
-				///int atdirfd = open(m_at_dir->GetPath().c_str(), m_at_dir->m_pimpl->m_open_flags | O_PATH);//m_at_dir->GetFileDescriptor();
-				//tempfd = openat(atdirfd, GetBasename().c_str(), m_open_flags);
-				ResolvePath();
-				tempfd = open(m_path.c_str(), m_open_flags);
-				if(unlikely(tempfd == -1))
-				{
-					throw FileException("GetFileDescriptor(): open(" + m_path + ") failed");
-				}
-///close(atdirfd);
+				throw FileException("GetFileDescriptor(): open(" + m_path + ") failed");
 			}
 
 			m_file_descriptor = tempfd;
 		}
 	}
 
-	return FileID::FILE_DESC;
+	return FileID::FILE_DESC | FileID::PATH;
 }
 
 void FileID::impl::SetDevIno(dev_t d, ino_t i) noexcept
@@ -375,15 +361,16 @@ void FileID::impl::SetStatInfo(const struct stat &stat_buf) const noexcept
 	m_blocks = stat_buf.st_blocks;
 }
 
-const std::string& FileID::impl::ResolvePath() const
+FileID::IsValid FileID::impl::ResolvePath() const noexcept
 {
 	// Do we not have a full path already?
 	if(m_path.empty())
 	{
 		// No.  Build the full path.
 		auto at_path = m_at_dir->GetPath();
-		if(at_path != ".")
+		if(!(at_path.length() == 1 && at_path[0] == '.'))
 		{
+			// This isn't the AT_FDCWD.
 			m_path.reserve(at_path.length() + m_basename.size()+2);
 			m_path.append(at_path);
 			m_path.append("/", 1);
@@ -391,11 +378,12 @@ const std::string& FileID::impl::ResolvePath() const
 		}
 		else
 		{
+			// This is the AT_FDCWD.
 			m_path = m_basename;
 		}
 	}
 
-	return m_path;
+	return FileID::PATH;
 }
 
 /////////////////////////////////
@@ -568,7 +556,7 @@ std::string FileID::GetBasename() const noexcept
 
 const std::string& FileID::GetPath() const noexcept
 {
-	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, PATH, m_mutex, [this](){ m_pimpl->ResolvePath(); return PATH; });
+	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, PATH, m_mutex, [this](){ return m_pimpl->ResolvePath(); });
 	return m_pimpl->m_path;
 }
 
