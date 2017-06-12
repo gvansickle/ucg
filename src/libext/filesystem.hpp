@@ -334,7 +334,7 @@ inline std::string get_home_dir_name()
 }
 
 /**
- * Convert #path into an absolute file path.
+ * Convert @p path into an absolute file path.
  *
  * @todo Suspect this is broken on... wait for it... OSX.
  *
