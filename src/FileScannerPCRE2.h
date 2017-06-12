@@ -24,10 +24,21 @@
 
 #include "FileScanner.h"
 
+#include <libext/memory.hpp>
+
 #if HAVE_LIBPCRE2
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 #endif
+
+namespace std
+{
+	template<>
+	struct default_delete<pcre2_match_data>
+	{
+		void operator()(pcre2_match_data *ptr) { pcre2_match_data_free(ptr); };
+	};
+};
 
 class FileScannerPCRE2: public FileScanner
 {

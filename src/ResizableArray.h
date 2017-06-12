@@ -22,6 +22,7 @@
 
 #include <config.h>
 
+#include <experimental/memory_resource>
 #include <cstdlib>
 #include <cstring> // For std::memset().
 
