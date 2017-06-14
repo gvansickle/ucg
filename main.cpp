@@ -85,6 +85,7 @@ int main(int argc, char **argv)
 		std::thread output_task_thread {&OutputTask::Run, &output_task};
 
 		// Start the scanner threads.
+		file_scanner->ThreadLocalSetup(arg_parser.m_jobs);
 		for(int t=0; t<arg_parser.m_jobs; ++t)
 		{
 			std::thread fst {&FileScanner::Run, file_scanner.get(), t};

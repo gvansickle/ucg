@@ -99,6 +99,8 @@ public:
 			bool pattern_is_literal);
 	virtual ~FileScanner();
 
+	virtual void ThreadLocalSetup(int thread_count) {};
+
 	void Run(int thread_index);
 
 protected:
@@ -245,7 +247,7 @@ private:
 	 * @param file_size
 	 * @param ml
 	 */
-	virtual void ScanFile(const char * __restrict__ file_data, size_t file_size, MatchList &ml) = 0;
+	virtual void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) = 0;
 
 	sync_queue<std::shared_ptr<FileID>>& m_in_queue;
 

@@ -306,7 +306,15 @@ struct default_delete<pcre2_match_context>
 /// @}
 #endif
 
-void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
+void FileScannerPCRE2::ThreadLocalSetup(int thread_count)
+{
+	for(int i = 0; i<thread_count; ++i)
+	{
+		m_match_data.push_back(std::unique_ptr<pcre2_match_data>(pcre2_match_data_create_from_pattern(m_pcre2_regex, NULL)));
+	}
+}
+
+void FileScannerPCRE2::ScanFile(int thread_index, const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
 #if HAVE_LIBPCRE2
 	try
@@ -317,18 +325,18 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 //	// Create a std::unique_ptr<> with a custom deleter (see above) to manage the lifetime of the match data.
 //	std::unique_ptr<pcre2_match_data> match_data;
 	/// Create a std::unique_ptr<> with a custom deleter (see above) to manage the lifetime of the match data.
-	static thread_local std::unique_ptr<pcre2_match_data> m_match_data;
+//	static thread_local std::unique_ptr<pcre2_match_data> m_match_data;
 
 	size_t line_no {1};
 	size_t prev_lineno {0};
 	const char *prev_lineno_search_end {file_data};
 	size_t start_offset { 0 };
 
-	if(!m_match_data)
-	{
-		m_match_data.reset(pcre2_match_data_create_from_pattern(m_pcre2_regex, NULL));
-	}
-	ovector = pcre2_get_ovector_pointer(m_match_data.get());
+//	if(!m_match_data)
+//	{
+//		m_match_data.reset(pcre2_match_data_create_from_pattern(m_pcre2_regex, NULL));
+//	}
+	ovector = pcre2_get_ovector_pointer(m_match_data[thread_index].get());
 	// Fool the "previous match was zero-length" logic for the first iteration.
 	ovector[0] = -1;
 	ovector[1] = 0;
@@ -428,7 +436,7 @@ void FileScannerPCRE2::ScanFile(const char* __restrict__ file_data, size_t file_
 					file_size,
 					start_offset,
 					options,
-					m_match_data.get(),
+					m_match_data[thread_index].get(),
 					mctx.get()
 					);
 		}
