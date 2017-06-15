@@ -142,7 +142,7 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 	// Load the pattern.
 	const __m128i xmm_patt = _mm_lddqu_si128(static_cast<const __m128i *>(pattern));
 
-
+#if 1
 	// Create the prefilter patterns.
 	/// @todo This will now only handle patterns longer than 1 char.
 	const __m128i xmm_temp0 = _mm_set1_epi8(static_cast<const char*>(pattern)[0]);
@@ -153,6 +153,7 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 	const __m128i xmm_01search = _mm_blendv_epi8(xmm_temp0, xmm_temp1, xmm_00FFs);
 	const __m128i xmm_10search = _mm_slli_si128(xmm_01search, 1);
 	const __m128i xmm_FF00 = _mm_set_epi8(0xFF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+#endif
 
 	while(p1 < (const char*)mem_to_search+(memlen&vec_size_mask))
 	{
@@ -161,7 +162,7 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 		{
 			// Load 16 bytes from mem_to_search.
 			frag1 = _mm_lddqu_si128(reinterpret_cast<const __m128i*>(p1));
-
+#if 1
 			// Prefilter, using faster SSE instructions than PCMPESTRI.
 			// Are the first two chars in this fragment, in order?
 			// ST'ST'ST'ST
@@ -190,7 +191,7 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 				// match the first char of the pattern.  The rest of string can't match.
 				continue;
 			}
-
+#endif
 
 			// Do the exact search.
 
