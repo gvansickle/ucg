@@ -31,14 +31,6 @@
 #include <pcre2.h>
 #endif
 
-namespace std
-{
-	template<>
-	struct default_delete<pcre2_match_data>
-	{
-		void operator()(pcre2_match_data *ptr) { pcre2_match_data_free(ptr); };
-	};
-};
 
 class FileScannerPCRE2: public FileScanner
 {
@@ -84,7 +76,11 @@ private:
 	//std::unique_ptr<pcre2_code, void(*)(pcre2_code*)> m_pcre2_regex;
 	pcre2_code *m_pcre2_regex;
 
+	/// @note This and m_match_context are a pseudo-thread_local mechanism for systems which
+	/// don't support real C++ thread_local's (older Mac OS X).
 	std::vector<std::unique_ptr<pcre2_match_data>> m_match_data;
+
+	std::vector<std::unique_ptr<pcre2_match_context>> m_match_context;
 
 #endif
 

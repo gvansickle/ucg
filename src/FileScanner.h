@@ -99,7 +99,7 @@ public:
 			bool pattern_is_literal);
 	virtual ~FileScanner();
 
-	virtual void ThreadLocalSetup(int thread_count) {};
+	virtual void ThreadLocalSetup(int thread_count) { (void)thread_count; };
 
 	void Run(int thread_index);
 

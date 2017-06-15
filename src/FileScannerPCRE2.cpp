@@ -91,7 +91,7 @@ static size_t pattern_num_callouts(const pcre2_code *code)
 	return num_callouts;
 }
 
-#endif
+#endif  // HAVE_LIBPCRE2
 
 FileScannerPCRE2::FileScannerPCRE2(sync_queue<std::shared_ptr<FileID>> &in_queue,
 		sync_queue<MatchList> &output_queue,
@@ -290,11 +290,11 @@ void FileScannerPCRE2::AnalyzeRegex(const std::string &regex_passed_in) noexcept
 namespace std
 {
 
-//template<>
-//struct default_delete<pcre2_match_data>
-//{
-//	void operator()(pcre2_match_data *ptr) { pcre2_match_data_free(ptr); };
-//};
+template<>
+struct default_delete<pcre2_match_data>
+{
+	void operator()(pcre2_match_data *ptr) { pcre2_match_data_free(ptr); };
+};
 
 template<>
 struct default_delete<pcre2_match_context>
@@ -304,13 +304,19 @@ struct default_delete<pcre2_match_context>
 
 }
 /// @}
-#endif
+#endif  // HAVE_LIBPCRE2
 
 void FileScannerPCRE2::ThreadLocalSetup(int thread_count)
 {
 	for(int i = 0; i<thread_count; ++i)
 	{
+#if HAVE_LIBPCRE2
+		/// Create a std::unique_ptr<> with a custom deleter (see above) to manage the lifetime of the match data.
 		m_match_data.push_back(std::unique_ptr<pcre2_match_data>(pcre2_match_data_create_from_pattern(m_pcre2_regex, NULL)));
+		m_match_context.push_back(std::unique_ptr<pcre2_match_context>(pcre2_match_context_create(NULL)));
+		// Hook in our callout function.
+		pcre2_set_callout(m_match_context[i].get(), callout_handler, this);
+#endif  // HAVE_LIBPCRE2
 	}
 }
 
@@ -322,32 +328,15 @@ void FileScannerPCRE2::ScanFile(int thread_index, const char* __restrict__ file_
 	// Pointer to the offset vector returned by pcre2_match().
 	PCRE2_SIZE *ovector;
 
-//	// Create a std::unique_ptr<> with a custom deleter (see above) to manage the lifetime of the match data.
-//	std::unique_ptr<pcre2_match_data> match_data;
-	/// Create a std::unique_ptr<> with a custom deleter (see above) to manage the lifetime of the match data.
-//	static thread_local std::unique_ptr<pcre2_match_data> m_match_data;
-
 	size_t line_no {1};
 	size_t prev_lineno {0};
 	const char *prev_lineno_search_end {file_data};
 	size_t start_offset { 0 };
 
-//	if(!m_match_data)
-//	{
-//		m_match_data.reset(pcre2_match_data_create_from_pattern(m_pcre2_regex, NULL));
-//	}
 	ovector = pcre2_get_ovector_pointer(m_match_data[thread_index].get());
 	// Fool the "previous match was zero-length" logic for the first iteration.
 	ovector[0] = -1;
 	ovector[1] = 0;
-
-	static thread_local std::unique_ptr<pcre2_match_context> mctx;
-	if(!mctx)
-	{
-		mctx.reset(pcre2_match_context_create(NULL));
-	}
-	// Hook in our callout function.
-	pcre2_set_callout(mctx.get(), callout_handler, this);
 
 	// Loop while the start_offset is less than the file_size.
 	while(start_offset < file_size)
@@ -437,7 +426,7 @@ void FileScannerPCRE2::ScanFile(int thread_index, const char* __restrict__ file_
 					start_offset,
 					options,
 					m_match_data[thread_index].get(),
-					mctx.get()
+					m_match_context[thread_index].get()
 					);
 		}
 		else
