@@ -47,7 +47,8 @@ FileScannerCpp11::~FileScannerCpp11()
 {
 }
 
-void FileScannerCpp11::ScanFile( const char * __restrict__ file_data [[maybe_unused]], size_t file_size [[gnu::unused]], MatchList &ml [[gnu::unused]])
+void FileScannerCpp11::ScanFile(int thread_index [[maybe_unused]], const char * __restrict__ file_data [[maybe_unused]],
+		size_t file_size [[gnu::unused]], MatchList &ml [[gnu::unused]])
 {
 #ifdef USE_CXX11_REGEX
 	// Scan the mmapped file for the regex.

@@ -49,7 +49,7 @@ private:
 	 * @param file_size
 	 * @param ml
 	 */
-	void ScanFile(const char * __restrict__ file_data, size_t file_size, MatchList &ml) override final;
+	void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) override final;
 };
 
 #endif /* FILESCANNERCPP11_H_ */

@@ -113,7 +113,7 @@ void FileScanner::Run(int thread_index)
 
 	if(m_manually_assign_cores)
 	{
-		// Spread the scanner threads across cores.  Linux at least doesn't seem to want to do that by default.
+		// Spread the scanner threads across cores.
 		AssignToNextCore();
 	}
 
@@ -155,7 +155,7 @@ void FileScanner::Run(int thread_index)
 			size_t file_size = f.size();
 
 			// Scan the file data for occurrences of the regex, sending matches to the MatchList ml.
-			ScanFile(file_data, file_size, ml);
+			ScanFile(thread_index, file_data, file_size, ml);
 
 			if(!ml.empty())
 			{

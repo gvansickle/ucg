@@ -24,10 +24,13 @@
 
 #include "FileScanner.h"
 
+#include <libext/memory.hpp>
+
 #if HAVE_LIBPCRE2
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 #endif
+
 
 class FileScannerPCRE2: public FileScanner
 {
@@ -46,6 +49,8 @@ public:
 	 */
 	static std::string GetPCRE2Version() noexcept;
 
+	void ThreadLocalSetup(int thread_count) override final;
+
 private:
 
 	/**
@@ -61,7 +66,7 @@ private:
 	 * @param file_size
 	 * @param ml
 	 */
-	void ScanFile(const char * __restrict__ file_data, size_t file_size, MatchList &ml) override final;
+	void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) override final;
 
 	std::string PCRE2ErrorCodeToErrorString(int errorcode);
 
@@ -70,6 +75,13 @@ private:
 	/// @todo Make this a unique_ptr<>, RAII-ify it.
 	//std::unique_ptr<pcre2_code, void(*)(pcre2_code*)> m_pcre2_regex;
 	pcre2_code *m_pcre2_regex;
+
+	/// @note This and m_match_context are a pseudo-thread_local mechanism for systems which
+	/// don't support real C++ thread_local's (older Mac OS X).
+	std::vector<std::unique_ptr<pcre2_match_data>> m_match_data;
+
+	std::vector<std::unique_ptr<pcre2_match_context>> m_match_context;
+
 #endif
 
 	bool m_use_first_code_unit_table { false };

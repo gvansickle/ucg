@@ -135,9 +135,10 @@ FileScannerPCRE::~FileScannerPCRE()
 #endif
 }
 
-void FileScannerPCRE::ScanFile(const char* __restrict__ file_data, size_t file_size, MatchList& ml)
+void FileScannerPCRE::ScanFile(int thread_index, const char* __restrict__ file_data, size_t file_size, MatchList& ml)
 {
 #if HAVE_LIBPCRE == 0
+	(void)thread_index;
 	(void)file_data;
 	(void)file_size;
 	(void)ml;
