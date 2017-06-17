@@ -83,12 +83,6 @@ public:
 				<< "Max descriptors, other: " << impl.m_atomic_fd_max_other << "\n";
 	}
 
-	/**
-	 * If we have a file descriptor already, return it.  Else return -1.
-	 * @return
-	 */
-	int TryGetFD() const noexcept;
-
 	int GetTempDirFileDesc() const noexcept;
 
 //private:
@@ -181,7 +175,6 @@ FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std
 		const struct stat *stat_buf, FileType type)
 		: m_at_dir(std::move(at_dir_fileid)), m_basename(std::move(bname)), m_path(std::move(pname)), m_file_type(type)
 {
-	LOG(DEBUG) << "5-param const., m_basename=" << m_basename << ", m_at_dir=" << (!!m_at_dir ? (m_at_dir->m_pimpl->m_path) : "<nullptr>");
 	if(stat_buf != nullptr)
 	{
 		SetStatInfo(*stat_buf);

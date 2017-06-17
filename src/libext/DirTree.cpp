@@ -304,11 +304,11 @@ void DirTree::ProcessDirent(const std::shared_ptr<FileID>& dse, struct dirent* c
 
 				LOG(INFO) << "... should be scanned.";
 
-				std::shared_ptr<FileID> file_to_scan = std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, bname,
+				std::shared_ptr<FileID> file_to_scan {std::make_shared<FileID>(FileID::path_known_relative_tag(), dse, bname,
 						statbuff_ptr,
 						FT_REG,
 						dse->GetDev(), current_dirent->d_ino,
-						FAM_RDONLY, FCF_NOCTTY | FCF_NOATIME);
+						FAM_RDONLY, FCF_NOCTTY | FCF_NOATIME)};
 
 				// Queue it up.
 				local_file_queue->push_back(std::move(file_to_scan));
