@@ -145,13 +145,14 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 #if 1
 	// Create the prefilter patterns.
 	/// @todo This will now only handle patterns longer than 1 char.
+	const uint8_t first_pattern_char = static_cast<const char *>(pattern)[0];
 	const __m128i xmm_temp0 = _mm_set1_epi8(static_cast<const char*>(pattern)[0]);
 	const __m128i xmm_temp1 = _mm_set1_epi8(static_cast<const char*>(pattern)[1]);
 	const __m128i xmm_all_FFs = _mm_set1_epi8(0xFF);
 	// Remember here, little-endian.
 	const __m128i xmm_00FFs = _mm_set1_epi16(0xFF00);
-	const __m128i xmm_01search = _mm_blendv_epi8(xmm_temp0, xmm_temp1, xmm_00FFs);
-	const __m128i xmm_10search = _mm_slli_si128(xmm_01search, 1);
+///	const __m128i xmm_01search = _mm_blendv_epi8(xmm_temp0, xmm_temp1, xmm_00FFs);
+///	const __m128i xmm_10search = _mm_slli_si128(xmm_01search, 1);
 	const __m128i xmm_FF00 = _mm_set_epi8(0xFF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 #endif
 
@@ -162,7 +163,7 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 		{
 			// Load 16 bytes from mem_to_search.
 			frag1 = _mm_lddqu_si128(reinterpret_cast<const __m128i*>(p1));
-#if 1
+#if PREFILTER2
 			// Prefilter, using faster SSE instructions than PCMPESTRI.
 			// Are the first two chars in this fragment, in order?
 			// ST'ST'ST'ST
@@ -191,6 +192,22 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 				// match the first char of the pattern.  The rest of string can't match.
 				continue;
 			}
+#else
+			__m128i match_bytemask = _mm_cmpeq_epi8(frag1, xmm_temp0);
+			//uint32_t match_bitmask = _mm_movemask_epi8(match_bytemask);
+			if(likely(_mm_test_all_zeros(match_bytemask, xmm_all_FFs)))
+			{
+				continue;
+			}
+			//int last_frag_char = _mm_extract_epi8(frag1, 15);
+//			if(likely((match_bitmask & 0x8000) == 0))//last_frag_char != first_pattern_char)
+//			{
+//				match_bytemask = _mm_cmpeq_epi8(frag1, xmm_temp1);
+//				if(likely(_mm_test_all_zeros(match_bytemask, xmm_all_FFs)))
+//				{
+//					continue;
+//				}
+//			}
 #endif
 
 			// Do the exact search.
