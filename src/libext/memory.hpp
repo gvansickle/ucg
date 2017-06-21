@@ -168,7 +168,7 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 
 			constexpr uint8_t imm8 = _SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS;
 
-			// Returns bitmask of bits set in IntRes2. (SSE4.2)
+			// Returns index of first set bit in IntRes2. (SSE4.2)
 			/// @note Ordering here is correct: pattern first, string to search second.
 			/// @note Multiple _mm_cmpestr?()'s here compile down into a single pcmpestrm insruction,
 			/// and serve only to expose the processor flags to the C++ code.  This would probably be easier in
