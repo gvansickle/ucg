@@ -146,6 +146,7 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 	const __m128i xmm_temp0 = _mm_set1_epi8(static_cast<const char*>(pattern)[0]);
 	const __m128i xmm_all_FFs = _mm_set1_epi8(0xFF);
 
+
 	while(p1 < (const char*)mem_to_search+(memlen&vec_size_mask))
 	{
 		// Find the start of a match.

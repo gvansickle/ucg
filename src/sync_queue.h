@@ -25,6 +25,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
+#include <libext/hints.hpp>
 
 #if TODO
 #include <scoped_allocator>
@@ -70,7 +71,7 @@ public:
 	sync_queue() {};
 	~sync_queue() {};
 
-	size_type size() const noexcept
+	size_type size() const noexcept __attribute__((noinline))
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 		return m_underlying_queue.size();
@@ -90,7 +91,7 @@ public:
 		m_cv.notify_all();
 	}
 
-	queue_op_status push_back(const ValueType& x)
+	queue_op_status push_back(const ValueType& x) __attribute__((noinline))
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 
@@ -116,7 +117,7 @@ public:
 		return queue_op_status::success;
 	}
 
-	queue_op_status push_back(ValueType&& x)
+	queue_op_status push_back(ValueType&& x) __attribute__((noinline))
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 
@@ -149,7 +150,7 @@ public:
 	 * @return
 	 */
 	template <typename T, typename Unused = typename T::value_type>
-	queue_op_status push_back(T& ContainerOfValues)
+	queue_op_status __attribute__((noinline)) push_back(T& ContainerOfValues)
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 
@@ -175,7 +176,7 @@ public:
 		return queue_op_status::success;
 	}
 
-	queue_op_status pull_front(ValueType& x)
+	queue_op_status pull_front(ValueType& x) __attribute__((noinline))
 	{
 		// Using a unique_lock<> here vs. a lock_guard<> because we'll be using a condition variable, which needs
 		// to unlock the mutex.
@@ -207,7 +208,7 @@ public:
 		return queue_op_status::success;
 	}
 
-	queue_op_status pull_front(ValueType&& x)
+	queue_op_status pull_front(ValueType&& x) __attribute__((noinline))
 	{
 		// Using a unique_lock<> here vs. a lock_guard<> because we'll be using a condition variable, which needs
 		// to unlock the mutex.

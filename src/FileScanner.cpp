@@ -132,7 +132,7 @@ void FileScanner::Run(int thread_index)
 		try
 		{
 			// Try to open and read the file.  This could throw.
-			LOG(INFO) << "Attempting to scan file \'" << next_file->GetPath() << "\', fd=" << next_file->GetFileDescriptor(); ///.GetFD();
+			LOG(INFO) << "Attempting to scan file \'" << next_file->GetPath() << "\', fd=" << next_file->GetFileDescriptor();
 
 			steady_clock::time_point start = steady_clock::now();
 
