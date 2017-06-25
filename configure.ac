@@ -317,9 +317,24 @@ PKG_CHECK_MODULES([PCRE], [libpcre >= 8.21],
 	[AC_SUBST([HAVE_LIBPCRE], [no])])
 ])
 
-#PKG_CHECK_MODULES([EXPLAIN], [libexplain])
-
-#PKG_CHECK_MODULES([JEMALLOC], [jemalloc], [AC_SUBST([HAVE_JEMALLOC], [yes])], [AC_SUBST([HAVE_JEMALLOC], [no])])
+PKG_CHECK_MODULES([TBB], [tbb],
+	[# Found it.  Remember to add $TBB_LIBS, $TBB_CFLAGS, and $TBB_CPPFLAGS to the appropriate automake vars.
+	AC_SUBST([HAVE_LIBTBB], [yes])
+	AC_DEFINE([HAVE_LIBTBB], [1], [Define if libtbb is available.])
+	],
+	[AC_SUBST([HAVE_LIBTBB], [no])])
+PKG_CHECK_MODULES([TBBMALLOC], [tbbmalloc],
+	[# Found it.  Remember to add $TBBMALLOC_LIBS, $TBBMALLOC_CFLAGS, and $TBBMALLOC_CPPFLAGS to the appropriate automake vars.
+	AC_SUBST([HAVE_LIBTBBMALLOC], [yes])
+	AC_DEFINE([HAVE_LIBTBBMALLOC], [1], [Define if libtbbmalloc is available.])
+	],
+	[AC_SUBST([HAVE_LIBTBBMALLOC], [no])])
+PKG_CHECK_MODULES([TBBMALLOC_PROXY], [tbbmalloc_proxy],
+	[# Found it.  Remember to add $TBBMALLOC_PROXY_LIBS, $TBBMALLOC_PROXY_CFLAGS, and $TBBMALLOC_PROXY_CPPFLAGS to the appropriate automake vars.
+	AC_SUBST([HAVE_LIBTBBMALLOC_PROXY], [yes])
+	AC_DEFINE([HAVE_LIBTBBMALLOC_PROXY], [1], [Define if libtbbmalloc is available.])
+	],
+	[AC_SUBST([HAVE_LIBTBBMALLOC_PROXY], [no])])
 
 AC_LANG_POP([C++])
 
