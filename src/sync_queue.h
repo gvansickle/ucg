@@ -32,6 +32,10 @@
 #include <ext/mt_allocator.h>
 #endif
 
+#if HAVE_LIBTBBMALLOC
+#include <tbb/scalable_allocator.h>
+#endif
+
 enum class queue_op_status
 {
 	success,
@@ -55,13 +59,12 @@ enum class queue_op_status
 template <typename ValueType>
 class sync_queue
 {
-#ifdef TODO
-	using mt_deque = std::deque<ValueType, std::scoped_allocator_adaptor<__gnu_cxx::__mt_alloc<ValueType>>>;
+#if HAVE_LIBTBBMALLOC
+	using mt_deque = std::deque<ValueType, tbb::scalable_allocator<ValueType>>;
 #else
 	using mt_deque = std::deque<ValueType>;
 #endif
 
-	//std::queue<ValueType, mt_deque> m_underlying_queue;
 	mt_deque m_underlying_queue;
 
 public:
