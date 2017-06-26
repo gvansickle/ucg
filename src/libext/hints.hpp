@@ -130,4 +130,10 @@
 #else
 #	define ATTR_MALLOC
 #endif
+#if __has_attribute(noinline) || defined(HAVE_FUNC_ATTRIBUTE_NOINLINE)
+#	define ATTR_NOINLINE  __attribute__((noinline))
+#else
+#	define ATTR_NOINLINE
+#endif
+
 #endif /* SRC_LIBEXT_HINTS_HPP_ */
