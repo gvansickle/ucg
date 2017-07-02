@@ -142,18 +142,10 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 	// Load the pattern.
 	const __m128i xmm_patt = _mm_lddqu_si128(static_cast<const __m128i *>(pattern));
 
-#if 1
 	// Create the prefilter patterns.
-	/// @todo This will now only handle patterns longer than 1 char.
 	const __m128i xmm_temp0 = _mm_set1_epi8(static_cast<const char*>(pattern)[0]);
-	const __m128i xmm_temp1 = _mm_set1_epi8(static_cast<const char*>(pattern)[1]);
 	const __m128i xmm_all_FFs = _mm_set1_epi8(0xFF);
-	// Remember here, little-endian.
-	const __m128i xmm_00FFs = _mm_set1_epi16(0xFF00);
-	const __m128i xmm_01search = _mm_blendv_epi8(xmm_temp0, xmm_temp1, xmm_00FFs);
-	const __m128i xmm_10search = _mm_slli_si128(xmm_01search, 1);
-	const __m128i xmm_FF00 = _mm_set_epi8(0xFF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
-#endif
+
 
 	while(p1 < (const char*)mem_to_search+(memlen&vec_size_mask))
 	{
@@ -162,42 +154,22 @@ static inline memmem_short_pattern(const void *mem_to_search, size_t memlen, con
 		{
 			// Load 16 bytes from mem_to_search.
 			frag1 = _mm_lddqu_si128(reinterpret_cast<const __m128i*>(p1));
-#if 1
+
 			// Prefilter, using faster SSE instructions than PCMPESTRI.
-			// Are the first two chars in this fragment, in order?
-			// ST'ST'ST'ST
-			__m128i match_bytemask = _mm_cmpeq_epi16(frag1, xmm_01search);
-			// 0S'TS'TS'TS
-			__m128i xmm_10_match_bytemask = _mm_cmpeq_epi8(frag1, xmm_10search);
-			// Shift 10 bytemask one byte to the right (remember, little endian), shifting in 1's.
-			/// @note Using alignr for this on Nehalem seems to be slightly slower than slri+or.
-#if 1
-			// ST'ST'ST'S0
-			xmm_10_match_bytemask = _mm_srli_si128(xmm_10_match_bytemask, 1);
-			// ST'ST'ST'SF
-			xmm_10_match_bytemask = _mm_or_si128(xmm_10_match_bytemask, xmm_FF00);
-#else
-			xmm_10_match_bytemask = _mm_alignr_epi8(xmm_all_FFs, xmm_10_match_bytemask, 1);
-#endif
-			// bitwise-OR in the match results from ST'ST'ST'ST above.
-			xmm_10_match_bytemask = _mm_or_si128(match_bytemask, xmm_10_match_bytemask);
-			// Do a compare of the 16-bit fields of the bytemask with 0xFFFF.
-			xmm_10_match_bytemask = _mm_cmpeq_epi16(xmm_10_match_bytemask, xmm_all_FFs);
-			// The xmm_10_match_bytemask will now have an aligned 0xFFFF in it for each ST match, or for a
-			// trailing S.
-			if(_mm_test_all_zeros(xmm_10_match_bytemask, xmm_all_FFs))
+
+			// This simple prefilter checks if the first search character exists in the
+			// 16-byte text fragment.  It's about 90% effective in avoiding unnecessary calls to _mm_cmpestri().
+			__m128i match_bytemask = _mm_cmpeq_epi8(frag1, xmm_temp0);
+			if(likely(_mm_test_all_zeros(match_bytemask, xmm_all_FFs)))
 			{
-				// No match for the first two chars, and the last char of the substring doesn't
-				// match the first char of the pattern.  The rest of string can't match.
 				continue;
 			}
-#endif
 
 			// Do the exact search.
 
 			constexpr uint8_t imm8 = _SIDD_LEAST_SIGNIFICANT | _SIDD_POSITIVE_POLARITY | _SIDD_CMP_EQUAL_ORDERED | _SIDD_UBYTE_OPS;
 
-			// Returns bitmask of bits set in IntRes2. (SSE4.2)
+			// Returns index of first set bit in IntRes2. (SSE4.2)
 			/// @note Ordering here is correct: pattern first, string to search second.
 			/// @note Multiple _mm_cmpestr?()'s here compile down into a single pcmpestrm insruction,
 			/// and serve only to expose the processor flags to the C++ code.  This would probably be easier in

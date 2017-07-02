@@ -100,7 +100,7 @@ enum class ISA_x86_64 : uint64_t
 	AVX_512 = 0x1000000000000200
 };
 
-static inline ISA_x86_64 operator|(ISA_x86_64 left, ISA_x86_64 right)
+static inline constexpr ISA_x86_64 operator|(ISA_x86_64 left, ISA_x86_64 right)
 {
 	return static_cast<ISA_x86_64>(static_cast<uint64_t>(left) | static_cast<uint64_t>(right));
 }
