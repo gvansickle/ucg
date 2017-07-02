@@ -58,7 +58,7 @@ public:
 		}
 	};
 
-	pointer realloc(std::size_t needed_size, std::size_t needed_alignment) ATTR_MALLOC ATTR_ALLOC_SIZE(1) ATTR_ALLOC_ALIGN(2)
+	pointer realloc(std::size_t needed_size, std::size_t needed_alignment) ATTR_MALLOC ATTR_ALLOC_SIZE(2) ATTR_ALLOC_ALIGN(3)
 	{
 		if(m_current_buffer==nullptr || m_current_buffer_size < needed_size || m_current_buffer_alignment < needed_alignment)
 		{
