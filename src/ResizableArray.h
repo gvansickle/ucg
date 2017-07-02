@@ -58,9 +58,7 @@ public:
 		}
 	};
 
-	const_pointer data() const noexcept ATTR_MALLOC ATTR_PURE { return m_current_buffer; };
-
-	void reserve_no_copy(std::size_t needed_size, std::size_t needed_alignment)  ATTR_ALLOC_SIZE(1)
+	pointer realloc(std::size_t needed_size, std::size_t needed_alignment) ATTR_MALLOC ATTR_ALLOC_SIZE(2) ATTR_ALLOC_ALIGN(3)
 	{
 		if(m_current_buffer==nullptr || m_current_buffer_size < needed_size || m_current_buffer_alignment < needed_alignment)
 		{
@@ -75,14 +73,16 @@ public:
 
 			// We might have gotten a more-aligned block than we requested.
 			m_current_buffer_alignment = 1U << count_trailing_zeros((uintptr_t)m_current_buffer);
-			m_current_buffer_size = needed_size+1024/8;  /// @todo Hackish, relies on special knowledge of overaligned_alloc()'s internals.
+			m_current_buffer_size = needed_size;
 
-			LOG(INFO) << "reserve_no_copy() realloc: needed_size=" << needed_size << ", needed_alignment=" << needed_alignment
+			LOG(INFO) << "realloc(): needed_size=" << needed_size << ", needed_alignment=" << needed_alignment
 					<< ", returned size=" << m_current_buffer_alignment << ", returned alignment =" << m_current_buffer_alignment;
 		}
 
 		// Zero-out the trailing vector's worth of extra space.
 		std::memset(m_current_buffer+needed_size, 0, 1024/8);
+
+		return m_current_buffer;
 	}
 
 private:

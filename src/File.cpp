@@ -143,8 +143,7 @@ const char* File::GetFileData(int file_descriptor, size_t file_size, size_t pref
 		(void)posix_fadvise(file_descriptor, 0, 0, POSIX_FADV_SEQUENTIAL /*| POSIX_FADV_WILLNEED*/);
 #endif
 
-		m_storage->reserve_no_copy(file_size, preferred_block_size);
-		file_data = m_storage->data();
+		file_data = m_storage->realloc(file_size, preferred_block_size);
 
 		// Read in the whole file.
 		ssize_t retval = 0;

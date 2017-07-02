@@ -125,6 +125,11 @@
 #	define ATTR_ALLOC_SIZE(size_of_element)
 #endif
 /// @todo two-param version of alloc_size().
+#if __has_attribute(alloc_align) || defined(HAVE_FUNC_ATTRIBUTE_ALLOC_ALIGN)
+#define ATTR_ALLOC_ALIGN(alignment_param)  __attribute__((alloc_align(alignment_param)))
+#else
+#define ATTR_ALLOC_ALIGN(alignment_param)
+#endif
 #if __has_attribute(malloc) || defined(HAVE_FUNC_ATTRIBUTE_MALLOC)
 #	define ATTR_MALLOC	__attribute__((malloc))
 #else

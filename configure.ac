@@ -438,6 +438,7 @@ AX_GCC_FUNC_ATTRIBUTE([artificial])
 AX_GCC_FUNC_ATTRIBUTE([const])
 AX_GCC_FUNC_ATTRIBUTE([pure])
 AX_GCC_FUNC_ATTRIBUTE([alloc_size])
+#AX_GCC_FUNC_ATTRIBUTE([alloc_align]) ## Not supported by the macro yet.
 AX_GCC_FUNC_ATTRIBUTE([malloc])
 AX_GCC_FUNC_ATTRIBUTE([noinline])
 AX_GCC_BUILTIN(__builtin_unreachable)
