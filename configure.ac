@@ -332,7 +332,7 @@ PKG_CHECK_MODULES([TBBMALLOC], [tbbmalloc],
 PKG_CHECK_MODULES([TBBMALLOC_PROXY], [tbbmalloc_proxy],
 	[# Found it.  Remember to add $TBBMALLOC_PROXY_LIBS, $TBBMALLOC_PROXY_CFLAGS, and $TBBMALLOC_PROXY_CPPFLAGS to the appropriate automake vars.
 	AC_SUBST([HAVE_LIBTBBMALLOC_PROXY], [yes])
-	AC_DEFINE([HAVE_LIBTBBMALLOC_PROXY], [1], [Define if libtbbmalloc is available.])
+	AC_DEFINE([HAVE_LIBTBBMALLOC_PROXY], [1], [Define if libtbbmalloc_proxy is available.])
 	],
 	[AC_SUBST([HAVE_LIBTBBMALLOC_PROXY], [no])])
 
