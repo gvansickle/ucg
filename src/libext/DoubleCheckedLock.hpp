@@ -24,6 +24,7 @@
 
 #include <atomic>
 #include <functional>
+#include <mutex>
 
 /**
  * Function template implementing a double-checked lock.

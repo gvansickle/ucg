@@ -37,6 +37,9 @@
 #    __builtin_clzll
 #    __builtin_complex
 #    __builtin_constant_p
+#    __builtin_cpu_init
+#    __builtin_cpu_is
+#    __builtin_cpu_supports
 #    __builtin_ctz
 #    __builtin_ctzl
 #    __builtin_ctzll
@@ -79,7 +82,7 @@
 #    __builtin_types_compatible_p
 #    __builtin_unreachable
 #
-#   Unsuppored built-ins will be tested with an empty parameter set and the
+#   Unsupported built-ins will be tested with an empty parameter set and the
 #   result of the check might be wrong or meaningless so use with care.
 #
 # LICENSE
@@ -91,7 +94,7 @@
 #   and this notice are preserved.  This file is offered as-is, without any
 #   warranty.
 
-#serial 4
+#serial 7
 
 AC_DEFUN([AX_GCC_BUILTIN], [
     AS_VAR_PUSHDEF([ac_var], [ax_cv_have_$1])
@@ -113,6 +116,9 @@ AC_DEFUN([AX_GCC_BUILTIN], [
                 [__builtin_clzll], [$1(0)],
                 [__builtin_complex], [$1(0.0, 0.0)],
                 [__builtin_constant_p], [$1(0)],
+                [__builtin_cpu_init], [$1()],
+                [__builtin_cpu_is], [$1("intel")],
+                [__builtin_cpu_supports], [$1("sse")],
                 [__builtin_ctz], [$1(0)],
                 [__builtin_ctzl], [$1(0)],
                 [__builtin_ctzll], [$1(0)],
