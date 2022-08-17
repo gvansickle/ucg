@@ -121,32 +121,8 @@ AS_BOX([Checking C++ compiler language standard support])
 # We do this here because this macro will replace $CXX with "$CXX -c++11switch", so we'll use this
 # in the AC_LANG_PUSH([C++]) tests below.
 AC_LANG_PUSH([C++])
-# @note No AX_CXX_COMPILE_STDCXX_17() macro yet, we'll do it manually.
-AX_CHECK_COMPILE_FLAG([-std=gnu++1z],
-	[# action-if-success
-	AC_SUBST([HAVE_CXX1Z], [1])
-	AC_DEFINE([HAVE_CXX1Z], [1], [Define if compiler supports C++1z])
-	AX_APPEND_FLAG([-std=gnu++1z], [CXX])
-	AX_APPEND_FLAG([-std=gnu++1z], [CXXCPP])
-	],
-	[# action-if-fail
-	AX_CHECK_COMPILE_FLAG([-std=c++1z],
-		[# action-if-success
-		AC_SUBST([HAVE_CXX1Z], [1])
-		AC_DEFINE([HAVE_CXX1Z], [1], [Define if compiler supports C++1z])
-		AX_APPEND_FLAG([-std=c++1z], [CXX])
-		AX_APPEND_FLAG([-std=c++1z], [CXXCPP])
-		],
-		[# action-if-fail
-		AC_SUBST([HAVE_CXX1Z], [0])
-		])
-	])
-AS_IF([test "x$HAVE_CXX1Z" = "x0"],
-[
-	AX_CXX_COMPILE_STDCXX_14([], [optional])
-	AS_IF([test "x$HAVE_CXX14" != "x1"],
-		[AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])], [])
-], [])
+
+AX_CXX_COMPILE_STDCXX(20, ext, mandatory)
 
 # @note For gcc's stdlibc++, see <https://gcc.gnu.org/onlinedocs/libstdc++/manual/using.html#manual.intro.using.flags>
 # for the full list of flags necessary for it to support the various dialects.  The '-std=' value determined above
