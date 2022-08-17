@@ -71,6 +71,7 @@ static constexpr size_t f_default_dirjobs = 4;
 
 
 // Not static, argp.h externs this.
+/// @TODO De-literalize the copyright dates.
 const char *argp_program_version = PACKAGE_STRING "\n"
 	"Copyright (C) 2015-2017 Gary R. Van Sickle.\n"
 	"\n"
@@ -93,13 +94,13 @@ const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 /**
  * The pre- and post-option help text.
  */
-static const char doc[] = "\nucg: the UniversalCodeGrep code search tool."
+static constexpr char doc[] = "\nucg: the UniversalCodeGrep code search tool."
 		"\vExit status is 0 if any matches were found, 1 if no matches, 2 or greater on error.";
 
 /**
  * The "Usage:" text.
  */
-static const char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
+static constexpr char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
 /// Keys for options without short-options.
 enum OPT
@@ -260,7 +261,7 @@ struct PreDescriptor
 	struct hidden_tag {};
 
 
-	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts,
+	constexpr PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts,
 			const lmcppop::CheckArg c, const char *h) noexcept
 			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(""), m_check_arg(c), m_help(h)
 	{
@@ -277,7 +278,7 @@ struct PreDescriptor
 	 * @param check_arg
 	 * @param help
 	 */
-	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
+	constexpr PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
 			const lmcppop::CheckArg check_arg, const char *help) noexcept
 			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname), m_check_arg(check_arg), m_help(help)
 	{
@@ -295,7 +296,7 @@ struct PreDescriptor
 	 * @param help
 	 * @param
 	 */
-	PreDescriptor(unsigned index, OptionType yestype, OptionType notype, const char *const shortopts, const char *const longopts, const char *const argname,
+	constexpr PreDescriptor(unsigned index, OptionType yestype, OptionType notype, const char *const shortopts, const char *const longopts, const char *const argname,
 			const lmcppop::CheckArg check_arg, const char *help) noexcept
 			: m_index(index), m_type(yestype), m_notype(notype), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname),
 			  m_check_arg(check_arg), m_help(help), m_is_bracket_no(true)
@@ -314,7 +315,7 @@ struct PreDescriptor
 	 * @param help
 	 * @param
 	 */
-	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
+	constexpr PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
 			const lmcppop::CheckArg check_arg, const char *help, hidden_tag) noexcept
 			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname), m_check_arg(check_arg), m_help(help),
 			  m_is_hidden(true)
@@ -326,27 +327,30 @@ struct PreDescriptor
 	 *
 	 * @param section_header_name  Text of the section header.
 	 */
-	PreDescriptor(const char *section_header_name, section_header_tag = section_header_tag()) noexcept
+	constexpr PreDescriptor(const char *section_header_name, section_header_tag = section_header_tag()) noexcept
 		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
 		  m_help(std::string("\n ") + section_header_name)
 	{
 	};
 
-	PreDescriptor(const char *arbitrary_text, arbtext_tag) noexcept
+	constexpr PreDescriptor(const char *arbitrary_text, arbtext_tag) noexcept
 		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
 		  m_help(arbitrary_text)
 	{
 	};
 
-	PreDescriptor(const char *arbitrary_text [[maybe_unused]], hidden_tag) noexcept
+	constexpr PreDescriptor(const char *arbitrary_text [[maybe_unused]], hidden_tag) noexcept
 			: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
 			  m_help(), m_is_hidden(true)
 	{
 	};
 
-	bool IsHidden() const noexcept { return m_is_hidden; };
-	bool IsBracketNo() const noexcept { return m_is_bracket_no; };
-	bool HasLongAliases() const noexcept { return std::strchr(m_longopts, ',') != nullptr; };
+	constexpr bool IsHidden() const noexcept { return m_is_hidden; };
+	constexpr bool IsBracketNo() const noexcept { return m_is_bracket_no; };
+	bool HasLongAliases() const noexcept
+	{
+		return std::strchr(m_longopts, ',') != nullptr;
+	};
 
 	/**
 	 * Conversion operator for converting between PreDescriptors and "The Lean Mean C++ Option Parser"'s option Descriptors.
@@ -479,7 +483,7 @@ struct PreDescriptor
 		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
 	}
 
-	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
+	static constexpr lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
 /// The vector of all command line options.
