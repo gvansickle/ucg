@@ -24,6 +24,10 @@
 
 #include <config.h>
 
+// Std C++.
+#include <string>
+
+// Ours.
 #include <future/type_traits.hpp>
 #include "integer.hpp"
 #include "hints.hpp"
