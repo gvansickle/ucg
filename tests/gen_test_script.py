@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 import argparse
-from ast import parse
+# from ast import parse
 
 copyright_notice=\
 '''
@@ -351,6 +351,9 @@ class CLIError(Exception):
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
 
+    global f_verbose
+    f_verbose = 0
+
     if argv is None:
         argv = sys.argv
     else:
@@ -373,7 +376,7 @@ def main(argv=None): # IGNORE:C0111
         parser.add_argument("-d", "--csv-dir", dest="csv_dir", help="Directory where the source csv files can be found.", required=True)
         parser.add_argument("--opt", dest="opts", action='append', help="Options to give the test programs.  Can be specified multiple times.")
         parser.add_argument("-r", "--test-output", dest="test_output_filename", help="Test results combined output filename.", required=True)
-        parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
+        parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=0, help="set verbosity level [default: %(default)s]")
         parser.add_argument("-i", "--include", dest="include", help="only include paths matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
         parser.add_argument("-e", "--exclude", dest="exclude", help="exclude paths matching this regex pattern. [default: %(default)s]", metavar="RE" )
         parser.add_argument('-V', '--version', action='version', version=program_version_message, help="Print version info.")
@@ -382,7 +385,7 @@ def main(argv=None): # IGNORE:C0111
         # Process arguments
         args = parser.parse_args()
 
-        global f_verbose
+        # global f_verbose
         f_verbose = args.verbose
         outfile_name = args.outfile_name
         test_case = args.test_case
