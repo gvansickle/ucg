@@ -48,7 +48,7 @@ DirInclusionManager::~DirInclusionManager()
 
 void DirInclusionManager::AddExclusions(const std::set<std::string>& exclusions)
 {
-	for(auto name : exclusions)
+	for(const auto& name : exclusions)
 	{
 		m_excluded_literal_dirs.insert(name);
 	}

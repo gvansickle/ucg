@@ -171,7 +171,7 @@ public:
 /**
  *
  */
-class STDLOG : public Logger
+class STDLOG final : public Logger
 {
 public:
 	STDLOG() { m_tempstream << m_program_invocation_short_name << ": "; };
