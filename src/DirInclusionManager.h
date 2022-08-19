@@ -46,7 +46,7 @@ public:
 	 * @param path
 	 * @return
 	 */
-	bool DirShouldBeExcluded(const std::string &name) const;
+	[[nodiscard]] bool DirShouldBeExcluded(const std::string &name) const;
 
 private:
 

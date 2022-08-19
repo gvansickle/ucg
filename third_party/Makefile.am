@@ -74,18 +74,20 @@ if HAVE_GOOGLETEST
 
 third_party_complete_deps += stampfile-gtest-tarball-untarred
 
+GT_RELEASE_NO = 1.12.1
+
 # Directory where Google Test tarball will be extracted.
-#GTEST_ROOT = ./googletest-release-1.8.0
+GTEST_ROOT = ./googletest-release-$(GT_RELEASE_NO)
 
 # Tarball as downloaded from <https://github.com/google/googletest/releases>
-stampfile-gtest-tarball-untarred: $(srcdir)/googletest-release-1.8.0.tar.gz
+stampfile-gtest-tarball-untarred: $(srcdir)/googletest-release-$(GT_RELEASE_NO).tar.gz
 	tar -xaf "$<"
 	echo "$$(date)" > $@.tmp
 	mv $@.tmp $@
 
 check_LTLIBRARIES += libgtest_all.la
-libgtest_all_la_SOURCES = ./googletest-release-1.8.0/googletest/src/gtest-all.cc
-libgtest_all_la_CPPFLAGS= -I./googletest-release-1.8.0/googletest/include -I./googletest-release-1.8.0/googletest
+libgtest_all_la_SOURCES = ./googletest-release-$(GT_RELEASE_NO)/googletest/src/gtest-all.cc
+libgtest_all_la_CPPFLAGS= -I./googletest-release-$(GT_RELEASE_NO)/googletest/include -I./googletest-release-$(GT_RELEASE_NO)/googletest
 libgtest_all_la_CXXFLAGS = -pthread
 EXTRA_libgtest_all_la_DEPENDENCIES = stampfile-gtest-tarball-untarred
 endif

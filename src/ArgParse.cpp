@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <string_view>
 #include <locale>
 #include <thread>
 #include <iostream>
@@ -89,7 +90,8 @@ const char *argp_program_version = PACKAGE_STRING "\n"
 	;
 
 // Not static, argp.h externs this.
-const char *argp_program_bug_address = PACKAGE_BUGREPORT;
+/// No more argp?
+constexpr char argp_program_bug_address[] = PACKAGE_BUGREPORT;
 
 /**
  * The pre- and post-option help text.
@@ -180,7 +182,7 @@ struct Arg: public lmcppop::Arg
 
 	static lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
 	{
-		if (option.arg != 0)
+		if (option.arg != nullptr)
 			return lmcppop::ARG_OK;
 
 		if (msg) printError("Option '", option, "' requires an argument\n");
@@ -189,7 +191,7 @@ struct Arg: public lmcppop::Arg
 
 	static lmcppop::ArgStatus NonEmpty(const lmcppop::Option& option, bool msg)
 	{
-		if (option.arg != 0 && option.arg[0] != 0)
+		if (option.arg != nullptr && option.arg[0] != 0)
 		  return lmcppop::ARG_OK;
 
 		if (msg) printError("Option '", option, "' requires a non-empty argument\n");
@@ -198,8 +200,8 @@ struct Arg: public lmcppop::Arg
 
 	static lmcppop::ArgStatus Numeric(const lmcppop::Option& option, bool msg)
 	{
-		char* endptr = 0;
-		if (option.arg != 0 && strtol(option.arg, &endptr, 10)){};
+		char* endptr = nullptr;
+		if (option.arg != nullptr && strtol(option.arg, &endptr, 10)){};
 		if (endptr != option.arg && *endptr == 0)
 		  return lmcppop::ARG_OK;
 
@@ -325,11 +327,13 @@ struct PreDescriptor
 	/**
 	 * Constructor overload for section headers.
 	 *
+	 * @note This cannot be marked explicit because of the way we want to use it.
+	 *
 	 * @param section_header_name  Text of the section header.
 	 */
 	constexpr PreDescriptor(const char *section_header_name, section_header_tag = section_header_tag()) noexcept
 		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
-		  m_help(std::string("\n ") + section_header_name)
+		  m_help(std::string("\n ") += section_header_name)
 	{
 	};
 
@@ -345,10 +349,12 @@ struct PreDescriptor
 	{
 	};
 
-	constexpr bool IsHidden() const noexcept { return m_is_hidden; };
-	constexpr bool IsBracketNo() const noexcept { return m_is_bracket_no; };
-	bool HasLongAliases() const noexcept
+	[[nodiscard]] constexpr bool IsHidden() const noexcept { return m_is_hidden; };
+	[[nodiscard]] constexpr bool IsBracketNo() const noexcept { return m_is_bracket_no; };
+	[[nodiscard]] bool HasLongAliases() const noexcept
 	{
+//		constexpr std::string_view sv(m_longopts);
+//		return sv.rfind(',') != std::string_view::npos;
 		return std::strchr(m_longopts, ',') != nullptr;
 	};
 
@@ -361,7 +367,7 @@ struct PreDescriptor
 
 		if(IsHidden())
 		{
-			fmt_help = 0;
+			fmt_help = nullptr;
 		}
 		else
 		{
@@ -447,7 +453,7 @@ struct PreDescriptor
 	}
 
 	template <typename T>
-	void PushAliasDescriptors(T* usage_container)
+	void PushAliasDescriptors(T* usage_container) const
 	{
 		auto long_aliases = split(m_longopts, ',');
 
@@ -471,7 +477,7 @@ struct PreDescriptor
 	}
 
 	template <typename T>
-	void PushBracketNoDescriptors(T* usage_container)
+	void PushBracketNoDescriptors(T* usage_container) const
 	{
 		auto long_alias = split(m_longopts, ',')[0];
 		long_alias.erase(0, 4);
@@ -487,10 +493,11 @@ struct PreDescriptor
 };
 
 /// The vector of all command line options.
+/// @todo It should be possible to make this constexpr, moving a lot of startup work to compile-time.
 static std::vector<PreDescriptor> raw_options {
 	// This first OPT_UNKNOWN entry picks up all unrecognized options.
 	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
-	{ (std::string("Usage: ucg [OPTION...] ") + args_doc).c_str(), PreDescriptor::arbtext_tag() },
+	{ (std::string("Usage: ucg [OPTION...] ") += args_doc).c_str(), PreDescriptor::arbtext_tag() },
 	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
 	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
 	{ "Searching:" },
@@ -540,8 +547,8 @@ static std::vector<PreDescriptor> raw_options {
 	// Epilogue Text.
 		{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
 		// Again, this folderol is to keep the doc[] string in the same format as used by argp.
-		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) + "\n").c_str(), PreDescriptor::arbtext_tag() },
-		{ (std::string("Report bugs to ") + argp_program_bug_address + ".").c_str(), PreDescriptor::arbtext_tag() }
+		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) += "\n").c_str(), PreDescriptor::arbtext_tag() },
+		{ ((std::string("Report bugs to ") += argp_program_bug_address) += ".").c_str(), PreDescriptor::arbtext_tag() }
 };
 
 /// Option descriptions for the "The Lean Mean C++ Option Parser" library.

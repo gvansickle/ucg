@@ -37,7 +37,7 @@
 class File
 {
 public:
-	File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
+	explicit File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
 	File(const std::string &filename, FileAccessMode fam, FileCreationFlag fcf,
 			std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
 	~File();

@@ -55,7 +55,8 @@ AM_INIT_AUTOMAKE([1.14
 	-Werror
 ])
 
-AM_SILENT_RULES([yes])
+# Seems like we need non-silent rules for CLion.
+AM_SILENT_RULES([no])
 
 # Figure out who we're building for.
 case $host_os in
@@ -98,19 +99,19 @@ AC_PROG_CXXCPP([g++ clang++])
 #       calling LT_INIT, or it will complain.
 AC_USE_SYSTEM_EXTENSIONS
 
-# Get C11 support.
+# Get C18 support.
 AS_BOX([Checking C compiler language standard support])
 
 AC_LANG_PUSH([C])
-AX_CHECK_COMPILE_FLAG([-std=gnu11],
-	[AX_APPEND_FLAG([-std=gnu11], [CC])
-	AX_APPEND_FLAG([-std=gnu11], [CPP])
+AX_CHECK_COMPILE_FLAG([-std=gnu18],
+	[AX_APPEND_FLAG([-std=gnu18], [CC])
+	AX_APPEND_FLAG([-std=gnu18], [CPP])
 	],
-	[AX_CHECK_COMPILE_FLAG([-std=c11],
-	[AX_APPEND_FLAG([-std=c11], [CC])
-	AX_APPEND_FLAG([-std=c11], [CPP])
+	[AX_CHECK_COMPILE_FLAG([-std=c18],
+	[AX_APPEND_FLAG([-std=c18], [CC])
+	AX_APPEND_FLAG([-std=c18], [CPP])
 	],
-		[AC_MSG_ERROR([no C11 support])], [], [])
+		[AC_MSG_ERROR([no C18 support])], [], [])
 	], [], [])
 AC_LANG_POP([C])
 
@@ -250,7 +251,7 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 # Google Test
 AC_MSG_CHECKING([for googletest library])
 # @todo Remove the false when we're ready for this.
-AM_CONDITIONAL([HAVE_GOOGLETEST], [false && test -f $srcdir/third_party/googletest-release-1.8.0.tar.gz])
+AM_CONDITIONAL([HAVE_GOOGLETEST], [test -f $srcdir/third_party/googletest-release-1.12.1.tar.gz])
 AM_COND_IF([HAVE_GOOGLETEST], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
 
 # Doxygen support.

@@ -188,12 +188,12 @@ public:
 	 *
 	 * @return Length of string.
 	 */
-	inline size_type length() const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	[[nodiscard]] constexpr inline size_type length() const noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
 		return countnonzeros(m_storage);
 	};
 
-	constexpr inline size_type size() const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	[[nodiscard]] constexpr inline size_type size() const noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
 		return length();
 	}
@@ -204,7 +204,7 @@ public:
 		return sizeof(UnderlyingType);
 	}
 
-	constexpr inline bool empty() const noexcept ATTR_CONST ATTR_ARTIFICIAL
+	[[nodiscard]] constexpr inline bool empty() const noexcept ATTR_CONST ATTR_ARTIFICIAL
 	{
 		return m_storage == 0;
 	}
@@ -226,7 +226,7 @@ public:
 		return std::string(reinterpret_cast<const char *>(&tmp), length());
 	};
 
-	underlying_storage_type urep() const noexcept { return m_storage; };
+	[[nodiscard]] underlying_storage_type urep() const noexcept { return m_storage; };
 
 private:
 	underlying_storage_type m_storage;  // No member initializer, would make the class non-trivial.

@@ -31,6 +31,30 @@
 #include <pcre2.h>
 #endif
 
+#if HAVE_LIBPCRE2
+/// @name Custom deleters for the PCRE2 objects we'll be using.
+/// These are implemented as specializations of the std::default_delete<> template.
+/// @{
+namespace std
+{
+
+	template<>
+	struct default_delete<pcre2_match_data>
+	{
+		void operator()(pcre2_match_data *ptr)
+		{ pcre2_match_data_free(ptr); };
+	};
+
+	template<>
+	struct default_delete<pcre2_match_context>
+	{
+		void operator()(pcre2_match_context *mctx)
+		{ pcre2_match_context_free(mctx); };
+	};
+
+}
+/// @}
+#endif  // HAVE_LIBPCRE2
 
 class FileScannerPCRE2: public FileScanner
 {

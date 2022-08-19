@@ -59,7 +59,7 @@ portable_time_LDFLAGS = $(AM_LDFLAGS)
 ###
 if HAVE_GOOGLETEST
 unittests_SOURCES = unittests.cpp
-unittests_CPPFLAGS = -I $(top_builddir)/third_party/googletest-release-1.8.0/googletest/include -I $(top_srcdir)/src $(AM_CPPFLAGS)
+unittests_CPPFLAGS = -I $(top_builddir)/third_party/googletest-release-1.12.1/googletest/include -I $(top_srcdir)/src $(AM_CPPFLAGS)
 unittests_CXXFLAGS = -msse4.2 $(AM_CXXFLAGS) -O0
 unittests_LDFLAGS = $(AM_LDFLAGS)
 unittests_LDADD = ../third_party/libgtest_all.la

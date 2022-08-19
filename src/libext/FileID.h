@@ -52,7 +52,7 @@ enum FileType
 };
 /// Stream insertion operator for FileType enum.
 inline std::ostream& operator<<(std::ostream& out, const FileType value){
-    const char* s = 0;
+    const char* s = nullptr;
 #define M_ENUM_CASE(p) case(p): s = #p; break;
     switch(value){
         M_ENUM_CASE(FT_UNINITIALIZED);

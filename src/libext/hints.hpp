@@ -65,7 +65,9 @@
 /// @}
 
 /// @todo Doesn't seem to have any affect on GCC 6.1.
-#define assume_aligned(ptr, align)  (ptr) = static_cast<decltype(ptr)>(__builtin_assume_aligned((ptr), align))
+//#if !defined(assume_aligned)
+//#   define assume_aligned(ptr, align)  (ptr) = static_cast<decltype(ptr)>(__builtin_assume_aligned((ptr), align))
+//#endif
 
 /// @todo Come up with a way to report the STATIC_MSG_WARN()s below without having them printed on each include.
 
