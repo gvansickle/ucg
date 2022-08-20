@@ -40,7 +40,7 @@ public:
 
 	void Run();
 
-	long long GetTotalMatchedLines() const { return m_total_matched_lines; };
+	[[nodiscard]] long long GetTotalMatchedLines() const { return m_total_matched_lines; };
 
 private:
 

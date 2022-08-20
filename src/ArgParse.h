@@ -81,7 +81,7 @@ private:
 
 	void PrintHelpTypes() const;
 
-	[[nodiscard]] std::string GetProjectRCFilename() const;
+	[[nodiscard]] static std::string GetProjectRCFilename() ;
 
 	/**
 	 * Pre-parse the given config (.ucgrc) file, removing comments and returning a vector of
@@ -92,7 +92,7 @@ private:
 	 * @param f  The config File.
 	 * @return  vector<char*> of command-line params.
 	 */
-	std::vector<char *> ConvertRCFileToArgv(const File &f);
+	static std::vector<char *> ConvertRCFileToArgv(const File &f);
 
 	void FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv);
 

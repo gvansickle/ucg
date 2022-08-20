@@ -92,7 +92,7 @@ private:
 	 */
 	void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) final;
 
-	std::string PCRE2ErrorCodeToErrorString(int errorcode);
+	static std::string PCRE2ErrorCodeToErrorString(int errorcode);
 
 #if HAVE_LIBPCRE2
 	/// The compiled libpcre2 regex.

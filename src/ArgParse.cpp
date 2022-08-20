@@ -1087,7 +1087,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 }
 
 
-std::string ArgParse::GetProjectRCFilename() const
+std::string ArgParse::GetProjectRCFilename()
 {
 	// Walk up the directory hierarchy from the cwd until we:
 	// 1. Get to the user's $HOME dir, in which case we don't return an rc filename even if it exists.

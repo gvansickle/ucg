@@ -120,7 +120,7 @@ public:
 	/// Primary constructor.
 	/// @param reporting_name  This is something like "INFO" or "DEBUG", indicating the severity level.  It gets set
 	///                        automatically in the INFO, DEBUG, etc. subclasses below.
-	EnableableLogger(const char *reporting_name) { m_tempstream << reporting_name << ": " << get_thread_name() << ": "; };
+	explicit EnableableLogger(const char *reporting_name) { m_tempstream << reporting_name << ": " << get_thread_name() << ": "; };
 	~EnableableLogger() noexcept override  = default;
 
 	static void Enable(bool enable) noexcept { m_enabled = enable; };

@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <set>
+#include <array>
 #include <iterator>
 #include <iostream>
 #include <iomanip>
@@ -39,12 +40,14 @@ struct Type
 
 	/// Vector of the extensions, literal strings, and first-line regexes which match the type.
 	std::vector<std::string> m_type_extensions;
+//	std::array<std::string> m_type_extensions;
 
 	/// less-than operator, so that Types are sortable by key (m_type_name).
-	bool operator<(const Type &other) const noexcept { return m_type_name < other.m_type_name; };
+	constexpr bool operator<(const Type &other) const noexcept { return m_type_name < other.m_type_name; };
 };
 
 static const std::set<Type> f_builtin_type_array =
+//static constexpr auto f_builtin_type_array = std::to_array<Type>(
 {
 	{ "actionscript", {".as", ".mxml"} },
 	{ "ada", {".ada", ".adb", ".ads"} },
@@ -120,7 +123,7 @@ static const std::set<Type> f_builtin_type_array =
 	// Below here are types corresponding to some of the files ack 2.14 finds as non-binary by scanning them.
 	// We'll do that at some point too, but for now just include them here.
 	{ "miscellaneous", {".qbk", ".w", ".ipp", ".patch", "configure"} }
-};
+}/*)*/;
 
 
 TypeManager::TypeManager()
@@ -148,7 +151,7 @@ bool TypeManager::FileShouldBeScanned(const name_string_type& name) const noexce
 			// Name doesn't start with a period, it still could be an extension.
 			size_t ext_plus_period_size = name.cend() - last_period;
 
-			if(ext_plus_period_size <= microstring().max_size()+1)
+			if(ext_plus_period_size <= microstring::max_size()+1)
 			{
 				// Use the 8-byte microstring fast map.
 				microstring mext(last_period+1, name.end());
