@@ -494,7 +494,7 @@ struct PreDescriptor
 
 /// The vector of all command line options.
 /// @todo It should be possible to make this constexpr, moving a lot of startup work to compile-time.
-static std::vector<PreDescriptor> raw_options {
+static const std::vector<PreDescriptor> raw_options {
 	// This first OPT_UNKNOWN entry picks up all unrecognized options.
 	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
 	{ (std::string("Usage: ucg [OPTION...] ") += args_doc).c_str(), PreDescriptor::arbtext_tag() },

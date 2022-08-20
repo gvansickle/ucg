@@ -166,7 +166,7 @@ public:
 
 	/// Our equivalent for AT_FDCWD, the cwd of the process.
 	/// Different in that each FileID created with this constructor holds a real file handle to the "." directory.
-	FileID(path_known_cwd_tag tag);
+	explicit FileID(path_known_cwd_tag tag);
 	FileID(path_known_relative_tag tag, const std::shared_ptr<FileID>& at_dir_fileid, const std::string& basename,
 			const struct stat *stat_buf = nullptr,
 			FileType type = FT_UNINITIALIZED,

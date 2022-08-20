@@ -521,7 +521,7 @@ void FileScannerPCRE2::ScanFile(int thread_index, const char* __restrict__ file_
 
 std::string FileScannerPCRE2::PCRE2ErrorCodeToErrorString(int errorcode)
 {
-	std::string retstr = "";
+	std::string retstr;
 #if HAVE_LIBPCRE2
 	PCRE2_SIZE error_msg_buf_size = 512;
 	PCRE2_UCHAR *error_msg_buf = new PCRE2_UCHAR[error_msg_buf_size];

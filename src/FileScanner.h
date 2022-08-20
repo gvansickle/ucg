@@ -59,7 +59,7 @@ enum class RegexEngine
  */
 struct FileScannerException : public std::runtime_error
 {
-	FileScannerException(const std::string &message) : std::runtime_error(message) {};
+	explicit FileScannerException(const std::string &message) : std::runtime_error(message) {};
 };
 
 
