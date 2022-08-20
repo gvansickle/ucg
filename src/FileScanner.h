@@ -185,14 +185,14 @@ protected:
 	 *
 	 * @returns  true if @c regex is literal.
 	 */
-	bool IsPatternLiteral(const std::string &regex) const noexcept;
+	[[nodiscard]] static bool IsPatternLiteral(const std::string &regex) noexcept;
 
 	/**
 	 *
 	 * @param regex
 	 * @return
 	 */
-	uint8_t GetLiteralPrefixLen(const std::string &regex) noexcept;
+	static uint8_t GetLiteralPrefixLen(const std::string &regex) noexcept;
 
 
 	/// The original regex (as a std::string) passed in during construction.

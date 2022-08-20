@@ -235,7 +235,7 @@ size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ p
 	return num_lines_since_last_match;
 }
 
-bool FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
+bool FileScanner::IsPatternLiteral(const std::string &regex) noexcept
 {
 	// Search the string for any of the PCRE2 metacharacters.  This will cause some false negatives (e.g. anything with escapes
 	// will be determined to be a non-literal), but is quick and easy.

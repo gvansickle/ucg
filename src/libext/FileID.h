@@ -162,7 +162,7 @@ public:
 	/// @{
 	FileID() = delete;
 	FileID(const FileID& other);
-	FileID(FileID&& other);
+	FileID(FileID&& other) noexcept ;
 
 	/// Our equivalent for AT_FDCWD, the cwd of the process.
 	/// Different in that each FileID created with this constructor holds a real file handle to the "." directory.
@@ -181,7 +181,7 @@ public:
 	FileID& operator=(const FileID& other);
 
 	/// Move assignment.
-	FileID& operator=(FileID&& other);
+	FileID& operator=(FileID&& other) noexcept ;
 
 	/// Destructor.
 	~FileID();
@@ -250,7 +250,7 @@ public:
 
 	blksize_t GetBlockSize() const noexcept;
 
-	const dev_ino_pair GetUniqueFileIdentifier() const noexcept;
+	dev_ino_pair GetUniqueFileIdentifier() const noexcept;
 
 	dev_t GetDev() const noexcept;
 

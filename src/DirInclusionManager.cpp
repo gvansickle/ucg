@@ -21,10 +21,15 @@
 
 #include "DirInclusionManager.h"
 
+// Std C++.
+#include <string>
+#include <array>
+
+
 /**
  * Default directories which will be ignored.
  */
-static const std::string f_builtin_dir_excludes[] =
+static constexpr std::array f_builtin_dir_excludes
 {
 	".bzr",
 	".git",

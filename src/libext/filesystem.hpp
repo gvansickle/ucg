@@ -45,7 +45,7 @@
 #include <dirent.h>
 
 /// @note Because we included libgen.h above, we shouldn't get the GNU version from this #include of string.h.
-#include <string.h>
+#include <cstring>
 #include <cstdlib>   // For free().
 #include <string>
 #include <iterator>   // For std::distance().

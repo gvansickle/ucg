@@ -76,11 +76,11 @@ public:
 	FileID::IsValid GetFileDescriptor();
 
 //protected:
-	std::ostream& dump_stats(std::ostream &ostrm, const FileID::impl &impl)
+	static std::ostream& dump_stats(std::ostream &ostrm, const FileID::impl &impl)
 	{
-		return ostrm << "Max descriptors, regular: " << impl.m_atomic_fd_max_reg << "\n"
-				<< "Max descriptors, dir: " << impl.m_atomic_fd_max_dir << "\n"
-				<< "Max descriptors, other: " << impl.m_atomic_fd_max_other << "\n";
+		return ostrm << "Max descriptors, regular: " << FileID::impl::m_atomic_fd_max_reg << "\n"
+				<< "Max descriptors, dir: " << FileID::impl::m_atomic_fd_max_dir << "\n"
+				<< "Max descriptors, other: " << FileID::impl::m_atomic_fd_max_other << "\n";
 	}
 
 	int GetTempDirFileDesc() const noexcept;
@@ -154,8 +154,8 @@ static_assert(std::is_move_assignable<FileID::impl>::value, "FileID::impl must b
 /// @}
 
 
-FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
-	: m_at_dir(std::move(at_dir_fileid)), m_basename(bname)
+FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string base_or_pathname)
+	: m_at_dir(std::move(at_dir_fileid)), m_basename(base_or_pathname)
 {
 	/// @note Taking basename by value since we are always storing it.
 	/// Full openat() semantics:
@@ -164,16 +164,16 @@ FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname)
 
 	LOG(DEBUG) << "2-param const., m_basename=" << m_basename << ", m_at_dir=" << (!!m_at_dir ? (m_at_dir->m_pimpl->m_path) : "<nullptr>");
 
-	if(is_pathname_absolute(bname))
+	if(is_pathname_absolute(base_or_pathname))
 	{
 		// Save an expensive recursive call to m_at_dir->GetPath() in the future.
-		m_path = bname;
+		m_path = base_or_pathname;
 	}
 }
 
-FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std::string pname,
+FileID::impl::impl(std::shared_ptr<FileID> at_dir_fileid, std::string bname, std::string pathname,
 		const struct stat *stat_buf, FileType type)
-		: m_at_dir(std::move(at_dir_fileid)), m_basename(std::move(bname)), m_path(std::move(pname)), m_file_type(type)
+		: m_at_dir(std::move(at_dir_fileid)), m_basename(std::move(bname)), m_path(std::move(pathname)), m_file_type(type)
 {
 	if(stat_buf != nullptr)
 	{
@@ -388,7 +388,7 @@ FileID::FileID(const FileID& other)
 };
 
 // Move constructor.
-FileID::FileID(FileID&& other)
+FileID::FileID(FileID&& other) noexcept
 	: m_pimpl(std::move((WriterLock(other.m_mutex), other.m_pimpl)))
 {
 	LOG(DEBUG) << "Move constructor called";
@@ -502,7 +502,7 @@ FileID& FileID::operator=(const FileID& other)
 	return *this;
 };
 
-FileID& FileID::operator=(FileID&& other)
+FileID& FileID::operator=(FileID&& other) noexcept
 {
 	if(this != &other)
 	{
@@ -553,7 +553,7 @@ blksize_t FileID::GetBlockSize() const noexcept
 	return m_pimpl->m_block_size;
 };
 
-const dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
+dev_ino_pair FileID::GetUniqueFileIdentifier() const noexcept
 {
 	DoubleCheckedMultiLock<uint_fast8_t>(m_valid_bits, UUID, m_mutex, [this](){ return m_pimpl->LazyLoadStatInfo();});
 	return m_pimpl->m_unique_file_identifier;

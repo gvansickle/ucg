@@ -65,7 +65,7 @@ public:
 			bool ignore_case,
 			bool word_regexp,
 			bool pattern_is_literal);
-	virtual ~FileScannerPCRE2();
+	~FileScannerPCRE2() override;
 
 	/**
 	 * Returns the version string of the PCRE2 library.
@@ -73,7 +73,7 @@ public:
 	 */
 	static std::string GetPCRE2Version() noexcept;
 
-	void ThreadLocalSetup(int thread_count) override final;
+	void ThreadLocalSetup(int thread_count) final;
 
 private:
 
@@ -90,7 +90,7 @@ private:
 	 * @param file_size
 	 * @param ml
 	 */
-	void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) override final;
+	void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) final;
 
 	std::string PCRE2ErrorCodeToErrorString(int errorcode);
 
