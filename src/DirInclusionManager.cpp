@@ -43,14 +43,6 @@ static constexpr std::array f_builtin_dir_excludes
 	""
 };
 
-DirInclusionManager::DirInclusionManager()
-{
-}
-
-DirInclusionManager::~DirInclusionManager()
-{
-}
-
 void DirInclusionManager::AddExclusions(const std::set<std::string>& exclusions)
 {
 	for(const auto& name : exclusions)

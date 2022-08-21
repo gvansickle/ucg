@@ -31,8 +31,8 @@
 class DirInclusionManager
 {
 public:
-	DirInclusionManager();
-	~DirInclusionManager();
+	DirInclusionManager() = default;
+	~DirInclusionManager() = default;
 
 	void AddExclusions(const std::set<std::string> &exclusions);
 
