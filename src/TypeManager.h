@@ -38,7 +38,7 @@
  */
 struct TypeManagerException : public std::runtime_error
 {
-	TypeManagerException(const std::string &message) : std::runtime_error(message) {};
+	explicit TypeManagerException(const std::string &message) : std::runtime_error(message) {};
 };
 
 /**

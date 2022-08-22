@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <string_view>
 #include <locale>
 #include <thread>
 #include <iostream>
@@ -71,6 +72,7 @@ static constexpr size_t f_default_dirjobs = 4;
 
 
 // Not static, argp.h externs this.
+/// @TODO De-literalize the copyright dates.
 const char *argp_program_version = PACKAGE_STRING "\n"
 	"Copyright (C) 2015-2017 Gary R. Van Sickle.\n"
 	"\n"
@@ -88,18 +90,19 @@ const char *argp_program_version = PACKAGE_STRING "\n"
 	;
 
 // Not static, argp.h externs this.
-const char *argp_program_bug_address = PACKAGE_BUGREPORT;
+/// No more argp?
+constexpr char argp_program_bug_address[] = PACKAGE_BUGREPORT;
 
 /**
  * The pre- and post-option help text.
  */
-static const char doc[] = "\nucg: the UniversalCodeGrep code search tool."
+static constexpr char doc[] = "\nucg: the UniversalCodeGrep code search tool."
 		"\vExit status is 0 if any matches were found, 1 if no matches, 2 or greater on error.";
 
 /**
  * The "Usage:" text.
  */
-static const char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
+static constexpr char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
 /// Keys for options without short-options.
 enum OPT
@@ -179,7 +182,7 @@ struct Arg: public lmcppop::Arg
 
 	static lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
 	{
-		if (option.arg != 0)
+		if (option.arg != nullptr)
 			return lmcppop::ARG_OK;
 
 		if (msg) printError("Option '", option, "' requires an argument\n");
@@ -188,7 +191,7 @@ struct Arg: public lmcppop::Arg
 
 	static lmcppop::ArgStatus NonEmpty(const lmcppop::Option& option, bool msg)
 	{
-		if (option.arg != 0 && option.arg[0] != 0)
+		if (option.arg != nullptr && option.arg[0] != 0)
 		  return lmcppop::ARG_OK;
 
 		if (msg) printError("Option '", option, "' requires a non-empty argument\n");
@@ -197,8 +200,8 @@ struct Arg: public lmcppop::Arg
 
 	static lmcppop::ArgStatus Numeric(const lmcppop::Option& option, bool msg)
 	{
-		char* endptr = 0;
-		if (option.arg != 0 && strtol(option.arg, &endptr, 10)){};
+		char* endptr = nullptr;
+		if (option.arg != nullptr && strtol(option.arg, &endptr, 10)){};
 		if (endptr != option.arg && *endptr == 0)
 		  return lmcppop::ARG_OK;
 
@@ -260,7 +263,7 @@ struct PreDescriptor
 	struct hidden_tag {};
 
 
-	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts,
+	constexpr PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts,
 			const lmcppop::CheckArg c, const char *h) noexcept
 			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(""), m_check_arg(c), m_help(h)
 	{
@@ -277,7 +280,7 @@ struct PreDescriptor
 	 * @param check_arg
 	 * @param help
 	 */
-	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
+	constexpr PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
 			const lmcppop::CheckArg check_arg, const char *help) noexcept
 			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname), m_check_arg(check_arg), m_help(help)
 	{
@@ -295,7 +298,7 @@ struct PreDescriptor
 	 * @param help
 	 * @param
 	 */
-	PreDescriptor(unsigned index, OptionType yestype, OptionType notype, const char *const shortopts, const char *const longopts, const char *const argname,
+	constexpr PreDescriptor(unsigned index, OptionType yestype, OptionType notype, const char *const shortopts, const char *const longopts, const char *const argname,
 			const lmcppop::CheckArg check_arg, const char *help) noexcept
 			: m_index(index), m_type(yestype), m_notype(notype), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname),
 			  m_check_arg(check_arg), m_help(help), m_is_bracket_no(true)
@@ -314,7 +317,7 @@ struct PreDescriptor
 	 * @param help
 	 * @param
 	 */
-	PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
+	constexpr PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts, const char *const argname,
 			const lmcppop::CheckArg check_arg, const char *help, hidden_tag) noexcept
 			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(argname), m_check_arg(check_arg), m_help(help),
 			  m_is_hidden(true)
@@ -324,29 +327,36 @@ struct PreDescriptor
 	/**
 	 * Constructor overload for section headers.
 	 *
+	 * @note This cannot be marked explicit because of the way we want to use it.
+	 *
 	 * @param section_header_name  Text of the section header.
 	 */
-	PreDescriptor(const char *section_header_name, section_header_tag = section_header_tag()) noexcept
+	constexpr PreDescriptor(const char *section_header_name, section_header_tag = section_header_tag()) noexcept
 		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
-		  m_help(std::string("\n ") + section_header_name)
+		  m_help(std::string("\n ") += section_header_name)
 	{
 	};
 
-	PreDescriptor(const char *arbitrary_text, arbtext_tag) noexcept
+	constexpr PreDescriptor(const char *arbitrary_text, arbtext_tag) noexcept
 		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
 		  m_help(arbitrary_text)
 	{
 	};
 
-	PreDescriptor(const char *arbitrary_text [[maybe_unused]], hidden_tag) noexcept
+	constexpr PreDescriptor(const char *arbitrary_text [[maybe_unused]], hidden_tag) noexcept
 			: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
 			  m_help(), m_is_hidden(true)
 	{
 	};
 
-	bool IsHidden() const noexcept { return m_is_hidden; };
-	bool IsBracketNo() const noexcept { return m_is_bracket_no; };
-	bool HasLongAliases() const noexcept { return std::strchr(m_longopts, ',') != nullptr; };
+	[[nodiscard]] constexpr bool IsHidden() const noexcept { return m_is_hidden; };
+	[[nodiscard]] constexpr bool IsBracketNo() const noexcept { return m_is_bracket_no; };
+	[[nodiscard]] bool HasLongAliases() const noexcept
+	{
+//		constexpr std::string_view sv(m_longopts);
+//		return sv.rfind(',') != std::string_view::npos;
+		return std::strchr(m_longopts, ',') != nullptr;
+	};
 
 	/**
 	 * Conversion operator for converting between PreDescriptors and "The Lean Mean C++ Option Parser"'s option Descriptors.
@@ -357,7 +367,7 @@ struct PreDescriptor
 
 		if(IsHidden())
 		{
-			fmt_help = 0;
+			fmt_help = nullptr;
 		}
 		else
 		{
@@ -443,7 +453,7 @@ struct PreDescriptor
 	}
 
 	template <typename T>
-	void PushAliasDescriptors(T* usage_container)
+	void PushAliasDescriptors(T* usage_container) const
 	{
 		auto long_aliases = split(m_longopts, ',');
 
@@ -467,7 +477,7 @@ struct PreDescriptor
 	}
 
 	template <typename T>
-	void PushBracketNoDescriptors(T* usage_container)
+	void PushBracketNoDescriptors(T* usage_container) const
 	{
 		auto long_alias = split(m_longopts, ',')[0];
 		long_alias.erase(0, 4);
@@ -479,14 +489,15 @@ struct PreDescriptor
 		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
 	}
 
-	static lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
+	static constexpr lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
 /// The vector of all command line options.
-static std::vector<PreDescriptor> raw_options {
+/// @todo It should be possible to make this constexpr, moving a lot of startup work to compile-time.
+static const std::vector<PreDescriptor> raw_options {
 	// This first OPT_UNKNOWN entry picks up all unrecognized options.
 	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
-	{ (std::string("Usage: ucg [OPTION...] ") + args_doc).c_str(), PreDescriptor::arbtext_tag() },
+	{ (std::string("Usage: ucg [OPTION...] ") += args_doc).c_str(), PreDescriptor::arbtext_tag() },
 	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
 	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
 	{ "Searching:" },
@@ -536,8 +547,8 @@ static std::vector<PreDescriptor> raw_options {
 	// Epilogue Text.
 		{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
 		// Again, this folderol is to keep the doc[] string in the same format as used by argp.
-		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) + "\n").c_str(), PreDescriptor::arbtext_tag() },
-		{ (std::string("Report bugs to ") + argp_program_bug_address + ".").c_str(), PreDescriptor::arbtext_tag() }
+		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) += "\n").c_str(), PreDescriptor::arbtext_tag() },
+		{ ((std::string("Report bugs to ") += argp_program_bug_address) += ".").c_str(), PreDescriptor::arbtext_tag() }
 };
 
 /// Option descriptions for the "The Lean Mean C++ Option Parser" library.
@@ -1076,7 +1087,7 @@ void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std:
 }
 
 
-std::string ArgParse::GetProjectRCFilename() const
+std::string ArgParse::GetProjectRCFilename()
 {
 	// Walk up the directory hierarchy from the cwd until we:
 	// 1. Get to the user's $HOME dir, in which case we don't return an rc filename even if it exists.
@@ -1256,7 +1267,7 @@ void ArgParse::HandleTYPELogic(std::vector<char*> *v)
 				//   ./ucg: option '--i' is ambiguous; possibilities: '--ignore-case' '--ignore' '--include' '--ignore-file' '--ignore-directory' '--ignore-dir'
 				//   Try `ucg --help' or `ucg --usage' for more information.
 				std::string possibilities = "'--" + join(type_name_list, "' '--") + "'";
-				throw ArgParseException(std::string("option '--") + argtxt + "' is ambiguous; possibilities: " + possibilities);
+				throw ArgParseException((std::string("option '--") += argtxt += "' is ambiguous; possibilities: ") += possibilities);
 			}
 
 			// Is this a type specification of the form '--noTYPE'?

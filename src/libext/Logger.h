@@ -120,7 +120,7 @@ public:
 	/// Primary constructor.
 	/// @param reporting_name  This is something like "INFO" or "DEBUG", indicating the severity level.  It gets set
 	///                        automatically in the INFO, DEBUG, etc. subclasses below.
-	EnableableLogger(const char *reporting_name) { m_tempstream << reporting_name << ": " << get_thread_name() << ": "; };
+	explicit EnableableLogger(const char *reporting_name) { m_tempstream << reporting_name << ": " << get_thread_name() << ": "; };
 	~EnableableLogger() noexcept override  = default;
 
 	static void Enable(bool enable) noexcept { m_enabled = enable; };
@@ -138,7 +138,7 @@ bool EnableableLogger<T>::m_enabled { false };
 /**
  * The LOG(INFO) logger.
  */
-class INFO : public EnableableLogger<INFO>
+class INFO final : public EnableableLogger<INFO>
 {
 public:
 	INFO() : EnableableLogger<INFO>(__func__) { };
@@ -149,7 +149,7 @@ public:
 /**
  * The LOG(DEBUG) logger.
  */
-class DEBUG : public EnableableLogger<DEBUG>
+class DEBUG final : public EnableableLogger<DEBUG>
 {
 public:
 	DEBUG() : EnableableLogger<DEBUG>(__func__) {};
@@ -159,7 +159,7 @@ public:
 /**
  * The Logger where regular warning/error messages should normally go to, via the NOTICE(), WARN(), and ERROR() macros.
  */
-class STDERR : public Logger
+class STDERR final : public Logger
 {
 public:
 	STDERR() { m_tempstream << m_program_invocation_short_name << ": "; };
@@ -171,7 +171,7 @@ public:
 /**
  *
  */
-class STDLOG : public Logger
+class STDLOG final : public Logger
 {
 public:
 	STDLOG() { m_tempstream << m_program_invocation_short_name << ": "; };

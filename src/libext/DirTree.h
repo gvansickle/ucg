@@ -115,7 +115,7 @@ public:
 			const dir_basename_filter_type &dir_basename_filter,
 			bool recurse,
 			bool follow_symlinks);
-	~DirTree();
+	~DirTree() = default;
 
 	/**
 	 * Begin the directory tree traversal, starting with the given #start_paths.

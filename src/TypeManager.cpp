@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <set>
+#include <array>
 #include <iterator>
 #include <iostream>
 #include <iomanip>
@@ -39,12 +40,14 @@ struct Type
 
 	/// Vector of the extensions, literal strings, and first-line regexes which match the type.
 	std::vector<std::string> m_type_extensions;
+//	std::array<std::string> m_type_extensions;
 
 	/// less-than operator, so that Types are sortable by key (m_type_name).
-	bool operator<(const Type &other) const noexcept { return m_type_name < other.m_type_name; };
+	constexpr bool operator<(const Type &other) const noexcept { return m_type_name < other.m_type_name; };
 };
 
 static const std::set<Type> f_builtin_type_array =
+//static constexpr auto f_builtin_type_array = std::to_array<Type>(
 {
 	{ "actionscript", {".as", ".mxml"} },
 	{ "ada", {".ada", ".adb", ".ads"} },
@@ -120,13 +123,13 @@ static const std::set<Type> f_builtin_type_array =
 	// Below here are types corresponding to some of the files ack 2.14 finds as non-binary by scanning them.
 	// We'll do that at some point too, but for now just include them here.
 	{ "miscellaneous", {".qbk", ".w", ".ipp", ".patch", "configure"} }
-};
+}/*)*/;
 
 
 TypeManager::TypeManager()
 {
 	// Populate the type map with the built-in defaults.
-	for(auto t : f_builtin_type_array)
+	for(auto& t : f_builtin_type_array)
 	{
 		m_builtin_and_user_type_map[t.m_type_name] = t.m_type_extensions;
 		m_active_type_map[t.m_type_name] = t.m_type_extensions;
@@ -148,7 +151,7 @@ bool TypeManager::FileShouldBeScanned(const name_string_type& name) const noexce
 			// Name doesn't start with a period, it still could be an extension.
 			size_t ext_plus_period_size = name.cend() - last_period;
 
-			if(ext_plus_period_size <= microstring().max_size()+1)
+			if(ext_plus_period_size <= microstring::max_size()+1)
 			{
 				// Use the 8-byte microstring fast map.
 				microstring mext(last_period+1, name.end());
@@ -193,7 +196,7 @@ bool TypeManager::FileShouldBeScanned(const name_string_type& name) const noexce
 	// Check if the filename matches the collection of the globbing patterns we're including and excluding.
 	// We have to match each filename against each glob pattern to deal with include/exclude sequences which match the overlapping filenames.
 	enum { nomatch, include, exclude } glob_verdict = nomatch;
-	for(auto glob : m_include_exclude_globs)
+	for(const auto& glob : m_include_exclude_globs)
 	{
 		std::string name_str = std::string(name);
 		int result = fnmatch(glob.first.c_str(), name_str.c_str(), 0);
@@ -251,7 +254,7 @@ bool TypeManager::type(const std::string& type_name)
 	/// and
 	/// ucg --noenv --type=hh '#endif' ~/src/boost_1_58_0
 	/// give the same results.
-	for(auto i : it_type->second)
+	for(const auto& i : it_type->second)
 	{
 		m_removed_type_filters.erase(i);
 	}
@@ -273,7 +276,7 @@ bool TypeManager::notype(const std::string& type_name)
 	}
 
 	// Add the filters to the removed-filters map.
-	for(auto i : it_type->second)
+	for(const auto& i : it_type->second)
 	{
 		m_removed_type_filters.insert(std::make_pair(i, type_name));
 	}
@@ -352,7 +355,7 @@ void TypeManager::TypeAddFromFilterSpecString(bool delete_type_first, const std:
 	{
 		// filter_args is a list of one or more comma-separated filename extensions.
 		auto exts = split(filter_args, ',');
-		for(auto ext : exts)
+		for(const auto& ext : exts)
 		{
 			TypeAddExt(file_type, ext);
 		}
@@ -440,7 +443,7 @@ bool TypeManager::TypeDel(const std::string& type)
 
 bool TypeManager::IsExcludedByAnyGlob(const std::string &name) const noexcept
 {
-	for(auto glob : m_exclude_globs)
+	for(const auto& glob : m_exclude_globs)
 	{
 		int result = fnmatch(glob.c_str(), name.c_str(), 0);
 		if(result == 0)
@@ -457,7 +460,7 @@ void TypeManager::CompileTypeTables()
 {
 	std::set<microstring> unique_microstring_extensions;
 
-	for(auto i : m_active_type_map)
+	for(const auto& i : m_active_type_map)
 	{
 		for(auto j : i.second)
 		{
@@ -524,7 +527,7 @@ void TypeManager::CompileTypeTables()
 
 void TypeManager::PrintTypesForHelp(std::ostream& s) const
 {
-	for(auto t : m_builtin_and_user_type_map)
+	for(const auto& t : m_builtin_and_user_type_map)
 	{
 		s << "  " << std::setw(15) << std::left << t.first;
 

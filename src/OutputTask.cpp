@@ -18,13 +18,17 @@
 /** @file */
 
 #include <config.h>
-#include <libext/Logger.h>
 
 #include "OutputTask.h"
 
-#include <unistd.h>
-#include <stdio.h>
+// Std C++.
+#include <cstdio>
 #include <iostream>
+
+#include <unistd.h>
+
+// Ours.
+#include <libext/Logger.h>
 
 
 OutputTask::OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, sync_queue<MatchList> &input_queue)
@@ -81,3 +85,4 @@ void OutputTask::Run()
 		m_total_matched_lines += ml.GetNumberOfMatchedLines();
 	}
 }
+

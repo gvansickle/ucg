@@ -55,7 +55,8 @@ AM_INIT_AUTOMAKE([1.14
 	-Werror
 ])
 
-AM_SILENT_RULES([yes])
+# Seems like we need non-silent rules for CLion.
+AM_SILENT_RULES([no])
 
 # Figure out who we're building for.
 case $host_os in
@@ -98,55 +99,31 @@ AC_PROG_CXXCPP([g++ clang++])
 #       calling LT_INIT, or it will complain.
 AC_USE_SYSTEM_EXTENSIONS
 
-# Get C11 support.
+# Get C18 support.
 AS_BOX([Checking C compiler language standard support])
 
 AC_LANG_PUSH([C])
-AX_CHECK_COMPILE_FLAG([-std=gnu11],
-	[AX_APPEND_FLAG([-std=gnu11], [CC])
-	AX_APPEND_FLAG([-std=gnu11], [CPP])
+AX_CHECK_COMPILE_FLAG([-std=gnu18],
+	[AX_APPEND_FLAG([-std=gnu18], [CC])
+	AX_APPEND_FLAG([-std=gnu18], [CPP])
 	],
-	[AX_CHECK_COMPILE_FLAG([-std=c11],
-	[AX_APPEND_FLAG([-std=c11], [CC])
-	AX_APPEND_FLAG([-std=c11], [CPP])
+	[AX_CHECK_COMPILE_FLAG([-std=c18],
+	[AX_APPEND_FLAG([-std=c18], [CC])
+	AX_APPEND_FLAG([-std=c18], [CPP])
 	],
-		[AC_MSG_ERROR([no C11 support])], [], [])
+		[AC_MSG_ERROR([no C18 support])], [], [])
 	], [], [])
 AC_LANG_POP([C])
 
 # Get the highest C++ standard support we can.
 AS_BOX([Checking C++ compiler language standard support])
-## Make sure we get a C++ compiler which supports the highest level of C++17/C++14/C++11 available.
-# Determine what switches we need to get the highest level of C++17/C++14/C++11 available.
-# We do this here because this macro will replace $CXX with "$CXX -c++11switch", so we'll use this
+## Make sure we get a C++ compiler which supports the highest level of C++20 available.
+# Determine what switches we need to get the highest level of C++20 available.
+# We do this here because this macro will replace $CXX with "$CXX -c++20switch", so we'll use this
 # in the AC_LANG_PUSH([C++]) tests below.
 AC_LANG_PUSH([C++])
-# @note No AX_CXX_COMPILE_STDCXX_17() macro yet, we'll do it manually.
-AX_CHECK_COMPILE_FLAG([-std=gnu++1z],
-	[# action-if-success
-	AC_SUBST([HAVE_CXX1Z], [1])
-	AC_DEFINE([HAVE_CXX1Z], [1], [Define if compiler supports C++1z])
-	AX_APPEND_FLAG([-std=gnu++1z], [CXX])
-	AX_APPEND_FLAG([-std=gnu++1z], [CXXCPP])
-	],
-	[# action-if-fail
-	AX_CHECK_COMPILE_FLAG([-std=c++1z],
-		[# action-if-success
-		AC_SUBST([HAVE_CXX1Z], [1])
-		AC_DEFINE([HAVE_CXX1Z], [1], [Define if compiler supports C++1z])
-		AX_APPEND_FLAG([-std=c++1z], [CXX])
-		AX_APPEND_FLAG([-std=c++1z], [CXXCPP])
-		],
-		[# action-if-fail
-		AC_SUBST([HAVE_CXX1Z], [0])
-		])
-	])
-AS_IF([test "x$HAVE_CXX1Z" = "x0"],
-[
-	AX_CXX_COMPILE_STDCXX_14([], [optional])
-	AS_IF([test "x$HAVE_CXX14" != "x1"],
-		[AX_CXX_COMPILE_STDCXX_11([ext], [mandatory])], [])
-], [])
+
+AX_CXX_COMPILE_STDCXX(20, ext, mandatory)
 
 # @note For gcc's stdlibc++, see <https://gcc.gnu.org/onlinedocs/libstdc++/manual/using.html#manual.intro.using.flags>
 # for the full list of flags necessary for it to support the various dialects.  The '-std=' value determined above
@@ -274,7 +251,7 @@ AM_MISSING_PROG([AUTOM4TE], [autom4te])
 # Google Test
 AC_MSG_CHECKING([for googletest library])
 # @todo Remove the false when we're ready for this.
-AM_CONDITIONAL([HAVE_GOOGLETEST], [false && test -f $srcdir/third_party/googletest-release-1.8.0.tar.gz])
+AM_CONDITIONAL([HAVE_GOOGLETEST], [test -f $srcdir/third_party/googletest-release-1.12.1.tar.gz])
 AM_COND_IF([HAVE_GOOGLETEST], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
 
 # Doxygen support.
@@ -475,7 +452,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 	])
 
 #
-# C++11 features
+# C++20 features
 #
 AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_templates])
 

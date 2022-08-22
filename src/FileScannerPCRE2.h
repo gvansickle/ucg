@@ -31,6 +31,30 @@
 #include <pcre2.h>
 #endif
 
+#if HAVE_LIBPCRE2
+/// @name Custom deleters for the PCRE2 objects we'll be using.
+/// These are implemented as specializations of the std::default_delete<> template.
+/// @{
+namespace std
+{
+
+	template<>
+	struct default_delete<pcre2_match_data>
+	{
+		void operator()(pcre2_match_data *ptr)
+		{ pcre2_match_data_free(ptr); };
+	};
+
+	template<>
+	struct default_delete<pcre2_match_context>
+	{
+		void operator()(pcre2_match_context *mctx)
+		{ pcre2_match_context_free(mctx); };
+	};
+
+}
+/// @}
+#endif  // HAVE_LIBPCRE2
 
 class FileScannerPCRE2: public FileScanner
 {
@@ -41,7 +65,7 @@ public:
 			bool ignore_case,
 			bool word_regexp,
 			bool pattern_is_literal);
-	virtual ~FileScannerPCRE2();
+	~FileScannerPCRE2() override;
 
 	/**
 	 * Returns the version string of the PCRE2 library.
@@ -49,7 +73,7 @@ public:
 	 */
 	static std::string GetPCRE2Version() noexcept;
 
-	void ThreadLocalSetup(int thread_count) override final;
+	void ThreadLocalSetup(int thread_count) final;
 
 private:
 
@@ -66,9 +90,9 @@ private:
 	 * @param file_size
 	 * @param ml
 	 */
-	void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) override final;
+	void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) final;
 
-	std::string PCRE2ErrorCodeToErrorString(int errorcode);
+	static std::string PCRE2ErrorCodeToErrorString(int errorcode);
 
 #if HAVE_LIBPCRE2
 	/// The compiled libpcre2 regex.

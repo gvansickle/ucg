@@ -40,7 +40,7 @@ public:
 			bool ignore_case,
 			bool word_regexp,
 			bool pattern_is_literal);
-	virtual ~FileScannerPCRE();
+	~FileScannerPCRE() override;
 
 
 private:
@@ -52,7 +52,7 @@ private:
 	 * @param file_size
 	 * @param ml
 	 */
-	void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) override final;
+	void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) final;
 
 #if HAVE_LIBPCRE
 	/// The compiled libpcre regex.

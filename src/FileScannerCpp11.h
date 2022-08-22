@@ -38,7 +38,7 @@ public:
 			bool ignore_case,
 			bool word_regexp,
 			bool pattern_is_literal);
-	virtual ~FileScannerCpp11();
+	~FileScannerCpp11() override;
 
 private:
 
@@ -49,7 +49,7 @@ private:
 	 * @param file_size
 	 * @param ml
 	 */
-	void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) override final;
+	void ScanFile(int thread_index, const char * __restrict__ file_data, size_t file_size, MatchList &ml) final;
 };
 
 #endif /* FILESCANNERCPP11_H_ */

@@ -52,7 +52,7 @@ enum FileType
 };
 /// Stream insertion operator for FileType enum.
 inline std::ostream& operator<<(std::ostream& out, const FileType value){
-    const char* s = 0;
+    const char* s = nullptr;
 #define M_ENUM_CASE(p) case(p): s = #p; break;
     switch(value){
         M_ENUM_CASE(FT_UNINITIALIZED);
@@ -162,11 +162,11 @@ public:
 	/// @{
 	FileID() = delete;
 	FileID(const FileID& other);
-	FileID(FileID&& other);
+	FileID(FileID&& other) noexcept ;
 
 	/// Our equivalent for AT_FDCWD, the cwd of the process.
 	/// Different in that each FileID created with this constructor holds a real file handle to the "." directory.
-	FileID(path_known_cwd_tag tag);
+	explicit FileID(path_known_cwd_tag tag);
 	FileID(path_known_relative_tag tag, const std::shared_ptr<FileID>& at_dir_fileid, const std::string& basename,
 			const struct stat *stat_buf = nullptr,
 			FileType type = FT_UNINITIALIZED,
@@ -181,7 +181,7 @@ public:
 	FileID& operator=(const FileID& other);
 
 	/// Move assignment.
-	FileID& operator=(FileID&& other);
+	FileID& operator=(FileID&& other) noexcept ;
 
 	/// Destructor.
 	~FileID();
@@ -250,7 +250,7 @@ public:
 
 	blksize_t GetBlockSize() const noexcept;
 
-	const dev_ino_pair GetUniqueFileIdentifier() const noexcept;
+	dev_ino_pair GetUniqueFileIdentifier() const noexcept;
 
 	dev_t GetDev() const noexcept;
 

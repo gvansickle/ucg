@@ -45,7 +45,7 @@
 #include <dirent.h>
 
 /// @note Because we included libgen.h above, we shouldn't get the GNU version from this #include of string.h.
-#include <string.h>
+#include <cstring>
 #include <cstdlib>   // For free().
 #include <string>
 #include <iterator>   // For std::distance().
@@ -128,8 +128,9 @@ inline int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
  */
 struct FileException : public std::system_error
 {
-	FileException(const std::string &message, int errval = errno) : std::system_error(errval, std::generic_category(), message) {};
+	explicit FileException(const std::string &message, int errval = errno) : std::system_error(errval, std::generic_category(), message) {};
 };
+
 inline std::ostream& operator<<(std::ostream &out, const FileException &fe) noexcept
 {
 	return out << fe.what() << ": " << fe.code() << " - " << fe.code().message();

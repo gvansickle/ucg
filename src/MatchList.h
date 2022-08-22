@@ -65,11 +65,11 @@ public:
 	/// @note You might expect that this needs to indicate 'empty' after a move-from has occurred.
 	/// That's not the case.  A moved-from object only has to be destructible, and the move and copy operations
 	/// have to still work the same as they did before the move operation.
-	bool empty() const noexcept { return m_match_list.empty(); };
+	[[nodiscard]] bool empty() const noexcept { return m_match_list.empty(); };
 
 	void clear() noexcept;
 
-	std::vector<Match>::size_type GetNumberOfMatchedLines() const noexcept;
+	[[nodiscard]] std::vector<Match>::size_type GetNumberOfMatchedLines() const noexcept;
 
 private:
 

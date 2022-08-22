@@ -218,7 +218,7 @@ size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ p
 	size_t num_lines_since_last_match = 0;
 
 	const char * last_ptr = prev_lineno_search_end;
-	while(1)
+	while(true)
 	{
 		last_ptr = (const char*)std::memchr((const void*)last_ptr, '\n', start_of_current_match-last_ptr);
 		if(last_ptr != NULL)
@@ -235,7 +235,7 @@ size_t FileScanner::CountLinesSinceLastMatch_default(const char * __restrict__ p
 	return num_lines_since_last_match;
 }
 
-bool FileScanner::IsPatternLiteral(const std::string &regex) const noexcept
+bool FileScanner::IsPatternLiteral(const std::string &regex) noexcept
 {
 	// Search the string for any of the PCRE2 metacharacters.  This will cause some false negatives (e.g. anything with escapes
 	// will be determined to be a non-literal), but is quick and easy.
@@ -250,7 +250,7 @@ uint8_t FileScanner::GetLiteralPrefixLen(const std::string &regex) noexcept
 {
 	// Bail if there are any alternates anywhere in the pattern.  This avoids having to
 	// deal with situations like '(cat|cab|car|cot)', which is a likely an overall loss anyway.
-	auto alt_pos = regex.find_first_of("|");
+	auto alt_pos = regex.find_first_of('|');
 	if(alt_pos != std::string::npos)
 	{
 		return 1;

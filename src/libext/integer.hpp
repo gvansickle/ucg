@@ -128,17 +128,17 @@ constexpr
 		static_assert(decltype(test_var)::dummy, "No template specialization for type T.");
 
 template <typename T>
-constexpr bool haszero(T x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+constexpr inline bool haszero(T x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 template <typename T>
-constexpr bool haszero(T x) noexcept
+constexpr inline bool haszero(T x) noexcept
 {
 	// Should never get to this unspecialized version.
 	STATIC_ASSERT_NO_SPECIALIZATION(x);
 	return false;
 }
 
-template <> constexpr bool haszero(uint64_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
-template <> constexpr bool haszero(uint64_t x) noexcept
+template <> constexpr inline bool haszero(uint64_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <> constexpr inline bool haszero(uint64_t x) noexcept
 {
 	// From https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord (public domain)
 	return ((x - UINT64_C(0x0101010101010101)) & (~(x) & UINT64_C(0x8080808080808080)));
@@ -150,17 +150,17 @@ template <> constexpr bool haszero(uint64_t x) noexcept
  * @return
  */
 template <typename T>
-constexpr uint8_t countnonzeros(T x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+constexpr inline uint8_t countnonzeros(T x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
 template <typename T>
-constexpr uint8_t countnonzeros(T x) noexcept
+constexpr inline uint8_t countnonzeros(T x) noexcept
 {
 	// Should never get to this unspecialized version.
 	STATIC_ASSERT_NO_SPECIALIZATION(x);
 	return false;
 }
 
-template <> constexpr uint8_t countnonzeros(uint64_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
-template <> constexpr uint8_t countnonzeros(uint64_t x) noexcept
+template <> constexpr inline uint8_t countnonzeros(uint64_t x) noexcept ATTR_CONST ATTR_ARTIFICIAL;
+template <> constexpr inline uint8_t countnonzeros(uint64_t x) noexcept
 {
 	return ((x & UINT64_C(0xFF)) > 0)
 		+ ((x & UINT64_C(0xFF00)) > 0)

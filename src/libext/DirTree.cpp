@@ -52,10 +52,6 @@ DirTree::DirTree(sync_queue<std::shared_ptr<FileID>>& output_queue,
 	m_dir_has_been_visited.reserve(M_INITIAL_NUM_DIR_ESTIMATE);
 }
 
-DirTree::~DirTree()
-{
-}
-
 void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 {
 	m_dirjobs = dirjobs;

@@ -31,8 +31,8 @@
 class DirInclusionManager
 {
 public:
-	DirInclusionManager();
-	~DirInclusionManager();
+	DirInclusionManager() = default;
+	~DirInclusionManager() = default;
 
 	void AddExclusions(const std::set<std::string> &exclusions);
 
@@ -46,7 +46,7 @@ public:
 	 * @param path
 	 * @return
 	 */
-	bool DirShouldBeExcluded(const std::string &name) const;
+	[[nodiscard]] bool DirShouldBeExcluded(const std::string &name) const;
 
 private:
 

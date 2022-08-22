@@ -37,20 +37,20 @@
 class File
 {
 public:
-	File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
+	explicit File(std::shared_ptr<FileID> file_id, std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
 	File(const std::string &filename, FileAccessMode fam, FileCreationFlag fcf,
 			std::shared_ptr<ResizableArray<char>> storage = std::make_shared<ResizableArray<char>>());
 	~File();
 
-	size_t size() const noexcept { return m_fileid->GetFileSize(); };
+	[[nodiscard]] size_t size() const noexcept { return m_fileid->GetFileSize(); };
 
-	const char * data() const noexcept { return m_file_data; };
+	[[nodiscard]] const char * data() const noexcept { return m_file_data; };
 
 	/**
 	 * Returns the name of this File as passed to the constructor.
 	 * @return  The name of this File as passed to the constructor.
 	 */
-	std::string name() const noexcept { return m_fileid->GetPath(); };
+	[[nodiscard]] std::string name() const noexcept { return m_fileid->GetPath(); };
 
 private:
 

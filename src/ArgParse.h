@@ -38,7 +38,7 @@ class File;
  */
 struct ArgParseException : public std::runtime_error
 {
-	ArgParseException(const std::string &message) : std::runtime_error(message) {};
+	explicit ArgParseException(const std::string &message) : std::runtime_error(message) {};
 };
 
 
@@ -48,7 +48,7 @@ struct ArgParseException : public std::runtime_error
 class ArgParse
 {
 public:
-	ArgParse(TypeManager &tm);
+	explicit ArgParse(TypeManager &tm);
 	~ArgParse();
 
 	/**
@@ -81,7 +81,7 @@ private:
 
 	void PrintHelpTypes() const;
 
-	std::string GetProjectRCFilename() const;
+	[[nodiscard]] static std::string GetProjectRCFilename() ;
 
 	/**
 	 * Pre-parse the given config (.ucgrc) file, removing comments and returning a vector of
@@ -92,7 +92,7 @@ private:
 	 * @param f  The config File.
 	 * @return  vector<char*> of command-line params.
 	 */
-	std::vector<char *> ConvertRCFileToArgv(const File &f);
+	static std::vector<char *> ConvertRCFileToArgv(const File &f);
 
 	void FindAndParseConfigFiles(std::vector<char*> *global_argv, std::vector<char*> *user_argv, std::vector<char*> *project_argv);
 
