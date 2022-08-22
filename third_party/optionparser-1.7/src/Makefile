@@ -4,7 +4,7 @@ CCFLAGS=$(CXXFLAGS) -fno-exceptions -fno-rtti -nodefaultlibs
 OPTIMIZE=-Os -fomit-frame-pointer
 #OPTIMIZE=-O0
 LD=gcc  # gcc automatically picks the correct crt*.o and helper libraries to link
-VERSION=1.4
+VERSION=1.7
 PACKAGEDIR=optionparser-$(VERSION)
 TARBALL=../$(PACKAGEDIR).tar.gz
 

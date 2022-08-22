@@ -27,6 +27,7 @@
 
 #include <libext/cpuidex.hpp>
 
+// Std C++.
 #include <locale>
 #include <algorithm>
 #include <vector>
@@ -264,8 +265,9 @@ struct PreDescriptor
 
 
 	constexpr PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts,
-			const lmcppop::CheckArg c, const char *h) noexcept
-			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(""), m_check_arg(c), m_help(h)
+			const lmcppop::CheckArg check_arg, const char *help) noexcept
+			: m_index(index), m_type(type), m_shortopts(shortopts), m_longopts(longopts), m_argname(""), m_check_arg(
+			check_arg), m_help(help)
 	{
 	};
 
@@ -591,10 +593,6 @@ ArgParse::ArgParse(TypeManager &type_manager)
 	}
 */
 	dynamic_usage.push_back(PreDescriptor::NullEntry());
-}
-
-ArgParse::~ArgParse()
-{
 }
 
 
@@ -991,7 +989,7 @@ void ArgParse::PrintHelpTypes() const
 	std::cout << std::endl;
 }
 
-void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std::vector<char*> *user_argv, std::vector<char*> *project_argv)
+void ArgParse::FindAndParseConfigFiles(std::vector<char*> */*global_argv*/, std::vector<char*> *user_argv, std::vector<char*> *project_argv) const
 {
 	// Find and parse the global config file.
 	/// @todo
