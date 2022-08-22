@@ -50,20 +50,22 @@ check_LTLIBRARIES =
 ### The Lean Mean C++ Option Parser
 ###
 
+LMCPPOP_RELEASE_NO = 1.7
+
 # This is a header-only library.  We just need to rig things up so it gets distributed.
 EXTRA_DIST += \
-	optionparser-1.4/DoxygenLayout.xml \
-	optionparser-1.4/README_ARGC_ARGV \
-	optionparser-1.4/src/printUsage.h \
-	optionparser-1.4/src/example.cpp \
-	optionparser-1.4/src/testodr1.cc \
-	optionparser-1.4/src/testprintusage.cpp \
-	optionparser-1.4/src/example_arg.cc \
-	optionparser-1.4/src/testodr2.cc \
-	optionparser-1.4/src/testparse.cpp \
-	optionparser-1.4/src/Makefile \
-	optionparser-1.4/src/optionparser.h \
-	optionparser-1.4/Doxyfile
+	optionparser-$(LMCPPOP_RELEASE_NO)/DoxygenLayout.xml \
+	optionparser-$(LMCPPOP_RELEASE_NO)/README_ARGC_ARGV \
+	optionparser-$(LMCPPOP_RELEASE_NO)/src/printUsage.h \
+	optionparser-$(LMCPPOP_RELEASE_NO)/src/example.cpp \
+	optionparser-$(LMCPPOP_RELEASE_NO)/src/testodr1.cc \
+	optionparser-$(LMCPPOP_RELEASE_NO)/src/testprintusage.cpp \
+	optionparser-$(LMCPPOP_RELEASE_NO)/src/example_arg.cc \
+	optionparser-$(LMCPPOP_RELEASE_NO)/src/testodr2.cc \
+	optionparser-$(LMCPPOP_RELEASE_NO)/src/testparse.cpp \
+	optionparser-$(LMCPPOP_RELEASE_NO)/src/Makefile \
+	optionparser-$(LMCPPOP_RELEASE_NO)/src/optionparser.h \
+	optionparser-$(LMCPPOP_RELEASE_NO)/Doxyfile
 
 ###
 ### Google Test
