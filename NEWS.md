@@ -1,5 +1,15 @@
 # NEWS file for the UniversalCodeGrep project.
 
+## [UNRELEASED] - 2022
+
+### New Features
+
+### Changed
+- #125: Updated to >= C++20.  Expanded use of constexpr.
+
+### Fixed
+- #125: Corrected a number of clang-tidy hits.
+
 ## [UNRELEASED] - 2017
 
 ### New Features

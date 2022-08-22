@@ -117,9 +117,9 @@ AC_LANG_POP([C])
 
 # Get the highest C++ standard support we can.
 AS_BOX([Checking C++ compiler language standard support])
-## Make sure we get a C++ compiler which supports the highest level of C++17/C++14/C++11 available.
-# Determine what switches we need to get the highest level of C++17/C++14/C++11 available.
-# We do this here because this macro will replace $CXX with "$CXX -c++11switch", so we'll use this
+## Make sure we get a C++ compiler which supports the highest level of C++20 available.
+# Determine what switches we need to get the highest level of C++20 available.
+# We do this here because this macro will replace $CXX with "$CXX -c++20switch", so we'll use this
 # in the AC_LANG_PUSH([C++]) tests below.
 AC_LANG_PUSH([C++])
 
@@ -452,7 +452,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 	])
 
 #
-# C++11 features
+# C++20 features
 #
 AC_CHECK_DECLS([__cpp_attributes, __cpp_alias_templates, __cpp_variadic_templates])
 
