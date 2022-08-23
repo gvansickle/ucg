@@ -38,6 +38,10 @@
 #include <iostream>
 #include <sstream>
 #include <system_error>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+
 
 // Include "The Lean Mean C++ Option Parser".
 // The namespaces here were originally to avoid clashes with "struct option" in argp.h during the transition away from it,
@@ -53,9 +57,6 @@ namespace lmcppop = lmcppop_int::option;
 #if HAVE_LIBPCRE2 == 1
 #include <FileScannerPCRE2.h>
 #endif
-#include <cstdlib>
-#include <cstring>
-#include <cstdio>
 
 #include <fcntl.h>
 #include <sys/stat.h>
