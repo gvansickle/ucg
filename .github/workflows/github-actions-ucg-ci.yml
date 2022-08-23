@@ -1,5 +1,9 @@
 name: ucg CI
-on: [push]
+on:
+  push:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
 jobs:
   script-tci:
     strategy:
@@ -11,11 +15,22 @@ jobs:
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
+        # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
         uses: actions/checkout@v3
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      - run: echo "🖥️ The workflow is now ready to build and test your code on the runner."
       - name: Display tool versions
         run: |
           gcc --version
           clang --version
+      - name: autoreconf -i
+        run: autoreconf -i
+      - name: Make build directory
+        run: |
+          mkdir build
+          cd build
+      - name: Configure
+        run: |
+          echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"
+          ../configure CC="$CFG_CC" CXX="$CFG_CXX"
       - run: echo "🍏 This job's status is ${{ job.status }}."
