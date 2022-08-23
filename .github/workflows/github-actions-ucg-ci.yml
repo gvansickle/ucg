@@ -33,4 +33,9 @@ jobs:
           cd build
           echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"
           ../configure CC="$CFG_CC" CXX="$CFG_CXX"
+      - name: Make
+        run: |
+          cd build
+          make
+          make check
       - run: echo "🍏 This job's status is ${{ job.status }}."
