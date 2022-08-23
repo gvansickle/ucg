@@ -1,0 +1,12 @@
+name: ucg CI
+on: [push]
+jobs:
+  script-tci:
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, macos-12]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
