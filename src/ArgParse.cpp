@@ -494,6 +494,7 @@ struct PreDescriptor
 
 /// The array of all command line options.
 /// @todo It should be possible to make this constexpr, moving a lot of startup work to compile-time.
+/// Currently one problem there is that even just a PreDescriptor of {"SomeString:"} isn't const enough.
 static const std::array f_raw_options = std::to_array<PreDescriptor>({
 	// This first OPT_UNKNOWN entry picks up all unrecognized options.
 	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },

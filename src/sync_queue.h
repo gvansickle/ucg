@@ -71,8 +71,8 @@ public:
 
 	using size_type = typename mt_deque::size_type;
 
-	sync_queue() {};
-	~sync_queue() {};
+	sync_queue() = default;
+	~sync_queue() = default;
 
 	size_type size() const noexcept __attribute__((noinline))
 	{
