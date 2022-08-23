@@ -16,5 +16,5 @@ jobs:
           ls ${{ github.workspace }}
       - name: Display tool versions
         run: |
-          gcc --version
+          gcc --version && clang --version
       - run: echo "🍏 This job's status is ${{ job.status }}."
