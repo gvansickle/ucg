@@ -491,9 +491,9 @@ struct PreDescriptor
 	static constexpr lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
-/// The vector of all command line options.
+/// The array of all command line options.
 /// @todo It should be possible to make this constexpr, moving a lot of startup work to compile-time.
-static const std::vector<PreDescriptor> f_raw_options {
+static const std::array f_raw_options = std::to_array<PreDescriptor>({
 	// This first OPT_UNKNOWN entry picks up all unrecognized options.
 	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
 	{ (std::string("Usage: ucg [OPTION...] ") += args_doc).c_str(), PreDescriptor::arbtext_tag() },
@@ -548,7 +548,7 @@ static const std::vector<PreDescriptor> f_raw_options {
 		// Again, this folderol is to keep the doc[] string in the same format as used by argp.
 		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) += "\n").c_str(), PreDescriptor::arbtext_tag() },
 		{ ((std::string("Report bugs to ") += f_program_bug_address) += ".").c_str(), PreDescriptor::arbtext_tag() }
-};
+});
 
 /// Option descriptions for the "The Lean Mean C++ Option Parser" library.
 static std::vector<lmcppop::Descriptor> dynamic_usage;
