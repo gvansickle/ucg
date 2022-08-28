@@ -250,8 +250,8 @@ struct PreDescriptor
 	const int m_notype {0};
 	const char* const m_shortopts;
 	const char* const m_longopts;
-	const char *const m_argname;
-	const lmcppop::CheckArg m_check_arg;
+	const char* const m_argname;
+	const lmcppop::CheckArg m_check_arg {};
 	const std::string m_help;
 	const bool m_is_hidden { false };
 	const bool m_is_bracket_no { false };
@@ -351,11 +351,10 @@ struct PreDescriptor
 
 	[[nodiscard]] constexpr bool IsHidden() const noexcept { return m_is_hidden; };
 	[[nodiscard]] constexpr bool IsBracketNo() const noexcept { return m_is_bracket_no; };
-	[[nodiscard]] bool HasLongAliases() const noexcept
+	[[nodiscard]] constexpr bool HasLongAliases() const noexcept
 	{
-//		constexpr std::string_view sv(m_longopts);
-//		return sv.rfind(',') != std::string_view::npos;
-		return std::strchr(m_longopts, ',') != nullptr;
+		std::string_view sv(m_longopts);
+		return sv.rfind(',') != std::string_view::npos;
 	};
 
 	/**
