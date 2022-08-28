@@ -152,7 +152,7 @@ struct dev_ino_pair
 
 	inline bool operator==(dev_ino_pair other) const noexcept { return m_dev == other.m_dev && m_ino == other.m_ino; };
 
-	inline bool empty() const noexcept { return m_dev == 0 && m_ino == 0; };
+	[[nodiscard]] inline bool empty() const noexcept { return m_dev == 0 && m_ino == 0; };
 
 private:
 	friend struct std::hash<dev_ino_pair>;

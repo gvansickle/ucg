@@ -96,13 +96,13 @@ static constexpr char f_program_bug_address[] = PACKAGE_BUGREPORT;
 /**
  * The pre- and post-option help text.
  */
-static constexpr char doc[] = "\nucg: the UniversalCodeGrep code search tool."
+static constexpr char f_doc[] = "\nucg: the UniversalCodeGrep code search tool."
 		"\vExit status is 0 if any matches were found, 1 if no matches, 2 or greater on error.";
 
 /**
  * The "Usage:" text.
  */
-static constexpr char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
+static constexpr char f_args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
 /// Keys for options without short-options.
 enum OPT
@@ -496,18 +496,18 @@ struct PreDescriptor
 /// Currently one problem there is that even just a PreDescriptor of {"SomeString:"} isn't const enough.
 static const std::array f_raw_options = std::to_array<PreDescriptor>({
 	// This first OPT_UNKNOWN entry picks up all unrecognized options.
-	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
-	{ (std::string("Usage: ucg [OPTION...] ") += args_doc).c_str(), PreDescriptor::arbtext_tag() },
-	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
-	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
+	{ OPT_UNKNOWN,                                                         0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
+	{ (std::string("Usage: ucg [OPTION...] ") += f_args_doc).c_str(),      PreDescriptor::arbtext_tag() },
+	// This next one is pretty crazy just to keep the f_doc[] string in the same format as used by argp.
+	{ std::string(f_doc).substr(0, std::string(f_doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
 	{ "Searching:" },
-		{ OPT_HANDLE_CASE, SMART_CASE, NO_SMART_CASE, "", "[no]smart-case", "", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)." },
-		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN." },
-		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
-		{ OPT_LITERAL, 0, "Q", "literal", Arg::None, "Treat all characters in PATTERN as literal."},
+		{ OPT_HANDLE_CASE,                                                 SMART_CASE, NO_SMART_CASE, "", "[no]smart-case", "", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)." },
+		{ OPT_HANDLE_CASE,                                                 IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN." },
+		{ OPT_WORDREGEX,                                                   0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
+		{ OPT_LITERAL,                                                     0, "Q", "literal", Arg::None, "Treat all characters in PATTERN as literal."},
 	{ "Search Output:" },
-		{ OPT_COLUMN, ENABLE, "", "column", Arg::None, "Print column of first match after line number."},
-		{ OPT_COLUMN, DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
+		{ OPT_COLUMN,                                                      ENABLE, "", "column", Arg::None, "Print column of first match after line number."},
+		{ OPT_COLUMN,                                                      DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
 	{ "File presentation:" },
 		{ OPT_COLOR, ENABLE, "", "color,colour", Arg::None, "Render the output with ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolor,nocolour", Arg::None, "Render the output without ANSI color codes."},
@@ -546,8 +546,8 @@ static const std::array f_raw_options = std::to_array<PreDescriptor>({
 		{ OPT_TEST_USE_MMAP, 0, "", "test-use-mmap", "", Arg::None, "Use mmap() to access files being searched.", PreDescriptor::hidden_tag() },
 	// Epilogue Text.
 		{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
-		// Again, this folderol is to keep the doc[] string in the same format as used by argp.
-		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) += "\n").c_str(), PreDescriptor::arbtext_tag() },
+		// Again, this folderol is to keep the f_doc[] string in the same format as used by argp.
+		{ (std::string(f_doc).substr(std::string(f_doc).find('\v')+1, std::string::npos) += "\n").c_str(), PreDescriptor::arbtext_tag() },
 		{ ((std::string("Report bugs to ") += f_program_bug_address) += ".").c_str(), PreDescriptor::arbtext_tag() }
 });
 
