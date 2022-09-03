@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2022 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -38,9 +38,13 @@
 #include <iostream>
 #include <sstream>
 #include <system_error>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+
 
 // Include "The Lean Mean C++ Option Parser".
-// The namespaces here were originally to avoid clashes with "struct option" in argp.h during the transition,
+// The namespaces here were originally to avoid clashes with "struct option" in argp.h during the transition away from it,
 // but "option" is so common a name that we'll just leave this in place even though we've removed argp.
 namespace lmcppop_int {
 #include <optionparser.h>
@@ -53,9 +57,6 @@ namespace lmcppop = lmcppop_int::option;
 #if HAVE_LIBPCRE2 == 1
 #include <FileScannerPCRE2.h>
 #endif
-#include <cstdlib>
-#include <cstring>
-#include <cstdio>
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -68,14 +69,14 @@ namespace lmcppop = lmcppop_int::option;
 #include <libext/Logger.h>
 #include <libext/Terminal.h>
 
+
 // The sweet spot for the number of directory tree traversal threads seems to be 4 on Linux with the new DirTree implementation.
 static constexpr size_t f_default_dirjobs = 4;
 
 
-// Not static, argp.h externs this.
 /// @TODO De-literalize the copyright dates.
-const char *argp_program_version = PACKAGE_STRING "\n"
-	"Copyright (C) 2015-2017 Gary R. Van Sickle.\n"
+static constexpr char f_program_version[] = PACKAGE_STRING "\n"
+	"Copyright (C) 2015-2022 Gary R. Van Sickle.\n"
 	"\n"
 	"This program is free software; you can redistribute it and/or modify\n"
 	"it under the terms of version 3 of the GNU General Public License as\n"
@@ -90,20 +91,18 @@ const char *argp_program_version = PACKAGE_STRING "\n"
 	"along with this program. If not, see http://www.gnu.org/licenses/."
 	;
 
-// Not static, argp.h externs this.
-/// No more argp?
-constexpr char argp_program_bug_address[] = PACKAGE_BUGREPORT;
+static constexpr char f_program_bug_address[] = PACKAGE_BUGREPORT;
 
 /**
  * The pre- and post-option help text.
  */
-static constexpr char doc[] = "\nucg: the UniversalCodeGrep code search tool."
+static constexpr char f_doc[] = "\nucg: the UniversalCodeGrep code search tool."
 		"\vExit status is 0 if any matches were found, 1 if no matches, 2 or greater on error.";
 
 /**
  * The "Usage:" text.
  */
-static constexpr char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
+static constexpr char f_args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
 /// Keys for options without short-options.
 enum OPT
@@ -151,8 +150,6 @@ enum OPT
 /// Ack returns 255 in this case, so we'll use that instead of BSD's EX_USAGE, which is 64.
 #define STATUS_EX_USAGE 255
 
-// Not static, argp.h externs this.
-int argp_err_exit_status = STATUS_EX_USAGE;
 
 /// Arg validity checkers.
 struct Arg: public lmcppop::Arg
@@ -164,13 +161,13 @@ struct Arg: public lmcppop::Arg
 		fprintf(stderr, "%s", msg2);
 	}
 
-	static lmcppop::ArgStatus Unknown(const lmcppop::Option& option, bool msg)
+	static constexpr lmcppop::ArgStatus Unknown(const lmcppop::Option& option, bool msg)
 	{
 		if (msg) printError("ucg: unrecognized option '", option, "'\nTry `ucg --help\' or `ucg --usage\' for more information.\n");
 		return lmcppop::ARG_ILLEGAL;
 	}
 
-	static lmcppop::ArgStatus UnknownArgHook(const lmcppop::Option& option, bool msg)
+	static constexpr lmcppop::ArgStatus UnknownArgHook(const lmcppop::Option& option, bool msg)
 	{
 		if(option.name != nullptr)
 		{
@@ -181,7 +178,7 @@ struct Arg: public lmcppop::Arg
 		return lmcppop::ARG_ILLEGAL;
 	}
 
-	static lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
+	static constexpr lmcppop::ArgStatus Required(const lmcppop::Option& option, bool msg)
 	{
 		if (option.arg != nullptr)
 			return lmcppop::ARG_OK;
@@ -190,7 +187,7 @@ struct Arg: public lmcppop::Arg
 		return lmcppop::ARG_ILLEGAL;
 	}
 
-	static lmcppop::ArgStatus NonEmpty(const lmcppop::Option& option, bool msg)
+	static constexpr lmcppop::ArgStatus NonEmpty(const lmcppop::Option& option, bool msg)
 	{
 		if (option.arg != nullptr && option.arg[0] != 0)
 		  return lmcppop::ARG_OK;
@@ -199,7 +196,7 @@ struct Arg: public lmcppop::Arg
 		return lmcppop::ARG_ILLEGAL;
 	}
 
-	static lmcppop::ArgStatus Numeric(const lmcppop::Option& option, bool msg)
+	static constexpr lmcppop::ArgStatus Numeric(const lmcppop::Option& option, bool msg)
 	{
 		char* endptr = nullptr;
 		if (option.arg != nullptr && strtol(option.arg, &endptr, 10)){};
@@ -211,7 +208,7 @@ struct Arg: public lmcppop::Arg
 	}
 
 	template <long limit>
-	static lmcppop::ArgStatus IntegerGreater(const lmcppop::Option& option, bool msg)
+	static constexpr lmcppop::ArgStatus IntegerGreater(const lmcppop::Option& option, bool msg)
 	{
 		if (option.arg != nullptr)
 		{
@@ -243,7 +240,8 @@ enum OptionType { UNSPECIFIED = 0, DISABLE = 0, ENABLE = 1,
 
 static constexpr char m_opt_start_str[] {"  \t"};
 static constexpr char m_help_space_str[] {"      \t"};
-static std::vector<std::shared_ptr<std::string>> delete_us;
+
+static std::vector<std::shared_ptr<std::string>> f_delete_us;
 
 struct PreDescriptor
 {
@@ -252,9 +250,15 @@ struct PreDescriptor
 	const int m_notype {0};
 	const char* const m_shortopts;
 	const char* const m_longopts;
-	const char *const m_argname;
-	const lmcppop::CheckArg m_check_arg;
+	const char* const m_argname;
+	const lmcppop::CheckArg m_check_arg {};
+	/// @note The use of std::string here is at least one problem with making the whole option parser description
+	/// constexpr.  As of up to C++23, allocations can't escape the constexpr, so this can't be initialized in the
+	/// constructors.  I *think* std::string simply can't work here for constexpr, regardless of any machinations we
+	/// might try.
 	const std::string m_help;
+	/// IGNORE ME - constexpr experimentation.
+	//	const char* m_help;
 	const bool m_is_hidden { false };
 	const bool m_is_bracket_no { false };
 
@@ -263,6 +267,14 @@ struct PreDescriptor
 	struct arbtext_tag {};
 	struct hidden_tag {};
 
+//// IGNORE ME - constexpr experimentation.
+//	constexpr const char* help_helper(const char* a) { return a; }; //const auto* retval = new std::string(a); return retval->c_str(); };
+
+//	constexpr explicit PreDescriptor() noexcept
+//		: m_index(1), m_type(1), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(NULL), m_help(help_helper(""))
+//	{
+//
+//	}
 
 	constexpr PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts,
 			const lmcppop::CheckArg check_arg, const char *help) noexcept
@@ -333,7 +345,7 @@ struct PreDescriptor
 	 *
 	 * @param section_header_name  Text of the section header.
 	 */
-	constexpr PreDescriptor(const char *section_header_name, section_header_tag = section_header_tag()) noexcept
+	constexpr PreDescriptor(const char* section_header_name, section_header_tag = section_header_tag()) noexcept
 		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
 		  m_help(std::string("\n ") += section_header_name)
 	{
@@ -353,11 +365,10 @@ struct PreDescriptor
 
 	[[nodiscard]] constexpr bool IsHidden() const noexcept { return m_is_hidden; };
 	[[nodiscard]] constexpr bool IsBracketNo() const noexcept { return m_is_bracket_no; };
-	[[nodiscard]] bool HasLongAliases() const noexcept
+	[[nodiscard]] constexpr bool HasLongAliases() const noexcept
 	{
-//		constexpr std::string_view sv(m_longopts);
-//		return sv.rfind(',') != std::string_view::npos;
-		return std::strchr(m_longopts, ',') != nullptr;
+		std::string_view temp_sv(m_longopts);
+		return temp_sv.rfind(',') != std::string_view::npos;
 	};
 
 	/**
@@ -410,20 +421,20 @@ struct PreDescriptor
 				fmt_help = semi_fmt_help->c_str();
 
 				/// @todo We should control this lifetime in a lighter-weight way.
-				delete_us.push_back(semi_fmt_help);
+				f_delete_us.push_back(semi_fmt_help);
 			}
 			else if(!m_help.empty())
 			{
 				// It's a section header.
 				auto semi_fmt_help = std::make_shared<std::string>(m_help);
 				fmt_help = semi_fmt_help->c_str();
-				delete_us.push_back(semi_fmt_help);
+				f_delete_us.push_back(semi_fmt_help);
 			}
 			else if(m_help.empty())
 			{
 				auto semi_fmt_help = std::make_shared<std::string>("");
 				fmt_help = semi_fmt_help->c_str();
-				delete_us.push_back(semi_fmt_help);
+				f_delete_us.push_back(semi_fmt_help);
 			}
 		}
 
@@ -440,7 +451,7 @@ struct PreDescriptor
 				// Strip out the '[no]', this will be the 'yes' option.
 				desc_longopt->erase(0,4);
 			}
-			delete_us.push_back(desc_longopt);
+			f_delete_us.push_back(desc_longopt);
 		}
 
 		size_t bracket_no_offset {0};
@@ -468,12 +479,12 @@ struct PreDescriptor
 				long_alias->erase(0, 4);
 				auto no_opt_str = std::make_shared<std::string>("no-" + *long_alias);
 				auto noopt_str = std::make_shared<std::string>("no" + *long_alias);
-				delete_us.push_back(no_opt_str);
-				delete_us.push_back(noopt_str);
+				f_delete_us.push_back(no_opt_str);
+				f_delete_us.push_back(noopt_str);
 				usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", no_opt_str->c_str(), m_check_arg, 0});
 				usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
 			}
-			delete_us.push_back(long_alias);
+			f_delete_us.push_back(long_alias);
 			usage_container->push_back(lmcppop::Descriptor{m_index, m_type, "", long_alias->c_str(), m_check_arg, 0});
 		}
 	}
@@ -485,8 +496,8 @@ struct PreDescriptor
 		long_alias.erase(0, 4);
 		auto no_opt_str = std::make_shared<std::string>("no-" + long_alias);
 		auto noopt_str = std::make_shared<std::string>("no" + long_alias);
-		delete_us.push_back(no_opt_str);
-		delete_us.push_back(noopt_str);
+		f_delete_us.push_back(no_opt_str);
+		f_delete_us.push_back(noopt_str);
 		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", no_opt_str->c_str(), m_check_arg, 0});
 		usage_container->push_back(lmcppop::Descriptor{m_index, m_notype, "", noopt_str->c_str(), m_check_arg, 0});
 	}
@@ -494,14 +505,19 @@ struct PreDescriptor
 	static constexpr lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
 
-/// The vector of all command line options.
+//// IGNORE ME - constexpr experimentation.
+//static constexpr PreDescriptor p;
+//static constexpr std::array fcx_raw_options = std::to_array<PreDescriptor>({p});
+
+/// The array of all command line options.
 /// @todo It should be possible to make this constexpr, moving a lot of startup work to compile-time.
-static const std::vector<PreDescriptor> raw_options {
+/// Currently one problem there is that even just a PreDescriptor of {"SomeString:"} isn't const enough.
+static const std::array f_raw_options = std::to_array<PreDescriptor>({
 	// This first OPT_UNKNOWN entry picks up all unrecognized options.
-	{ OPT_UNKNOWN, 0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
-	{ (std::string("Usage: ucg [OPTION...] ") += args_doc).c_str(), PreDescriptor::arbtext_tag() },
-	// This next one is pretty crazy just to keep the doc[] string in the same format as used by argp.
-	{ std::string(doc).substr(0, std::string(doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
+	{ OPT_UNKNOWN,                                                         0, "", "", "", Arg::Unknown, "", PreDescriptor::hidden_tag() },
+	{ (std::string("Usage: ucg [OPTION...] ") += f_args_doc).c_str(),      PreDescriptor::arbtext_tag() },
+	// This next one is pretty crazy just to keep the f_doc[] string in the same format as used by argp.
+	{ std::string(f_doc).substr(0, std::string(f_doc).find('\v')).c_str(), PreDescriptor::arbtext_tag() },
 	{ "Searching:" },
 		{ OPT_HANDLE_CASE, SMART_CASE, NO_SMART_CASE, "", "[no]smart-case", "", Arg::None, "Ignore case if PATTERN is all lowercase (default: enabled)." },
 		{ OPT_HANDLE_CASE, IGNORE, "i", "ignore-case", Arg::None, "Ignore case distinctions in PATTERN." },
@@ -548,10 +564,10 @@ static const std::vector<PreDescriptor> raw_options {
 		{ OPT_TEST_USE_MMAP, 0, "", "test-use-mmap", "", Arg::None, "Use mmap() to access files being searched.", PreDescriptor::hidden_tag() },
 	// Epilogue Text.
 		{ "\n" "Mandatory or optional arguments to long options are also mandatory or optional for any corresponding short options." "\n", PreDescriptor::arbtext_tag() },
-		// Again, this folderol is to keep the doc[] string in the same format as used by argp.
-		{ (std::string(doc).substr(std::string(doc).find('\v')+1, std::string::npos) += "\n").c_str(), PreDescriptor::arbtext_tag() },
-		{ ((std::string("Report bugs to ") += argp_program_bug_address) += ".").c_str(), PreDescriptor::arbtext_tag() }
-};
+		// Again, this folderol is to keep the f_doc[] string in the same format as used by argp.
+		{ (std::string(f_doc).substr(std::string(f_doc).find('\v')+1, std::string::npos) += "\n").c_str(), PreDescriptor::arbtext_tag() },
+		{ ((std::string("Report bugs to ") += f_program_bug_address) += ".").c_str(), PreDescriptor::arbtext_tag() }
+});
 
 /// Option descriptions for the "The Lean Mean C++ Option Parser" library.
 static std::vector<lmcppop::Descriptor> dynamic_usage;
@@ -560,21 +576,21 @@ static std::vector<lmcppop::Descriptor> dynamic_usage;
 ArgParse::ArgParse(TypeManager &type_manager)
 	: m_type_manager(type_manager)
 {
-	for(auto& ro : raw_options)
+	for(auto& ro : f_raw_options)
 	{
 		/// @note We may want to only push hidden options below, since they break the help formatting into sections.
 		/// If we do, we need to make sure the OPT_UNKNOWN handler is the first one.
 		lmcppop::Descriptor d = ro;
 		dynamic_usage.push_back(d);
 	}
-	for(auto& ro : raw_options)
+	for(auto& ro : f_raw_options)
 	{
 		if(ro.HasLongAliases())
 		{
 			ro.PushAliasDescriptors<std::vector<lmcppop::Descriptor>>(&dynamic_usage);
 		}
 	}
-	for(auto& ro : raw_options)
+	for(auto& ro : f_raw_options)
 	{
 		if(ro.IsBracketNo())
 		{
@@ -867,7 +883,7 @@ void ArgParse::Parse(int argc, char **argv)
 void ArgParse::PrintVersionText(FILE* stream)
 {
 	// Print the version string and copyright notice.
-	std::fputs(argp_program_version, stream);
+	std::fputs(f_program_version, stream);
 
 	// In addition, we want to print the compiler/version we were built with, the libpcre version and some other info on it,
 	// and any source control version info we can get.

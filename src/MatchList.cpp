@@ -28,7 +28,7 @@
 
 void MatchList::SetFilename(std::string filename)
 {
-	m_filename = filename;
+	m_filename = std::move(filename);
 }
 
 void MatchList::AddMatch(Match &&match)
