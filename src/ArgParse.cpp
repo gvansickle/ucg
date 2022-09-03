@@ -252,7 +252,13 @@ struct PreDescriptor
 	const char* const m_longopts;
 	const char* const m_argname;
 	const lmcppop::CheckArg m_check_arg {};
+	/// @note The use of std::string here is at least one problem with making the whole option parser description
+	/// constexpr.  As of up to C++23, allocations can't escape the constexpr, so this can't be initialized in the
+	/// constructors.  I *think* std::string simply can't work here for constexpr, regardless of any machinations we
+	/// might try.
 	const std::string m_help;
+	/// IGNORE ME - constexpr experimentation.
+	//	const char* m_help;
 	const bool m_is_hidden { false };
 	const bool m_is_bracket_no { false };
 
@@ -261,6 +267,14 @@ struct PreDescriptor
 	struct arbtext_tag {};
 	struct hidden_tag {};
 
+//// IGNORE ME - constexpr experimentation.
+//	constexpr const char* help_helper(const char* a) { return a; }; //const auto* retval = new std::string(a); return retval->c_str(); };
+
+//	constexpr explicit PreDescriptor() noexcept
+//		: m_index(1), m_type(1), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(NULL), m_help(help_helper(""))
+//	{
+//
+//	}
 
 	constexpr PreDescriptor(unsigned index, int type, const char *const shortopts, const char *const longopts,
 			const lmcppop::CheckArg check_arg, const char *help) noexcept
@@ -331,7 +345,7 @@ struct PreDescriptor
 	 *
 	 * @param section_header_name  Text of the section header.
 	 */
-	constexpr PreDescriptor(const char *section_header_name, section_header_tag = section_header_tag()) noexcept
+	constexpr PreDescriptor(const char* section_header_name, section_header_tag = section_header_tag()) noexcept
 		: m_index(255), m_type(0), m_shortopts(""), m_longopts(""), m_argname(""), m_check_arg(Arg::None),
 		  m_help(std::string("\n ") += section_header_name)
 	{
@@ -353,8 +367,8 @@ struct PreDescriptor
 	[[nodiscard]] constexpr bool IsBracketNo() const noexcept { return m_is_bracket_no; };
 	[[nodiscard]] constexpr bool HasLongAliases() const noexcept
 	{
-		std::string_view sv(m_longopts);
-		return sv.rfind(',') != std::string_view::npos;
+		std::string_view temp_sv(m_longopts);
+		return temp_sv.rfind(',') != std::string_view::npos;
 	};
 
 	/**
@@ -490,6 +504,10 @@ struct PreDescriptor
 
 	static constexpr lmcppop::Descriptor NullEntry() noexcept { return lmcppop::Descriptor{0,0,0,0,0,0}; };
 };
+
+//// IGNORE ME - constexpr experimentation.
+//static constexpr PreDescriptor p;
+//static constexpr std::array fcx_raw_options = std::to_array<PreDescriptor>({p});
 
 /// The array of all command line options.
 /// @todo It should be possible to make this constexpr, moving a lot of startup work to compile-time.
