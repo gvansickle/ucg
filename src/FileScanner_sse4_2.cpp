@@ -21,12 +21,15 @@
 
 #include "FileScanner.h"
 
+// Std C++.
+#include <cstdint>
+
+#include <immintrin.h>
+
 #include <libext/multiversioning.hpp>
 #include <libext/hints.hpp>
 #include <libext/memory.hpp>
 
-#include <cstdint>
-#include <immintrin.h>
 
 #ifdef __SSE2__
 STATIC_MSG("Have SSE2")
@@ -55,10 +58,10 @@ static_assert(is_power_of_2(f_alignment), "alignof(__m128i) should be a power of
 static_assert(f_alignment == 16, "alignof(__m128i) should be 16, but isn't");
 
 // Declaration here only so we can apply gcc attributes.
-static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_ptr, uint16_t num_unaligned_bytes, size_t len, const char searchchar) noexcept
+static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_ptr, uint16_t num_unaligned_bytes, size_t len, char searchchar) noexcept
 		ATTR_CONST ATTR_ARTIFICIAL;
 
-static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_ptr, uint16_t num_unaligned_bytes, size_t len, const char searchchar) noexcept
+static inline size_t memcnt_prologue(const char * __restrict__ unaligned_start_ptr, uint16_t num_unaligned_bytes, size_t len, char searchchar) noexcept
 {
 	// Load the 16-byte xmm register from the previous 16-byte-aligned address,
 	// then ignore any matches before unaligned_start_address and after len.
@@ -269,7 +272,7 @@ const char * MULTIVERSION(FileScanner::find)(const char * __restrict__ cbegin, s
 	// Broadcast the character we're looking for to all 16 bytes of an xmm register.
 	// SSE2.
 	const __m128i xmm0 = _mm_set1_epi8(m_compiled_cu_bitmap[0]);
-	const __m128i xmm_all_FFs = _mm_set1_epi8(0xFF);
+	const __m128i xmm_all_FFs = _mm_set1_epi8(UINT8_C(0xFF));
 	for(size_t i=0; i<len; i+=vec_size_bytes)
 	{
 		// Load an xmm register with 16 unaligned bytes.  SSE3, L/Th: 1/0.25-0.5, plus cache effects.

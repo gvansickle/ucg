@@ -33,9 +33,9 @@ public:
 	OutputContext(bool output_is_tty, bool enable_color, bool print_column);
 	~OutputContext();
 
-	inline bool is_output_tty() const noexcept { return m_output_is_tty; };
-	inline bool is_color_enabled() const noexcept { return m_enable_color; };
-	inline bool is_column_print_enabled() const noexcept { return m_print_column; };
+	[[nodiscard]] inline bool is_output_tty() const noexcept { return m_output_is_tty; };
+	[[nodiscard]] inline bool is_color_enabled() const noexcept { return m_enable_color; };
+	[[nodiscard]] inline bool is_column_print_enabled() const noexcept { return m_print_column; };
 
 	/// @name Active colors.
 	/// @{
