@@ -1,6 +1,6 @@
+name: ucg CI - Podman
 # Use podman via GitHub actions to run on a different OS and different deps than that offered natively by GHA.
 # Based on this: https://fedoramagazine.org/github-actions-use-podman-to-run-fedora-linux/
-name: CI
 on:
   push:
 #    branches:
@@ -27,14 +27,14 @@ jobs:
         run: |
           {
               echo 'FROM fedora:38'
-#              echo '# set TZ to ensure the test using timestamp'
-#              echo 'ENV TZ=Asia/Tokyo'
+              echo '# set TZ to ensure the test using timestamp'
+              echo 'ENV TZ=Asia/Tokyo'
               echo 'RUN dnf -y update'
               echo 'RUN dnf -y install gcc-c++ git'
               echo 'RUN dnf clean all'
                # Check tool versions.
               echo 'RUN gcc --version'
-#              echo 'COPY red_amber red_amber'
+              echo 'COPY red_amber red_amber'
               echo 'WORKDIR ${{ github.workspace }}'
               echo 'RUN bundle install'
               echo 'RUN bundle exec rake test' 
