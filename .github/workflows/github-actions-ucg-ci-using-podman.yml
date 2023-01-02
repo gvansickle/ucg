@@ -23,8 +23,8 @@ jobs:
       - name: Check out repository code
         # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
         uses: actions/checkout@v3
-#        with:
-#          path: 'red_amber'
+##        with:
+##          path: 'red_amber'
       - name: Create Podman container and run tests
         run: |
           {
