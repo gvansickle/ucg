@@ -36,7 +36,10 @@ jobs:
               echo 'RUN gcc --version'
               #echo 'COPY red_amber red_amber'
               echo 'WORKDIR ${{ github.workspace }}'
-              echo 'RUN bundle install'
-              echo 'RUN bundle exec rake test' 
+              echo 'RUN autoreconf -i'
+              echo 'RUN mkdir build'
+              echo 'RUN cd build'
+              echo 'RUN echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"'
+              echo 'RUN ../configure CC="$CFG_CC" CXX="$CFG_CXX"'
           } > podmanfile
           podman build --tag fedora38test -f ./podmanfile
