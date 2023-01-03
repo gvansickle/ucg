@@ -27,6 +27,7 @@ jobs:
         run: autoreconf -i
       - name: Make build directory
         run: |
+          ls -l
           mkdir build
       - name: Configure
         run: |
