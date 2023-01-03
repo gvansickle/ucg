@@ -38,9 +38,9 @@ jobs:
               echo 'COPY ucg ucg'
               echo 'WORKDIR /ucg'
               echo 'RUN pwd; ls -l; autoreconf -i'
-              echo 'RUN mkdir build'
-              echo 'RUN cd build'
-              echo 'RUN echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"'
+              echo 'RUN ls -l; mkdir build'
+              echo 'RUN pwd; cd build'
+              echo 'RUN pwd; echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"'
               echo 'RUN ../configure CC="$CFG_CC" CXX="$CFG_CXX"'
           } > podmanfile
           podman build --tag fedora38test -f ./podmanfile
