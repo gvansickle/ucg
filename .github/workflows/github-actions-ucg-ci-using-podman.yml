@@ -21,8 +21,9 @@ jobs:
           sudo apt-get -y install podman
           podman pull fedora:38
       - name: Check out repository code
-        # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
         uses: actions/checkout@v3
+        with:
+          path: 'ucg'
       - name: Create Podman container and run tests
         run: |
           {
@@ -35,7 +36,7 @@ jobs:
                # Check tool versions.
               echo 'RUN gcc --version'
               echo 'COPY ucg ucg'
-              echo 'WORKDIR ${{ github.workspace }}'
+              echo 'WORKDIR /ucg'
               echo 'RUN pwd; ls -l ../; autoreconf -i'
               echo 'RUN mkdir build'
               echo 'RUN cd build'
