@@ -36,7 +36,7 @@ jobs:
               echo 'RUN gcc --version'
               #echo 'COPY red_amber red_amber'
               echo 'WORKDIR ${{ github.workspace }}'
-              echo 'RUN pwd; ls -l; autoreconf -i'
+              echo 'RUN pwd; ls -l ../; autoreconf -i'
               echo 'RUN mkdir build'
               echo 'RUN cd build'
               echo 'RUN echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"'
