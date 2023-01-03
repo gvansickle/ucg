@@ -30,7 +30,7 @@ jobs:
               #echo '# set TZ to ensure the test using timestamp'
               #echo 'ENV TZ=Asia/Tokyo'
               echo 'RUN dnf -y update'
-              echo 'RUN dnf -y install gcc-c++ git'
+              echo 'RUN dnf -y install gcc-c++ git autoconf autoconf-archive automake'
               echo 'RUN dnf clean all'
                # Check tool versions.
               echo 'RUN gcc --version'
