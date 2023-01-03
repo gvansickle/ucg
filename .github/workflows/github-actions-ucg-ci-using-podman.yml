@@ -34,7 +34,7 @@ jobs:
               echo 'RUN dnf clean all'
                # Check tool versions.
               echo 'RUN gcc --version'
-              #echo 'COPY red_amber red_amber'
+              echo 'COPY ucg ucg'
               echo 'WORKDIR ${{ github.workspace }}'
               echo 'RUN pwd; ls -l ../; autoreconf -i'
               echo 'RUN mkdir build'
