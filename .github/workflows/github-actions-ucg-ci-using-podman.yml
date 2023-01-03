@@ -42,5 +42,6 @@ jobs:
               echo 'RUN pwd; cd build'
               echo 'RUN echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"'
               echo 'RUN cd build; ../configure CC="$CFG_CC" CXX="$CFG_CXX"'
+              echo 'RUN cd build; make check'
           } > podmanfile
           podman build --tag fedora38test -f ./podmanfile
