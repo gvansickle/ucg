@@ -46,6 +46,7 @@ jobs:
               # Skip tests which require large corpuses, so we fast-fail if something easy to test is broken.
               echo 'RUN cd build; make check TESTSUITEFLAGS=--keywords=!benchmark'
               echo 'RUN echo "PWD: $(pwd)"; mkdir TestCorpus && cd TestCorpus && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 && tar xjf boost_1_58_0.tar.bz2 && cd ..'
-              echo 'RUN cd build; make check TESTSUITEFLAGS=--corpusdir=/ucg/TestCorpus' #TESTSUITEFLAGS=-v -d -x
+              echo 'RUN cd build; make check TESTSUITEFLAGS=--corpusdir=/ucg/TestCorpus'
+              #TESTSUITEFLAGS=-v -d -x
           } > podmanfile
           podman build --tag fedora38test -f ./podmanfile
