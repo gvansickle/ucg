@@ -33,7 +33,7 @@ jobs:
               echo 'RUN dnf -y update'
               echo 'RUN dnf -y install gcc-c++ git autoconf autoconf-archive automake libtool pcre2-devel'
               echo 'RUN dnf -y install diffutils wget bzip2'
-              echo 'RUN dnf -y install silversearcher-ag' 
+              echo 'RUN dnf -y install the_silver_searcher' 
               echo 'RUN dnf clean all'
                # Check tool versions.
               echo 'RUN gcc --version'
