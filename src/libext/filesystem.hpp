@@ -145,7 +145,7 @@ inline std::ostream& operator<<(std::ostream &out, const FileException &fe) noex
 struct dev_ino_pair
 {
 	dev_ino_pair() = default;
-	constexpr dev_ino_pair(dev_t d, ino_t i) noexcept : m_dev(d), m_ino(i) { };
+	dev_ino_pair(dev_t d, ino_t i) noexcept : m_dev(d), m_ino(i) { };
 	~dev_ino_pair() = default;
 
 	inline bool operator<(const dev_ino_pair& other) const noexcept { return m_dev < other.m_dev || m_ino < other.m_ino; };
@@ -163,7 +163,10 @@ private:
 
 namespace std
 {
-	// Inject a specialization of std::hash<> into std:: for dev_ino_pair.
+	/**
+	 * Inject a specialization of std::hash<> into std:: for dev_ino_pair
+	 * so it can be used in unordered containers.
+	 */
 	template <>
 	struct hash<dev_ino_pair>
 	{
@@ -176,10 +179,6 @@ namespace std
 	};
 }
 
-// Check that dev_ino_pair meets the LiteralType concept.
-static_assert(std::is_trivially_destructible<dev_ino_pair>::value, "no trivial destructor.");
-static_assert(std::is_class<dev_ino_pair>::value, "not an aggregate type");
-static_assert(std::is_literal_type<dev_ino_pair>::value, "dev_ino_pair isn't trivial");
 
 /**
  * Get the d_name field out of the passed dirent struct #de and into a std::string, in as efficient manner as possible.
