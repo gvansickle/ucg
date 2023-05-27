@@ -122,7 +122,7 @@ void DirTree::Scandir(std::vector<std::string> start_paths, int dirjobs)
 
 	for(int i=0; i<m_dirjobs; i++)
 	{
-		threads.push_back(std::thread(&DirTree::ReaddirLoop, this, i));
+		threads.emplace_back(std::thread(&DirTree::ReaddirLoop, this, i));
 	}
 
 	LOG(INFO) << "Globber threads = " << threads.size();
