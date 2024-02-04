@@ -44,19 +44,19 @@ void MatchList::clear() noexcept
 
 void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 {
-	std::string no_dotslash_fn;
-	const std::string empty_color_string {""};
+	std::string_view no_dotslash_fn;
+	static constexpr std::string empty_color_string {""};
 	bool color = output_context.is_color_enabled();
 
 	// If the file path starts with a "./", chop it off.
 	// This is to match the behavior of ack.
 	if(m_filename.find("./") == 0)
 	{
-		no_dotslash_fn = std::string(m_filename.begin()+2, m_filename.end());
+		no_dotslash_fn = std::string_view(m_filename.begin()+2, m_filename.end());
 	}
 	else
 	{
-		no_dotslash_fn = std::string(m_filename.begin(), m_filename.end());
+		no_dotslash_fn = std::string_view(m_filename.begin(), m_filename.end());
 	}
 
 	const std::string *color_filename { &empty_color_string };
