@@ -31,7 +31,7 @@
 #include <libext/Logger.h>
 
 
-OutputTask::OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, sync_queue<MatchList> &input_queue)
+OutputTask::OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, bool flag_nullsep, sync_queue<MatchList> &input_queue)
 	: m_input_queue(input_queue)
 {
 	// Determine if the output is going to a terminal.  If so we'll use color by default, group the matches under
@@ -51,8 +51,9 @@ OutputTask::OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, syn
 	}
 
 	m_print_column = flag_column;
-
-	m_output_context.reset(new OutputContext(m_output_is_tty, m_enable_color, m_print_column));
+        m_nullsep = flag_nullsep;
+        
+	m_output_context.reset(new OutputContext(m_output_is_tty, m_enable_color, m_print_column, m_nullsep));
 }
 
 OutputTask::~OutputTask()

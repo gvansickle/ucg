@@ -84,13 +84,15 @@ void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 	//   [...]
 	if(output_context.is_output_tty())
 	{
+          const char file_separator(output_context.use_nullsep() ? '\0': '\n');
+        
 		// Render to a TTY device.
 
 		// Print file header.
 		if(color) composition_buffer += *color_filename;
 		composition_buffer += no_dotslash_fn;
 		if(color) composition_buffer += *color_default;
-		composition_buffer += '\n';
+		composition_buffer += file_separator;
 		sstrm << composition_buffer;
 
 		// Print the individual matches.
@@ -118,6 +120,7 @@ void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 	}
 	else
 	{
+          const char file_separator(output_context.use_nullsep() ? '\0': ':');
 		// Render to a pipe or file.
 
 		for(const Match& it : m_match_list)
@@ -127,7 +130,8 @@ void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 			if(color) composition_buffer += *color_filename;
 			composition_buffer += no_dotslash_fn;
 			if(color) composition_buffer += *color_default;
-			composition_buffer += ':';
+			composition_buffer += file_separator;
+			// composition_buffer += ':';
 
 			// Line number.
 			if(color) composition_buffer += *color_lineno;

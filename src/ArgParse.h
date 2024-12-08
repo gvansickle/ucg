@@ -142,6 +142,9 @@ public:
 	bool m_color { false };
 	bool m_nocolor { false };
 
+	/// Whether to write a null after a filename instead of ':'.
+	bool m_nullsep { false };
+
 	/// Whether to recurse into subdirectories or not.
 	bool m_recurse { true };
 

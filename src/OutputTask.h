@@ -35,7 +35,7 @@
 class OutputTask
 {
 public:
-	OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, sync_queue<MatchList> &input_queue);
+      OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, bool flag_nullsep, sync_queue<MatchList> &input_queue);
 	virtual ~OutputTask();
 
 	void Run();
@@ -55,6 +55,9 @@ private:
 
 	/// Whether to print the column number of the first match or not.
 	bool m_print_column;
+
+	/// Whether to write a null after a filename instead of ':'.
+	bool m_nullsep;
 
 	std::unique_ptr<OutputContext> m_output_context;
 

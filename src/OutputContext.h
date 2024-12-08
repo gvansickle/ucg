@@ -30,12 +30,13 @@
 class OutputContext
 {
 public:
-	OutputContext(bool output_is_tty, bool enable_color, bool print_column);
+      OutputContext(bool output_is_tty, bool enable_color, bool print_column, bool nullsep);
 	~OutputContext();
 
 	[[nodiscard]] inline bool is_output_tty() const noexcept { return m_output_is_tty; };
 	[[nodiscard]] inline bool is_color_enabled() const noexcept { return m_enable_color; };
 	[[nodiscard]] inline bool is_column_print_enabled() const noexcept { return m_print_column; };
+	[[nodiscard]] inline bool use_nullsep() const noexcept { return m_nullsep; };
 
 	/// @name Active colors.
 	/// @{
@@ -54,6 +55,9 @@ private:
 
 	/// Whether to print the column number of the first match or not.
 	bool m_print_column;
+
+	/// Whether to write a null after a filename instead of ':'.
+	bool m_nullsep;
 
 	/// @name Default output colors.
 	/// @{
