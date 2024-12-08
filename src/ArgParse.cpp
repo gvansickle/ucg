@@ -25,7 +25,7 @@
 
 #include "../build_info.h"
 
-#include <libext/cpuidex.hpp>
+#include "libext/cpuidex.hpp"
 
 // Std C++.
 #include <locale>
@@ -55,7 +55,7 @@ namespace lmcppop = lmcppop_int::option;
 #include <pcre.h>
 #endif
 #if HAVE_LIBPCRE2 == 1
-#include <FileScannerPCRE2.h>
+#include "FileScannerPCRE2.h"
 #endif
 
 #include <fcntl.h>
