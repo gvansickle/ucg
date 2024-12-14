@@ -75,89 +75,37 @@ void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 	std::string composition_buffer;
 	composition_buffer.reserve(256);
 
-	// The only real difference between TTY vs. non-TTY printing here is that for TTY we print:
-	//   filename
-	//   lineno:column:match
-	//   [...]
-	// while for non-TTY we print:
-	//   filename:lineno:column:match
-	//   [...]
-	if(output_context.is_output_tty())
-	{
-          const char file_separator(output_context.use_nullsep() ? '\0': '\n');
+        const char file_separator(output_context.use_nullsep() ? '\0': '\n');
         
-		// Render to a TTY device.
+        // Print file header.
+        if(color) composition_buffer += *color_filename;
+        composition_buffer += no_dotslash_fn;
+        if(color) composition_buffer += *color_default;
+        composition_buffer += file_separator;
+        sstrm << composition_buffer;
 
-		// Print file header.
-		if(color) composition_buffer += *color_filename;
-		composition_buffer += no_dotslash_fn;
-		if(color) composition_buffer += *color_default;
-		composition_buffer += file_separator;
-		sstrm << composition_buffer;
-
-		// Print the individual matches.
-		for(const Match& it : m_match_list)
-		{
-			composition_buffer.clear();
-			if(color) composition_buffer += *color_lineno;
-			composition_buffer += std::to_string(it.m_line_number);
-			if(color) composition_buffer += *color_default;
-			composition_buffer += ':';
-			sstrm << composition_buffer;
-			if(output_context.is_column_print_enabled())
-			{
-				sstrm << it.m_pre_match.length()+1 << ':';
-			}
-			composition_buffer.clear();
-			composition_buffer += it.m_pre_match;
-			if(color) composition_buffer += *color_match;
-			composition_buffer += it.m_match;
-			if(color) composition_buffer += *color_default;
-			composition_buffer += it.m_post_match;
-			composition_buffer += '\n';
-			sstrm << composition_buffer;
-		}
-	}
-	else
-	{
-          const char file_separator(output_context.use_nullsep() ? '\0': ':');
-		// Render to a pipe or file.
-
-		for(const Match& it : m_match_list)
-		{
-			// Print file name at the beginning of each line.
-			composition_buffer.clear();
-			if(color) composition_buffer += *color_filename;
-			composition_buffer += no_dotslash_fn;
-			if(color) composition_buffer += *color_default;
-			composition_buffer += file_separator;
-			// composition_buffer += ':';
-
-			// Line number.
-			if(color) composition_buffer += *color_lineno;
-			composition_buffer += std::to_string(it.m_line_number);
-			if(color) composition_buffer += *color_default;
-			composition_buffer += ':';
-
-			sstrm << composition_buffer;
-
-			// The column, if enabled.
-			if(output_context.is_column_print_enabled())
-			{
-				sstrm << it.m_pre_match.length()+1 << ':';
-			}
-
-			// The match text.
-			composition_buffer.clear();
-			composition_buffer += it.m_pre_match;
-			if(color) composition_buffer += *color_match;
-			composition_buffer += it.m_match;
-			if(color) composition_buffer += *color_default;
-			composition_buffer += it.m_post_match;
-			composition_buffer += '\n';
-			sstrm << composition_buffer;
-		}
-	}
+        // Print the individual matches.
+        for(const Match& it : m_match_list)
+          {
+            composition_buffer.clear();
+            if(color) composition_buffer += *color_lineno;
+            composition_buffer += std::to_string(it.m_line_number);
+            if(color) composition_buffer += *color_default;
+            composition_buffer += ':';
+            sstrm << composition_buffer;
+            if(output_context.is_column_print_enabled())
+              {
+                sstrm << it.m_pre_match.length()+1 << ':';
+              }
+            composition_buffer.clear();
+            composition_buffer += it.m_pre_match;
+            if(color) composition_buffer += *color_match;
+            composition_buffer += it.m_match;
+            if(color) composition_buffer += *color_default;
+            composition_buffer += it.m_post_match;
+            composition_buffer += '\n';
+            sstrm << composition_buffer;
+          }
 }
 
 std::vector<Match>::size_type MatchList::GetNumberOfMatchedLines() const noexcept

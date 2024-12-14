@@ -30,10 +30,9 @@
 class OutputContext
 {
 public:
-      OutputContext(bool output_is_tty, bool enable_color, bool print_column, bool nullsep);
+      OutputContext(bool enable_color, bool print_column, bool nullsep);
 	~OutputContext();
 
-	[[nodiscard]] inline bool is_output_tty() const noexcept { return m_output_is_tty; };
 	[[nodiscard]] inline bool is_color_enabled() const noexcept { return m_enable_color; };
 	[[nodiscard]] inline bool is_column_print_enabled() const noexcept { return m_print_column; };
 	[[nodiscard]] inline bool use_nullsep() const noexcept { return m_nullsep; };
@@ -47,8 +46,6 @@ public:
 	/// @}
 
 private:
-
-	bool m_output_is_tty;
 
 	/// Whether to output color or not.  Determined by logic in OutputTask's constructor.
 	bool m_enable_color;

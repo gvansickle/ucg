@@ -761,6 +761,22 @@ void ArgParse::Parse(int argc, char **argv)
 
 	m_word_regexp = options[OPT_WORDREGEX];
 	m_pattern_is_literal = options[OPT_LITERAL];
+
+	// If the output is going to a terminal, use color and group
+	// the matches under the filename.  So for the TTY, by
+	// default, we print:
+	//   filename
+	//   lineno:column:match
+	//   [...]
+	// while for non-TTY we print:
+	//   filename:lineno:column:match
+	//   [...]
+        if(!isatty(fileno(stdout)))
+          {
+            m_color=false;
+          }
+
+        
 	m_column = (options[OPT_COLUMN].last()->type() == ENABLE);
 	if(options[OPT_COLOR]) // If not specified on command line, defaults to both == false.
 	{

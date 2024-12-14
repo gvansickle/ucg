@@ -47,9 +47,6 @@ private:
 	/// The queue from which we'll pull our MatchLists.
 	sync_queue<MatchList> &m_input_queue;
 
-	/// Whether stdout is a TTY.  Determined in constructor.
-	bool m_output_is_tty;
-
 	/// Whether to output color or not.  Determined in constructor.
 	bool m_enable_color;
 
