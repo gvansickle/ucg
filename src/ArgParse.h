@@ -138,9 +138,7 @@ public:
 	int m_dirjobs { 0 };
 
 	/// Whether to use color output or not.
-	/// both false == not specified on command line.
-	bool m_color { false };
-	bool m_nocolor { false };
+	bool m_color { true };
 
 	/// Whether to write a null after a filename instead of ':'.
 	bool m_nullsep { false };

@@ -781,7 +781,6 @@ void ArgParse::Parse(int argc, char **argv)
 	if(options[OPT_COLOR]) // If not specified on command line, defaults to both == false.
 	{
 		m_color = (options[OPT_COLOR].last()->type() == ENABLE);
-		m_nocolor = !m_color;
 	}
 
 	if(options[OPT_RECURSE_SUBDIRS]) // m_recurse defaults to true, so only assign if option was really given.
