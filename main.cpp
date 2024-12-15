@@ -77,6 +77,7 @@ int main(int argc, char **argv)
 
 		// Set up the output task object.
 		OutputTask output_task(arg_parser.m_color, arg_parser.m_prefix_file,
+                                       arg_parser.m_line_number, 
                                        arg_parser.m_column, arg_parser.m_nullsep, match_queue);
 
 		// Create the FileScanner object.

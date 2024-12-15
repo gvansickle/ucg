@@ -31,12 +31,14 @@
 #include <libext/Logger.h>
 
 
-OutputTask::OutputTask(bool flag_color, bool flag_prefix_file,
+OutputTask::OutputTask(bool flag_color, bool flag_prefix_file, bool flag_line_number,
                        bool flag_column, bool flag_nullsep, sync_queue<MatchList> &input_queue)
   : m_input_queue(input_queue), m_enable_color(flag_color),
-    m_prefix_file(flag_prefix_file), m_print_column(flag_column), m_nullsep(flag_nullsep)
+    m_prefix_file(flag_prefix_file), m_print_line_number(flag_line_number), 
+    m_print_column(flag_column), m_nullsep(flag_nullsep)
 {
-  m_output_context.reset(new OutputContext(m_enable_color, m_prefix_file, m_print_column, m_nullsep));
+  m_output_context.reset(new OutputContext(m_enable_color, m_prefix_file, m_print_line_number,
+                                           m_print_column, m_nullsep));
 }
 
 OutputTask::~OutputTask()

@@ -123,6 +123,11 @@ public:
 	bool m_pattern_is_literal { false };
 
 	/// true if we should print the column of the first match after the line number.
+	bool m_line_number { true };
+
+	/// true if we should print the column of the first match
+	/// after the line number.  Setting this to true implies will
+	/// also set m_line_number to true.
 	bool m_column { false };
 
 	/// The file and directory paths given on the command line.
