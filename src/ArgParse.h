@@ -140,6 +140,9 @@ public:
 	/// Whether to use color output or not.
 	bool m_color { true };
 
+	/// Whether to prefix each match with the filename
+        bool m_prefix_file { false };
+
 	/// Whether to write a null after a filename instead of ':'.
 	bool m_nullsep { false };
 

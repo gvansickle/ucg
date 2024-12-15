@@ -30,10 +30,11 @@
 class OutputContext
 {
 public:
-      OutputContext(bool enable_color, bool print_column, bool nullsep);
+      OutputContext(bool enable_color, bool prefix_file, bool print_column, bool nullsep);
 	~OutputContext();
 
 	[[nodiscard]] inline bool is_color_enabled() const noexcept { return m_enable_color; };
+	[[nodiscard]] inline bool prefix_file() const noexcept { return m_prefix_file; };
 	[[nodiscard]] inline bool is_column_print_enabled() const noexcept { return m_print_column; };
 	[[nodiscard]] inline bool use_nullsep() const noexcept { return m_nullsep; };
 
@@ -49,6 +50,9 @@ private:
 
 	/// Whether to output color or not.  Determined by logic in OutputTask's constructor.
 	bool m_enable_color;
+
+	/// Whether to prefix each match with the filename
+	bool m_prefix_file;
 
 	/// Whether to print the column number of the first match or not.
 	bool m_print_column;

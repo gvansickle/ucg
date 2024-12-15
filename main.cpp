@@ -76,7 +76,8 @@ int main(int argc, char **argv)
 				arg_parser.m_dirjobs, files_to_scan_queue);
 
 		// Set up the output task object.
-		OutputTask output_task(arg_parser.m_color, arg_parser.m_column, arg_parser.m_nullsep, match_queue);
+		OutputTask output_task(arg_parser.m_color, arg_parser.m_prefix_file,
+                                       arg_parser.m_column, arg_parser.m_nullsep, match_queue);
 
 		// Create the FileScanner object.
 		std::unique_ptr<FileScanner> file_scanner(FileScanner::Create(files_to_scan_queue, match_queue, arg_parser.m_pattern, arg_parser.m_ignore_case, arg_parser.m_word_regexp, arg_parser.m_pattern_is_literal));

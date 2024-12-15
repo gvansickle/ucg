@@ -116,6 +116,7 @@ enum OPT
 	OPT_LITERAL,
 	OPT_WORDREGEX,
 	OPT_COLOR,
+	OPT_PREFIX_FILE,
 	OPT_NULLSEP,
 	OPT_IGNORE_DIR,
 	OPT_IGNORE_FILE,
@@ -525,6 +526,8 @@ static const std::array f_raw_options = std::to_array<PreDescriptor>({
 	{ "File presentation:" },
 		{ OPT_COLOR, ENABLE, "", "color,colour", Arg::None, "Render the output with ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolor,nocolour", Arg::None, "Render the output without ANSI color codes."},
+		{ OPT_PREFIX_FILE, ENABLE, "H", "with-filename", Arg::None, "Render the output with ANSI color codes."},
+		{ OPT_PREFIX_FILE, DISABLE, "h", "no-with-filename", Arg::None, "Render the output without ANSI color codes."},
                 { OPT_NULLSEP, ENABLE, "", "null", Arg::None,
                   "Print a zero character '\0' instead of a colon ':' after a file name."},
 	{ "File/directory inclusion/exclusion:" },
@@ -773,16 +776,20 @@ void ArgParse::Parse(int argc, char **argv)
 	//   [...]
         if(!isatty(fileno(stdout)))
           {
+            m_prefix_file = true;
             m_color=false;
           }
 
-        
-	m_column = (options[OPT_COLUMN].last()->type() == ENABLE);
 	if(options[OPT_COLOR]) // If not specified on command line, defaults to both == false.
 	{
 		m_color = (options[OPT_COLOR].last()->type() == ENABLE);
 	}
 
+        if(options[OPT_PREFIX_FILE])
+          {
+            m_prefix_file = (options[OPT_PREFIX_FILE].last()->type() == ENABLE);
+          }
+	m_column = (options[OPT_COLUMN].last()->type() == ENABLE);
 	if(options[OPT_RECURSE_SUBDIRS]) // m_recurse defaults to true, so only assign if option was really given.
 	{
 		m_recurse = (options[OPT_RECURSE_SUBDIRS].last()->type() == ENABLE);

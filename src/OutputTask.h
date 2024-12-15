@@ -35,7 +35,8 @@
 class OutputTask
 {
 public:
-      OutputTask(bool flag_color, bool flag_column, bool flag_nullsep, sync_queue<MatchList> &input_queue);
+  OutputTask(bool flag_color, bool flag_prefix_file,
+             bool flag_column, bool flag_nullsep, sync_queue<MatchList> &input_queue);
 	virtual ~OutputTask();
 
 	void Run();
@@ -46,6 +47,9 @@ private:
 
 	/// The queue from which we'll pull our MatchLists.
 	sync_queue<MatchList> &m_input_queue;
+
+	/// Whether to prefix each match with the filename
+	bool m_prefix_file;
 
 	/// Whether to output color or not.  Determined in constructor.
 	bool m_enable_color;

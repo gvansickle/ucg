@@ -74,19 +74,33 @@ void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 
 	std::string composition_buffer;
 	composition_buffer.reserve(256);
+        
+        const char file_separator(output_context.use_nullsep()
+                                  ? '\0': (output_context.prefix_file() ? ':' : '\n'));
 
-        const char file_separator(output_context.use_nullsep() ? '\0': '\n');
+        if(!output_context.prefix_file())
+          {
+            // Print file header.
+            if(color) composition_buffer += *color_filename;
+            composition_buffer += no_dotslash_fn;
+            if(color) composition_buffer += *color_default;
+            composition_buffer += file_separator;
+            sstrm << composition_buffer;
+          }
         
         // Print file header.
-        if(color) composition_buffer += *color_filename;
-        composition_buffer += no_dotslash_fn;
-        if(color) composition_buffer += *color_default;
-        composition_buffer += file_separator;
-        sstrm << composition_buffer;
-
         // Print the individual matches.
         for(const Match& it : m_match_list)
           {
+            if(output_context.prefix_file())
+              {
+                // Print file prefix.
+                if(color) composition_buffer += *color_filename;
+                composition_buffer += no_dotslash_fn;
+                if(color) composition_buffer += *color_default;
+                composition_buffer += file_separator;
+                sstrm << composition_buffer;
+              }
             composition_buffer.clear();
             if(color) composition_buffer += *color_lineno;
             composition_buffer += std::to_string(it.m_line_number);

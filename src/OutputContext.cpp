@@ -21,8 +21,9 @@
 
 #include "OutputContext.h"
 
-OutputContext::OutputContext(bool enable_color, bool print_column, bool nullsep)
-  : m_enable_color(enable_color), m_print_column(print_column), m_nullsep(nullsep)
+OutputContext::OutputContext(bool enable_color, bool prefix_file, bool print_column, bool nullsep)
+  : m_enable_color(enable_color), m_prefix_file(prefix_file),
+    m_print_column(print_column), m_nullsep(nullsep)
 {
 	if(m_enable_color)
 	{
