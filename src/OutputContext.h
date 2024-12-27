@@ -30,12 +30,14 @@
 class OutputContext
 {
 public:
-	OutputContext(bool output_is_tty, bool enable_color, bool print_column);
+      OutputContext(bool enable_color, bool prefix_file, bool print_line_number, bool print_column, bool nullsep);
 	~OutputContext();
 
-	[[nodiscard]] inline bool is_output_tty() const noexcept { return m_output_is_tty; };
 	[[nodiscard]] inline bool is_color_enabled() const noexcept { return m_enable_color; };
+	[[nodiscard]] inline bool prefix_file() const noexcept { return m_prefix_file; };
+	[[nodiscard]] inline bool is_line_print_enabled() const noexcept { return m_print_line_number; };
 	[[nodiscard]] inline bool is_column_print_enabled() const noexcept { return m_print_column; };
+	[[nodiscard]] inline bool use_nullsep() const noexcept { return m_nullsep; };
 
 	/// @name Active colors.
 	/// @{
@@ -47,13 +49,20 @@ public:
 
 private:
 
-	bool m_output_is_tty;
-
 	/// Whether to output color or not.  Determined by logic in OutputTask's constructor.
 	bool m_enable_color;
 
+	/// Whether to prefix each match with the filename
+	bool m_prefix_file;
+
+	/// Whether to print the line number of the match or not
+	bool m_print_line_number;
+
 	/// Whether to print the column number of the first match or not.
 	bool m_print_column;
+
+	/// Whether to write a null after a filename instead of ':'.
+	bool m_nullsep;
 
 	/// @name Default output colors.
 	/// @{

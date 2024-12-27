@@ -25,7 +25,7 @@
 
 #include "../build_info.h"
 
-#include <libext/cpuidex.hpp>
+#include "libext/cpuidex.hpp"
 
 // Std C++.
 #include <locale>
@@ -55,7 +55,7 @@ namespace lmcppop = lmcppop_int::option;
 #include <pcre.h>
 #endif
 #if HAVE_LIBPCRE2 == 1
-#include <FileScannerPCRE2.h>
+#include "FileScannerPCRE2.h"
 #endif
 
 #include <fcntl.h>
@@ -112,19 +112,17 @@ enum OPT
 	OPT_SECTION = 255,
 	OPT_IGNORE_CASE = 1,
 	OPT_SMART_CASE,
-	OPT_NO_SMART_CASE,
 	OPT_HANDLE_CASE,
 	OPT_LITERAL,
 	OPT_WORDREGEX,
 	OPT_COLOR,
-	OPT_NOCOLOR,
+	OPT_PREFIX_FILE,
+	OPT_NULLSEP,
 	OPT_IGNORE_DIR,
-	OPT_NOIGNORE_DIR,
 	OPT_IGNORE_FILE,
 	OPT_INCLUDE,
 	OPT_EXCLUDE,
 	OPT_FOLLOW,
-	OPT_NOFOLLOW,
 	OPT_RECURSE_SUBDIRS,
 	OPT_ONLY_KNOWN_TYPES,
 	OPT_TYPE,
@@ -138,8 +136,8 @@ enum OPT
 	OPT_HELP_TYPES,
 	OPT_USAGE,
 	OPT_VERSION,
+	OPT_LINE_NUMBER,
 	OPT_COLUMN,
-	OPT_NOCOLUMN,
 	OPT_TEST_LOG_ALL,
 	OPT_TEST_NOENV_USER,
 	OPT_TEST_USE_MMAP,
@@ -524,11 +522,17 @@ static const std::array f_raw_options = std::to_array<PreDescriptor>({
 		{ OPT_WORDREGEX, 0, "w", "word-regexp", Arg::None, "PATTERN must match a complete word."},
 		{ OPT_LITERAL, 0, "Q", "literal", Arg::None, "Treat all characters in PATTERN as literal."},
 	{ "Search Output:" },
+		{ OPT_PREFIX_FILE, ENABLE, "H", "with-filename", Arg::None, "Prefix the result with the file name."},
+		{ OPT_PREFIX_FILE, DISABLE, "h", "no-with-filename", Arg::None, "Prefix the file name on a separate line before matches (default)."},
+		{ OPT_LINE_NUMBER, ENABLE, "n", "line-number", Arg::None, "Print the line number of each match (default)."},
+		{ OPT_LINE_NUMBER, DISABLE, "", "no-line-number", Arg::None, "Don't print the line number."},
 		{ OPT_COLUMN, ENABLE, "", "column", Arg::None, "Print column of first match after line number."},
 		{ OPT_COLUMN, DISABLE, "", "nocolumn", Arg::None, "Don't print column of first match (default)."},
 	{ "File presentation:" },
 		{ OPT_COLOR, ENABLE, "", "color,colour", Arg::None, "Render the output with ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolor,nocolour", Arg::None, "Render the output without ANSI color codes."},
+                { OPT_NULLSEP, ENABLE, "", "null", Arg::None,
+                  "Print a zero character '\0' instead of a colon ':' after a file name."},
 	{ "File/directory inclusion/exclusion:" },
 		{ OPT_IGNORE_DIR, ENABLE, DISABLE, "", "[no]ignore-dir,[no]ignore-directory", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
 		// grep-style --include=glob and --exclude=glob
@@ -538,7 +542,7 @@ static const std::array f_raw_options = std::to_array<PreDescriptor>({
 		// ack-style --ignore-file=FILTER:FILTERARGS
 		{ OPT_IGNORE_FILE, 0, "", "ignore-file", "FILTER:FILTERARGS", Arg::NonEmpty, "Files matching FILTER:FILTERARGS (e.g. ext:txt,cpp) will be ignored." },
 		{ OPT_RECURSE_SUBDIRS, ENABLE, "r,R", "recurse", Arg::None, "Recurse into subdirectories (default: on)." },
-		{ OPT_RECURSE_SUBDIRS, DISABLE, "n", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
+		{ OPT_RECURSE_SUBDIRS, DISABLE, "", "no-recurse", Arg::None, "Do not recurse into subdirectories."},
 		{ OPT_FOLLOW, ENABLE, DISABLE, "", "[no]follow", "", Arg::None, "[Do not] follow symlinks (default: nofollow)." },
 		{ OPT_ONLY_KNOWN_TYPES, ENABLE, "k", "known-types", Arg::None, "Only search in files of recognized types (default: on)."},
 		{ OPT_TYPE, ENABLE, "", "type", "[no]TYPE", Arg::NonEmpty, "Include only [exclude all] TYPE files.  Types may also be specified as --[no]TYPE."},
@@ -763,13 +767,41 @@ void ArgParse::Parse(int argc, char **argv)
 
 	m_word_regexp = options[OPT_WORDREGEX];
 	m_pattern_is_literal = options[OPT_LITERAL];
-	m_column = (options[OPT_COLUMN].last()->type() == ENABLE);
+
+	// If the output is going to a terminal, use color and group
+	// the matches under the filename.  So for the TTY, by
+	// default, we print:
+	//   filename
+	//   lineno:column:match
+	//   [...]
+	// while for non-TTY we print:
+	//   filename:lineno:column:match
+	//   [...]
+        if(!isatty(fileno(stdout)))
+          {
+            m_prefix_file = true;
+            m_color=false;
+          }
+
 	if(options[OPT_COLOR]) // If not specified on command line, defaults to both == false.
 	{
 		m_color = (options[OPT_COLOR].last()->type() == ENABLE);
-		m_nocolor = !m_color;
 	}
 
+        if(options[OPT_PREFIX_FILE])
+          {
+            m_prefix_file = (options[OPT_PREFIX_FILE].last()->type() == ENABLE);
+          }
+        if(options[OPT_LINE_NUMBER])
+          {
+            m_line_number = (options[OPT_LINE_NUMBER].last()->type() == ENABLE);
+          }
+	m_column = (options[OPT_COLUMN].last()->type() == ENABLE);
+        if(m_column)
+          {
+            m_line_number = true;
+          }
+        
 	if(options[OPT_RECURSE_SUBDIRS]) // m_recurse defaults to true, so only assign if option was really given.
 	{
 		m_recurse = (options[OPT_RECURSE_SUBDIRS].last()->type() == ENABLE);
