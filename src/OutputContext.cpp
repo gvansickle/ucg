@@ -21,8 +21,11 @@
 
 #include "OutputContext.h"
 
-OutputContext::OutputContext(bool output_is_tty, bool enable_color, bool print_column)
-	: m_output_is_tty(output_is_tty), m_enable_color(enable_color), m_print_column(print_column)
+OutputContext::OutputContext(bool enable_color, bool prefix_file, bool print_line_number,
+                             bool print_column, bool nullsep)
+  : m_enable_color(enable_color), m_prefix_file(prefix_file),
+    m_print_line_number(print_line_number),
+    m_print_column(print_column), m_nullsep(nullsep)
 {
 	if(m_enable_color)
 	{

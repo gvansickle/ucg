@@ -35,7 +35,8 @@
 class OutputTask
 {
 public:
-	OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, sync_queue<MatchList> &input_queue);
+  OutputTask(bool flag_color, bool flag_prefix_file, bool flag_line_number,
+             bool flag_column, bool flag_nullsep, sync_queue<MatchList> &input_queue);
 	virtual ~OutputTask();
 
 	void Run();
@@ -47,14 +48,20 @@ private:
 	/// The queue from which we'll pull our MatchLists.
 	sync_queue<MatchList> &m_input_queue;
 
-	/// Whether stdout is a TTY.  Determined in constructor.
-	bool m_output_is_tty;
-
 	/// Whether to output color or not.  Determined in constructor.
 	bool m_enable_color;
 
+	/// Whether to prefix each match with the filename
+	bool m_prefix_file;
+
+	/// Whether to print the line number of the match or not.
+	bool m_print_line_number;
+
 	/// Whether to print the column number of the first match or not.
 	bool m_print_column;
+
+	/// Whether to write a null after a filename instead of ':'.
+	bool m_nullsep;
 
 	std::unique_ptr<OutputContext> m_output_context;
 

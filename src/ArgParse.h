@@ -123,6 +123,11 @@ public:
 	bool m_pattern_is_literal { false };
 
 	/// true if we should print the column of the first match after the line number.
+	bool m_line_number { true };
+
+	/// true if we should print the column of the first match
+	/// after the line number.  Setting this to true implies will
+	/// also set m_line_number to true.
 	bool m_column { false };
 
 	/// The file and directory paths given on the command line.
@@ -138,9 +143,13 @@ public:
 	int m_dirjobs { 0 };
 
 	/// Whether to use color output or not.
-	/// both false == not specified on command line.
-	bool m_color { false };
-	bool m_nocolor { false };
+	bool m_color { true };
+
+	/// Whether to prefix each match with the filename
+        bool m_prefix_file { false };
+
+	/// Whether to write a null after a filename instead of ':'.
+	bool m_nullsep { false };
 
 	/// Whether to recurse into subdirectories or not.
 	bool m_recurse { true };
