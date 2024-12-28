@@ -531,8 +531,8 @@ static const std::array f_raw_options = std::to_array<PreDescriptor>({
 	{ "File presentation:" },
 		{ OPT_COLOR, ENABLE, "", "color,colour", Arg::None, "Render the output with ANSI color codes."},
 		{ OPT_COLOR, DISABLE, "", "nocolor,nocolour", Arg::None, "Render the output without ANSI color codes."},
-                { OPT_NULLSEP, ENABLE, "", "null", Arg::None,
-                  "Print a zero character '\0' instead of a colon ':' after a file name."},
+		{ OPT_NULLSEP, ENABLE, "", "null", Arg::None,
+                  "Print a zero character \'\\0\' instead of a colon \':\' after a file name."},
 	{ "File/directory inclusion/exclusion:" },
 		{ OPT_IGNORE_DIR, ENABLE, DISABLE, "", "[no]ignore-dir,[no]ignore-directory", "NAME", Arg::NonEmpty, "[Do not] exclude directories with NAME."},
 		// grep-style --include=glob and --exclude=glob
