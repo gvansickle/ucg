@@ -23,7 +23,7 @@
 
 #include <iostream>
 #include <sstream>
-#include <future/string.hpp>
+#include "future/string.hpp"
 
 
 void MatchList::SetFilename(std::string filename)
@@ -44,19 +44,19 @@ void MatchList::clear() noexcept
 
 void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 {
-	std::string no_dotslash_fn;
-	const std::string empty_color_string {""};
+	std::string_view no_dotslash_fn;
+	static constexpr std::string empty_color_string {""};
 	bool color = output_context.is_color_enabled();
 
 	// If the file path starts with a "./", chop it off.
 	// This is to match the behavior of ack.
 	if(m_filename.find("./") == 0)
 	{
-		no_dotslash_fn = std::string(m_filename.begin()+2, m_filename.end());
+		no_dotslash_fn = std::string_view(m_filename.begin()+2, m_filename.end());
 	}
 	else
 	{
-		no_dotslash_fn = std::string(m_filename.begin(), m_filename.end());
+		no_dotslash_fn = std::string_view(m_filename.begin(), m_filename.end());
 	}
 
 	const std::string *color_filename { &empty_color_string };
@@ -74,86 +74,57 @@ void MatchList::Print(std::ostream &sstrm, OutputContext &output_context) const
 
 	std::string composition_buffer;
 	composition_buffer.reserve(256);
+        
+        const char file_separator(output_context.use_nullsep()
+                                  ? '\0': (output_context.prefix_file() ? ':' : '\n'));
 
-	// The only real difference between TTY vs. non-TTY printing here is that for TTY we print:
-	//   filename
-	//   lineno:column:match
-	//   [...]
-	// while for non-TTY we print:
-	//   filename:lineno:column:match
-	//   [...]
-	if(output_context.is_output_tty())
-	{
-		// Render to a TTY device.
-
-		// Print file header.
-		if(color) composition_buffer += *color_filename;
-		composition_buffer += no_dotslash_fn;
-		if(color) composition_buffer += *color_default;
-		composition_buffer += '\n';
-		sstrm << composition_buffer;
-
-		// Print the individual matches.
-		for(const Match& it : m_match_list)
-		{
-			composition_buffer.clear();
-			if(color) composition_buffer += *color_lineno;
-			composition_buffer += std::to_string(it.m_line_number);
-			if(color) composition_buffer += *color_default;
-			composition_buffer += ':';
-			sstrm << composition_buffer;
-			if(output_context.is_column_print_enabled())
-			{
-				sstrm << it.m_pre_match.length()+1 << ':';
-			}
-			composition_buffer.clear();
-			composition_buffer += it.m_pre_match;
-			if(color) composition_buffer += *color_match;
-			composition_buffer += it.m_match;
-			if(color) composition_buffer += *color_default;
-			composition_buffer += it.m_post_match;
-			composition_buffer += '\n';
-			sstrm << composition_buffer;
-		}
-	}
-	else
-	{
-		// Render to a pipe or file.
-
-		for(const Match& it : m_match_list)
-		{
-			// Print file name at the beginning of each line.
-			composition_buffer.clear();
-			if(color) composition_buffer += *color_filename;
-			composition_buffer += no_dotslash_fn;
-			if(color) composition_buffer += *color_default;
-			composition_buffer += ':';
-
-			// Line number.
-			if(color) composition_buffer += *color_lineno;
-			composition_buffer += std::to_string(it.m_line_number);
-			if(color) composition_buffer += *color_default;
-			composition_buffer += ':';
-
-			sstrm << composition_buffer;
-
-			// The column, if enabled.
-			if(output_context.is_column_print_enabled())
-			{
-				sstrm << it.m_pre_match.length()+1 << ':';
-			}
-
-			// The match text.
-			composition_buffer.clear();
-			composition_buffer += it.m_pre_match;
-			if(color) composition_buffer += *color_match;
-			composition_buffer += it.m_match;
-			if(color) composition_buffer += *color_default;
-			composition_buffer += it.m_post_match;
-			composition_buffer += '\n';
-			sstrm << composition_buffer;
-		}
-	}
+        if(!output_context.prefix_file())
+          {
+            // Print file header.
+            if(color) composition_buffer += *color_filename;
+            composition_buffer += no_dotslash_fn;
+            if(color) composition_buffer += *color_default;
+            composition_buffer += file_separator;
+            sstrm << composition_buffer;
+          }
+        
+        // Print the individual matches.
+        for(const Match& it : m_match_list)
+          {
+            // Print file prefix.
+            if(output_context.prefix_file())
+              {
+                composition_buffer.clear();
+                if(color) composition_buffer += *color_filename;
+                composition_buffer += no_dotslash_fn;
+                if(color) composition_buffer += *color_default;
+                composition_buffer += file_separator;
+                sstrm << composition_buffer;
+              }
+            // Print line and column numbers.
+            if(output_context.is_line_print_enabled())
+              {
+                composition_buffer.clear();
+                if(color) composition_buffer += *color_lineno;
+                composition_buffer += std::to_string(it.m_line_number);
+                if(color) composition_buffer += *color_default;
+                composition_buffer += ':';
+                sstrm << composition_buffer;
+                if(output_context.is_column_print_enabled())
+                  {
+                    sstrm << it.m_pre_match.length()+1 << ':';
+                  }
+              }
+            // Print match
+            composition_buffer.clear();
+            composition_buffer += it.m_pre_match;
+            if(color) composition_buffer += *color_match;
+            composition_buffer += it.m_match;
+            if(color) composition_buffer += *color_default;
+            composition_buffer += it.m_post_match;
+            composition_buffer += '\n';
+            sstrm << composition_buffer;
+          }
 }
 
 std::vector<Match>::size_type MatchList::GetNumberOfMatchedLines() const noexcept

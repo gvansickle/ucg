@@ -31,28 +31,14 @@
 #include <libext/Logger.h>
 
 
-OutputTask::OutputTask(bool flag_color, bool flag_nocolor, bool flag_column, sync_queue<MatchList> &input_queue)
-	: m_input_queue(input_queue)
+OutputTask::OutputTask(bool flag_color, bool flag_prefix_file, bool flag_line_number,
+                       bool flag_column, bool flag_nullsep, sync_queue<MatchList> &input_queue)
+  : m_input_queue(input_queue), m_enable_color(flag_color),
+    m_prefix_file(flag_prefix_file), m_print_line_number(flag_line_number), 
+    m_print_column(flag_column), m_nullsep(flag_nullsep)
 {
-	// Determine if the output is going to a terminal.  If so we'll use color by default, group the matches under
-	// the filename, etc.
-	m_output_is_tty = isatty(fileno(stdout));
-
-	// Determine whether to enable color or not.
-	// Color is enabled if explicitly specified with --color or
-	// if outputting to a TTY and --nocolor is not specified.
-	if(flag_color || (!flag_nocolor && m_output_is_tty))
-	{
-		m_enable_color = true;
-	}
-	else
-	{
-		m_enable_color = false;
-	}
-
-	m_print_column = flag_column;
-
-	m_output_context.reset(new OutputContext(m_output_is_tty, m_enable_color, m_print_column));
+  m_output_context.reset(new OutputContext(m_enable_color, m_prefix_file, m_print_line_number,
+                                           m_print_column, m_nullsep));
 }
 
 OutputTask::~OutputTask()
@@ -69,7 +55,7 @@ void OutputTask::Run()
 
 	while(m_input_queue.pull_front(std::move(ml)) != queue_op_status::closed)
 	{
-		if(first_matchlist_printed && m_output_is_tty)
+		if(first_matchlist_printed && !m_prefix_file)
 		{
 			// Print a blank line between the match lists (i.e. the groups of matches in one file).
 			std::cout << '\n';
