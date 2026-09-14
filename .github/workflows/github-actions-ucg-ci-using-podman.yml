@@ -19,15 +19,15 @@ jobs:
         run: |
           sudo apt update
           sudo apt-get -y install podman
-          podman pull fedora:38
+          podman pull fedora:44
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           path: 'ucg'
       - name: Create Podman container and run tests
         run: |
           {
-              echo 'FROM fedora:38'
+              echo 'FROM fedora:44'
               #echo '# set TZ to ensure the test using timestamp'
               #echo 'ENV TZ=Asia/Tokyo'
               echo 'RUN dnf -y update'
