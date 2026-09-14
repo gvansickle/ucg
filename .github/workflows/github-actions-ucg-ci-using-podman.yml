@@ -1,0 +1,54 @@
+name: ucg CI - Podman
+# Use podman via GitHub actions to run on a different OS and different deps than that offered natively by GHA.
+# Based on this: https://fedoramagazine.org/github-actions-use-podman-to-run-fedora-linux/
+on:
+  push:
+#    branches:
+#      - main
+  pull_request:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: fedora
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Podman
+        run: |
+          sudo apt update
+          sudo apt-get -y install podman
+          podman pull fedora:38
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          path: 'ucg'
+      - name: Create Podman container and run tests
+        run: |
+          {
+              echo 'FROM fedora:38'
+              #echo '# set TZ to ensure the test using timestamp'
+              #echo 'ENV TZ=Asia/Tokyo'
+              echo 'RUN dnf -y update'
+              echo 'RUN dnf -y install gcc-c++ git autoconf autoconf-archive automake libtool pcre2-devel'
+              echo 'RUN dnf -y install diffutils wget bzip2'
+              echo 'RUN dnf -y install the_silver_searcher' 
+              echo 'RUN dnf clean all'
+               # Check tool versions.
+              echo 'RUN gcc --version'
+              echo 'COPY ucg ucg'
+              echo 'WORKDIR /ucg'
+              echo 'RUN pwd; ls -l; autoreconf -i'
+              echo 'RUN ls -l; mkdir build'
+              echo 'RUN pwd; cd build'
+              echo 'RUN echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"'
+              echo 'RUN cd build; ../configure CC="$CFG_CC" CXX="$CFG_CXX"'
+              # Skip tests which require large corpuses, so we fast-fail if something easy to test is broken.
+              echo 'RUN cd build; make check TESTSUITEFLAGS=--keywords=!benchmark'
+              echo 'RUN echo "PWD: $(pwd)"; mkdir TestCorpus && cd TestCorpus && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 && tar xjf boost_1_58_0.tar.bz2 && cd ..'
+              echo 'RUN echo "LL: $(ls -l)" && cd TestCorpus && echo "LL: $(ls -l)"'
+              echo 'RUN cd build; make check TESTSUITEFLAGS=--corpusdir=../../TestCorpus ; cat tests/testsuite.log ; cat tests/perf_test_results.txt'
+              #TESTSUITEFLAGS=-v -d -x
+          } > podmanfile
+          podman build --tag fedora38test -f ./podmanfile
