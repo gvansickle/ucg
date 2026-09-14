@@ -35,7 +35,7 @@ jobs:
               echo 'RUN dnf -y install diffutils wget bzip2'
               echo 'RUN dnf -y install the_silver_searcher'
               echo 'RUN dnf -y install ripgrep'
-              echo 'RUN which -a rg'
+              echo 'RUN rg --version'
               echo 'RUN dnf clean all'
                # Check tool versions.
               echo 'RUN gcc --version'
