@@ -54,4 +54,6 @@ jobs:
               #TESTSUITEFLAGS=-v -d -x              
           } > podmanfile
           podman build --tag fedora38test -f ./podmanfile
-          ls -a
+          echo "#################"
+          ls -l
+          echo "#################"
