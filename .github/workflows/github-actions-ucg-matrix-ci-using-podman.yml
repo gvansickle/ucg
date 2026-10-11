@@ -18,7 +18,7 @@ jobs:
       # Let every OS/compiler combination finish, even if one fails.
       fail-fast: false
       matrix:
-        os: [ fedora-38, fedora-41, ubuntu-24.04 ]
+        os: [ fedora-38, fedora-41, ubuntu-24.04, arch-latest ]
         compiler: [ gcc, clang ]
         include:
           # Per-OS settings.  These get merged into every combination with the matching "os".
@@ -44,6 +44,11 @@ jobs:
               apt-get -y install g++ clang git autoconf autoconf-archive automake libtool libpcre2-dev
               diffutils wget bzip2 debianutils silversearcher-ag ripgrep make pkg-config &&
               apt-get clean
+          - os: arch-latest
+            image: archlinux:latest
+            pkg_install: >-
+              pacman -Syu --noconfirm base-devel clang git autoconf-archive pcre2
+              diffutils wget bzip2 which the_silver_searcher ripgrep
           # Per-compiler settings.  These get merged into every combination with the matching "compiler".
           - compiler: gcc
             cc: gcc
