@@ -51,52 +51,52 @@ jobs:
           - compiler: clang
             cc: clang
             cxx: clang++
-        steps:
-          - name: Setup Podman
-            run: |
-              sudo apt update
-              sudo apt-get -y install podman
-              podman pull ${{ matrix.image }}
-          - name: Check out repository code
-            uses: actions/checkout@v6
-            with:
-              path: 'ucg'
-          - name: Create Podman container and run tests
-            run: |
-              cat > podmanfile <<'EOF'
-              ARG BASE_IMAGE
-              FROM ${BASE_IMAGE}
-              ARG PKG_INSTALL
-              ARG CFG_CC
-              ARG CFG_CXX
-              #echo '# set TZ to ensure the test using timestamp'
-              #ENV TZ=Asia/Tokyo
-              RUN sh -c "${PKG_INSTALL}"
-              # Check tool versions.
-              RUN rg --version
-              RUN ag --version
-              RUN ${CFG_CC} --version
-              RUN ${CFG_CXX} --version
-              COPY ucg ucg
-              WORKDIR /ucg
-              RUN pwd; ls -l; autoreconf -i
-              RUN ls -l; mkdir build
-              RUN echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"
-              RUN cd build; ../configure CC="$CFG_CC" CXX="$CFG_CXX"
-              # Skip tests which require large corpuses, so we fast-fail if something easy to test is broken.
-              RUN cd build; make check TESTSUITEFLAGS=--keywords=!benchmark
-              RUN echo "PWD: $(pwd)"; mkdir TestCorpus && cd TestCorpus && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 && tar xjf boost_1_58_0.tar.bz2 && cd ..
-              RUN echo "LL: $(ls -l)" && cd TestCorpus && echo "LL: $(ls -l)"
-              RUN cd build; make check TESTSUITEFLAGS=--corpusdir=../../TestCorpus ; cat tests/testsuite.log ; cat tests/perf_test_results.txt
-              #TESTSUITEFLAGS=-v -d -x
-              EOF
-              podman build \
-                --build-arg BASE_IMAGE="${{ matrix.image }}" \
-                --build-arg PKG_INSTALL="${{ matrix.pkg_install }}" \
-                --build-arg CFG_CC="${{ matrix.cc }}" \
-                --build-arg CFG_CXX="${{ matrix.cxx }}" \
-                --tag "ucgtest-${{ matrix.os }}-${{ matrix.compiler }}" \
-                -f ./podmanfile
-              echo "#################"
-              ls -l
-              echo "#################"
+    steps:
+      - name: Setup Podman
+        run: |
+          sudo apt update
+          sudo apt-get -y install podman
+          podman pull ${{ matrix.image }}
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          path: 'ucg'
+      - name: Create Podman container and run tests
+        run: |
+          cat > podmanfile <<'EOF'
+          ARG BASE_IMAGE
+          FROM ${BASE_IMAGE}
+          ARG PKG_INSTALL
+          ARG CFG_CC
+          ARG CFG_CXX
+          #echo '# set TZ to ensure the test using timestamp'
+          #ENV TZ=Asia/Tokyo
+          RUN sh -c "${PKG_INSTALL}"
+          # Check tool versions.
+          RUN rg --version
+          RUN ag --version
+          RUN ${CFG_CC} --version
+          RUN ${CFG_CXX} --version
+          COPY ucg ucg
+          WORKDIR /ucg
+          RUN pwd; ls -l; autoreconf -i
+          RUN ls -l; mkdir build
+          RUN echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"
+          RUN cd build; ../configure CC="$CFG_CC" CXX="$CFG_CXX"
+          # Skip tests which require large corpuses, so we fast-fail if something easy to test is broken.
+          RUN cd build; make check TESTSUITEFLAGS=--keywords=!benchmark
+          RUN echo "PWD: $(pwd)"; mkdir TestCorpus && cd TestCorpus && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 && tar xjf boost_1_58_0.tar.bz2 && cd ..
+          RUN echo "LL: $(ls -l)" && cd TestCorpus && echo "LL: $(ls -l)"
+          RUN cd build; make check TESTSUITEFLAGS=--corpusdir=../../TestCorpus ; cat tests/testsuite.log ; cat tests/perf_test_results.txt
+          #TESTSUITEFLAGS=-v -d -x
+          EOF
+          podman build \
+            --build-arg BASE_IMAGE="${{ matrix.image }}" \
+            --build-arg PKG_INSTALL="${{ matrix.pkg_install }}" \
+            --build-arg CFG_CC="${{ matrix.cc }}" \
+            --build-arg CFG_CXX="${{ matrix.cxx }}" \
+            --tag "ucgtest-${{ matrix.os }}-${{ matrix.compiler }}" \
+            -f ./podmanfile
+          echo "#################"
+          ls -l
+          echo "#################"
