@@ -1,7 +1,7 @@
 # UniversalCodeGrep
 
 [![License](https://img.shields.io/badge/License-GPL3-red.svg)](COPYING)
-[![Travis-CI Build Status](https://travis-ci.org/gvansickle/ucg.svg?branch=master)](https://travis-ci.org/gvansickle/ucg)
+[![GitHub Actions CI](https://github.com/gvansickle/ucg/actions/workflows/github-actions-ucg-matrix-ci-using-podman.yml/badge.svg)](https://github.com/gvansickle/ucg/actions/workflows/github-actions-ucg-matrix-ci-using-podman.yml)
 <a href="https://scan.coverity.com/projects/gvansickle-ucg">
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/7451/badge.svg"/>
