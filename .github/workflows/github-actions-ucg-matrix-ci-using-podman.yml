@@ -91,7 +91,7 @@ jobs:
           # Skip tests which require large corpuses, so we fast-fail if something cheap to test is broken.
           RUN cd build; make check TESTSUITEFLAGS=--keywords=!benchmark
           RUN echo "PWD: $(pwd)"; cd .. && mkdir TestCorpus && cd TestCorpus && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 && tar xjf boost_1_58_0.tar.bz2
-          RUN echo "LL: $(ls -l)" && cd ../TestCorpus && echo "LL: $(ls -l)"
+#          RUN echo "LL: $(ls -l)" && cd ../TestCorpus && echo "LL: $(ls -l)"
           RUN cd build; make check TESTSUITEFLAGS=--corpusdir=../../TestCorpus ; rc=$? ; cat tests/testsuite.log ; cat tests/perf_test_results.txt ; exit $rc
           #TESTSUITEFLAGS=-v -d -x
           EOF
