@@ -65,7 +65,7 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v6
         with:
-          path: 'ucg'
+          path: ucg
       - name: Create Podman container and run tests
         run: |
           cat > podmanfile <<'EOF'
