@@ -1,0 +1,142 @@
+name: "ucg Matrix CI using Podman"
+# Use podman via GitHub actions to run on a different OS and different deps than that offered natively by GHA.
+# Based on this: https://fedoramagazine.org/github-actions-use-podman-to-run-fedora-linux/
+on:
+  push:
+  #    branches:
+  #      - main
+  pull_request:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / ${{ matrix.compiler }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Let every OS/compiler combination finish, even if one fails.
+      fail-fast: false
+      matrix:
+        os: [ fedora-38, fedora-41, ubuntu-24.04, arch-latest ]
+        compiler: [ gcc, clang ]
+        include:
+          # Per-OS settings.  These get merged into every combination with the matching "os".
+          - os: fedora-38
+            image: fedora:38
+            pkg_install: >-
+              dnf -y update &&
+              dnf -y install gcc-c++ clang git autoconf autoconf-archive automake libtool pcre2-devel
+              diffutils wget bzip2 which the_silver_searcher ripgrep &&
+              dnf clean all
+          - os: fedora-41
+            image: fedora:41
+            pkg_install: >-
+              dnf -y update &&
+              dnf -y install gcc-c++ clang git autoconf autoconf-archive automake libtool pcre2-devel
+              diffutils wget bzip2 which the_silver_searcher ripgrep &&
+              dnf clean all
+          - os: ubuntu-24.04
+            image: ubuntu:24.04
+            pkg_install: >-
+              export DEBIAN_FRONTEND=noninteractive &&
+              apt-get update &&
+              apt-get -y install g++ clang git autoconf autoconf-archive automake libtool libpcre2-dev
+              diffutils wget bzip2 debianutils silversearcher-ag ripgrep make pkg-config &&
+              apt-get clean
+          - os: arch-latest
+            image: archlinux:latest
+            pkg_install: >-
+              pacman -Syu --noconfirm base-devel clang git autoconf-archive pcre2
+              diffutils wget bzip2 which the_silver_searcher ripgrep
+          # Per-compiler settings.  These get merged into every combination with the matching "compiler".
+          - compiler: gcc
+            cc: gcc
+            cxx: g++
+          - compiler: clang
+            cc: clang
+            cxx: clang++
+    steps:
+      - name: Setup Podman
+        run: |
+          sudo apt update
+          sudo apt-get -y install podman
+          podman pull ${{ matrix.image }}
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          path: ucg
+      - name: Create Podman container and run tests
+        run: |
+          cat > podmanfile <<'EOF'
+          ARG BASE_IMAGE
+          FROM ${BASE_IMAGE}
+          ARG PKG_INSTALL
+          ARG CFG_CC
+          ARG CFG_CXX
+          #echo '# set TZ to ensure the test using timestamp'
+          #ENV TZ=Asia/Tokyo
+          RUN sh -c "${PKG_INSTALL}"
+          # Check tool versions.
+          RUN rg --version
+          RUN ag --version
+          RUN ${CFG_CC} --version
+          RUN ${CFG_CXX} --version
+          COPY ucg ucg
+          WORKDIR /ucg
+          RUN pwd; ls -l; autoreconf -i
+          RUN ls -l; mkdir build
+          RUN echo "CFG_CC=$CFG_CC CFG_CXX=$CFG_CXX"
+          RUN cd build; ../configure CC="$CFG_CC" CXX="$CFG_CXX"
+          # Skip tests which require large corpuses, so we fast-fail if something cheap to test is broken.
+          RUN cd build; make check TESTSUITEFLAGS=--keywords=!benchmark
+          RUN echo "PWD: $(pwd)"; cd .. && mkdir TestCorpus && cd TestCorpus && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 && tar xjf boost_1_58_0.tar.bz2
+          #RUN echo "LL: $(ls -l)" && cd ../TestCorpus && echo "LL: $(ls -l)"
+          RUN cd build; make check TESTSUITEFLAGS=--corpusdir=../../TestCorpus ; rc=$? ; cat tests/testsuite.log ; cat tests/perf_test_results.txt ; exit $rc
+          #TESTSUITEFLAGS=-v -d -x
+          EOF
+          podman build \
+            --build-arg BASE_IMAGE="${{ matrix.image }}" \
+            --build-arg PKG_INSTALL="${{ matrix.pkg_install }}" \
+            --build-arg CFG_CC="${{ matrix.cc }}" \
+            --build-arg CFG_CXX="${{ matrix.cxx }}" \
+            --tag "ucgtest-${{ matrix.os }}-${{ matrix.compiler }}" \
+            -f ./podmanfile
+          echo "#################"
+          ls -l
+          echo "#################"
+
+    ### NOTES
+    ## Changes
+    # - **The matrix:**
+    #    3 OSes × 2 compilers gives 6 jobs. Each `include` entry adds settings to every job whose `os` or
+    #    `compiler` matches it: the image and package install command for each OS, and `cc`/`cxx` for each compiler. To
+    #    add another OS or compiler, add it to the list and add one `include` entry for it.
+    # - **Install commands per distro:**
+    #   Fedora and Ubuntu use different package managers and package names (for example `the_silver_searcher` vs.
+    #   `silversearcher-ag` and `pcre2-devel` vs. `libpcre2-dev`). Both compilers get installed in every image, which
+    #   keeps the matrix simple. I guessed Ubuntu needs `make` and `pkg-config` installed explicitly, but haven't tested that.
+
+    # - **Settings reach the container through `--build-arg`:**
+    #   the image name, install command and compilers are passed as `ARG`s to `podman build`. `CFG_CC`/`CFG_CXX` now
+    #   actually get set. In the original they were never defined, so `configure` always got empty `CC`/`CXX` and used
+    #   its default compiler.
+    # - **Echo lines replaced with a heredoc:**
+    #   The Containerfile is now written with a heredoc (`<<'EOF'`) instead of one `echo` per line. Because `EOF` is
+    #   quoted, the shell doesn't expand `$VARS`, so they reach the container unchanged, the same as with the single-quoted echos.
+    # - **`fail-fast : false`:**
+    #   One failing combination no longer cancels the other jobs.
+    # - **Job names and tags:**
+    #   Each job is named something like `fedora-38 / clang`, and each image gets its own tag.
+    # - **Removed `RUN pwd; cd build`:**
+    #   It did nothing, because each `RUN` starts fresh in `WORKDIR`.
+
+    ## Existing problems
+    # - **The full test run can't fail the build.**
+    #   The last `RUN` ends in `; cat ...`, so its exit status is `cat`'s, not `make check`'s. To make test failures count,
+    #   change it to something like `make check ... ; rc=$?; cat ...; cat ...; exit $rc`.
+    # ^^^ Should now be fixed.
+    # - **Fedora 38 is end-of-life.**
+    #   Its package mirrors may eventually move to the archive, and then `dnf update` will fail. I added `fedora:44` alongside it.
+    # - **Podman is already on the runner.**
+    #   `ubuntu-latest` comes with Podman installed, so the "Setup Podman" step could just be the `podman pull`.

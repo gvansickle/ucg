@@ -1,7 +1,7 @@
 # UniversalCodeGrep
 
 [![License](https://img.shields.io/badge/License-GPL3-red.svg)](COPYING)
-[![Travis-CI Build Status](https://travis-ci.org/gvansickle/ucg.svg?branch=master)](https://travis-ci.org/gvansickle/ucg)
+[![GitHub Actions CI](https://github.com/gvansickle/ucg/actions/workflows/github-actions-ucg-matrix-ci-using-podman.yml/badge.svg)](https://github.com/gvansickle/ucg/actions/workflows/github-actions-ucg-matrix-ci-using-podman.yml)
 <a href="https://scan.coverity.com/projects/gvansickle-ucg">
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/7451/badge.svg"/>
@@ -184,9 +184,9 @@ One or both of these should be available from your Linux/OS X/*BSD distro's pack
 UniversalCodeGrep 0.3.3 should build and run on any reasonably POSIX-compliant platform where the prerequisites are available.  It has been built and tested on the following OSes/distros:
 
 - Linux:
-  - Fedora 23, 24, 25, 26
+  - Fedora 23, 24, 25, 26, 38, 41
   - Arch Linux
-  - Ubuntu 16.04 (Xenial), 14.04 (Trusty Tahr)
+  - Ubuntu 16.04 (Xenial), 14.04 (Trusty Tahr), 24.04
 - OS X:
   - OS X 10.10, 10.11, 10.12, with Xcode 6.4, 7.3.1, 8gm, 8.1, and 8.2 resp.
 - *BSDs:

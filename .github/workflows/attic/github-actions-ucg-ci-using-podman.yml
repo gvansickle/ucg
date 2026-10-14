@@ -21,7 +21,7 @@ jobs:
           sudo apt-get -y install podman
           podman pull fedora:38
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           path: 'ucg'
       - name: Create Podman container and run tests
@@ -32,9 +32,10 @@ jobs:
               #echo 'ENV TZ=Asia/Tokyo'
               echo 'RUN dnf -y update'
               echo 'RUN dnf -y install gcc-c++ git autoconf autoconf-archive automake libtool pcre2-devel'
-              echo 'RUN dnf -y install diffutils wget bzip2'
+              echo 'RUN dnf -y install diffutils wget bzip2 which'
               echo 'RUN dnf -y install the_silver_searcher'
               echo 'RUN dnf -y install ripgrep'
+              echo 'RUN rg --version'
               echo 'RUN dnf clean all'
                # Check tool versions.
               echo 'RUN gcc --version'
@@ -50,6 +51,9 @@ jobs:
               echo 'RUN echo "PWD: $(pwd)"; mkdir TestCorpus && cd TestCorpus && wget http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 && tar xjf boost_1_58_0.tar.bz2 && cd ..'
               echo 'RUN echo "LL: $(ls -l)" && cd TestCorpus && echo "LL: $(ls -l)"'
               echo 'RUN cd build; make check TESTSUITEFLAGS=--corpusdir=../../TestCorpus ; cat tests/testsuite.log ; cat tests/perf_test_results.txt'
-              #TESTSUITEFLAGS=-v -d -x
+              #TESTSUITEFLAGS=-v -d -x              
           } > podmanfile
           podman build --tag fedora38test -f ./podmanfile
+          echo "#################"
+          ls -l
+          echo "#################"
